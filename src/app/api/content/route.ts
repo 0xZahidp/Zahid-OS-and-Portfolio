@@ -35,17 +35,18 @@ export async function GET() {
     if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
       try {
         const supabase = supabaseServer();
+        // Query by id = 'current'
         const { data, error } = await supabase
           .from('portfolio_content')
-          .select('content')
-          .eq('id', 'main')
+          .select('data')
+          .eq('id', 'current')
           .single();
 
-        if (!error && data?.content) {
+        if (!error && data?.data) {
           return NextResponse.json({
             success: true,
             source: 'supabase',
-            content: data.content as PortfolioContent,
+            content: data.data as PortfolioContent,
           });
         }
       } catch (err) {
@@ -94,15 +95,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const updatedContent: PortfolioContent = {
+    // Extract any secret token to isolate it
+    const tokenToSave = body.githubSettings?.token?.trim();
+
+    // Sanitize content: NEVER write secrets to public disk JSON or public portfolio_content JSONB
+    const sanitizedContent: PortfolioContent = {
       ...body,
+      githubSettings: {
+        ...body.githubSettings,
+        token: undefined, // Secret stripped for disk and public storage
+      },
       updatedAt: new Date().toISOString(),
     };
 
     const destinations: string[] = [];
 
-    // 1. Write to local file for zero-config persistence & offline dev
-    const localSaved = await writeLocalContent(updatedContent);
+    // 1. Write sanitized content to local file (zero-config persistence & offline dev)
+    const localSaved = await writeLocalContent(sanitizedContent);
     if (localSaved) {
       destinations.push('local_file');
     }
@@ -114,10 +123,10 @@ export async function POST(req: NextRequest) {
       try {
         const supabase = supabaseServer();
 
-        // Upsert portfolio content
+        // Upsert portfolio content into data column (id = 'current')
         const { error: contentError } = await supabase.from('portfolio_content').upsert({
-          id: 'main',
-          content: updatedContent,
+          id: 'current',
+          data: sanitizedContent,
           updated_at: new Date().toISOString(),
         });
 
@@ -125,18 +134,24 @@ export async function POST(req: NextRequest) {
           destinations.push('supabase');
           supabaseStatus = 'success';
         } else {
-          supabaseStatus = `table_missing_or_error: ${contentError.message}`;
+          supabaseStatus = `table_error: ${contentError.message}`;
         }
 
-        // If a GitHub token was supplied, also update app_settings table
-        if (updatedContent.githubSettings?.token) {
+        // If a GitHub token was supplied, securely save directly into app_settings table
+        if (tokenToSave) {
           try {
-            await supabase.from('app_settings').upsert({
+            const { error: tokenError } = await supabase.from('app_settings').upsert({
               key: 'GITHUB_TOKEN',
-              value: updatedContent.githubSettings.token,
+              value: tokenToSave,
+              is_secret: true,
+              updated_at: new Date().toISOString(),
             });
-          } catch {
-            // Optional table
+
+            if (!tokenError) {
+              destinations.push('supabase_app_settings');
+            }
+          } catch (tokenErr) {
+            console.error('Failed to securely save GITHUB_TOKEN to app_settings:', tokenErr);
           }
         }
       } catch (err: unknown) {
@@ -147,20 +162,16 @@ export async function POST(req: NextRequest) {
 
     const response: CmsSaveResponse = {
       success: true,
-      savedAt: updatedContent.updatedAt || new Date().toISOString(),
+      savedAt: sanitizedContent.updatedAt || new Date().toISOString(),
       destination: destinations,
-      message:
-        destinations.includes('supabase')
-          ? 'Saved to Supabase and local cache successfully.'
-          : 'Saved to local file. (Supabase not configured or table missing)',
+      message: destinations.includes('supabase')
+        ? 'Saved to Supabase and local cache successfully.'
+        : 'Saved to local file. (Supabase not configured or table missing)',
     };
 
     return NextResponse.json({ ...response, supabaseStatus });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to save content';
-    return NextResponse.json(
-      { success: false, error: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

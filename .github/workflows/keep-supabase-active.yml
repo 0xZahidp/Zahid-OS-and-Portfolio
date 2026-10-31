@@ -68,3 +68,4 @@ jobs:
           else
             echo "::warning::Unexpected response (DB: $DB_STATUS, REST: $REST_STATUS). Check project status."
           fi
+

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Database,
-  AlertCircle,
   Copy,
   ExternalLink,
   RefreshCw,
@@ -11,21 +10,27 @@ import {
   Shield,
   Layers,
   Check,
+  CheckCircle2,
+  KeyRound,
 } from 'lucide-react';
 
 export const SupabaseTab: React.FC = () => {
   const [copied, setCopied] = useState(false);
+  const [copiedGrant, setCopiedGrant] = useState(false);
   const [checking, setChecking] = useState(false);
   const [status, setStatus] = useState<{
     configured: boolean;
     projectRef?: string;
     sqlEditorUrl?: string;
     restConnected: boolean;
+    tablesInSchema?: boolean;
     tables: {
       portfolio_content: boolean;
       app_settings: boolean;
     };
+    needsGrant?: boolean;
     isReady: boolean;
+    grantSql?: string;
   } | null>(null);
 
   const fetchStatus = async () => {
@@ -44,6 +49,12 @@ export const SupabaseTab: React.FC = () => {
   useEffect(() => {
     fetchStatus();
   }, []);
+
+  const grantSql = status?.grantSql || `-- 1. Grant table privileges to standard Supabase roles
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.portfolio_content TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.app_settings TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;`;
 
   const migrationSql = `-- 1. Create portfolio_content table
 CREATE TABLE IF NOT EXISTS public.portfolio_content (
@@ -92,13 +103,21 @@ CREATE TRIGGER set_portfolio_content_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- 4. Grant table privileges to standard Supabase roles
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON TABLE public.portfolio_content TO anon, authenticated, service_role;
-GRANT ALL ON TABLE public.app_settings TO anon, authenticated, service_role;`;
+GRANT ALL ON TABLE public.app_settings TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;`;
 
   const handleCopySql = () => {
     navigator.clipboard.writeText(migrationSql);
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
+  };
+
+  const handleCopyGrant = () => {
+    navigator.clipboard.writeText(grantSql);
+    setCopiedGrant(true);
+    setTimeout(() => setCopiedGrant(false), 3000);
   };
 
   const sqlEditorUrl =
@@ -167,12 +186,14 @@ GRANT ALL ON TABLE public.app_settings TO anon, authenticated, service_role;`;
                 }`}
               />
               <span className="text-xs font-bold text-ink">
-                {status?.tables.portfolio_content ? 'Active & Ready' : 'Needs SQL Setup'}
+                {status?.tables.portfolio_content ? 'Active & Ready' : 'Permission Required'}
               </span>
             </div>
             <p className="text-[10px] text-ink-3">
               {status?.tables.portfolio_content
                 ? 'Synced with cloud storage'
+                : status?.tablesInSchema
+                ? 'Table exists, run grants below'
                 : 'Run migration schema below'}
             </p>
           </div>
@@ -190,74 +211,101 @@ GRANT ALL ON TABLE public.app_settings TO anon, authenticated, service_role;`;
                 }`}
               />
               <span className="text-xs font-bold text-ink">
-                {status?.tables.app_settings ? 'Active & Ready' : 'Needs SQL Setup'}
+                {status?.tables.app_settings ? 'Active & Ready' : 'Permission Required'}
               </span>
             </div>
             <p className="text-[10px] text-ink-3">
-              {status?.tables.app_settings ? 'PAT & secrets protected' : 'Run migration schema below'}
+              {status?.tables.app_settings
+                ? 'PAT & secrets protected'
+                : status?.tablesInSchema
+                ? 'Table exists, run grants below'
+                : 'Run migration schema below'}
             </p>
           </div>
         </div>
 
-        {/* Action Callout if tables missing */}
-        {(!status?.tables.portfolio_content || !status?.tables.app_settings) && (
-          <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {/* Priority Callout if tables exist but need GRANT */}
+        {status?.needsGrant && (
+          <div className="p-4.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 space-y-3">
             <div className="flex items-start gap-3">
-              <AlertCircle className="size-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <h3 className="text-xs font-bold text-ink">Tables need to be created</h3>
+              <KeyRound className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-xs font-bold text-ink">Tables Detected in Database — 1 Click to Enable</h3>
                 <p className="text-[11px] text-ink-2 mt-0.5 leading-relaxed">
-                  Your project is connected to Supabase REST! Copy the SQL migration below, click
-                  &quot;Open Supabase SQL Editor&quot;, paste it and click <strong>Run</strong>.
+                  Both <code>portfolio_content</code> and <code>app_settings</code> tables exist in your PostgreSQL database! To enable the API and service role to read/write, run this grant SQL in your Supabase SQL Editor.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2.5 pt-1">
               <button
                 type="button"
-                onClick={handleCopySql}
-                className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
+                onClick={handleCopyGrant}
+                className="btn btn-primary h-8.5 px-3.5 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                {copied ? <Check className="size-3.5 text-emerald-500" /> : <Copy className="size-3.5" />}
-                <span>{copied ? 'Copied SQL!' : 'Copy SQL'}</span>
+                {copiedGrant ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                <span>{copiedGrant ? 'Copied Grant SQL!' : 'Copy Grant SQL'}</span>
               </button>
 
               <a
                 href={sqlEditorUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-primary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
+                className="btn btn-secondary h-8.5 px-3.5 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                <span>Open SQL Editor</span>
+                <span>Open Supabase SQL Editor</span>
                 <ExternalLink className="size-3.5" />
               </a>
             </div>
           </div>
         )}
+
+        {/* Success Banner if All Ready */}
+        {status?.isReady && (
+          <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center gap-3">
+            <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <div>
+              <h3 className="text-xs font-bold text-ink">Supabase Cloud Sync is 100% Active</h3>
+              <p className="text-[11px] text-ink-2 mt-0.5">
+                Every edit saved from the CMS Studio automatically uploads to Supabase and caches locally.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 2. SQL Schema Card */}
+      {/* 2. SQL Schema Migration Card */}
       <div className="card-raised rounded-2xl border border-line bg-surface p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-line">
           <div>
-            <h3 className="text-xs font-bold text-ink">Database Migration Schema (SQL)</h3>
+            <h3 className="text-xs font-bold text-ink">Complete Schema Migration</h3>
             <p className="text-[11px] text-ink-3">
-              Also saved in <code>supabase/migrations/20261101000000_portfolio_schema.sql</code>
+              Full PostgreSQL migration script with tables, RLS policies, and triggers.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleCopySql}
-            className="btn btn-secondary h-7.5 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
-          >
-            {copied ? <Check className="size-3.5 text-emerald-500" /> : <Copy className="size-3.5" />}
-            <span>{copied ? 'Copied!' : 'Copy SQL'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCopySql}
+              className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
+            >
+              {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+              <span>{copied ? 'Copied' : 'Copy All SQL'}</span>
+            </button>
+            <a
+              href={sqlEditorUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
+            >
+              <span>SQL Editor</span>
+              <ExternalLink className="size-3" />
+            </a>
+          </div>
         </div>
 
-        <pre className="rounded-xl border border-line bg-surface-2 p-4 text-[11px] font-mono text-ink-2 overflow-x-auto leading-relaxed [scrollbar-width:thin]">
+        <pre className="p-4 rounded-xl bg-surface-2 border border-line text-[11px] font-mono text-ink overflow-x-auto max-h-72 leading-relaxed">
           {migrationSql}
         </pre>
       </div>
