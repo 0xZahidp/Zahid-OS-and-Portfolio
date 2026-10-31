@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   Layers,
   ArrowUpRight,
@@ -12,6 +12,69 @@ import {
 import { GitHubIcon } from '@/components/ui/Icons';
 import { projectsData } from '@/data/profile';
 
+interface PinnedRepo {
+  id: string;
+  name: string;
+  title: string;
+  description: string;
+  language: string;
+  languageColor?: string;
+  stars: number;
+  forks?: number;
+  url: string;
+}
+
+const DEFAULT_PINNED_REPOS: PinnedRepo[] = [
+  {
+    id: 'MyTapCard',
+    name: '0xZahidp/MyTapCard',
+    title: 'MyTapCard',
+    description:
+      'MyTapCard is an NFC-powered digital business card and profile-sharing platform. It allows users to create a personalized profile with links, contact details, and social media.',
+    language: 'TypeScript',
+    languageColor: '#3178c6',
+    stars: 0,
+    forks: 0,
+    url: 'https://github.com/0xZahidp/MyTapCard',
+  },
+  {
+    id: 'Orbit',
+    name: '0xZahidp/Orbit',
+    title: 'Orbit',
+    description:
+      'Shared plans, clearly managed - Manage memberships, recurring dues, payment approvals, reminders, and group history in one place.',
+    language: 'TypeScript',
+    languageColor: '#3178c6',
+    stars: 0,
+    forks: 0,
+    url: 'https://github.com/0xZahidp/Orbit',
+  },
+  {
+    id: 'GhuraFira',
+    name: '0xZahidp/GhuraFira_Mobile_APP_Flutter',
+    title: 'GhuraFira_Mobile_APP_Flutter',
+    description:
+      'Online travel agency app designed to simplify travel booking. Book flights and hotels, explore tour packages, and get visa assistance built with Flutter.',
+    language: 'Dart',
+    languageColor: '#00B4AB',
+    stars: 3,
+    forks: 0,
+    url: 'https://github.com/0xZahidp/GhuraFira_Mobile_APP_Flutter',
+  },
+  {
+    id: 'CompilerX',
+    name: '0xZahidp/CompilerX',
+    title: 'CompilerX',
+    description:
+      'C-based compiler for a custom programming language, demonstrating key compiler design concepts like lexical analysis, syntax parsing, semantic analysis, and optimization with Flex and Bison.',
+    language: 'C',
+    languageColor: '#555555',
+    stars: 0,
+    forks: 0,
+    url: 'https://github.com/0xZahidp/CompilerX',
+  },
+];
+
 interface WorkTabContentProps {
   onNavigateToProjects: () => void;
 }
@@ -19,11 +82,51 @@ interface WorkTabContentProps {
 export const WorkTabContent: React.FC<WorkTabContentProps> = ({
   onNavigateToProjects,
 }) => {
-  // Generate realistic 52-week GitHub contribution heatmap
-  const contributionWeeks = useMemo(() => {
+  const [totalContributions, setTotalContributions] = useState<number>(102);
+  const [totalRepos, setTotalRepos] = useState<number>(26);
+  const [pinnedRepos, setPinnedRepos] = useState<PinnedRepo[]>(DEFAULT_PINNED_REPOS);
+  const [liveWeeks, setLiveWeeks] = useState<number[][] | null>(null);
+
+  // Fetch live GitHub data from /api/github
+  useEffect(() => {
+    let isMounted = true;
+    const fetchGitHubData = async () => {
+      try {
+        const res = await fetch('/api/github');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!isMounted) return;
+
+        if (data.contributions?.total !== undefined) {
+          setTotalContributions(data.contributions.total);
+        }
+        if (data.user?.public_repos !== undefined) {
+          setTotalRepos(data.user.public_repos);
+        }
+        if (Array.isArray(data.repositories) && data.repositories.length > 0) {
+          setPinnedRepos(data.repositories);
+        }
+        if (Array.isArray(data.contributions?.weeks) && data.contributions.weeks.length > 0) {
+          const weekLevels: number[][] = data.contributions.weeks.map(
+            (w: { level: number }[]) => w.map((d) => d.level)
+          );
+          setLiveWeeks(weekLevels);
+        }
+      } catch (err) {
+        console.error('Error fetching live GitHub data:', err);
+      }
+    };
+
+    fetchGitHubData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Generate realistic 52-week GitHub contribution heatmap fallback
+  const fallbackContributionWeeks = useMemo(() => {
     // 52 columns x 7 days
     const weeks = [];
-    // Seeded random pseudo generator so grid stays stable across renders
     let seed = 42;
     const seededRandom = () => {
       seed = (seed * 9301 + 49297) % 233280;
@@ -35,7 +138,6 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
       for (let d = 0; d < 7; d++) {
         const rand = seededRandom();
         let level = 0;
-        // Higher intensity toward later months (Aug, Sep, Oct)
         const intensityBoost = w > 36 ? 0.35 : w > 20 ? 0.2 : 0;
         const adjusted = rand - intensityBoost;
 
@@ -52,70 +154,18 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
     return weeks;
   }, []);
 
-  const months = [
-    'Nov',
-    'Dec',
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-  ];
+  const displayedWeeks = liveWeeks && liveWeeks.length > 0 ? liveWeeks : fallbackContributionWeeks;
 
-  // Specific 4 pinned repos matching Screenshot 1
-  const pinnedRepos = [
-    {
-      id: 'pin-1',
-      name: 'alnahian2003/learn-laravel',
-      title: 'learn-laravel',
-      description:
-        '🎉 Ready to level up your Laravel skills? Dive into awesome self-learning resources - tutorials, ebooks, blogs and courses.',
-      language: '',
-      stars: 186,
-      forks: 82,
-      url: 'https://github.com/0xZahidp/learn-laravel',
-    },
-    {
-      id: 'pin-2',
-      name: 'alnahian2003/year',
-      title: 'year',
-      description:
-        'A beautifully designed, real-time year progress tracker with 8 unique themes including Windows 7, Cyberpunk and more.',
-      language: 'HTML',
-      languageColor: '#e34c26',
-      stars: 12,
-      forks: 3,
-      url: 'https://github.com/0xZahidp/year-progress',
-    },
-    {
-      id: 'pin-3',
-      name: 'alnahian2003/kordova',
-      title: 'kordova',
-      description:
-        'Simplify your uptime monitoring experience with this all-in-one solution, designed to be lightweight and easy to self-host.',
-      language: 'PHP',
-      languageColor: '#4F5D95',
-      stars: 6,
-      url: 'https://github.com/0xZahidp/kordova',
-    },
-    {
-      id: 'pin-4',
-      name: 'alnahian2003/kleon',
-      title: 'kleon',
-      description:
-        'Freelancer CRM - Using Laravel, Vue 3 & Inertia. Submission for Laravel Daily’s Laravel Learning challenge.',
-      language: 'PHP',
-      languageColor: '#4F5D95',
-      stars: 10,
-      forks: 2,
-      url: 'https://github.com/0xZahidp/kleon',
-    },
-  ];
+  const months = useMemo(() => {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentMonthIdx = new Date().getMonth();
+    const list = [];
+    for (let i = 11; i >= 0; i--) {
+      const idx = (currentMonthIdx - i + 12) % 12;
+      list.push(monthNames[idx]);
+    }
+    return list;
+  }, []);
 
   const renderRowIcon = (id: string) => {
     switch (id) {
@@ -202,7 +252,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
         </div>
 
         <p className="text-xs text-ink-3">
-          1,378 contributions in the last year
+          {totalContributions.toLocaleString()} contributions in the last year
         </p>
 
         {/* Heatmap Matrix Container */}
@@ -217,7 +267,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
 
             {/* Matrix Grid (52 weeks x 7 days) */}
             <div className="flex gap-[3px]">
-              {contributionWeeks.map((week, wIdx) => (
+              {displayedWeeks.map((week, wIdx) => (
                 <div key={wIdx} className="flex flex-col gap-[3px]">
                   {week.map((level, dIdx) => {
                     let bgClass = 'bg-zinc-100 dark:bg-zinc-800/80';
@@ -253,7 +303,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
 
         {/* Repositories Sub-heading & Action */}
         <div className="pt-2 flex items-center justify-between gap-4">
-          <p className="text-sm font-semibold text-ink">Total 92 repositories</p>
+          <p className="text-sm font-semibold text-ink">Total {totalRepos} repositories</p>
           <a
             href="https://github.com/0xZahidp?tab=repositories"
             target="_blank"

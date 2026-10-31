@@ -22,7 +22,7 @@ export const profileData: Profile = {
   location: 'Dhaka',
   timezone: 'Asia/Dhaka',
   availability: 'Open to new conversations',
-  github_followers_count: 483,
+  github_followers_count: 6,
   roles: [
     {
       title: 'CTO',
