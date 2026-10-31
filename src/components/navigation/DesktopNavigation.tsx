@@ -2,13 +2,13 @@
 
 import React from 'react';
 import {
-  User,
-  Box,
-  Users,
-  Mail,
-  BookOpen,
-  Headphones,
-} from 'lucide-react';
+  TablerUserCircle,
+  TablerBox,
+  TablerUsers,
+  TablerMail,
+  TablerBooks,
+  TablerHeadphones,
+} from '@/components/ui/Icons';
 
 interface DesktopNavigationProps {
   activeSection: string;
@@ -22,15 +22,15 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
   onNavigate,
 }) => {
   const mainNavItems = [
-    { id: 'profile', label: 'Profile', icon: User, target: '#top' },
-    { id: 'projects', label: 'Projects', icon: Box, target: '#projects' },
-    { id: 'people', label: 'People', icon: Users, target: '#who-to-follow' },
-    { id: 'contact', label: 'Contact', icon: Mail, target: '#contact' },
+    { id: 'profile', label: 'Profile', icon: TablerUserCircle },
+    { id: 'projects', label: 'Projects', icon: TablerBox },
+    { id: 'people', label: 'People', icon: TablerUsers },
+    { id: 'contact', label: 'Contact', icon: TablerMail },
   ];
 
   const secondaryNavItems = [
-    { id: 'library', label: 'Library', icon: BookOpen, target: '#skills' },
-    { id: 'focus', label: 'Focus', icon: Headphones, target: '#about' },
+    { id: 'library', label: 'Library', icon: TablerBooks },
+    { id: 'focus', label: 'Focus', icon: TablerHeadphones },
   ];
 
   const renderItem = (item: (typeof mainNavItems)[0]) => {
@@ -47,7 +47,7 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
           isCollapsed ? 'justify-center xl:p-3' : 'xl:px-3 xl:py-2.5'
         } ${
           isActive
-            ? 'bg-surface-2/70 font-semibold text-ink'
+            ? 'bg-surface-2/70 font-semibold text-ink shadow-sm'
             : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
         }`}
       >
@@ -81,4 +81,3 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
     </nav>
   );
 };
-

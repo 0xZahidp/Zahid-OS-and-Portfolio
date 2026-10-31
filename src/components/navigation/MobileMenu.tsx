@@ -2,18 +2,16 @@
 
 import React from 'react';
 import Link from 'next/link';
-import {
-  X,
-  User,
-  Box,
-  Users,
-  Mail,
-  BookOpen,
-  Headphones,
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { SoundToggle } from '@/components/ui/SoundToggle';
 import {
+  TablerUserCircle,
+  TablerBox,
+  TablerUsers,
+  TablerMail,
+  TablerBooks,
+  TablerHeadphones,
   GitHubIcon,
   XIcon,
   LinkedInIcon,
@@ -39,12 +37,12 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   };
 
   const navItems = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'projects', label: 'Projects', icon: Box },
-    { id: 'people', label: 'People', icon: Users },
-    { id: 'contact', label: 'Contact', icon: Mail },
-    { id: 'library', label: 'Library', icon: BookOpen },
-    { id: 'focus', label: 'Focus', icon: Headphones },
+    { id: 'profile', label: 'Profile', icon: TablerUserCircle },
+    { id: 'projects', label: 'Projects', icon: TablerBox },
+    { id: 'people', label: 'People', icon: TablerUsers },
+    { id: 'contact', label: 'Contact', icon: TablerMail },
+    { id: 'library', label: 'Library', icon: TablerBooks },
+    { id: 'focus', label: 'Focus', icon: TablerHeadphones },
   ];
 
   return (
@@ -65,13 +63,13 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             onClick={onClose}
             className="group inline-flex items-center gap-2.5"
           >
-            <span className="btn-primary grid size-9 place-items-center rounded-[11px] shadow-md">
-              <span className="text-lg leading-none font-black tracking-tighter text-black">
-                N
+            <span className="grid size-9 place-items-center rounded-[11px] bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/40">
+              <span className="text-lg leading-none font-black tracking-tighter text-white">
+                Z
               </span>
             </span>
             <span className="text-title font-bold tracking-tight text-ink">
-              nahian<span className="text-ink-3">.bd</span>
+              zahid<span className="text-ink-3">.dev</span>
             </span>
           </Link>
 
@@ -115,7 +113,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 
           <div className="flex items-center gap-3 text-ink-3">
             <a
-              href="https://github.com/alnahian2003"
+              href="https://github.com/0xZahidp"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub"
@@ -124,7 +122,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               <GitHubIcon className="size-4" />
             </a>
             <a
-              href="https://x.com/alnahian2003"
+              href="https://x.com/0xZahidP"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="X"
@@ -133,7 +131,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               <XIcon className="size-4" />
             </a>
             <a
-              href="https://linkedin.com/in/alnahian2003"
+              href="https://linkedin.com/in/0xZahidp"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="LinkedIn"
@@ -142,7 +140,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               <LinkedInIcon className="size-4" />
             </a>
             <a
-              href="https://facebook.com/alnahian2003"
+              href="https://facebook.com/0xZahidp"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Facebook"
@@ -152,7 +150,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             </a>
           </div>
 
-          <p className="text-[11px] text-ink-3">© 2026 Al Nahian</p>
+          <p className="text-[11px] text-ink-3">© 2026 Zahid</p>
         </div>
       </div>
     </div>

@@ -9,11 +9,11 @@ import {
 } from '@/types/profile';
 
 export const profileData: Profile = {
-  id: 'usr_01',
-  username: 'alnahian2003',
-  full_name: 'Al Nahian',
+  id: 'usr_zahid',
+  username: '0xZahidp',
+  full_name: 'Md Zahid Hasan Patwary',
   headline: 'Less talk, show me code!',
-  bio: `I’m a founding engineer and product builder who enjoys turning complex ideas into products that ship globally. I pair a strong passion for software design with a disciplined approach to life.`,
+  bio: `Developer & Growth Strategist | Building SaaS & Web3 products | Passionate about code, community & scaling ideas into impact 🚀`,
   avatar_url: '/images/avatar.webp',
   location: 'Dhaka',
   timezone: 'Asia/Dhaka',
@@ -36,10 +36,10 @@ export const profileData: Profile = {
 };
 
 export const bioParagraphs = [
-  'I’m a founding engineer and product builder who enjoys turning complex ideas into products that ship globally. I pair a strong passion for software design with a disciplined approach to life.',
-  'As CTO at Bidvers, a startup founded by GymScanner’s CEO with offices in the US, Oman and Romania, I built the core platform and API from a blank repo, including a low-latency bidding engine on the TALL stack and secure payment routing. The team’s iOS and Android apps are built on that API. Bidvers has raised over $120K so far. I joined GymScanner first, and I still maintain and scale its backend infrastructure as a software engineer.',
-  'These days I build with agentic engineering, so the stack matters less than the value I add: I own the architecture, the product decisions and the quality bar. Most of my products run on the Laravel ecosystem, both TALL and VILT, with a close eye on clean SaaS UI/UX, and I build AI into them with models from OpenAI and Claude.',
-  'My journey started early: I co-founded the studio ZovoZip, led development at ZovoTeam, and taught Laravel at Interactive Cares, including a free crash course that drew 1,200+ students. I love owning products end to end, and I’m always happy to meet founders and teams building ambitious remote products.',
+  'I’m a developer and growth strategist building scalable SaaS and Web3 products. I turn complex technical architectures into intuitive, high-performance web products that ship globally.',
+  'As CTO at Bidvers and Software Engineer at GymScanner, I architected core platforms and APIs from a blank repository, including low-latency real-time bidding engines and secure multi-region payment routing across the US, Oman, and Romania. Bidvers has raised over $120K so far.',
+  'These days I build with agentic AI engineering and modern full-stack systems—leveraging Next.js, Laravel, Supabase, Tailwind CSS, and models from OpenAI and Claude. I own the architecture, user experience, and technical roadmap end to end.',
+  'I love building products from zero to one, scaling engineering teams, and exploring decentralized technologies. Always open to collaborating with ambitious founders and teams worldwide.',
 ];
 
 export const languagesData: LanguageSkill[] = [
@@ -228,35 +228,44 @@ export const socialLinksData: SocialLink[] = [
     id: 's1',
     platform: 'github',
     label: 'GitHub',
-    handle: '@alnahian2003',
-    url: 'https://github.com/alnahian2003',
+    handle: '@0xZahidp',
+    url: 'https://github.com/0xZahidp',
   },
   {
     id: 's2',
     platform: 'x',
     label: 'X',
-    handle: '@alnahian2003',
-    url: 'https://x.com/alnahian2003',
+    handle: '@0xZahidP',
+    url: 'https://x.com/0xZahidP',
   },
   {
     id: 's3',
     platform: 'linkedin',
     label: 'LinkedIn',
-    handle: 'in/alnahian2003',
-    url: 'https://linkedin.com/in/alnahian2003',
+    handle: 'in/0xZahidp',
+    url: 'https://linkedin.com/in/0xZahidp',
   },
   {
     id: 's4',
     platform: 'facebook',
     label: 'Facebook',
-    handle: '/alnahian2003',
-    url: 'https://facebook.com/alnahian2003',
+    handle: '/0xZahidp',
+    url: 'https://facebook.com/0xZahidp',
   },
 ];
 
 export const projectsData: Project[] = [
   {
     id: 'proj-1',
+    title: 'MyTapCard - NFC Profile Platform',
+    description:
+      'NFC-powered digital business card and profile-sharing platform. Allows users to create a personalized profile with instant contact sharing over NFC or single URL.',
+    tags: ['TypeScript', 'Next.js', 'Tailwind CSS', 'Vercel'],
+    project_url: 'https://mytapcard.vercel.app',
+    repository_url: 'https://github.com/0xZahidp/MyTapCard',
+  },
+  {
+    id: 'proj-2',
     title: 'Bidvers Live Auction Platform',
     description:
       'High-throughput live vehicle bidding engine built with TALL stack, processing real-time websocket transactions with sub-50ms latency.',
@@ -264,28 +273,19 @@ export const projectsData: Project[] = [
     project_url: 'https://bidvers.com',
   },
   {
-    id: 'proj-2',
+    id: 'proj-3',
+    title: 'Telegram Community Engagement Bot',
+    description:
+      'Automated high-concurrency bot infrastructure supporting real-time user verification, community incentives, and engagement analytics.',
+    tags: ['Python', 'AsyncIO', 'Telegram API', 'Automation'],
+    repository_url: 'https://github.com/0xZahidp/tg_engagement_bot_romania',
+  },
+  {
+    id: 'proj-4',
     title: 'GymScanner Backend & Search Pipeline',
     description:
       'Scalable cloud infrastructure powering automated gym schedule indexing and dynamic fitness subscription discovery.',
     tags: ['PHP', 'Laravel', 'PostgreSQL', 'Docker'],
     project_url: 'https://gymscanner.com',
   },
-  {
-    id: 'proj-3',
-    title: 'Interactive Cares Developer Academy',
-    description:
-      'Comprehensive curriculum platform and mentorship system that instructed 1,200+ students on building production-ready SaaS applications.',
-    tags: ['Education', 'PHP', 'Laravel', 'Mentorship'],
-    project_url: 'https://interactivecares.com',
-  },
-  {
-    id: 'proj-4',
-    title: 'ZovoZip Design & Template Systems',
-    description:
-      'High-performance UI components, web applications, and accessible design kit templates for startups.',
-    tags: ['Design Systems', 'HTML5', 'Tailwind CSS', 'UI/UX'],
-    project_url: 'https://zovoteam.com',
-  },
 ];
-

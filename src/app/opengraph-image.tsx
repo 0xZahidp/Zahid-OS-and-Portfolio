@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'Al Nahian — Developer Profile | FolioFrame';
+export const alt = 'Md Zahid Hasan Patwary (Zahid) — Developer Profile';
 export const size = {
   width: 1200,
   height: 630,
@@ -44,49 +44,49 @@ export default async function Image() {
               justifyContent: 'center',
               fontSize: '32px',
               fontWeight: 900,
-              color: '#000',
+              color: '#fff',
             }}
           >
-            N
+            Z
           </div>
           <span style={{ fontSize: '36px', fontWeight: 800, color: '#f5f5f5' }}>
-            nahian.bd
+            zahid.dev
           </span>
         </div>
 
         <h1
           style={{
-            fontSize: '64px',
+            fontSize: '56px',
             fontWeight: 800,
             color: '#ffffff',
             margin: '0 0 16px 0',
             letterSpacing: '-0.02em',
           }}
         >
-          Al Nahian
+          Md Zahid Hasan Patwary
         </h1>
 
         <p
           style={{
-            fontSize: '32px',
+            fontSize: '28px',
             color: '#10b981',
             margin: '0 0 24px 0',
             fontWeight: 600,
           }}
         >
-          Less talk, show me code!
+          Developer & Growth Strategist | Building SaaS & Web3 products
         </p>
 
         <p
           style={{
-            fontSize: '22px',
+            fontSize: '20px',
             color: '#a1a1aa',
             maxWidth: '800px',
             textAlign: 'center',
             lineHeight: 1.4,
           }}
         >
-          Founding Engineer · CTO at Bidvers · Software Engineer at GymScanner · Agentic AI Builder
+          CTO at Bidvers · Software Engineer at GymScanner · Agentic AI Builder
         </p>
       </div>
     ),
@@ -95,4 +95,3 @@ export default async function Image() {
     }
   );
 }
-

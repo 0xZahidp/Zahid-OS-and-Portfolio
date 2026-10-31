@@ -3,6 +3,9 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+
   --color-bg-base: var(--background);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
@@ -73,7 +76,7 @@
 body {
   background-color: var(--background);
   color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -91,17 +94,21 @@ body {
   cursor: pointer;
 }
 
+/* Pixel-exact "Get in touch" Primary Button */
 .btn-primary {
-  background-color: #10b981;
-  color: #000000;
-  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.25);
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  font-weight: 700;
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.35), 0 0 20px 0 rgba(16, 185, 129, 0.25);
 }
 .btn-primary:hover {
-  background-color: #34d399;
-  box-shadow: 0 6px 20px 0 rgba(16, 185, 129, 0.35);
+  background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+  box-shadow: 0 6px 20px 0 rgba(16, 185, 129, 0.45), 0 0 25px 0 rgba(16, 185, 129, 0.35);
+  transform: translateY(-0.5px);
 }
 .btn-primary:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
 .btn-secondary {
@@ -171,6 +178,16 @@ body {
 .pill:hover {
   border-color: var(--line-strong);
   transform: translateY(-1px);
+}
+
+/* AI Pill with delicate brand coloring */
+.ai-pill {
+  border-color: color-mix(in srgb, var(--ai, currentColor) 35%, var(--line));
+  background-color: color-mix(in srgb, var(--ai, currentColor) 8%, var(--surface-2));
+}
+.ai-pill:hover {
+  border-color: var(--ai, var(--line-strong));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ai, #10b981) 25%, transparent);
 }
 
 .badge {

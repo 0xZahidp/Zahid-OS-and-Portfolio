@@ -47,8 +47,10 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ onContactClick }) =>
     <aside className="sticky top-0 hidden h-dvh w-80 shrink-0 flex-col gap-5 overflow-y-auto px-4 py-5 [scrollbar-width:none] lg:flex border-l border-line bg-surface/30">
       {/* Top Follow Button */}
       <div className="flex justify-end">
-        <button
-          type="button"
+        <a
+          href="https://x.com/0xZahidP"
+          target="_blank"
+          rel="noopener noreferrer"
           onClick={() => setIsFollowingMain(!isFollowingMain)}
           className={`btn ${
             isFollowingMain
@@ -60,22 +62,22 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ onContactClick }) =>
             <XIcon className="size-3.5" />
             <span>{isFollowingMain ? 'Following' : 'Follow'}</span>
           </span>
-        </button>
+        </a>
       </div>
 
-      {/* Open to Conversations Mini Card (Visible on light mode or scroll) */}
+      {/* Open to Conversations Mini Card */}
       <div className="card-raised p-4 bg-surface/80">
         <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-500">
           <span className="size-1.5 rounded-full bg-brand-500 animate-pulse" />
           <span>Open to new conversations</span>
         </p>
         <p className="mt-1 text-xs text-ink-2 leading-relaxed">
-          Software engineer and agentic builder. Always happy to talk products, collaborations and consultations.
+          Developer & Growth Strategist. Always happy to talk products, SaaS architectures, collaborations and consultations.
         </p>
         <button
           type="button"
           onClick={onContactClick}
-          className="mt-3 btn btn-primary h-7 px-3 rounded-lg text-xs font-medium"
+          className="mt-3 btn btn-primary h-7 px-3 rounded-lg text-xs font-bold"
         >
           Let’s talk
         </button>
@@ -140,7 +142,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ onContactClick }) =>
         {/* Footer with mini avatars stack */}
         <div className="mt-4 flex items-center justify-between pt-3 border-t border-line/70">
           <a
-            href="https://github.com/alnahian2003?tab=following"
+            href="https://github.com/0xZahidp?tab=following"
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs font-medium text-link hover:underline inline-flex items-center gap-1"
@@ -201,12 +203,12 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ onContactClick }) =>
 
         <div className="px-3 pt-1">
           <a
-            href="https://github.com/alnahian2003"
+            href="https://github.com/0xZahidp"
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs font-medium text-link hover:underline"
           >
-            See all 7 profiles →
+            See all profiles →
           </a>
         </div>
       </div>

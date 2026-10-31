@@ -2,10 +2,13 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { SoundToggle } from '@/components/ui/SoundToggle';
 import { DesktopNavigation } from '@/components/navigation/DesktopNavigation';
+import {
+  TablerSidebarLeftCollapse,
+  TablerSidebarLeftExpand,
+} from '@/components/ui/Icons';
 
 interface LeftSidebarProps {
   activeSection: string;
@@ -37,11 +40,11 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         <Link
           href="/"
           className="group inline-flex items-center gap-2.5"
-          aria-label="FolioFrame, home"
+          aria-label="Zahid, home"
         >
-          <span className="btn-primary grid size-9 place-items-center rounded-[11px] transition-transform group-hover:rotate-[-4deg] group-active:scale-95 shadow-md">
-            <span className="text-lg leading-none font-black tracking-tighter text-black">
-              N
+          <span className="grid size-9 place-items-center rounded-[11px] bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.4)] ring-1 ring-emerald-400/40 transition-transform group-hover:rotate-[-4deg] group-active:scale-95">
+            <span className="text-lg leading-none font-black tracking-tighter text-white">
+              Z
             </span>
           </span>
 
@@ -50,7 +53,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               isCollapsed ? 'hidden' : 'hidden xl:inline-flex'
             }`}
           >
-            nahian<span className="text-ink-3 transition-colors group-hover:text-link">.bd</span>
+            zahid<span className="text-ink-3 transition-colors group-hover:text-link">.dev</span>
           </span>
         </Link>
       </div>
@@ -88,13 +91,13 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             type="button"
             onClick={onToggleCollapse}
             aria-label="Toggle sidebar width"
-            className="btn btn-secondary grid size-9 place-items-center rounded-full"
+            className="btn btn-secondary grid size-9 place-items-center rounded-full hover:border-line-strong transition-all"
           >
             <span className="btn-content">
               {isCollapsed ? (
-                <PanelLeftOpen className="size-4.5 text-zinc-300" />
+                <TablerSidebarLeftExpand className="size-4.5 text-zinc-300 dark:text-zinc-300 text-zinc-700" />
               ) : (
-                <PanelLeftClose className="size-4.5 text-zinc-300" />
+                <TablerSidebarLeftCollapse className="size-4.5 text-zinc-300 dark:text-zinc-300 text-zinc-700" />
               )}
             </span>
           </button>
@@ -106,10 +109,9 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             isCollapsed ? 'hidden' : 'hidden xl:block'
           }`}
         >
-          © 2026 Al Nahian
+          © 2026 Zahid
         </p>
       </div>
     </aside>
   );
 };
-

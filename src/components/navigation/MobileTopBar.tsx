@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Menu } from 'lucide-react';
+import { TablerMenu2 } from '@/components/ui/Icons';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 interface MobileTopBarProps {
@@ -23,7 +23,7 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
         className="btn btn-secondary grid size-9 place-items-center rounded-full"
       >
         <span className="btn-content">
-          <Menu className="size-4.5" />
+          <TablerMenu2 className="size-4.5" />
         </span>
       </button>
 
@@ -34,7 +34,7 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
         <button
           type="button"
           onClick={onContactClick}
-          className="btn btn-primary h-8 px-3.5 text-xs font-semibold rounded-xl"
+          className="btn btn-primary h-8 px-4 text-xs font-bold rounded-xl"
         >
           <span className="btn-content">Contact</span>
         </button>
@@ -42,4 +42,3 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
     </header>
   );
 };
-

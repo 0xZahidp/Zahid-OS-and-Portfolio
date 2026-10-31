@@ -1,5 +1,18 @@
 import type { Metadata, Viewport } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+  display: 'swap',
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 export const viewport: Viewport = {
   themeColor: '#0d0d0f',
@@ -9,31 +22,31 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Al Nahian — Developer Profile | FolioFrame',
+  title: 'Md Zahid Hasan Patwary (Zahid) — Developer Profile',
   description:
-    'Founding engineer and product builder turning complex ideas into products that ship globally. CTO at Bidvers and Software Engineer at GymScanner.',
+    'Developer & Growth Strategist | Building SaaS & Web3 products | Passionate about code, community & scaling ideas into impact.',
   keywords: [
-    'Al Nahian',
-    'FolioFrame',
+    'Md Zahid Hasan Patwary',
+    'Zahid',
+    '0xZahidp',
     'Developer Portfolio',
-    'CTO',
-    'Software Engineer',
-    'Full Stack Engineer',
-    'Laravel',
+    'SaaS',
+    'Web3',
     'Next.js',
-    'Agentic AI',
+    'Supabase',
+    'Tailwind CSS',
   ],
-  authors: [{ name: 'Al Nahian', url: 'https://nahian.bd' }],
-  creator: 'Al Nahian',
+  authors: [{ name: 'Md Zahid Hasan Patwary', url: 'https://zahidp.com' }],
+  creator: 'Md Zahid Hasan Patwary',
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || 'https://folioframe.dev'
+    process.env.NEXT_PUBLIC_SITE_URL || 'https://zahidp.com'
   ),
   openGraph: {
-    title: 'Al Nahian — Developer Profile',
+    title: 'Md Zahid Hasan Patwary (Zahid) — Developer Profile',
     description:
-      'Founding engineer and product builder turning complex ideas into products that ship globally.',
+      'Developer & Growth Strategist | Building SaaS & Web3 products | Passionate about code, community & scaling ideas into impact.',
     url: '/',
-    siteName: 'FolioFrame',
+    siteName: 'Zahid',
     locale: 'en_US',
     type: 'profile',
     images: [
@@ -41,16 +54,16 @@ export const metadata: Metadata = {
         url: '/images/avatar.webp',
         width: 800,
         height: 800,
-        alt: 'Al Nahian - Developer Profile',
+        alt: 'Md Zahid Hasan Patwary - Developer Profile',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Al Nahian — Developer Profile',
+    title: 'Md Zahid Hasan Patwary (Zahid) — Developer Profile',
     description:
-      'Founding engineer and product builder turning complex ideas into products that ship globally.',
-    creator: '@alnahian2003',
+      'Developer & Growth Strategist | Building SaaS & Web3 products | Passionate about code, community & scaling ideas into impact.',
+    creator: '@0xZahidP',
     images: ['/images/avatar.webp'],
   },
   icons: {
@@ -65,8 +78,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
-      <body className="min-h-dvh antialiased [scrollbar-gutter:stable]">
+    <html lang="en" className={`scroll-smooth ${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <body className="min-h-dvh antialiased font-sans [scrollbar-gutter:stable]">
         {children}
       </body>
     </html>

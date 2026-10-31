@@ -9,13 +9,13 @@ import { ProfileBanner } from '@/components/profile/ProfileBanner';
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
 import { ProfileBadges } from '@/components/profile/ProfileBadges';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
-import { VerifiedBadgeIcon } from '@/components/ui/Icons';
+import { VerifiedBadgeIcon, TablerShare } from '@/components/ui/Icons';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { ExperienceSection } from '@/components/sections/ExperienceSection';
 import { SkillsSection } from '@/components/sections/SkillsSection';
 import { ProjectsSection } from '@/components/sections/ProjectsSection';
 import { ContactSection } from '@/components/sections/ContactSection';
-import { Briefcase, MapPin, Share2, Check } from 'lucide-react';
+import { Briefcase, MapPin, Check } from 'lucide-react';
 import Image from 'next/image';
 import {
   GitHubIcon,
@@ -51,7 +51,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${profile.full_name} - Developer Profile`,
+          title: `${profile.full_name} (Zahid) - Developer Profile`,
           text: `${profile.full_name} - ${profile.headline}`,
           url: window.location.href,
         });
@@ -94,7 +94,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
 
           {/* Full Name & Verification */}
           <h1 className="mt-3 flex items-center gap-1.5 text-title font-bold tracking-tight text-ink">
-            {profile.full_name}
+            <span>{profile.full_name}</span>
             <VerifiedBadgeIcon className="size-6 text-brand-500" />
           </h1>
 
@@ -160,7 +160,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             <li className="inline-flex items-center gap-1.5">
               <MapPin className="size-4 text-ink-3 shrink-0" />
               <span>{profile.location}</span>
-              <span className="text-ink-3 tabular-nums">· 5:37 PM</span>
+              <span className="text-ink-3 tabular-nums">· 6:11 PM</span>
             </li>
           </ul>
 
@@ -172,7 +172,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             <button
               type="button"
               onClick={scrollToContact}
-              className="flex-1 btn btn-primary h-10 px-4.5 rounded-xl font-semibold text-sm"
+              className="flex-1 btn btn-primary h-10 px-5 rounded-xl font-bold text-sm tracking-[-0.01em]"
             >
               <span className="btn-content">Get in touch</span>
             </button>
@@ -189,7 +189,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                   </>
                 ) : (
                   <>
-                    <Share2 className="size-4" />
+                    <TablerShare className="size-4.5" />
                     <span>Share</span>
                   </>
                 )}
@@ -221,7 +221,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           <footer className="mt-14 pt-6 border-t border-line flex flex-col items-center gap-3 text-center">
             <div className="flex items-center gap-4 text-ink-3">
               <a
-                href="https://github.com/alnahian2003"
+                href="https://github.com/0xZahidp"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub"
@@ -229,7 +229,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 <GitHubIcon className="size-4" />
               </a>
               <a
-                href="https://x.com/alnahian2003"
+                href="https://x.com/0xZahidP"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="X"
@@ -237,7 +237,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 <XIcon className="size-4" />
               </a>
               <a
-                href="https://linkedin.com/in/alnahian2003"
+                href="https://linkedin.com/in/0xZahidp"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn"
@@ -245,7 +245,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 <LinkedInIcon className="size-4" />
               </a>
               <a
-                href="https://facebook.com/alnahian2003"
+                href="https://facebook.com/0xZahidp"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
@@ -253,7 +253,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 <FacebookIcon className="size-4" />
               </a>
             </div>
-            <p className="text-xs text-ink-3">© 2026 Al Nahian</p>
+            <p className="text-xs text-ink-3">© 2026 Md Zahid Hasan Patwary (Zahid)</p>
           </footer>
         </div>
       </main>
@@ -266,4 +266,3 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     </div>
   );
 };
-

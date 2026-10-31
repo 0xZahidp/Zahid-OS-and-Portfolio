@@ -93,7 +93,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           <footer className="mt-16 pt-8 border-t border-line flex flex-col items-center gap-4 text-center">
             <div className="flex items-center gap-4 text-ink-3">
               <a
-                href="https://github.com/alnahian2003"
+                href="https://github.com/0xZahidp"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub"
@@ -102,7 +102,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                 <GitHubIcon className="size-4" />
               </a>
               <a
-                href="https://x.com/alnahian2003"
+                href="https://x.com/0xZahidP"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="X"
@@ -111,7 +111,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                 <XIcon className="size-4" />
               </a>
               <a
-                href="https://linkedin.com/in/alnahian2003"
+                href="https://linkedin.com/in/0xZahidp"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn"
@@ -120,7 +120,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                 <LinkedInIcon className="size-4" />
               </a>
               <a
-                href="https://facebook.com/alnahian2003"
+                href="https://facebook.com/0xZahidp"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
@@ -129,7 +129,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                 <FacebookIcon className="size-4" />
               </a>
             </div>
-            <p className="text-xs text-ink-3">© 2026 Al Nahian</p>
+            <p className="text-xs text-ink-3">© 2026 Md Zahid Hasan Patwary (Zahid)</p>
           </footer>
         </div>
       </main>
@@ -139,4 +139,3 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     </div>
   );
 };
-

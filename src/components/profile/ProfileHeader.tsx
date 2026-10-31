@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Briefcase, MapPin, Share2, Check } from 'lucide-react';
+import { Briefcase, MapPin, Check } from 'lucide-react';
 import { Profile } from '@/types/profile';
-import { VerifiedBadgeIcon } from '@/components/ui/Icons';
+import { VerifiedBadgeIcon, TablerShare } from '@/components/ui/Icons';
 import { ProfileBanner } from './ProfileBanner';
 import { ProfileAvatar } from './ProfileAvatar';
 import { ProfileBadges } from './ProfileBadges';
@@ -23,7 +23,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   onTabChange,
   onContactClick,
 }) => {
-  const [localTime, setLocalTime] = useState<string>('5:49 PM');
+  const [localTime, setLocalTime] = useState<string>('6:11 PM');
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         }).format(now);
         setLocalTime(formatted);
       } catch {
-        setLocalTime('5:49 PM');
+        setLocalTime('6:11 PM');
       }
     };
 
@@ -51,7 +51,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${profile.full_name} - Developer Profile`,
+          title: `${profile.full_name} (Zahid) - Developer Profile`,
           text: `${profile.full_name} - ${profile.headline}`,
           url: window.location.href,
         });
@@ -101,7 +101,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             {copied ? (
               <Check className="size-4.5 text-brand-500" />
             ) : (
-              <Share2 className="size-4.5" />
+              <TablerShare className="size-4.5" />
             )}
           </span>
         </button>
@@ -109,7 +109,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <button
           type="button"
           onClick={onContactClick}
-          className="btn btn-primary h-10 px-4.5 rounded-xl font-semibold text-sm"
+          className="btn btn-primary h-10 px-5 rounded-xl font-bold text-sm tracking-[-0.01em]"
         >
           <span className="btn-content inline-flex items-center gap-2">
             Get in touch
@@ -127,7 +127,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
         {/* Name & Verification */}
         <h1 className="mt-3 flex items-center gap-1.5 text-title font-bold tracking-tight text-ink">
-          {profile.full_name}
+          <span>{profile.full_name}</span>
           <VerifiedBadgeIcon className="size-6 text-brand-500" />
         </h1>
 
@@ -207,7 +207,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <button
             type="button"
             onClick={onContactClick}
-            className="btn btn-primary h-10 px-4.5 rounded-xl font-semibold text-sm"
+            className="btn btn-primary h-10 px-5 rounded-xl font-bold text-sm"
           >
             <span className="btn-content inline-flex items-center gap-2">
               Get in touch
@@ -226,7 +226,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </>
               ) : (
                 <>
-                  <Share2 className="size-4.5" />
+                  <TablerShare className="size-4.5" />
                   <span>Share</span>
                 </>
               )}
@@ -240,4 +240,3 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     </div>
   );
 };
-

@@ -1,7 +1,12 @@
 'use client';
 
 import React from 'react';
-import { User, Box, Users, BookOpen } from 'lucide-react';
+import {
+  TablerUserCircle,
+  TablerBox,
+  TablerUsers,
+  TablerBooks,
+} from '@/components/ui/Icons';
 
 interface MobileBottomBarProps {
   activeSection: string;
@@ -13,10 +18,10 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
   onNavigate,
 }) => {
   const items = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'projects', label: 'Projects', icon: Box },
-    { id: 'people', label: 'People', icon: Users },
-    { id: 'library', label: 'Library', icon: BookOpen },
+    { id: 'profile', label: 'Profile', icon: TablerUserCircle },
+    { id: 'projects', label: 'Projects', icon: TablerBox },
+    { id: 'people', label: 'People', icon: TablerUsers },
+    { id: 'library', label: 'Library', icon: TablerBooks },
   ];
 
   return (
@@ -47,4 +52,3 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
     </nav>
   );
 };
-

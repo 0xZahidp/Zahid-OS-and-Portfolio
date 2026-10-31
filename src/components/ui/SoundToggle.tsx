@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Volume2, VolumeX } from 'lucide-react';
+import { TablerVolume, TablerVolumeOff } from '@/components/ui/Icons';
 
 export const SoundToggle: React.FC<{ className?: string }> = ({ className = '' }) => {
   const [muted, setMuted] = useState(false);
@@ -19,12 +19,11 @@ export const SoundToggle: React.FC<{ className?: string }> = ({ className = '' }
     >
       <span className="btn-content">
         {muted ? (
-          <VolumeX className="size-4.5 text-zinc-400" />
+          <TablerVolumeOff className="size-4.5 text-zinc-400" />
         ) : (
-          <Volume2 className="size-4.5 text-zinc-300" />
+          <TablerVolume className="size-4.5 text-zinc-300 dark:text-zinc-300 text-zinc-700" />
         )}
       </span>
     </button>
   );
 };
-
