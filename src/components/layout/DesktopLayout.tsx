@@ -120,7 +120,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   );
 
   return (
-    <div className="mx-auto hidden min-h-dvh max-w-[1740px] md:flex">
+    <div className="mx-auto hidden min-h-dvh max-w-[87.5rem] md:flex">
       {/* 1. Left Column (Sticky Sidebar) */}
       <LeftSidebar
         activeSection={activeSection}
@@ -134,7 +134,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         {activeSection === 'projects' ? (
           <div>
             {/* Sticky Header for Projects View */}
-            <header className="sticky top-0 z-30 flex h-[70px] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
+            <header className="sticky top-0 z-30 flex h-[4.375rem] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
               <h1 className="text-xl font-bold tracking-tight text-ink">Projects</h1>
             </header>
 
@@ -152,7 +152,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         ) : activeSection === 'people' ? (
           <div>
             {/* Sticky Header for People View */}
-            <header className="sticky top-0 z-30 flex h-[70px] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
+            <header className="sticky top-0 z-30 flex h-[4.375rem] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
               <h1 className="text-xl font-bold tracking-tight text-ink">People</h1>
             </header>
 
@@ -166,7 +166,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         ) : activeSection === 'contact' ? (
           <div>
             {/* Sticky Header for Contact View */}
-            <header className="sticky top-0 z-30 flex h-[70px] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
+            <header className="sticky top-0 z-30 flex h-[4.375rem] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
               <h1 className="text-xl font-bold tracking-tight text-ink">Contact</h1>
             </header>
 

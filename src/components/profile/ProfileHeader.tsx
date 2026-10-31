@@ -72,7 +72,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <button
           type="button"
           onClick={onContactClick}
-          className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-500/10 px-3 py-1 text-meta font-semibold text-brand-700 ring-1 ring-brand-500/25 dark:text-emerald-400 transition-colors hover:bg-brand-500/15"
+          className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-500/10 px-3 py-1 text-meta font-semibold text-brand-700 ring-1 ring-brand-500/25 dark:text-link transition-colors hover:bg-brand-500/15"
         >
           <span className="relative flex size-2" aria-hidden="true">
             <span className="absolute inline-flex size-full rounded-full bg-brand-400 opacity-75 motion-safe:animate-ping" />

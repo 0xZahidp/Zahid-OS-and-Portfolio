@@ -47,8 +47,8 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
           aria-label={item.label}
           className={`group grid size-11 place-items-center rounded-2xl transition-all cursor-pointer ${
             isActive
-              ? 'bg-surface-2 font-semibold text-ink shadow-xs ring-1 ring-line/50'
-              : 'text-ink-2 hover:bg-surface-2/60 hover:text-ink'
+              ? 'bg-surface-2/70 font-semibold text-ink shadow-xs ring-1 ring-line/50'
+              : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
           }`}
         >
           <Icon className="size-6 shrink-0 transition-transform group-active:scale-90" />
@@ -62,10 +62,10 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
         type="button"
         onClick={() => onNavigate(item.id)}
         title={item.label}
-        className={`group flex items-center gap-3.5 rounded-xl px-3.5 py-2.5 text-base transition-colors cursor-pointer w-full text-left ${
+        className={`group flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-lead transition-colors cursor-pointer w-full text-left ${
           isActive
-            ? 'bg-surface-2 font-semibold text-ink shadow-xs'
-            : 'text-ink-2 font-medium hover:bg-surface-2/60 hover:text-ink'
+            ? 'bg-surface-2/70 font-semibold text-ink'
+            : 'text-ink font-normal hover:bg-surface-2'
         }`}
       >
         <Icon className="size-5.5 shrink-0 transition-transform group-active:scale-95" />

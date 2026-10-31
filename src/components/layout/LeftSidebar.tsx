@@ -27,13 +27,13 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
     <aside
       className={`sticky top-0 hidden h-dvh shrink-0 flex-col transition-[width] duration-200 md:flex border-r border-line bg-surface ${
         isCollapsed
-          ? 'w-19 items-center px-3 pb-5'
-          : 'w-[260px] items-stretch px-4 pb-5'
+          ? 'w-[4.75rem] items-center px-3 pb-5'
+          : 'w-[16.25rem] items-stretch px-4 pb-5'
       }`}
     >
       {/* Brand Logo & Name */}
       <div
-        className={`flex h-[70px] shrink-0 items-center ${
+        className={`flex h-[4.375rem] shrink-0 items-center ${
           isCollapsed ? 'justify-center' : 'justify-start px-2'
         }`}
       >
@@ -42,7 +42,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           className="group inline-flex items-center gap-3"
           aria-label="Zahid, home"
         >
-          <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/40 transition-transform group-hover:rotate-[-4deg] group-active:scale-95">
+          <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-b from-brand-500 to-brand-700 shadow-[0_0_15px_rgba(16,185,129,0.35)] ring-1 ring-brand-400/40 transition-transform group-hover:rotate-[-4deg] group-active:scale-95">
             <span className="text-xl leading-none font-black tracking-tighter text-white">
               Z
             </span>
@@ -63,7 +63,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         onNavigate={onNavigate}
       />
 
-      {/* Bottom Controls - Three 44px circular buttons & copyright */}
+      {/* Bottom Controls - Three circular buttons & copyright */}
       <div
         className={`mt-4 flex shrink-0 flex-col gap-3 ${
           isCollapsed ? 'items-center' : 'items-start px-2'
@@ -75,30 +75,30 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           }`}
         >
           {/* Theme Toggle */}
-          <ThemeToggle className="size-11" />
+          <ThemeToggle className="btn btn-secondary grid size-9 place-items-center rounded-full" />
 
           {/* Sound Toggle */}
-          <SoundToggle className="size-11" />
+          <SoundToggle className="btn btn-secondary grid size-9 place-items-center rounded-full" />
 
           {/* Sidebar Collapse/Expand Toggle */}
           <button
             type="button"
             onClick={onToggleCollapse}
             aria-label="Toggle sidebar width"
-            className="btn-secondary grid size-11 place-items-center rounded-full hover:border-line-strong transition-all cursor-pointer"
+            className="btn btn-secondary grid size-9 place-items-center rounded-full"
           >
             {isCollapsed ? (
-              <TablerSidebarLeftExpand className="size-5 text-ink-2" />
+              <TablerSidebarLeftExpand className="size-4.5 text-ink-2" />
             ) : (
-              <TablerSidebarLeftCollapse className="size-5 text-ink-2" />
+              <TablerSidebarLeftCollapse className="size-4.5 text-ink-2" />
             )}
           </button>
         </div>
 
         {/* Copyright */}
         {!isCollapsed && (
-          <p className="text-xs text-ink-3">
-            © 2026 Zahid
+          <p className="text-micro text-ink-3">
+            © {new Date().getFullYear()} Md Zahid Hasan
           </p>
         )}
       </div>
