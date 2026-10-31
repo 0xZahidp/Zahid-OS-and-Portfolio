@@ -81,7 +81,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`scroll-smooth ${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
-      <body className="min-h-dvh antialiased font-sans [scrollbar-gutter:stable]">
+      <body className="min-h-dvh antialiased font-sans [scrollbar-gutter:stable]" suppressHydrationWarning>
         <ThemeManager />
         {children}
         <ContextMenu />
