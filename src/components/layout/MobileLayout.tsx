@@ -17,6 +17,7 @@ import { SkillsSection } from '@/components/sections/SkillsSection';
 import { ProjectsSection } from '@/components/sections/ProjectsSection';
 import { PeopleSection } from '@/components/sections/PeopleSection';
 import { ContactSection } from '@/components/sections/ContactSection';
+import { WorkTabContent } from '@/components/sections/WorkTabContent';
 import { Briefcase, MapPin } from 'lucide-react';
 import {
   GitHubIcon,
@@ -189,7 +190,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                   <SkillsSection />
                 </>
               ) : (
-                <ProjectsSection />
+                <WorkTabContent onNavigateToProjects={() => onNavigate('projects')} />
               )}
             </div>
           </>
