@@ -3,7 +3,7 @@
 import React from 'react';
 import { TablerMenu2 } from '@/components/ui/Icons';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { TactileButton } from '@/components/ui/TactileButton';
+import { Button } from '@/components/ui/Button';
 
 interface MobileTopBarProps {
   onOpenMenu: () => void;
@@ -32,9 +32,14 @@ export const MobileTopBar: React.FC<MobileTopBarProps> = ({
       <div className="flex items-center gap-2">
         <ThemeToggle />
 
-        <TactileButton size="sm" onClick={onContactClick}>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={onContactClick}
+          className="rounded-[12px] h-9 px-4 text-xs font-semibold"
+        >
           Contact
-        </TactileButton>
+        </Button>
       </div>
     </header>
   );

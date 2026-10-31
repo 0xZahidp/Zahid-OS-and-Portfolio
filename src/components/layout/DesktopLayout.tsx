@@ -46,7 +46,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   };
 
   return (
-    <div className="mx-auto hidden min-h-dvh max-w-[1400px] md:flex">
+    <div className="mx-auto hidden min-h-dvh max-w-[1740px] md:flex">
       {/* 1. Left Column (Sticky Sidebar) */}
       <LeftSidebar
         activeSection={activeSection}

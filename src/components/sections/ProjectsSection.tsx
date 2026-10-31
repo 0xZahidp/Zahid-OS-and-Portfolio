@@ -1,7 +1,7 @@
 import React from 'react';
 import { Globe, Layers } from 'lucide-react';
 import { projectsData } from '@/data/profile';
-import { TactileButton } from '@/components/ui/TactileButton';
+import { Button } from '@/components/ui/Button';
 import { GitHubIcon } from '@/components/ui/Icons';
 
 export const ProjectsSection: React.FC = () => {
@@ -30,30 +30,32 @@ export const ProjectsSection: React.FC = () => {
                 </h3>
                 <div className="flex items-center gap-1.5 shrink-0">
                   {project.project_url && (
-                    <TactileButton
-                      variant="obsidian"
-                      size="xs"
+                    <Button
+                      variant="dark"
+                      size="sm"
                       href={project.project_url}
                       target="_blank"
                       rel="noopener noreferrer"
+                      className="rounded-[12px] h-8 px-3 text-xs"
                       title={`Visit ${project.title}`}
                     >
                       <Globe className="size-3.5" />
                       <span>Website</span>
-                    </TactileButton>
+                    </Button>
                   )}
                   {project.repository_url && (
-                    <TactileButton
-                      variant="obsidian"
-                      size="xs"
+                    <Button
+                      variant="dark"
+                      size="sm"
                       href={project.repository_url}
                       target="_blank"
                       rel="noopener noreferrer"
+                      className="rounded-[12px] h-8 px-3 text-xs"
                       title={`View ${project.title} repository`}
                     >
                       <GitHubIcon className="size-3.5" />
                       <span>Source</span>
-                    </TactileButton>
+                    </Button>
                   )}
                 </div>
               </div>

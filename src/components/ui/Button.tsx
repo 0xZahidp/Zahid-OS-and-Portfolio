@@ -2,9 +2,12 @@ import React from 'react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost';
-  size?: 'sm' | 'md' | 'lg' | 'icon';
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'dark' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'icon' | 'icon-round';
+  href?: string;
+  target?: string;
+  rel?: string;
   children: React.ReactNode;
 }
 
@@ -13,30 +16,47 @@ export const Button: React.FC<ButtonProps> = ({
   size = 'md',
   className,
   children,
+  href,
+  target,
+  rel,
   ...props
 }) => {
   const baseStyles = 'btn select-none';
-  
+
   const variantStyles = {
     primary: 'btn-primary',
+    dark: 'btn-dark',
     secondary: 'btn-secondary',
-    ghost: 'hover:bg-surface text-ink',
+    ghost: 'hover:bg-surface-2 text-ink',
   };
 
   const sizeStyles = {
-    sm: 'h-8 px-3.5 text-xs rounded-xl',
-    md: 'h-10 px-4.5 text-sm rounded-xl',
-    lg: 'h-11 px-5 text-base rounded-xl',
-    icon: 'grid size-9 place-items-center rounded-full',
+    sm: 'btn-sm',
+    md: 'h-11 px-5 rounded-[14px] text-[15px]',
+    icon: 'btn-icon',
+    'icon-round': 'btn-icon-round',
   };
 
+  const combinedClasses = twMerge(
+    clsx(baseStyles, variantStyles[variant], sizeStyles[size], className)
+  );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target={target}
+        rel={rel || (target === '_blank' ? 'noopener noreferrer' : undefined)}
+        className={combinedClasses}
+      >
+        <span className="inline-flex items-center gap-2">{children}</span>
+      </a>
+    );
+  }
+
   return (
-    <button
-      className={twMerge(clsx(baseStyles, variantStyles[variant], sizeStyles[size], className))}
-      {...props}
-    >
-      <span className="btn-content inline-flex items-center gap-2">{children}</span>
+    <button className={combinedClasses} {...props}>
+      <span className="inline-flex items-center gap-2">{children}</span>
     </button>
   );
 };
-

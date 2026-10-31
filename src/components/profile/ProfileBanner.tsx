@@ -5,7 +5,7 @@ import { WaterRippleMatrix } from './WaterRippleMatrix';
 
 export const ProfileBanner: React.FC = () => {
   return (
-    <div className="relative overflow-hidden h-[240px] sm:h-[280px] w-full border-b border-line bg-surface flex items-center justify-center select-none">
+    <div className="relative overflow-hidden h-[235px] w-full border-b border-line bg-surface flex items-center justify-center select-none">
       {/* Background ambient glowing blobs */}
       <div className="cover absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
         <span
@@ -71,8 +71,8 @@ export const ProfileBanner: React.FC = () => {
         />
       </div>
 
-      {/* Interactive Water Ripple Matrix Canvas */}
-      <WaterRippleMatrix className="h-full w-full" slatWidth={8} slatHeight={20} gap={3} />
+      {/* Interactive Water Ripple Matrix Canvas - Chunkier slats matching REFERENCE */}
+      <WaterRippleMatrix className="h-full w-full" slatWidth={11} slatHeight={25} gap={4} />
     </div>
   );
 };

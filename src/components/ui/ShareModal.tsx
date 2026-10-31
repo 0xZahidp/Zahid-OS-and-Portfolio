@@ -15,7 +15,7 @@ import {
   LogosWhatsAppIcon,
   LogosTelegramIcon,
 } from './Icons';
-import { TactileButton } from './TactileButton';
+import { Button } from './Button';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -283,10 +283,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             <span className="min-w-0 flex-1 truncate text-sm text-ink-2 select-all font-mono">
               {displayUrl}
             </span>
-            <TactileButton
+            <Button
+              variant="primary"
               size="sm"
               onClick={handleCopy}
-              wrapClassName="shrink-0 p-[3px]"
+              className="rounded-[12px] h-9 px-4 shrink-0 text-xs font-semibold"
             >
               {copied ? (
                 <>
@@ -296,7 +297,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               ) : (
                 <span>Copy link</span>
               )}
-            </TactileButton>
+            </Button>
           </div>
 
           {/* More Options */}

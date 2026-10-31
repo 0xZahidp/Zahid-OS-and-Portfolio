@@ -11,13 +11,13 @@ interface ProfileAvatarProps {
 
 export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({ src, alt }) => {
   return (
-    <div className="relative -mt-12 sm:-mt-14 shrink-0 z-10">
-      <div className="size-24 rounded-full border-4 border-surface shadow-md overflow-hidden bg-surface-2">
+    <div className="relative -mt-[60px] shrink-0 z-10">
+      <div className="size-[120px] rounded-full ring-4 ring-white dark:ring-[#121215] shadow-lg overflow-hidden bg-surface-2">
         <Image
           src={src}
           alt={alt}
-          width={96}
-          height={96}
+          width={120}
+          height={120}
           priority
           className="size-full object-cover"
         />
@@ -25,4 +25,3 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({ src, alt }) => {
     </div>
   );
 };
-

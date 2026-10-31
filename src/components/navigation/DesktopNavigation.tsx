@@ -62,14 +62,14 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
         type="button"
         onClick={() => onNavigate(item.id)}
         title={item.label}
-        className={`group flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-lead transition-colors cursor-pointer w-full text-left ${
+        className={`group flex items-center gap-3.5 rounded-xl px-3.5 py-2.5 text-base transition-colors cursor-pointer w-full text-left ${
           isActive
-            ? 'bg-surface-2/70 font-semibold text-ink shadow-sm'
-            : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
+            ? 'bg-surface-2 font-semibold text-ink shadow-xs'
+            : 'text-ink-2 font-medium hover:bg-surface-2/60 hover:text-ink'
         }`}
       >
-        <Icon className="size-6 shrink-0 transition-transform group-active:scale-90" />
-        <span className="truncate transition-opacity duration-200">
+        <Icon className="size-5.5 shrink-0 transition-transform group-active:scale-95" />
+        <span className="truncate">
           {item.label}
         </span>
       </button>

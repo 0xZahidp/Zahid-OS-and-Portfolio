@@ -19,10 +19,10 @@ interface Ripple {
 }
 
 export const WaterRippleMatrix: React.FC<WaterRippleMatrixProps> = ({
-  className = 'h-36 sm:h-52',
-  slatWidth = 8,
-  slatHeight = 20,
-  gap = 3,
+  className = 'h-[235px]',
+  slatWidth = 11,
+  slatHeight = 25,
+  gap = 4,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -110,7 +110,7 @@ export const WaterRippleMatrix: React.FC<WaterRippleMatrixProps> = ({
       addRipple(width * 0.25, height * 0.5, 1.2);
     }, 300);
 
-    const cornerRadius = 4;
+    const cornerRadius = 5.5;
     const stepX = slatWidth + gap;
     const stepY = slatHeight + gap;
 

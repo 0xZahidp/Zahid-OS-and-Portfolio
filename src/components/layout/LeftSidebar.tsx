@@ -25,36 +25,34 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 }) => {
   return (
     <aside
-      className={`sticky top-0 hidden h-dvh shrink-0 flex-col px-3 pb-5 transition-[width] duration-200 md:flex border-r border-line bg-surface/40 ${
+      className={`sticky top-0 hidden h-dvh shrink-0 flex-col transition-[width] duration-200 md:flex border-r border-line bg-surface ${
         isCollapsed
-          ? 'w-19 items-center'
-          : 'w-19 items-center xl:w-65 xl:items-stretch xl:px-4'
+          ? 'w-19 items-center px-3 pb-5'
+          : 'w-[260px] items-stretch px-4 pb-5'
       }`}
     >
       {/* Brand Logo & Name */}
       <div
-        className={`flex h-17.5 shrink-0 items-center ${
-          isCollapsed ? 'justify-center' : 'justify-center xl:justify-start xl:px-2'
+        className={`flex h-[70px] shrink-0 items-center ${
+          isCollapsed ? 'justify-center' : 'justify-start px-2'
         }`}
       >
         <Link
           href="/"
-          className="group inline-flex items-center gap-2.5"
+          className="group inline-flex items-center gap-3"
           aria-label="Zahid, home"
         >
-          <span className="grid size-9 place-items-center rounded-[11px] bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.4)] ring-1 ring-emerald-400/40 transition-transform group-hover:rotate-[-4deg] group-active:scale-95">
-            <span className="text-lg leading-none font-black tracking-tighter text-white">
+          <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/40 transition-transform group-hover:rotate-[-4deg] group-active:scale-95">
+            <span className="text-xl leading-none font-black tracking-tighter text-white">
               Z
             </span>
           </span>
 
-          <span
-            className={`text-title font-bold tracking-tight text-ink ${
-              isCollapsed ? 'hidden' : 'hidden xl:inline-flex'
-            }`}
-          >
-            zahid<span className="text-ink-3 transition-colors group-hover:text-link">.dev</span>
-          </span>
+          {!isCollapsed && (
+            <span className="text-xl font-bold tracking-tight text-ink">
+              zahid<span className="text-ink-3 transition-colors group-hover:text-link">.dev</span>
+            </span>
+          )}
         </Link>
       </div>
 
@@ -65,52 +63,44 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         onNavigate={onNavigate}
       />
 
-      {/* Bottom Controls */}
+      {/* Bottom Controls - Three 44px circular buttons & copyright */}
       <div
         className={`mt-4 flex shrink-0 flex-col gap-3 ${
-          isCollapsed
-            ? 'items-center'
-            : 'items-center xl:items-start xl:px-2'
+          isCollapsed ? 'items-center' : 'items-start px-2'
         }`}
       >
         <div
-          className={`flex gap-2 ${
-            isCollapsed
-              ? 'flex-col'
-              : 'flex-col xl:flex-row'
+          className={`flex gap-2.5 ${
+            isCollapsed ? 'flex-col' : 'flex-row items-center'
           }`}
         >
           {/* Theme Toggle */}
-          <ThemeToggle />
+          <ThemeToggle className="size-11" />
 
           {/* Sound Toggle */}
-          <SoundToggle />
+          <SoundToggle className="size-11" />
 
           {/* Sidebar Collapse/Expand Toggle */}
           <button
             type="button"
             onClick={onToggleCollapse}
             aria-label="Toggle sidebar width"
-            className="btn btn-secondary grid size-9 place-items-center rounded-full hover:border-line-strong transition-all"
+            className="btn-secondary grid size-11 place-items-center rounded-full hover:border-line-strong transition-all cursor-pointer"
           >
-            <span className="btn-content">
-              {isCollapsed ? (
-                <TablerSidebarLeftExpand className="size-4.5 text-zinc-300 dark:text-zinc-300 text-zinc-700" />
-              ) : (
-                <TablerSidebarLeftCollapse className="size-4.5 text-zinc-300 dark:text-zinc-300 text-zinc-700" />
-              )}
-            </span>
+            {isCollapsed ? (
+              <TablerSidebarLeftExpand className="size-5 text-ink-2" />
+            ) : (
+              <TablerSidebarLeftCollapse className="size-5 text-ink-2" />
+            )}
           </button>
         </div>
 
         {/* Copyright */}
-        <p
-          className={`text-meta text-ink-3 ${
-            isCollapsed ? 'hidden' : 'hidden xl:block'
-          }`}
-        >
-          © 2026 Zahid
-        </p>
+        {!isCollapsed && (
+          <p className="text-xs text-ink-3">
+            © 2026 Zahid
+          </p>
+        )}
       </div>
     </aside>
   );

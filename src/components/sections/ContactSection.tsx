@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Mail, Send, Check, Copy } from 'lucide-react';
-import { TactileButton } from '@/components/ui/TactileButton';
+import { Button } from '@/components/ui/Button';
 
 export const ContactSection: React.FC = () => {
   const [copied, setCopied] = useState(false);
@@ -60,13 +60,15 @@ export const ContactSection: React.FC = () => {
             </button>
           </div>
 
-          <TactileButton
-            href={`mailto:${email}`}
+          <Button
+            variant="primary"
             size="md"
+            href={`mailto:${email}`}
+            className="rounded-[14px]"
           >
             <Send className="size-4" />
             <span>Send Email</span>
-          </TactileButton>
+          </Button>
         </div>
 
         {/* Quick Message Form */}
