@@ -165,8 +165,10 @@ export async function POST(req: NextRequest) {
       savedAt: sanitizedContent.updatedAt || new Date().toISOString(),
       destination: destinations,
       message: destinations.includes('supabase')
-        ? 'Saved to Supabase and local cache successfully.'
-        : 'Saved to local file. (Supabase not configured or table missing)',
+        ? 'Saved to Supabase cloud successfully.'
+        : destinations.includes('local_file')
+          ? 'Saved to local file. (Supabase not configured or table missing)'
+          : 'Content received. Connect Supabase for persistent cloud storage on Vercel.',
     };
 
     return NextResponse.json({ ...response, supabaseStatus });
