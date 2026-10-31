@@ -130,3 +130,4 @@ export const BioTab: React.FC = () => {
     </div>
   );
 };
+

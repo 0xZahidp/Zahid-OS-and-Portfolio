@@ -36,7 +36,7 @@
       "name": "English",
       "proficiency": "Near-native",
       "rating": 5,
-      "note": "British and American accents",
+      "note": "",
       "hasVoice": true
     },
     {
@@ -139,6 +139,27 @@
     }
   ],
   "experience": [
+    {
+      "id": "exp-1793472519337",
+      "position": "Software Engineer",
+      "company": "New Company",
+      "company_url": "https://example.com",
+      "company_logo": "/images/bidvers.webp",
+      "period": "Jan 2025 – Present",
+      "type": "Full-time",
+      "workplace_type": "Remote",
+      "description": "Architecting scalable applications and high-throughput systems.",
+      "bullet_points": [
+        "Built modern full-stack features and API endpoints.",
+        "Improved application performance and developer velocity."
+      ],
+      "tags": [
+        "Next.js",
+        "TypeScript",
+        "Tailwind CSS"
+      ],
+      "is_current": true
+    },
     {
       "id": "exp-1",
       "company": "Bidvers",
@@ -438,5 +459,5 @@
       "0xZahidp/CompilerX"
     ]
   },
-  "updatedAt": "2026-10-31T18:23:07.793Z"
+  "updatedAt": "2026-10-31T18:51:51.481Z"
 }
