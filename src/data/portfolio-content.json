@@ -1,0 +1,442 @@
+{
+  "profile": {
+    "id": "usr_zahid",
+    "username": "0xZahidp",
+    "full_name": "Md Zahid Hasan Patwary",
+    "headline": "Less talk, show me code!",
+    "bio": "Developer & Growth Strategist | Building SaaS & Web3 products | Passionate about code, community & scaling ideas into impact 🚀",
+    "avatar_url": "/images/avatar.webp",
+    "location": "Dhaka",
+    "timezone": "Asia/Dhaka",
+    "availability": "Open to new conversations",
+    "github_followers_count": 6,
+    "roles": [
+      {
+        "title": "CTO",
+        "company": "Bidvers",
+        "company_url": "https://bidvers.com",
+        "company_logo": "/images/bidvers.webp"
+      },
+      {
+        "title": "Software Engineer",
+        "company": "GymScanner",
+        "company_url": "https://gymscanner.com",
+        "company_logo": "/images/gymscanner.webp"
+      }
+    ]
+  },
+  "bioParagraphs": [
+    "I’m a developer and growth strategist building scalable SaaS and Web3 products. I turn complex technical architectures into intuitive, high-performance web products that ship globally.",
+    "As CTO at Bidvers and Software Engineer at GymScanner, I architected core platforms and APIs from a blank repository, including low-latency real-time bidding engines and secure multi-region payment routing across the US, Oman, and Romania. Bidvers has raised over $120K so far.",
+    "These days I build with agentic AI engineering and modern full-stack systems—leveraging Next.js, Laravel, Supabase, Tailwind CSS, and models from OpenAI and Claude. I own the architecture, user experience, and technical roadmap end to end.",
+    "I love building products from zero to one, scaling engineering teams, and exploring decentralized technologies. Always open to collaborating with ambitious founders and teams worldwide."
+  ],
+  "languages": [
+    {
+      "name": "English",
+      "proficiency": "Near-native",
+      "rating": 5,
+      "note": "British and American accents",
+      "hasVoice": true
+    },
+    {
+      "name": "Bangla",
+      "proficiency": "Native",
+      "rating": 5,
+      "hasVoice": true
+    },
+    {
+      "name": "Arabic",
+      "proficiency": "Reading and small talk",
+      "rating": 3,
+      "hasVoice": true
+    }
+  ],
+  "skills": [
+    {
+      "id": "claude",
+      "name": "Claude",
+      "category": "ai",
+      "color": "#d97757"
+    },
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "category": "ai",
+      "color": "#10a37f"
+    },
+    {
+      "id": "antigravity",
+      "name": "Antigravity",
+      "category": "ai",
+      "color": "#3186ff"
+    },
+    {
+      "id": "opencode",
+      "name": "OpenCode",
+      "category": "ai",
+      "color": "#9a9897"
+    },
+    {
+      "id": "laravel",
+      "name": "Laravel",
+      "category": "tech"
+    },
+    {
+      "id": "php",
+      "name": "PHP",
+      "category": "tech"
+    },
+    {
+      "id": "javascript",
+      "name": "JavaScript",
+      "category": "tech"
+    },
+    {
+      "id": "livewire",
+      "name": "Livewire",
+      "category": "tech"
+    },
+    {
+      "id": "alpine",
+      "name": "Alpine.js",
+      "category": "tech"
+    },
+    {
+      "id": "vue",
+      "name": "Vue.js",
+      "category": "tech"
+    },
+    {
+      "id": "inertia",
+      "name": "Inertia",
+      "category": "tech"
+    },
+    {
+      "id": "tailwind",
+      "name": "Tailwind CSS",
+      "category": "tech"
+    },
+    {
+      "id": "vscode",
+      "name": "VS Code",
+      "category": "tool"
+    },
+    {
+      "id": "phpstorm",
+      "name": "PhpStorm",
+      "category": "tool"
+    },
+    {
+      "id": "git",
+      "name": "Git",
+      "category": "tool"
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "category": "tool"
+    }
+  ],
+  "experience": [
+    {
+      "id": "exp-1",
+      "company": "Bidvers",
+      "company_url": "https://bidvers.com",
+      "company_logo": "/images/bidvers.webp",
+      "position": "Chief Technology Officer",
+      "period": "Nov 2025 – Present",
+      "type": "Full-time",
+      "workplace_type": "Remote",
+      "description": "Hand-picked by GymScanner’s CEO to build his next company from day one. I own the architecture and technical roadmap as Bidvers operates in the US, Oman and Romania and expands into London, Poland, Singapore and beyond.",
+      "highlights": [
+        {
+          "label": "Raised",
+          "value": "$120K+",
+          "icon": "rocket"
+        },
+        {
+          "label": "Built by me from scratch",
+          "value": "Core + API",
+          "icon": "code"
+        },
+        {
+          "label": "Apps built on my API",
+          "value": "iOS + Android",
+          "icon": "mobile"
+        }
+      ],
+      "bullet_points": [
+        "Core platform and API: architected and built them from a blank repo; the team’s iOS and Android apps are built on top.",
+        "Bidding engine: built a low-latency, real-time engine on the TALL stack (Tailwind, Alpine.js, Laravel, Livewire).",
+        "Payments and vendors: shipped secure payment routing and complex vendor workflows for operations in the US, Oman and Romania."
+      ],
+      "tags": [
+        "Laravel",
+        "Livewire",
+        "Alpine.js",
+        "Tailwind CSS"
+      ],
+      "is_current": true
+    },
+    {
+      "id": "exp-2",
+      "company": "GymScanner",
+      "company_url": "https://gymscanner.com",
+      "company_logo": "/images/gymscanner.webp",
+      "position": "Software Engineer",
+      "period": "Nov 2025 – Present",
+      "type": "Full-time",
+      "workplace_type": "Remote",
+      "description": "Maintaining and scaling backend infrastructure.",
+      "is_current": true
+    },
+    {
+      "id": "exp-3",
+      "company": "Interactive Cares",
+      "company_logo": "/images/interactive-cares.webp",
+      "position": "Education Mentor",
+      "period": "Jun 2023 – Feb 2025",
+      "type": "Contract",
+      "workplace_type": "Remote",
+      "description": "Taught Laravel to aspiring developers, from a full career-path course to a free crash course, live and online.",
+      "sub_programs": [
+        {
+          "title": "Laravel Career Path",
+          "badge": "2 successful batches",
+          "description": "I co-taught both batches and was also the support instructor for batch 1, alongside lead instructor Ahmed Shamim Hassan Shaon."
+        },
+        {
+          "title": "Laravel Crash Course",
+          "badge": "Free",
+          "description": "I taught it to 1,200+ students online."
+        }
+      ],
+      "tags": [
+        "Laravel",
+        "PHP"
+      ],
+      "is_current": false
+    },
+    {
+      "id": "exp-4",
+      "company": "Megaminds Technologies",
+      "company_url": "https://megamindslearning.net",
+      "company_logo": "/images/megaminds.webp",
+      "position": "Education Mentor",
+      "period": "2023 – 2025",
+      "type": "Contract",
+      "workplace_type": "Remote",
+      "description": "Mentored learners at Megaminds Learning, led by my mentor Ahmed Shamim Hassan Shaon.",
+      "is_current": false
+    },
+    {
+      "id": "exp-5",
+      "company": "ZovoZip",
+      "company_logo": "/images/zovozip.webp",
+      "position": "Co-Founder",
+      "period": "Feb 2021 – Present",
+      "type": "Seasonal",
+      "workplace_type": "Dhaka, Bangladesh",
+      "description": "Co-founded a web and software studio building UI templates, HTML templates and WordPress themes.",
+      "is_current": true
+    },
+    {
+      "id": "exp-6",
+      "company": "ZovoTeam",
+      "company_url": "https://www.facebook.com/Zovoteam",
+      "company_logo": "/images/zovoteam.webp",
+      "position": "Executive Web Developer",
+      "period": "Jan 2021 – Present",
+      "type": "Seasonal",
+      "workplace_type": "Dhaka, Bangladesh",
+      "description": "Led web development for the team’s client and product work.",
+      "is_current": true
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj-1",
+      "title": "Bidvers",
+      "description": "Core platform and API behind a real-time hotel upgrade bidding marketplace",
+      "tags": [
+        "Laravel",
+        "API",
+        "Real-time"
+      ],
+      "project_url": "https://bidvers.com",
+      "highlightBadge": "$120K+ raised",
+      "logoType": "bidvers"
+    },
+    {
+      "id": "proj-2",
+      "title": "Learn Laravel",
+      "description": "Self-learning resources to level up your Laravel skills: tutorials, ebooks, blogs and courses",
+      "tags": [
+        "Open source",
+        "Laravel",
+        "Learning"
+      ],
+      "repository_url": "https://github.com/0xZahidp/learn-laravel",
+      "stars": 186,
+      "logoType": "laravel"
+    },
+    {
+      "id": "proj-3",
+      "title": "Invo",
+      "description": "Effortless invoice management, no sign-up needed",
+      "tags": [
+        "SaaS",
+        "Productivity"
+      ],
+      "project_url": "https://invo.so",
+      "repository_url": "https://github.com/0xZahidp/invo",
+      "stars": 5,
+      "logoType": "invo"
+    },
+    {
+      "id": "proj-4",
+      "title": "Prompt Filler",
+      "description": "Fill prompt placeholders as easily as filling a form",
+      "tags": [
+        "DevTool",
+        "SaaS",
+        "Productivity"
+      ],
+      "repository_url": "https://github.com/0xZahidp/prompt-filler",
+      "stars": 2,
+      "logoType": "prompt"
+    },
+    {
+      "id": "proj-5",
+      "title": "Year",
+      "description": "Real-time year progress tracker with 8 themes, from Windows 7 to Cyberpunk",
+      "tags": [
+        "Real-time",
+        "Fun"
+      ],
+      "repository_url": "https://github.com/0xZahidp/year-progress",
+      "stars": 12
+    },
+    {
+      "id": "proj-6",
+      "title": "Murad Takla",
+      "description": "A fun dictionary of hilariously misspelled Banglish, made for laughs",
+      "tags": [
+        "Fun",
+        "Bangla"
+      ],
+      "repository_url": "https://github.com/0xZahidp/murad-takla",
+      "stars": 25
+    },
+    {
+      "id": "proj-7",
+      "title": "KajKam",
+      "description": "Client-side kanban task manager, no backend, built with Tailwind and Alpine.js",
+      "tags": [
+        "Productivity",
+        "Kanban"
+      ],
+      "repository_url": "https://github.com/0xZahidp/kajkam",
+      "stars": 3,
+      "logoType": "invo"
+    },
+    {
+      "id": "proj-8",
+      "title": "Hatlar",
+      "description": "Hand-picked VS Code extension packs that make Laravel development smoother",
+      "tags": [
+        "VS Code",
+        "Laravel",
+        "DevTool"
+      ],
+      "repository_url": "https://github.com/0xZahidp/hatlar",
+      "stars": 8,
+      "logoType": "prompt"
+    }
+  ],
+  "suggestedPeople": [
+    {
+      "id": "p1",
+      "name": "Ahmed Shamim Hassan Shaon",
+      "role": "CEO of Megaminds Lear...",
+      "avatar_url": "/images/shaon.jpg",
+      "url": "https://x.com/me_shaon",
+      "handle": "@me_shaon"
+    },
+    {
+      "id": "p2",
+      "name": "Caleb Porzio",
+      "role": "Creator of Livewire and ...",
+      "avatar_url": "/images/caleb.jpg",
+      "url": "https://x.com/calebporzio",
+      "handle": "@calebporzio"
+    },
+    {
+      "id": "p3",
+      "name": "HM Nayem",
+      "role": "Founder of Stack Learne...",
+      "avatar_url": "/images/nayem.jpg",
+      "url": "https://github.com/hmnayem",
+      "handle": "@hmnayem"
+    }
+  ],
+  "socialLinks": [
+    {
+      "id": "s1",
+      "platform": "github",
+      "label": "GitHub",
+      "handle": "@0xZahidp",
+      "url": "https://github.com/0xZahidp"
+    },
+    {
+      "id": "s2",
+      "platform": "x",
+      "label": "X",
+      "handle": "@0xZahidP",
+      "url": "https://x.com/0xZahidP"
+    },
+    {
+      "id": "s3",
+      "platform": "linkedin",
+      "label": "LinkedIn",
+      "handle": "in/0xZahidp",
+      "url": "https://linkedin.com/in/0xZahidp"
+    },
+    {
+      "id": "s4",
+      "platform": "facebook",
+      "label": "Facebook",
+      "handle": "/0xZahidp",
+      "url": "https://facebook.com/0xZahidp"
+    }
+  ],
+  "worksSettings": {
+    "heading": "Remote-first",
+    "description": "Comfortable working with teams in any time zone, from the Americas to Europe to Asia-Pacific.",
+    "chips": [
+      "Remote",
+      "Async-friendly",
+      "US hours",
+      "EU hours",
+      "Flexible schedule"
+    ]
+  },
+  "basedInSettings": {
+    "city": "Dhaka",
+    "country": "Bangladesh",
+    "timezone": "Asia/Dhaka",
+    "gmtOffset": "GMT+6"
+  },
+  "githubSettings": {
+    "username": "0xZahidp",
+    "followersCount": 6,
+    "pinnedRepos": [
+      "0xZahidp/MyTapCard",
+      "0xZahidp/Orbit",
+      "0xZahidp/GhuraFira_Mobile_APP_Flutter",
+      "0xZahidp/CompilerX"
+    ]
+  },
+  "updatedAt": "2026-10-31T18:17:04.713Z"
+}

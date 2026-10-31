@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { profileData } from '@/data/profile';
+import { usePortfolio } from '@/context/PortfolioContext';
 import { DesktopLayout } from '@/components/layout/DesktopLayout';
 import { MobileLayout } from '@/components/layout/MobileLayout';
 
 export default function Home() {
+  const { content } = usePortfolio();
   const [activeSection, setActiveSection] = useState<string>('profile');
   const [activeTab, setActiveTab] = useState<'resume' | 'work'>('resume');
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
@@ -57,7 +58,7 @@ export default function Home() {
     <>
       {/* Desktop & Tablet 3-Column Experience */}
       <DesktopLayout
-        profile={profileData}
+        profile={content.profile}
         activeSection={activeSection}
         activeTab={activeTab}
         isCollapsed={isCollapsed}
@@ -68,7 +69,7 @@ export default function Home() {
 
       {/* Mobile Dedicated Experience */}
       <MobileLayout
-        profile={profileData}
+        profile={content.profile}
         activeSection={activeSection}
         activeTab={activeTab}
         onNavigate={handleNavigate}

@@ -1,9 +1,11 @@
 import React from 'react';
 import Image from 'next/image';
 import { Briefcase, Rocket, Code, Smartphone } from 'lucide-react';
-import { experiencesData } from '@/data/profile';
+import { usePortfolio } from '@/context/PortfolioContext';
 
 export const ExperienceSection: React.FC = () => {
+  const { content } = usePortfolio();
+  const experiencesData = content.experience;
   return (
     <section id="experience" aria-labelledby="experience-heading" className="mt-14 scroll-mt-20">
       <div className="mb-5 flex items-center justify-between gap-4">

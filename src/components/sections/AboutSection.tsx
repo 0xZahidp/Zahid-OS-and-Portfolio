@@ -13,9 +13,14 @@ import {
   ChevronUp,
   Languages,
 } from 'lucide-react';
-import { bioParagraphs, languagesData } from '@/data/profile';
+import { usePortfolio } from '@/context/PortfolioContext';
 
 export const AboutSection: React.FC = () => {
+  const { content } = usePortfolio();
+  const bioParagraphs = content.bioParagraphs;
+  const languagesData = content.languages;
+  const basedIn = content.basedInSettings;
+  const works = content.worksSettings;
   const [expanded, setExpanded] = useState(false);
   const [currentTime, setCurrentTime] = useState('5:49 PM');
   const [isDay, setIsDay] = useState(false);
@@ -177,7 +182,7 @@ export const AboutSection: React.FC = () => {
                     <span>Based in</span>
                   </p>
                   <p className="mt-1 text-lead font-semibold text-ink">
-                    Dhaka, Bangladesh
+                    {basedIn.city}, {basedIn.country}
                   </p>
 
                   <div className="mt-5 flex items-end gap-2">
@@ -187,7 +192,7 @@ export const AboutSection: React.FC = () => {
                       <span className="col-start-1 row-start-1" data-clock-time>{currentTime}</span>
                     </span>
                     <span className="pb-1 text-meta font-medium text-ink-2">
-                      GMT+6
+                      {basedIn.gmtOffset}
                     </span>
                   </div>
 
@@ -195,12 +200,12 @@ export const AboutSection: React.FC = () => {
                     {isDay ? (
                       <>
                         <Sun className="size-4 text-amber-500" />
-                        <span>Daytime in Dhaka</span>
+                        <span>Daytime in {basedIn.city}</span>
                       </>
                     ) : (
                       <>
                         <Moon className="size-4 text-indigo-400 dark:text-indigo-300" />
-                        <span>Evening in Dhaka</span>
+                        <span>Evening in {basedIn.city}</span>
                       </>
                     )}
                   </p>
@@ -215,18 +220,12 @@ export const AboutSection: React.FC = () => {
               <Globe className="size-4 text-link" />
               <span>Works</span>
             </p>
-            <p className="mt-1 text-lead font-semibold text-ink">Remote-first</p>
+            <p className="mt-1 text-lead font-semibold text-ink">{works.heading}</p>
             <p className="mt-1 text-meta text-ink-2 leading-normal">
-              Comfortable working with teams in any time zone, from the Americas to Europe to Asia-Pacific.
+              {works.description}
             </p>
             <ul className="mt-4 flex flex-wrap gap-1.5">
-              {[
-                'Remote',
-                'Async-friendly',
-                'US hours',
-                'EU hours',
-                'Flexible schedule',
-              ].map((item) => (
+              {works.chips.map((item) => (
                 <li
                   key={item}
                   className="inline-flex items-center gap-1 rounded-md bg-surface-2 px-2 py-0.5 text-meta text-ink-2 ring-1 ring-line"

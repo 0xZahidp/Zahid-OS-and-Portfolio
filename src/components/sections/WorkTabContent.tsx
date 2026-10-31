@@ -10,7 +10,7 @@ import {
   Smile,
 } from 'lucide-react';
 import { GitHubIcon } from '@/components/ui/Icons';
-import { projectsData } from '@/data/profile';
+import { usePortfolio } from '@/context/PortfolioContext';
 
 interface PinnedRepo {
   id: string;
@@ -82,6 +82,8 @@ interface WorkTabContentProps {
 export const WorkTabContent: React.FC<WorkTabContentProps> = ({
   onNavigateToProjects,
 }) => {
+  const { content } = usePortfolio();
+  const projectsData = content.projects;
   const [totalContributions, setTotalContributions] = useState<number>(102);
   const [totalRepos, setTotalRepos] = useState<number>(26);
   const [pinnedRepos, setPinnedRepos] = useState<PinnedRepo[]>(DEFAULT_PINNED_REPOS);

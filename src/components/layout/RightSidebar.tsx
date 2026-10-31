@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   Check,
 } from 'lucide-react';
-import { suggestedPeople, socialLinksData } from '@/data/profile';
+import { usePortfolio } from '@/context/PortfolioContext';
 import {
   GitHubIcon,
   XIcon,
@@ -26,6 +26,9 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   onContactClick,
   activeSection = 'profile',
 }) => {
+  const { content } = usePortfolio();
+  const suggestedPeople = content.suggestedPeople;
+  const socialLinksData = content.socialLinks;
   const [followedState, setFollowedState] = useState<Record<string, boolean>>({});
   const [isFollowingMain, setIsFollowingMain] = useState(false);
 
