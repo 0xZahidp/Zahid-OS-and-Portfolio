@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
   Layers,
   ArrowUpRight,
@@ -11,6 +11,12 @@ import {
 } from 'lucide-react';
 import { GitHubIcon } from '@/components/ui/Icons';
 import { usePortfolio } from '@/context/PortfolioContext';
+
+interface ContributionDay {
+  date: string;
+  count: number;
+  level: number;
+}
 
 interface PinnedRepo {
   id: string;
@@ -54,10 +60,10 @@ const DEFAULT_PINNED_REPOS: PinnedRepo[] = [
     name: '0xZahidp/GhuraFira_Mobile_APP_Flutter',
     title: 'GhuraFira_Mobile_APP_Flutter',
     description:
-      'Online travel agency app designed to simplify travel booking. Book flights and hotels, explore tour packages, and get visa assistance built with Flutter.',
+      'GhuraFira - a smart travel companion app built with Flutter. Discover attractions, plan itineraries, and navigate with ease.',
     language: 'Dart',
     languageColor: '#00B4AB',
-    stars: 3,
+    stars: 0,
     forks: 0,
     url: 'https://github.com/0xZahidp/GhuraFira_Mobile_APP_Flutter',
   },
@@ -66,9 +72,9 @@ const DEFAULT_PINNED_REPOS: PinnedRepo[] = [
     name: '0xZahidp/CompilerX',
     title: 'CompilerX',
     description:
-      'C-based compiler for a custom programming language, demonstrating key compiler design concepts like lexical analysis, syntax parsing, semantic analysis, and optimization with Flex and Bison.',
-    language: 'C',
-    languageColor: '#555555',
+      'A lightweight web-based online code compiler supporting multiple programming languages with instant stdout/stderr feedback.',
+    language: 'JavaScript',
+    languageColor: '#f1e05a',
     stars: 0,
     forks: 0,
     url: 'https://github.com/0xZahidp/CompilerX',
@@ -87,7 +93,14 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
   const [totalContributions, setTotalContributions] = useState<number>(102);
   const [totalRepos, setTotalRepos] = useState<number>(26);
   const [pinnedRepos, setPinnedRepos] = useState<PinnedRepo[]>(DEFAULT_PINNED_REPOS);
-  const [liveWeeks, setLiveWeeks] = useState<number[][] | null>(null);
+  const [liveWeeks, setLiveWeeks] = useState<ContributionDay[][] | null>(null);
+  const [hoveredCell, setHoveredCell] = useState<{
+    day: ContributionDay;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch live GitHub data from /api/github
   useEffect(() => {
@@ -109,10 +122,15 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
           setPinnedRepos(data.repositories);
         }
         if (Array.isArray(data.contributions?.weeks) && data.contributions.weeks.length > 0) {
-          const weekLevels: number[][] = data.contributions.weeks.map(
-            (w: { level: number }[]) => w.map((d) => d.level)
+          const weekData: ContributionDay[][] = data.contributions.weeks.map(
+            (w: { date?: string; count?: number; level: number }[]) =>
+              w.map((d) => ({
+                date: d.date || '',
+                count: d.count || 0,
+                level: d.level ?? 0,
+              }))
           );
-          setLiveWeeks(weekLevels);
+          setLiveWeeks(weekData);
         }
       } catch (err) {
         console.error('Error fetching live GitHub data:', err);
@@ -125,31 +143,50 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
     };
   }, []);
 
-  // Generate realistic 52-week GitHub contribution heatmap fallback
-  const fallbackContributionWeeks = useMemo(() => {
-    // 52 columns x 7 days
-    const weeks = [];
+  // Generate realistic 53-week GitHub contribution heatmap fallback with dates
+  const fallbackContributionWeeks = useMemo<ContributionDay[][]>(() => {
+    const weeks: ContributionDay[][] = [];
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() - (52 * 7 + today.getDay()));
+
     let seed = 42;
     const seededRandom = () => {
       seed = (seed * 9301 + 49297) % 233280;
       return seed / 233280;
     };
 
-    for (let w = 0; w < 52; w++) {
-      const days = [];
+    for (let w = 0; w < 53; w++) {
+      const days: ContributionDay[] = [];
       for (let d = 0; d < 7; d++) {
+        const curDate = new Date(start);
+        curDate.setDate(start.getDate() + (w * 7 + d));
+        const dateStr = curDate.toISOString().split('T')[0];
+
         const rand = seededRandom();
         let level = 0;
+        let count = 0;
         const intensityBoost = w > 36 ? 0.35 : w > 20 ? 0.2 : 0;
         const adjusted = rand - intensityBoost;
 
-        if (adjusted < 0.2) level = 4;
-        else if (adjusted < 0.4) level = 3;
-        else if (adjusted < 0.65) level = 2;
-        else if (adjusted < 0.85) level = 1;
-        else level = 0;
+        if (adjusted < 0.2) {
+          level = 4;
+          count = Math.floor(rand * 10) + 14;
+        } else if (adjusted < 0.4) {
+          level = 3;
+          count = Math.floor(rand * 6) + 7;
+        } else if (adjusted < 0.65) {
+          level = 2;
+          count = Math.floor(rand * 3) + 3;
+        } else if (adjusted < 0.85) {
+          level = 1;
+          count = Math.floor(rand * 2) + 1;
+        } else {
+          level = 0;
+          count = 0;
+        }
 
-        days.push(level);
+        days.push({ date: dateStr, count, level });
       }
       weeks.push(days);
     }
@@ -158,16 +195,60 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
 
   const displayedWeeks = liveWeeks && liveWeeks.length > 0 ? liveWeeks : fallbackContributionWeeks;
 
-  const months = useMemo(() => {
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const currentMonthIdx = new Date().getMonth();
-    const list = [];
-    for (let i = 11; i >= 0; i--) {
-      const idx = (currentMonthIdx - i + 12) % 12;
-      list.push(monthNames[idx]);
+  // Auto-scroll the heatmap to show the most recent weeks first on smaller screens
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
     }
+  }, [displayedWeeks]);
+
+  // Compute month labels aligned with column indices across the 53 weeks
+  const monthLabels = useMemo(() => {
+    const list: { name: string; col: number }[] = [];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    let lastMonth = -1;
+
+    displayedWeeks.forEach((week, wIdx) => {
+      if (!week || week.length === 0) return;
+      const firstDay = week[0];
+      if (!firstDay?.date) return;
+      const d = new Date(firstDay.date + 'T00:00:00Z');
+      if (!isNaN(d.getTime())) {
+        const m = d.getUTCMonth();
+        if (m !== lastMonth) {
+          list.push({ name: monthNames[m], col: wIdx + 1 });
+          lastMonth = m;
+        }
+      }
+    });
+
+    if (list.length === 0) {
+      const currentMonthIdx = new Date().getMonth();
+      for (let i = 11; i >= 0; i--) {
+        const idx = (currentMonthIdx - i + 12) % 12;
+        const col = Math.floor(((11 - i) * 52) / 12) + 1;
+        list.push({ name: monthNames[idx], col });
+      }
+    }
+
     return list;
-  }, []);
+  }, [displayedWeeks]);
+
+  const effectiveContributions = content.githubSettings?.totalContributions ?? totalContributions;
+  const effectiveRepos = content.githubSettings?.totalRepos ?? totalRepos;
+  const githubUsername = content.githubSettings?.username || '0xZahidp';
+  const effectivePinnedRepos = useMemo(() => {
+    if (content.githubSettings?.pinnedRepos && content.githubSettings.pinnedRepos.length > 0) {
+      const selectedNames = content.githubSettings.pinnedRepos;
+      const matched = pinnedRepos.filter((r) =>
+        selectedNames.some(
+          (n) => r.id.toLowerCase() === n.toLowerCase() || r.name.toLowerCase().includes(n.toLowerCase())
+        )
+      );
+      if (matched.length > 0) return matched;
+    }
+    return pinnedRepos;
+  }, [content.githubSettings?.pinnedRepos, pinnedRepos]);
 
   const renderRowIcon = (id: string) => {
     switch (id) {
@@ -240,86 +321,168 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
 
   return (
     <div className="space-y-12">
-      {/* 1. GitHub Contributions Heatmap & Pinned Repos (Screenshot 1) */}
-      <section aria-labelledby="github-section-heading" className="space-y-5">
+      {/* 1. GitHub Contributions Heatmap & Pinned Repos */}
+      <section aria-labelledby="github-section-heading">
         {/* Header */}
         <div className="flex items-center gap-2.5">
-          <GitHubIcon className="size-5.5 text-ink" />
+          <GitHubIcon className="size-5 text-ink shrink-0" />
           <h2
             id="github-section-heading"
-            className="text-base font-bold tracking-tight text-ink"
+            className="text-lg font-semibold tracking-tight text-ink"
           >
             GitHub
           </h2>
         </div>
 
-        <p className="text-xs text-ink-3">
-          {totalContributions.toLocaleString()} contributions in the last year
+        {/* Summary text - Muted gray with uniform weight */}
+        <p className="mt-2 mb-4.5 text-body text-ink-3 font-normal">
+          {effectiveContributions.toLocaleString()} contributions in the last year
         </p>
 
-        {/* Heatmap Matrix Container */}
-        <div className="rounded-[22px] border border-line bg-surface p-5 overflow-x-auto [scrollbar-width:none]">
-          <div className="min-w-[660px]">
-            {/* Months Header Row */}
-            <div className="flex justify-between text-[10px] font-medium text-ink-3 mb-2 px-1">
-              {months.map((m) => (
-                <span key={m}>{m}</span>
-              ))}
-            </div>
+        {/* Heatmap Card Wrapper (.card-raised) */}
+        <div className="card-raised relative rounded-3xl border border-line bg-surface p-6 shadow-xs">
+          {/* Scroll container for responsiveness */}
+          <div
+            ref={scrollRef}
+            className="overflow-x-auto pb-1 [scrollbar-width:thin] sm:overflow-visible sm:pb-0"
+          >
+            <div className="min-w-[580px]">
+              {/* Month Labels Grid */}
+              <div
+                className="grid gap-[2px] sm:gap-[3px] mb-1.5"
+                style={{
+                  gridTemplateColumns: `repeat(${displayedWeeks.length}, minmax(0.625rem, 1fr))`,
+                }}
+              >
+                {monthLabels.map((m) => (
+                  <span
+                    key={`${m.name}-${m.col}`}
+                    className="text-micro whitespace-nowrap text-ink-3 font-normal"
+                    style={{ gridColumn: `${m.col} / span 4` }}
+                  >
+                    {m.name}
+                  </span>
+                ))}
+              </div>
 
-            {/* Matrix Grid (52 weeks x 7 days) */}
-            <div className="flex gap-[3px]">
-              {displayedWeeks.map((week, wIdx) => (
-                <div key={wIdx} className="flex flex-col gap-[3px]">
-                  {week.map((level, dIdx) => {
-                    let bgClass = 'bg-zinc-100 dark:bg-zinc-800/80';
-                    if (level === 1) bgClass = 'bg-emerald-200 dark:bg-emerald-950/70 border border-emerald-500/20';
-                    else if (level === 2) bgClass = 'bg-emerald-300 dark:bg-emerald-800/80';
-                    else if (level === 3) bgClass = 'bg-emerald-500 dark:bg-emerald-600';
-                    else if (level === 4) bgClass = 'bg-emerald-600 dark:bg-emerald-400';
+              {/* Cells Grid (53 columns x 7 rows) */}
+              <div
+                className="grid grid-flow-col grid-rows-7 gap-[2px] sm:gap-[3px]"
+                style={{
+                  gridTemplateColumns: `repeat(${displayedWeeks.length}, minmax(0.625rem, 1fr))`,
+                }}
+                role="img"
+                aria-label={`${effectiveContributions} GitHub contributions in the last year`}
+              >
+                {displayedWeeks.flatMap((week, wIdx) =>
+                  week.map((day, dIdx) => {
+                    let bgClass = 'bg-graph-0';
+                    if (day.level === 1) bgClass = 'bg-graph-1 ring-1 ring-black/5 dark:ring-white/10';
+                    else if (day.level === 2) bgClass = 'bg-graph-2 ring-1 ring-black/5 dark:ring-white/10';
+                    else if (day.level === 3) bgClass = 'bg-graph-3 ring-1 ring-black/5 dark:ring-white/10';
+                    else if (day.level === 4) bgClass = 'bg-graph-4 ring-1 ring-black/5 dark:ring-white/10';
+
+                    const formattedDate = day.date
+                      ? new Date(day.date + 'T00:00:00Z').toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          timeZone: 'UTC',
+                        })
+                      : '';
+                    const tooltipText = day.count === 0
+                      ? `No contributions on ${formattedDate}`
+                      : `${day.count} contribution${day.count === 1 ? '' : 's'} on ${formattedDate}`;
 
                     return (
                       <span
-                        key={dIdx}
-                        className={`size-[10px] rounded-[2px] ${bgClass} transition-transform hover:scale-125`}
-                        title={`Activity level: ${level}`}
+                        key={`${wIdx}-${dIdx}`}
+                        className={`aspect-square rounded-[2px] cursor-pointer transition-shadow hover:ring-2 hover:ring-ink/40 ${bgClass}`}
+                        title={tooltipText}
+                        onMouseEnter={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const cardEl = e.currentTarget.closest('.card-raised');
+                          if (cardEl) {
+                            const cardRect = cardEl.getBoundingClientRect();
+                            setHoveredCell({
+                              day,
+                              x: rect.left - cardRect.left + rect.width / 2,
+                              y: rect.top - cardRect.top,
+                            });
+                          }
+                        }}
+                        onMouseLeave={() => setHoveredCell(null)}
                       />
                     );
-                  })}
-                </div>
-              ))}
+                  })
+                )}
+              </div>
             </div>
+          </div>
 
-            {/* Legend Bottom Row */}
-            <div className="mt-3 flex items-center justify-end gap-1.5 text-[10px] text-ink-3">
-              <span>Less</span>
-              <span className="size-[9px] rounded-[2px] bg-zinc-100 dark:bg-zinc-800" />
-              <span className="size-[9px] rounded-[2px] bg-emerald-200 dark:bg-emerald-950" />
-              <span className="size-[9px] rounded-[2px] bg-emerald-300 dark:bg-emerald-800" />
-              <span className="size-[9px] rounded-[2px] bg-emerald-500 dark:bg-emerald-600" />
-              <span className="size-[9px] rounded-[2px] bg-emerald-600 dark:bg-emerald-400" />
-              <span>More</span>
+          {/* Floating Tooltip */}
+          {hoveredCell && (
+            <div
+              className="pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-full rounded-lg bg-ink px-2.5 py-1.5 text-meta whitespace-nowrap text-surface shadow-lg transition-opacity duration-150"
+              style={{
+                left: `${hoveredCell.x}px`,
+                top: `${hoveredCell.y - 8}px`,
+              }}
+            >
+              <span className="font-medium">
+                {hoveredCell.day.count === 0
+                  ? 'No contributions'
+                  : `${hoveredCell.day.count} contribution${hoveredCell.day.count === 1 ? '' : 's'}`}
+              </span>
+              {hoveredCell.day.date && (
+                <span className="text-surface/80 ml-1.5">
+                  on{' '}
+                  {new Date(hoveredCell.day.date + 'T00:00:00Z').toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    timeZone: 'UTC',
+                  })}
+                </span>
+              )}
             </div>
+          )}
+
+          {/* Legend inside bottom-right */}
+          <div className="mt-3.5 flex items-center justify-end gap-1 text-micro text-ink-3 select-none">
+            <span>Less</span>
+            <span className="size-2.5 rounded-[2px] bg-graph-0" />
+            <span className="size-2.5 rounded-[2px] bg-graph-1 ring-1 ring-black/5 dark:ring-white/10" />
+            <span className="size-2.5 rounded-[2px] bg-graph-2 ring-1 ring-black/5 dark:ring-white/10" />
+            <span className="size-2.5 rounded-[2px] bg-graph-3 ring-1 ring-black/5 dark:ring-white/10" />
+            <span className="size-2.5 rounded-[2px] bg-graph-4 ring-1 ring-black/5 dark:ring-white/10" />
+            <span>More</span>
           </div>
         </div>
 
         {/* Repositories Sub-heading & Action */}
-        <div className="pt-2 flex items-center justify-between gap-4">
-          <p className="text-sm font-semibold text-ink">Total {totalRepos} repositories</p>
+        <div className="mt-8 mb-4 flex items-center justify-between gap-4">
+          <p className="text-body font-semibold text-ink">
+            Total {effectiveRepos} repositories
+          </p>
           <a
-            href="https://github.com/0xZahidp?tab=repositories"
+            href={`https://github.com/${githubUsername}?tab=repositories`}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-secondary h-8 px-3 rounded-[12px] text-xs font-semibold inline-flex items-center gap-1"
+            className="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-xl font-semibold tracking-[-0.01em] whitespace-nowrap select-none btn btn-secondary h-8 px-3.5 text-meta"
+            title="View all repositories on GitHub"
           >
-            <span>View all</span>
-            <ArrowUpRight className="size-3.5" />
+            <span className="btn-content inline-flex items-center gap-1.5">
+              <span>View all</span>
+              <ArrowUpRight className="size-3.5" />
+            </span>
           </a>
         </div>
 
         {/* 2-Column Grid of 4 Pinned Repositories */}
         <div className="grid gap-4 sm:grid-cols-2">
-          {pinnedRepos.map((repo) => (
+          {effectivePinnedRepos.map((repo) => (
             <a
               key={repo.id}
               href={repo.url}

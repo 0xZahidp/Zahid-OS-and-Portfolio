@@ -29,6 +29,12 @@
   --color-brand-900: #063f29;
   
   --color-link: var(--link);
+
+  --color-graph-0: var(--graph-0);
+  --color-graph-1: var(--graph-1);
+  --color-graph-2: var(--graph-2);
+  --color-graph-3: var(--graph-3);
+  --color-graph-4: var(--graph-4);
 }
 
 :root {
@@ -42,6 +48,13 @@
   --ink-2: #525252;
   --ink-3: #6b6b6b;
   --link: #0a7f4f;
+
+  /* GitHub Calendar Graph Ramp */
+  --graph-0: #ededed;
+  --graph-1: #93dbb5;
+  --graph-2: #57c48c;
+  --graph-3: #0f9459;
+  --graph-4: #08673f;
 
   --cover-base-1: #e3f6ec;
   --cover-base-2: #e6f4f1;
@@ -67,6 +80,13 @@
   --ink-2: #b4b4b8;
   --ink-3: #9a9aa0;
   --link: #57c48c;
+
+  /* GitHub Calendar Graph Ramp (Dark) */
+  --graph-0: #212125;
+  --graph-1: #075234;
+  --graph-2: #0a7f4f;
+  --graph-3: #22a86a;
+  --graph-4: #93dbb5;
 
   --cover-base-1: #03140d;
   --cover-base-2: #04120f;

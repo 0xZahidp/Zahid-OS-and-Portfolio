@@ -53,3 +53,4 @@ export const defaultPortfolioContent: PortfolioContent = {
   },
   updatedAt: new Date().toISOString(),
 };
+

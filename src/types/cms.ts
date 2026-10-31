@@ -26,6 +26,8 @@ export interface GitHubSettings {
   token?: string;
   pinnedRepos?: string[];
   followersCount?: number;
+  totalContributions?: number;
+  totalRepos?: number;
 }
 
 export interface PortfolioContent {
@@ -50,3 +52,4 @@ export interface CmsSaveResponse {
   message?: string;
   error?: string;
 }
+

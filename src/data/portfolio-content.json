@@ -13,8 +13,8 @@
     "roles": [
       {
         "title": "CTO",
-        "company": "Bidvers",
-        "company_url": "https://bidvers.com",
+        "company": "Dhakaiya Bites",
+        "company_url": "https://db.zahidp.com",
         "company_logo": "/images/bidvers.webp"
       },
       {
@@ -438,5 +438,5 @@
       "0xZahidp/CompilerX"
     ]
   },
-  "updatedAt": "2026-10-31T18:17:04.713Z"
+  "updatedAt": "2026-10-31T18:23:07.793Z"
 }

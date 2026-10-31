@@ -773,3 +773,88 @@ Inside `main` and `right aside` at `top-0 z-20` (both perfectly aligned at `h-17
 - **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `0px`, shadow: `none`
 - **Layout:** display: `grid`, alignItems: `normal`, justifyContent: `normal`, gap: `13.5px`
 
+
+
+## GitHub Activity Section Tokens (Extracted from nahian.bd/work at 1920x1080)
+
+### 1. Section Header & Heading
+- **GitHub Icon:**
+  - Size: `20.25px` × `20.25px` (rendered within `size-5` or `size-6` container)
+  - Color (Light): `rgb(23, 23, 23)` (`#171717`)
+  - Color (Dark): `rgb(237, 237, 237)` (`#ededed`)
+- **Heading Text (`GitHub`):**
+  - Font Size: `18px` – `20.25px` (`text-lg` / `text-base font-semibold`)
+  - Font Weight: `600` (`font-semibold`)
+  - Line Height: `27px`
+  - Color (Light): `rgb(23, 23, 23)` (`text-ink`)
+  - Color (Dark): `rgb(237, 237, 237)` (`text-ink`)
+  - Gap: `11.25px` (`gap-2.5`)
+
+### 2. Summary Line (`102 contributions in the last year`)
+- **Container / Paragraph:**
+  - Font Size: `15px` – `16.875px` (`text-body` / `text-sm`)
+  - Font Weight: `400` (Uniform weight, unbolded number)
+  - Color (Light): `rgb(107, 107, 107)` (`text-ink-3` / `text-ink-2`)
+  - Color (Dark): `rgb(154, 154, 160)` (`text-ink-3`)
+  - Margin Bottom: `16px` – `18px` (`mb-4` / `mb-4.5`)
+
+### 3. Graph Card Wrapper (`.card-raised`)
+- **Container Dimensions & Styling:**
+  - Padding: `24px` (`p-6` / `p-7`)
+  - Border: `1px solid var(--color-line)` (`rgb(232, 232, 232)` in Light, `rgb(43, 43, 48)` in Dark)
+  - Border Radius: `24px` (`rounded-3xl` / `rounded-[24px]`)
+  - Background (Light): `rgb(255, 255, 255)` (`bg-surface`)
+  - Background (Dark): `rgb(20, 20, 22)` (`bg-surface`)
+  - Box Shadow (Light): `0 1px 3px rgba(0, 0, 0, 0.04)` (`shadow-xs`)
+  - Box Shadow (Dark): `0 1px 3px rgba(0, 0, 0, 0.3)` (`shadow-xs`)
+
+### 4. Month Labels Row
+- **Typography & Layout:**
+  - Font Size: `11px` – `12.375px` (`text-micro`)
+  - Font Weight: `400`
+  - Color (Light): `rgb(107, 107, 107)` (`text-ink-3`)
+  - Color (Dark): `rgb(154, 154, 160)` (`text-ink-3`)
+  - Margin Bottom: `4.5px` – `6px`
+  - Column alignment: Grid corresponding directly to calendar week columns (`grid-cols-[repeat(53,minmax(0,1fr))]`)
+
+### 5. Contribution Cells & Color Ramp
+- **Cell Geometry:**
+  - Dimensions: `10px` × `10px` to `12px` × `12px` (aspect-square)
+  - Gap: `3px` (`gap-[3px]`)
+  - Border Radius: `2px` – `3px` (`rounded-[2px]`)
+  - Outline / Glass Border: Subtle `ring-1 ring-black/5 dark:ring-white/10` on filled cells
+  - Hover State: `hover:ring-2 hover:ring-ink/40 transition-shadow`
+- **Color Ramp (Light Mode):**
+  - Level 0 (Empty): `rgb(237, 237, 237)` (`#ededed`)
+  - Level 1: `rgb(147, 219, 181)` (`#93dbb5`)
+  - Level 2: `rgb(87, 196, 140)` (`#57c48c`)
+  - Level 3: `rgb(15, 148, 89)` (`#0f9459`)
+  - Level 4: `rgb(8, 103, 63)` (`#08673f`)
+- **Color Ramp (Dark Mode):**
+  - Level 0 (Empty): `rgb(33, 33, 37)` (`#212125`)
+  - Level 1: `rgb(7, 82, 52)` (`#075234`)
+  - Level 2: `rgb(10, 127, 79)` (`#0a7f4f`)
+  - Level 3: `rgb(34, 168, 106)` (`#22a86a`)
+  - Level 4: `rgb(147, 219, 181)` (`#93dbb5`)
+
+### 6. Legend Inside Card (Bottom-Right)
+- **Position & Sizing:**
+  - Container: `flex items-center justify-end gap-1.5 mt-3.5`
+  - Font Size: `11px` – `12.375px` (`text-micro`)
+  - Text Color: `text-ink-3`
+  - Swatch Dimensions: `10px` × `10px` (`size-2.5`)
+  - Swatch Border Radius: `2px` (`rounded-[2px]`)
+  - Swatches: 5 swatches mapped to Level 0 through Level 4 colors
+
+### 7. Repositories Sub-heading & "View All" Button
+- **Repositories Heading (`Total {count} repositories`):**
+  - Typography: `16.875px` (`text-body` / `text-base`), font-weight `600` (`font-semibold`), uniform weight across label and number
+  - Color (Light): `rgb(23, 23, 23)` (`text-ink`)
+  - Color (Dark): `rgb(237, 237, 237)` (`text-ink`)
+  - Spacing: `mt-8 mb-4` (`gap-4 items-center justify-between`)
+- **"View All" Button:**
+  - Height: `36px` (`h-9` / `h-8`)
+  - Padding: `0 15.75px` (`px-4`)
+  - Border Radius: `13.5px` (`rounded-[13.5px]` / `rounded-xl`)
+  - Styling: `.btn .btn-secondary` tactile secondary button with 1px ring, subtle inset highlight, and soft drop shadow
+  - Icon: `ArrowUpRight` (`size-3.5`, 14px – 16px)
