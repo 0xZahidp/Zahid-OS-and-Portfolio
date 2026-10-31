@@ -112,3 +112,4 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
     </aside>
   );
 };
+

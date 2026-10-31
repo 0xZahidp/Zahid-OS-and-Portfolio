@@ -25,3 +25,4 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({ src, alt }) => {
     </div>
   );
 };
+

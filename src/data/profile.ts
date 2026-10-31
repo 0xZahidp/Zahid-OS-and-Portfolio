@@ -288,3 +288,4 @@ export const projectsData: Project[] = [
     project_url: 'https://zovoteam.com',
   },
 ];
+

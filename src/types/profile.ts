@@ -90,3 +90,4 @@ export interface LanguageSkill {
   note?: string;
   hasVoice?: boolean;
 }
+

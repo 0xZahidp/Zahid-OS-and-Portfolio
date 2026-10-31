@@ -266,3 +266,4 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     </div>
   );
 };
+

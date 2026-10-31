@@ -27,3 +27,4 @@ export const SoundToggle: React.FC<{ className?: string }> = ({ className = '' }
     </button>
   );
 };
+

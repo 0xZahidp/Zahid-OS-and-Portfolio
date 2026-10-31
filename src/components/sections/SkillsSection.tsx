@@ -174,3 +174,4 @@ export const SkillsSection: React.FC = () => {
     </div>
   );
 };
+

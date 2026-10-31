@@ -8,3 +8,4 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholde
  * Safe for client components; uses public anonymous key.
  */
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+

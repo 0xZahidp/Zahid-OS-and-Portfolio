@@ -81,3 +81,4 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
     </nav>
   );
 };
+
