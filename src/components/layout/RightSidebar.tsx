@@ -19,11 +19,13 @@ import {
 
 interface RightSidebarProps {
   onContactClick: () => void;
+  onNavigate?: (section: string) => void;
   activeSection?: string;
 }
 
 export const RightSidebar: React.FC<RightSidebarProps> = ({
   onContactClick,
+  onNavigate,
   activeSection = 'profile',
 }) => {
   const { content } = usePortfolio();
@@ -110,7 +112,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
             </h2>
 
             <ul className="-mx-2">
-              {suggestedPeople.map((person) => {
+              {suggestedPeople.slice(0, 3).map((person) => {
                 const isFollowing = followedState[person.id] || false;
                 const isGitHub = person.url.includes('github.com');
 
@@ -133,6 +135,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                           width={36}
                           height={36}
                           className="rounded-full object-cover size-9 text-meta ring-1 ring-line"
+                          unoptimized
                         />
                         <span
                           className="absolute grid place-items-center rounded-full bg-surface text-ink shadow-sm ring-2 ring-surface size-4.5 -right-0.5 -bottom-0.5"
@@ -179,47 +182,44 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
             </ul>
 
             {/* Footer with avatar stack */}
-            <a
-              href="/people"
-              className="-mx-2 mt-1 flex items-center justify-between gap-2 rounded-xl px-2 py-2 transition-colors hover:bg-surface-2"
+            <button
+              type="button"
+              onClick={() => {
+                if (onNavigate) {
+                  onNavigate('people');
+                } else {
+                  window.location.href = '#people';
+                }
+              }}
+              className="w-full -mx-2 mt-1 flex items-center justify-between gap-2 rounded-xl px-2 py-2 transition-colors hover:bg-surface-2 cursor-pointer text-left"
             >
               <span className="text-meta font-semibold whitespace-nowrap text-link">
-                See all 11 people
+                See all {suggestedPeople.length} people
               </span>
 
               <span className="facepile flex items-center" aria-hidden="true">
-                <span className="relative inline-block shrink-0 self-start">
-                  <Image
-                    src="/images/face-1.jpg"
-                    alt=""
-                    width={28}
-                    height={28}
-                    className="rounded-full object-cover size-7 text-micro ring-2 ring-surface"
-                  />
-                </span>
-                <span className="relative inline-block shrink-0 self-start -ml-2">
-                  <Image
-                    src="/images/face-2.jpg"
-                    alt=""
-                    width={28}
-                    height={28}
-                    className="rounded-full object-cover size-7 text-micro ring-2 ring-surface"
-                  />
-                </span>
-                <span className="relative inline-block shrink-0 self-start -ml-2">
-                  <Image
-                    src="/images/face-3.jpg"
-                    alt=""
-                    width={28}
-                    height={28}
-                    className="rounded-full object-cover size-7 text-micro ring-2 ring-surface"
-                  />
-                </span>
-                <span className="grid size-7 place-items-center rounded-full bg-surface-2 text-micro font-semibold text-ink-2 ring-1 ring-line -ml-2">
-                  +5
-                </span>
+                {suggestedPeople.slice(0, 3).map((p, idx) => (
+                  <span
+                    key={p.id}
+                    className={`relative inline-block shrink-0 self-start ${idx > 0 ? '-ml-2' : ''}`}
+                  >
+                    <Image
+                      src={p.avatar_url}
+                      alt=""
+                      width={28}
+                      height={28}
+                      className="rounded-full object-cover size-7 text-micro ring-2 ring-surface"
+                      unoptimized
+                    />
+                  </span>
+                ))}
+                {suggestedPeople.length > 3 && (
+                  <span className="relative inline-flex items-center justify-center rounded-full bg-surface-2 text-micro font-semibold text-ink-3 size-7 ring-2 ring-surface -ml-2">
+                    +{suggestedPeople.length - 3}
+                  </span>
+                )}
               </span>
-            </a>
+            </button>
           </section>
         )}
 

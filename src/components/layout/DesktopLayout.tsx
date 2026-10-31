@@ -221,6 +221,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       {/* 3. Right Column (Sticky Follow & Socials Sidebar) */}
       <RightSidebar
         onContactClick={handleContactClick}
+        onNavigate={onNavigate}
         activeSection={activeSection}
       />
 

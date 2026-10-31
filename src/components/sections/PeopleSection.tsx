@@ -27,12 +27,12 @@ export const PeopleSection: React.FC = () => {
 
   const filterTabs: { id: PlatformFilter; label: string; count: number; icon?: React.ReactNode }[] = [
     { id: 'all', label: 'All', count: peopleData.length },
-    { id: 'github', label: 'GitHub', count: 9, icon: <GitHubIcon className="size-3.5" /> },
-    { id: 'x', label: 'X', count: 8, icon: <XIcon className="size-3" /> },
-    { id: 'linkedin', label: 'LinkedIn', count: 6, icon: <LinkedInIcon className="size-3.5" /> },
-    { id: 'facebook', label: 'Facebook', count: 5, icon: <FacebookIcon className="size-3.5" /> },
-    { id: 'website', label: 'Website', count: 4, icon: <Globe className="size-3.5" /> },
-    { id: 'youtube', label: 'YouTube', count: 2, icon: <YouTubeIcon className="size-3.5 text-red-500" /> },
+    { id: 'github', label: 'GitHub', count: peopleData.filter((p) => p.platforms.some((pl) => pl.platform === 'github')).length, icon: <GitHubIcon className="size-3.5" /> },
+    { id: 'x', label: 'X', count: peopleData.filter((p) => p.platforms.some((pl) => pl.platform === 'x')).length, icon: <XIcon className="size-3" /> },
+    { id: 'linkedin', label: 'LinkedIn', count: peopleData.filter((p) => p.platforms.some((pl) => pl.platform === 'linkedin')).length, icon: <LinkedInIcon className="size-3.5" /> },
+    { id: 'facebook', label: 'Facebook', count: peopleData.filter((p) => p.platforms.some((pl) => pl.platform === 'facebook')).length, icon: <FacebookIcon className="size-3.5" /> },
+    { id: 'website', label: 'Website', count: peopleData.filter((p) => p.platforms.some((pl) => pl.platform === 'website')).length, icon: <Globe className="size-3.5" /> },
+    { id: 'youtube', label: 'YouTube', count: peopleData.filter((p) => p.platforms.some((pl) => pl.platform === 'youtube')).length, icon: <YouTubeIcon className="size-3.5 text-red-500" /> },
   ];
 
   const filteredPeople = peopleData.filter((person) => {

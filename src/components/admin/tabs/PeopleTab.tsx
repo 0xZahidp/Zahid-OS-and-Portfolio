@@ -1,14 +1,38 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
-import { Users, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Users, Plus, Trash2, ChevronUp, ChevronDown, RefreshCw, Check } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { FollowerRecommendation } from '@/types/profile';
 
 export const PeopleTab: React.FC = () => {
   const { content, updateSuggestedPeople } = usePortfolio();
   const people = content.suggestedPeople;
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
+  const handleSyncFromGitHub = async () => {
+    try {
+      setIsSyncing(true);
+      setSyncMessage(null);
+      const username = content.githubSettings?.username || '0xZahidp';
+      const res = await fetch(`/api/github/following?username=${encodeURIComponent(username)}`);
+      const data = await res.json();
+      if (data.people && Array.isArray(data.people) && data.people.length > 0) {
+        updateSuggestedPeople(data.people);
+        setSyncMessage(`Successfully synced ${data.people.length} creators from @${username} on GitHub!`);
+      } else {
+        setSyncMessage('No people found to sync.');
+      }
+    } catch (err) {
+      console.error(err);
+      setSyncMessage('Failed to sync from GitHub.');
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => setSyncMessage(null), 4000);
+    }
+  };
 
   const handleUpdate = (idx: number, patch: Partial<FollowerRecommendation>) => {
     const updated = [...people];
@@ -46,7 +70,7 @@ export const PeopleTab: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="card-raised rounded-2xl border border-line bg-surface p-6 shadow-xs space-y-6">
-        <div className="flex items-center justify-between pb-4 border-b border-line">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-line">
           <div className="flex items-center gap-2.5">
             <Users className="size-4.5 text-brand-500" />
             <div>
@@ -56,15 +80,34 @@ export const PeopleTab: React.FC = () => {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleAdd}
-            className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
-          >
-            <Plus className="size-3.5" />
-            <span>Add Person</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleSyncFromGitHub}
+              disabled={isSyncing}
+              className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
+              title="Fetch followed developers directly from GitHub"
+            >
+              <RefreshCw className={`size-3.5 ${isSyncing ? 'animate-spin text-brand-500' : ''}`} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync with GitHub'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
+            >
+              <Plus className="size-3.5" />
+              <span>Add Person</span>
+            </button>
+          </div>
         </div>
+
+        {syncMessage && (
+          <div className="flex items-center gap-2 rounded-xl bg-brand-500/10 border border-brand-500/20 px-3.5 py-2 text-xs font-medium text-brand-600 dark:text-brand-400">
+            <Check className="size-4 shrink-0 text-brand-500" />
+            <span>{syncMessage}</span>
+          </div>
+        )}
 
         <div className="space-y-3">
           {people.map((person, idx) => (
