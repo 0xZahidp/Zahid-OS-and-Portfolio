@@ -156,21 +156,24 @@ body {
 }
 
 @keyframes halo-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
   to {
-    transform: rotate(360deg);
+    transform: translate(-50%, -50%) rotate(360deg);
   }
 }
 
 .halo-glow {
   z-index: 0;
-  border-radius: 1.5rem;
-  filter: blur(26px);
-  opacity: 0.35;
+  border-radius: 2rem;
+  filter: blur(28px);
+  opacity: 0;
   pointer-events: none;
-  transition: opacity 0.35s ease;
+  transition: opacity 0.4s ease;
   position: absolute;
-  inset: -8px;
-  overflow: hidden;
+  inset: -12px;
+  overflow: visible;
   container-type: size;
 }
 

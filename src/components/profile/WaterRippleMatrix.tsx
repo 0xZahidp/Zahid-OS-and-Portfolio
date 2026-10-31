@@ -180,29 +180,33 @@ export const WaterRippleMatrix: React.FC<WaterRippleMatrixProps> = ({
           ctx.roundRect(cx - w / 2, cy - h / 2, w, h, cornerRadius);
 
           if (isLight) {
-            // Light Theme Palette: Soft emerald & mint tones fading across canvas
-            // Matching the left side of user screenshot
-            const baseAlpha = Math.max(0.12, Math.min(0.88, intensity * (1.1 - (col / cols) * 0.45)));
+            // Light Theme Palette: Vibrant emerald & mint tones matching nahian.bd
+            const baseAlpha = Math.max(0.35, Math.min(0.95, intensity * 0.88));
             
-            if (rippleDisplacement > 0.15) {
+            if (rippleDisplacement > 0.12) {
               // Highlighted water wave crest
-              ctx.fillStyle = `rgba(5, 150, 105, ${Math.min(0.95, baseAlpha + 0.3).toFixed(2)})`;
-            } else if (intensity > 0.6) {
-              // Medium emerald slat
+              ctx.fillStyle = `rgba(5, 150, 105, ${Math.min(1, baseAlpha + 0.25).toFixed(2)})`;
+            } else if (intensity > 0.72) {
+              // Rich emerald slat
               ctx.fillStyle = `rgba(16, 185, 129, ${baseAlpha.toFixed(2)})`;
-            } else {
-              // Light mint slat
+            } else if (intensity > 0.48) {
+              // Mint green slat
               ctx.fillStyle = `rgba(52, 211, 153, ${baseAlpha.toFixed(2)})`;
+            } else {
+              // Soft pastel mint slat
+              ctx.fillStyle = `rgba(110, 231, 183, ${Math.max(0.38, baseAlpha).toFixed(2)})`;
             }
           } else {
-            // Dark Theme Palette: Glowing matrix green against near-black
-            const baseAlpha = Math.max(0.08, Math.min(0.9, intensity * 0.8));
-            if (rippleDisplacement > 0.15) {
-              ctx.fillStyle = `rgba(110, 231, 183, ${Math.min(1, baseAlpha + 0.4).toFixed(2)})`;
-            } else if (intensity > 0.7) {
+            // Dark Theme Palette: Glowing matrix green against dark surface
+            const baseAlpha = Math.max(0.25, Math.min(0.95, intensity * 0.85));
+            if (rippleDisplacement > 0.12) {
+              ctx.fillStyle = `rgba(110, 231, 183, ${Math.min(1, baseAlpha + 0.35).toFixed(2)})`;
+            } else if (intensity > 0.72) {
+              ctx.fillStyle = `rgba(52, 211, 153, ${baseAlpha.toFixed(2)})`;
+            } else if (intensity > 0.48) {
               ctx.fillStyle = `rgba(16, 185, 129, ${baseAlpha.toFixed(2)})`;
             } else {
-              ctx.fillStyle = `rgba(6, 78, 59, ${baseAlpha.toFixed(2)})`;
+              ctx.fillStyle = `rgba(6, 78, 59, ${Math.max(0.35, baseAlpha).toFixed(2)})`;
             }
           }
 

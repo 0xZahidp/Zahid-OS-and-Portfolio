@@ -12,10 +12,6 @@ import {
   VueIcon,
   InertiaIcon,
   TailwindIcon,
-  VSCodeIcon,
-  PhpStormIcon,
-  GitIcon,
-  GitHubIcon,
 } from '@/components/ui/Icons';
 
 export const ProfileBadges: React.FC = () => {
@@ -113,30 +109,6 @@ export const ProfileBadges: React.FC = () => {
           <span className="pill font-medium">
             <TailwindIcon className="size-3.5 shrink-0" />
             <span>Tailwind CSS</span>
-          </span>
-        </li>
-        <li className="hidden sm:inline-block">
-          <span className="pill font-medium">
-            <VSCodeIcon className="size-3.5 shrink-0" />
-            <span>VS Code</span>
-          </span>
-        </li>
-        <li className="hidden sm:inline-block">
-          <span className="pill font-medium">
-            <PhpStormIcon className="size-3.5 shrink-0" />
-            <span>PhpStorm</span>
-          </span>
-        </li>
-        <li className="hidden sm:inline-block">
-          <span className="pill font-medium">
-            <GitIcon className="size-3.5 shrink-0" />
-            <span>Git</span>
-          </span>
-        </li>
-        <li className="hidden sm:inline-block">
-          <span className="pill font-medium">
-            <GitHubIcon className="size-3.5 shrink-0" />
-            <span>GitHub</span>
           </span>
         </li>
       </ul>

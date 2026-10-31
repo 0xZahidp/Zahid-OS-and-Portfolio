@@ -5,7 +5,7 @@ import { WaterRippleMatrix } from './WaterRippleMatrix';
 
 export const ProfileBanner: React.FC = () => {
   return (
-    <div className="relative overflow-hidden h-36 sm:h-52 w-full border-b border-line bg-surface flex items-center justify-center select-none">
+    <div className="relative overflow-hidden h-[240px] sm:h-[280px] w-full border-b border-line bg-surface flex items-center justify-center select-none">
       {/* Background ambient glowing blobs */}
       <div className="cover absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
         <span
