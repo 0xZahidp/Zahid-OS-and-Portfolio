@@ -52,7 +52,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   };
 
   return (
-    <div className="flex min-h-dvh flex-col md:hidden">
+    <div className="flex min-h-dvh flex-col md:hidden" suppressHydrationWarning>
       {/* 1. Mobile Sticky Top Navigation Bar */}
       <MobileTopBar
         onOpenMenu={() => setIsMenuOpen(true)}

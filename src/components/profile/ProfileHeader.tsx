@@ -129,7 +129,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <li className="inline-flex items-center gap-1.5">
             <MapPin className="size-4.5 text-ink-3 shrink-0" />
             <span>{profile.location}</span>
-            <span className="text-ink-3 tabular-nums">· {localTime}</span>
+            <span className="text-ink-3 tabular-nums" suppressHydrationWarning>· {localTime}</span>
           </li>
         </ul>
 
