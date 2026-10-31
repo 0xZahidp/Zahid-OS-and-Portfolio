@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Profile } from '@/types/profile';
 import { LeftSidebar } from './LeftSidebar';
 import { RightSidebar } from './RightSidebar';
+import { DesktopStickyHeader } from '@/components/profile/DesktopStickyHeader';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
+import { ShareModal } from '@/components/ui/ShareModal';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { ExperienceSection } from '@/components/sections/ExperienceSection';
 import { SkillsSection } from '@/components/sections/SkillsSection';
@@ -36,6 +38,8 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   onNavigate,
   onTabChange,
 }) => {
+  const [isShareOpen, setIsShareOpen] = useState(false);
+
   const scrollToContact = () => {
     const el = document.getElementById('contact');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -53,15 +57,20 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
       {/* 2. Center Column (Scrollable Main Content) */}
       <main className="min-w-0 flex-1 border-x border-line pb-16">
-        {/* Sticky Desktop Header & Profile Hero */}
-        <div id="top">
-          <ProfileHeader
-            profile={profile}
-            activeTab={activeTab}
-            onTabChange={onTabChange}
-            onContactClick={scrollToContact}
-          />
-        </div>
+        {/* Sticky Desktop Header Bar - Direct Child of <main>, stays sticky throughout all scroll positions */}
+        <DesktopStickyHeader
+          profile={profile}
+          onContactClick={scrollToContact}
+          onShareClick={() => setIsShareOpen(true)}
+        />
+
+        {/* Profile Hero & Decorative Banner */}
+        <ProfileHeader
+          profile={profile}
+          activeTab={activeTab}
+          onTabChange={onTabChange}
+          onContactClick={scrollToContact}
+        />
 
         {/* Tab Content */}
         <div className="px-6 py-10 lg:px-8">
@@ -136,6 +145,13 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
       {/* 3. Right Column (Sticky Follow & Socials Sidebar) */}
       <RightSidebar onContactClick={scrollToContact} />
+
+      {/* Share Profile Modal */}
+      <ShareModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        profile={profile}
+      />
     </div>
   );
 };

@@ -50,50 +50,6 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   return (
     <div className="w-full">
-      {/* Desktop Sticky Header Bar */}
-      <div className="sticky top-0 z-20 hidden md:flex h-17.5 items-center gap-3 border-b border-line bg-surface/85 px-6 backdrop-blur-md lg:px-8">
-        <div className="relative size-9 rounded-full ring-1 ring-line overflow-hidden shrink-0">
-          <Image
-            src={profile.avatar_url}
-            alt={profile.full_name}
-            width={36}
-            height={36}
-            className="size-full object-cover"
-          />
-        </div>
-        
-        <div className="min-w-0 flex-1 leading-tight">
-          <p className="flex items-center gap-1.5 truncate text-base font-semibold text-ink">
-            {profile.full_name}
-            <VerifiedBadgeIcon className="size-4.5 shrink-0 text-brand-500" />
-          </p>
-          <p className="text-meta text-ink-3">
-            {profile.github_followers_count} followers on GitHub
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setIsShareOpen(true)}
-          aria-label="Share profile"
-          className="btn btn-secondary grid size-10 place-items-center rounded-xl transition-all hover:bg-surface-2"
-        >
-          <span className="btn-content">
-            <TablerShare className="size-4.5" />
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={onContactClick}
-          className="btn btn-primary h-10 px-5 rounded-full font-bold text-sm tracking-[-0.01em] shadow-[0_4px_16px_rgba(16,185,129,0.35)]"
-        >
-          <span className="btn-content inline-flex items-center gap-2">
-            Get in touch
-          </span>
-        </button>
-      </div>
-
       {/* Decorative Matrix Slats Banner */}
       <ProfileBanner />
 

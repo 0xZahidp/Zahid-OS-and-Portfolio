@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { TablerMoon, TablerSun } from '@/components/ui/Icons';
+import { toggleGlobalTheme } from './ThemeManager';
 
 interface ThemeToggleProps {
   className?: string;
@@ -16,31 +17,18 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
     const savedTheme = localStorage.getItem('folioframe-theme') as 'dark' | 'light' | null;
     if (savedTheme) {
       setTheme(savedTheme);
-      if (savedTheme === 'light') {
-        document.documentElement.classList.add('light');
-        document.documentElement.classList.remove('dark');
-      } else {
-        document.documentElement.classList.remove('light');
-        document.documentElement.classList.add('dark');
-      }
     } else {
-      document.documentElement.classList.remove('light');
-      document.documentElement.classList.add('dark');
+      setTheme(document.documentElement.classList.contains('light') ? 'light' : 'dark');
     }
-  }, []);
 
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    localStorage.setItem('folioframe-theme', nextTheme);
-    if (nextTheme === 'light') {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
-    } else {
-      document.documentElement.classList.remove('light');
-      document.documentElement.classList.add('dark');
-    }
-  };
+    const handleThemeChange = (e: Event) => {
+      const customEvent = e as CustomEvent<'dark' | 'light'>;
+      setTheme(customEvent.detail);
+    };
+
+    window.addEventListener('folioframe-theme-change', handleThemeChange);
+    return () => window.removeEventListener('folioframe-theme-change', handleThemeChange);
+  }, []);
 
   if (!mounted) {
     return (
@@ -57,8 +45,9 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
   return (
     <button
       type="button"
-      onClick={toggleTheme}
-      aria-label={`Toggle theme (currently ${theme})`}
+      onClick={toggleGlobalTheme}
+      aria-label={`Toggle theme (currently ${theme}, press Space to toggle)`}
+      title="Toggle theme (Space)"
       className={`btn btn-secondary grid size-9 place-items-center rounded-full transition-transform active:scale-95 ${className}`}
     >
       <span className="btn-content">
@@ -71,3 +60,4 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
     </button>
   );
 };
+
