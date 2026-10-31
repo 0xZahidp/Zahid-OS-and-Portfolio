@@ -8,7 +8,7 @@ import { MobileLayout } from '@/components/layout/MobileLayout';
 export default function Home() {
   const [activeSection, setActiveSection] = useState<string>('profile');
   const [activeTab, setActiveTab] = useState<'resume' | 'work'>('resume');
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
 
   const handleNavigate = (section: string) => {
     setActiveSection(section);

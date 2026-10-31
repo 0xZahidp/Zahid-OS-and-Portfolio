@@ -44,9 +44,9 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ onContactClick }) =>
   };
 
   return (
-    <aside className="sticky top-0 hidden h-dvh w-80 shrink-0 flex-col gap-5 overflow-y-auto px-4 py-5 [scrollbar-width:none] lg:flex border-l border-line bg-surface/30">
-      {/* Top Follow Button */}
-      <div className="flex justify-end">
+    <aside className="sticky top-0 hidden min-h-dvh w-80 shrink-0 self-start border-line lg:block xl:w-90 xl:border-r">
+      {/* Top Header Bar with Follow Button */}
+      <div className="sticky top-0 z-10 flex h-17.5 items-center justify-end gap-2 border-b border-line bg-surface/85 px-6 backdrop-blur-md">
         <a
           href="https://x.com/0xZahidP"
           target="_blank"
@@ -55,18 +55,19 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ onContactClick }) =>
           className={`btn ${
             isFollowingMain
               ? 'btn-secondary text-brand-500'
-              : 'bg-zinc-100 hover:bg-white text-zinc-900 shadow-md'
+              : 'btn-secondary hover:border-line-strong'
           } h-9 px-4.5 rounded-xl font-semibold text-xs tracking-tight transition-all`}
         >
           <span className="btn-content inline-flex items-center gap-1.5">
-            <XIcon className="size-3.5" />
-            <span>{isFollowingMain ? 'Following' : 'Follow'}</span>
+            <XIcon className="size-3.5 text-ink" />
+            <span className="text-ink">{isFollowingMain ? 'Following' : 'Follow'}</span>
           </span>
         </a>
       </div>
 
-      {/* Open to Conversations Mini Card */}
-      <div className="card-raised p-4 bg-surface/80">
+      <div className="flex flex-col gap-6 p-6 overflow-y-auto [scrollbar-width:none]">
+        {/* Open to Conversations Mini Card */}
+        <div className="card-raised p-4 bg-surface/80">
         <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-500">
           <span className="size-1.5 rounded-full bg-brand-500 animate-pulse" />
           <span>Open to new conversations</span>
@@ -219,6 +220,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ onContactClick }) =>
           <ShieldCheck className="size-3" />
           DMCA PROTECTED
         </span>
+      </div>
       </div>
     </aside>
   );

@@ -43,12 +43,17 @@
   --link: #10b981;
   --ring: #10b981;
 
-  --cover-1: #10b981;
-  --cover-2: #059669;
+  --cover-base-1: #03140d;
+  --cover-base-2: #04120f;
+  --cover-1: #059669;
+  --cover-2: #0d9488;
   --cover-3: #047857;
-  --cover-4: #064e3b;
-  --cover-5: #34d399;
-  --cover-6: #6ee7b7;
+  --cover-4: #0f766e;
+  --cover-5: #065f46;
+  --cover-6: #10b981;
+  --slats-bg: #07100c;
+  --slats-color: #22a86a;
+  --slats-glint: #c8f5dc;
 }
 
 :root.light {
@@ -68,12 +73,17 @@
   --link: #059669;
   --ring: #059669;
 
+  --cover-base-1: #e3f6ec;
+  --cover-base-2: #e6f4f1;
   --cover-1: #34d399;
   --cover-2: #2dd4bf;
   --cover-3: #10b981;
   --cover-4: #5eead4;
   --cover-5: #a7f3d0;
   --cover-6: #0f9459;
+  --slats-bg: #e9f6ef;
+  --slats-color: #0f9459;
+  --slats-glint: #ffffff;
 }
 
 body {
@@ -227,28 +237,35 @@ body {
   line-height: 0.875rem;
 }
 
-/* Blob animations */
-@keyframes blob-float {
-  0%, 100% {
-    transform: translate(0px, 0px) scale(1);
+/* Cover and Blob animations matching nahian.bd */
+.cover {
+  isolation: isolate;
+  background: linear-gradient(120deg, var(--cover-base-1), var(--cover-base-2));
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes cover-drift {
+  0% {
+    transform: translate(0) scale(1) rotate(0);
   }
-  33% {
-    transform: translate(30px, -20px) scale(1.1);
+  50% {
+    transform: translate(12%, -10%) scale(1.15) rotate(20deg);
   }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
+  100% {
+    transform: translate(-10%, 8%) scale(0.95) rotate(-15deg);
   }
 }
 
 .cover-blob {
-  position: absolute;
-  width: 35%;
-  aspect-ratio: 1/1;
-  border-radius: 9999px;
-  background: var(--blob);
-  filter: blur(55px);
-  opacity: 0.4;
-  animation: blob-float var(--dur, 25s) ease-in-out infinite alternate;
+  aspect-ratio: 1;
+  background: radial-gradient(closest-side, var(--blob), transparent);
+  opacity: 0.7;
+  will-change: transform;
+  width: 70%;
+  animation: cover-drift var(--dur, 22s) ease-in-out infinite alternate;
   animation-delay: var(--delay, 0s);
+  border-radius: 9999px;
+  position: absolute;
   pointer-events: none;
 }

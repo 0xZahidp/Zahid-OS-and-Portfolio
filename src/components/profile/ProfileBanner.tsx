@@ -48,10 +48,31 @@ export const ProfileBanner: React.FC = () => {
             ['--delay' as string]: '-12s',
           }}
         />
+        <span
+          className="cover-blob"
+          style={{
+            ['--blob' as string]: 'var(--cover-5)',
+            top: '-30%',
+            left: '76%',
+            ['--dur' as string]: '31s',
+            ['--delay' as string]: '-6s',
+          }}
+        />
+        <span
+          className="cover-blob"
+          style={{
+            ['--blob' as string]: 'var(--cover-6)',
+            top: '45%',
+            left: '38%',
+            ['--dur' as string]: '33s',
+            ['--delay' as string]: '-16s',
+            width: '45%',
+          }}
+        />
       </div>
 
       {/* Interactive Water Ripple Matrix Canvas */}
-      <WaterRippleMatrix className="h-full w-full" />
+      <WaterRippleMatrix className="h-full w-full" slatWidth={8} slatHeight={20} gap={3} />
     </div>
   );
 };

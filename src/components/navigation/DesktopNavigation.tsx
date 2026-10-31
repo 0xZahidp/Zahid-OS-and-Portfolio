@@ -37,26 +37,39 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
     const Icon = item.icon;
     const isActive = activeSection === item.id;
 
+    if (isCollapsed) {
+      return (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => onNavigate(item.id)}
+          title={item.label}
+          aria-label={item.label}
+          className={`group grid size-11 place-items-center rounded-2xl transition-all cursor-pointer ${
+            isActive
+              ? 'bg-surface-2 font-semibold text-ink shadow-xs ring-1 ring-line/50'
+              : 'text-ink-2 hover:bg-surface-2/60 hover:text-ink'
+          }`}
+        >
+          <Icon className="size-6 shrink-0 transition-transform group-active:scale-90" />
+        </button>
+      );
+    }
+
     return (
       <button
         key={item.id}
         type="button"
         onClick={() => onNavigate(item.id)}
         title={item.label}
-        className={`group flex items-center gap-3.5 rounded-xl p-3 text-lead transition-colors cursor-pointer w-full text-left ${
-          isCollapsed ? 'justify-center xl:p-3' : 'xl:px-3 xl:py-2.5'
-        } ${
+        className={`group flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-lead transition-colors cursor-pointer w-full text-left ${
           isActive
             ? 'bg-surface-2/70 font-semibold text-ink shadow-sm'
             : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
         }`}
       >
         <Icon className="size-6 shrink-0 transition-transform group-active:scale-90" />
-        <span
-          className={`truncate transition-opacity duration-200 ${
-            isCollapsed ? 'sr-only' : 'sr-only xl:not-sr-only'
-          }`}
-        >
+        <span className="truncate transition-opacity duration-200">
           {item.label}
         </span>
       </button>
