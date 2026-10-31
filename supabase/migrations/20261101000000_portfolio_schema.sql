@@ -57,3 +57,7 @@ CREATE TRIGGER set_app_settings_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_updated_at();
 
+-- 4. Grant table privileges to standard Supabase roles
+GRANT ALL ON TABLE public.portfolio_content TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.app_settings TO anon, authenticated, service_role;
+

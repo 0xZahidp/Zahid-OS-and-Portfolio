@@ -89,7 +89,11 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS set_portfolio_content_updated_at ON public.portfolio_content;
 CREATE TRIGGER set_portfolio_content_updated_at
   BEFORE UPDATE ON public.portfolio_content
-  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();`;
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- 4. Grant table privileges to standard Supabase roles
+GRANT ALL ON TABLE public.portfolio_content TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.app_settings TO anon, authenticated, service_role;`;
 
   const handleCopySql = () => {
     navigator.clipboard.writeText(migrationSql);
