@@ -14,11 +14,7 @@ export default function Home() {
     setActiveSection(section);
 
     if (section === 'projects') {
-      setActiveTab('work');
-      setTimeout(() => {
-        const el = document.getElementById('projects');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 50);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -29,8 +25,11 @@ export default function Home() {
     }
 
     if (section === 'contact') {
-      const el = document.getElementById('contact');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      setActiveSection('profile');
+      setTimeout(() => {
+        const el = document.getElementById('contact');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
       return;
     }
 
@@ -41,14 +40,20 @@ export default function Home() {
     }
 
     if (section === 'library') {
-      const el = document.getElementById('skills');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      setActiveSection('profile');
+      setTimeout(() => {
+        const el = document.getElementById('skills');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
       return;
     }
 
     if (section === 'focus') {
-      const el = document.getElementById('about');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      setActiveSection('profile');
+      setTimeout(() => {
+        const el = document.getElementById('about');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
       return;
     }
   };

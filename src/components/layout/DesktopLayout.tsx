@@ -17,6 +17,9 @@ import {
   XIcon,
   LinkedInIcon,
   FacebookIcon,
+  ProductHuntIcon,
+  DevToIcon,
+  BehanceIcon,
 } from '@/components/ui/Icons';
 
 interface DesktopLayoutProps {
@@ -57,90 +60,205 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
       {/* 2. Center Column (Scrollable Main Content) */}
       <main className="min-w-0 flex-1 border-x border-line pb-16">
-        {/* Sticky Desktop Header Bar - Direct Child of <main>, stays sticky throughout all scroll positions */}
-        <DesktopStickyHeader
-          profile={profile}
-          onContactClick={scrollToContact}
-          onShareClick={() => setIsShareOpen(true)}
-        />
+        {activeSection === 'projects' ? (
+          <div>
+            {/* Sticky Header for Projects View */}
+            <header className="sticky top-0 z-30 flex h-[70px] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
+              <h1 className="text-xl font-bold tracking-tight text-ink">Projects</h1>
+            </header>
 
-        {/* Profile Hero & Decorative Banner */}
-        <ProfileHeader
-          profile={profile}
-          activeTab={activeTab}
-          onTabChange={onTabChange}
-          onContactClick={scrollToContact}
-        />
+            <div className="px-6 py-8 lg:px-8">
+              <p className="text-base text-ink-2 mb-8 leading-relaxed">
+                Products I&apos;ve designed, built and shipped, plus the open source work behind them.
+              </p>
 
-        {/* Tab Content */}
-        <div className="px-6 py-10 lg:px-8">
-          {activeTab === 'resume' ? (
-            <>
-              {/* About Section */}
-              <AboutSection />
-
-              {/* Experience Section */}
-              <ExperienceSection />
-
-              {/* Skills and Tools Section */}
-              <SkillsSection />
-
-              {/* Contact Section */}
-              <ContactSection />
-            </>
-          ) : (
-            <>
-              {/* Work / Projects Tab */}
+              {/* Visual 2-Column Projects Grid */}
               <ProjectsSection />
 
-              {/* Contact Section */}
-              <ContactSection />
-            </>
-          )}
-
-          {/* Center Column Footer (Social icons + Copyright) */}
-          <footer className="mt-16 pt-8 border-t border-line flex flex-col items-center gap-4 text-center">
-            <div className="flex items-center gap-4 text-ink-3">
-              <a
-                href="https://github.com/0xZahidp"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="GitHub"
-                className="hover:text-ink transition-colors"
-              >
-                <GitHubIcon className="size-4" />
-              </a>
-              <a
-                href="https://x.com/0xZahidP"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="X"
-                className="hover:text-ink transition-colors"
-              >
-                <XIcon className="size-4" />
-              </a>
-              <a
-                href="https://linkedin.com/in/0xZahidp"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="LinkedIn"
-                className="hover:text-ink transition-colors"
-              >
-                <LinkedInIcon className="size-4" />
-              </a>
-              <a
-                href="https://facebook.com/0xZahidp"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
-                className="hover:text-ink transition-colors"
-              >
-                <FacebookIcon className="size-4" />
-              </a>
+              {/* Center Column Footer */}
+              <footer className="mt-20 pt-8 pb-4 border-t border-line flex flex-col items-center gap-4 text-center">
+                <div className="flex items-center gap-4 text-ink-3">
+                  <a
+                    href="https://github.com/0xZahidp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="GitHub"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <GitHubIcon className="size-4" />
+                  </a>
+                  <a
+                    href="https://x.com/0xZahidP"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="X"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <XIcon className="size-4" />
+                  </a>
+                  <a
+                    href="https://linkedin.com/in/0xZahidp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="LinkedIn"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <LinkedInIcon className="size-4" />
+                  </a>
+                  <a
+                    href="https://producthunt.com/@0xzahidp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Product Hunt"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <ProductHuntIcon className="size-4" />
+                  </a>
+                  <a
+                    href="https://facebook.com/0xZahidp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Facebook"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <FacebookIcon className="size-4" />
+                  </a>
+                  <a
+                    href="https://dev.to/0xzahidp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="DEV"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <DevToIcon className="size-4" />
+                  </a>
+                  <a
+                    href="https://behance.net/0xzahidp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Behance"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <BehanceIcon className="size-4" />
+                  </a>
+                </div>
+              </footer>
             </div>
-            <p className="text-xs text-ink-3">© 2026 Md Zahid Hasan Patwary (Zahid)</p>
-          </footer>
-        </div>
+          </div>
+        ) : (
+          <div>
+            {/* Sticky Desktop Header Bar - Direct Child of <main>, stays sticky throughout all scroll positions */}
+            <DesktopStickyHeader
+              profile={profile}
+              onContactClick={scrollToContact}
+              onShareClick={() => setIsShareOpen(true)}
+            />
+
+            {/* Profile Hero & Decorative Banner */}
+            <ProfileHeader
+              profile={profile}
+              activeTab={activeTab}
+              onTabChange={onTabChange}
+              onContactClick={scrollToContact}
+            />
+
+            {/* Tab Content */}
+            <div className="px-6 py-10 lg:px-8">
+              {activeTab === 'resume' ? (
+                <>
+                  {/* About Section */}
+                  <AboutSection />
+
+                  {/* Experience Section */}
+                  <ExperienceSection />
+
+                  {/* Skills and Tools Section */}
+                  <SkillsSection />
+
+                  {/* Contact Section */}
+                  <ContactSection />
+                </>
+              ) : (
+                <>
+                  {/* Work / Projects Tab */}
+                  <ProjectsSection />
+
+                  {/* Contact Section */}
+                  <ContactSection />
+                </>
+              )}
+
+              {/* Center Column Footer (7 Social icons) */}
+              <footer className="mt-16 pt-8 pb-4 border-t border-line flex flex-col items-center gap-4 text-center">
+                <div className="flex items-center gap-4 text-ink-3">
+                  <a
+                    href="https://github.com/0xZahidp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="GitHub"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <GitHubIcon className="size-4" />
+                  </a>
+                  <a
+                    href="https://x.com/0xZahidP"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="X"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <XIcon className="size-4" />
+                  </a>
+                  <a
+                    href="https://linkedin.com/in/0xZahidp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="LinkedIn"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <LinkedInIcon className="size-4" />
+                  </a>
+                  <a
+                    href="https://producthunt.com/@0xzahidp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Product Hunt"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <ProductHuntIcon className="size-4" />
+                  </a>
+                  <a
+                    href="https://facebook.com/0xZahidp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Facebook"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <FacebookIcon className="size-4" />
+                  </a>
+                  <a
+                    href="https://dev.to/0xzahidp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="DEV"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <DevToIcon className="size-4" />
+                  </a>
+                  <a
+                    href="https://behance.net/0xzahidp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Behance"
+                    className="hover:text-ink transition-colors"
+                  >
+                    <BehanceIcon className="size-4" />
+                  </a>
+                </div>
+              </footer>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* 3. Right Column (Sticky Follow & Socials Sidebar) */}

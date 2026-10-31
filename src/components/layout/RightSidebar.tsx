@@ -46,25 +46,26 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ onContactClick }) =>
 
   return (
     <aside className="sticky top-0 hidden min-h-dvh w-[400px] xl:w-[400px] shrink-0 self-start border-r border-line lg:block bg-background">
-      {/* Top Header Bar with Follow Button - 44px height, 14px radius, obsidian finish */}
+      {/* Top Header Bar with Follow Button - Tactile obsidian capsule finish */}
       <div className="sticky top-0 z-10 flex h-[70px] items-center justify-end px-6 border-b border-line bg-surface/85 backdrop-blur-md">
-        <Button
-          variant="dark"
-          size="sm"
-          onClick={() => {
-            setIsFollowingMain(!isFollowingMain);
-            window.open('https://x.com/0xZahidP', '_blank', 'noopener,noreferrer');
-          }}
-          className="rounded-[14px] h-10 px-5 text-sm"
-          title="Follow @0xZahidP on X"
-        >
-          <XIcon className="size-4 text-white" />
-          <span>{isFollowingMain ? 'Following' : 'Follow'}</span>
-        </Button>
+        <div className="tactile-button-wrap dark">
+          <button
+            type="button"
+            onClick={() => {
+              setIsFollowingMain(!isFollowingMain);
+              window.open('https://x.com/0xZahidP', '_blank', 'noopener,noreferrer');
+            }}
+            className="tactile-button dark px-5 py-2 text-sm"
+            title="Follow @0xZahidP on X"
+          >
+            <XIcon className="size-3.5 fill-current text-white" />
+            <span>{isFollowingMain ? 'Following' : 'Follow'}</span>
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-6 p-6 overflow-y-auto [scrollbar-width:none]">
-        {/* 1. Open to Conversations Card (Separate component with strictly clipped internal top-right glow) */}
+        {/* 1. Open to Conversations Card (Separate component with strictly clipped internal top-right glow & ambient hover halo) */}
         <div className="card-conversations p-6">
           {/* Status Chip */}
           <div className="flex items-center gap-2">
@@ -82,16 +83,17 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ onContactClick }) =>
             Software engineer and agentic builder. Always happy to talk products, collaborations and consultations.
           </p>
 
-          {/* Let's talk primary green button */}
+          {/* Let's talk tactile glossy button */}
           <div className="mt-5">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={onContactClick}
-              className="rounded-[14px] h-9 px-5 text-sm"
-            >
-              Let’s talk
-            </Button>
+            <div className="tactile-button-wrap">
+              <button
+                type="button"
+                onClick={onContactClick}
+                className="tactile-button"
+              >
+                Let&apos;s talk
+              </button>
+            </div>
           </div>
         </div>
 

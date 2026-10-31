@@ -64,6 +64,9 @@ export interface Project {
   repository_url?: string;
   tags?: string[];
   created_at?: string;
+  stars?: number;
+  highlightBadge?: string;
+  logoType?: 'bidvers' | 'laravel' | 'invo' | 'prompt' | 'mytapcard' | 'gymscanner';
 }
 
 export interface SocialLink {

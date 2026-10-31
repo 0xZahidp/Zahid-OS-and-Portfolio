@@ -98,57 +98,53 @@ export const AboutSection: React.FC = () => {
       </div>
 
       {/* Quick Facts Grid */}
-      <div className="mt-6">
-        <div className="grid gap-3 sm:grid-cols-2">
-          {/* Based In Card with Glowing Clock */}
-          <div className="halo relative rounded-3xl p-5 border border-line bg-surface">
-            <div className="halo-glow" aria-hidden="true" />
-            <div className="relative z-10">
-              <p className="flex items-center gap-2 text-meta font-medium text-ink-2">
-                <MapPin className="size-4 text-link" />
-                <span>Based in</span>
-              </p>
-              <p className="mt-1 text-lead font-semibold text-ink">
-                Dhaka, Bangladesh
-              </p>
+      <div className="mt-8">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Based In Card with Soft Mint Gradient */}
+          <div className="rounded-[24px] p-6 bg-gradient-to-br from-emerald-100/70 via-emerald-50/40 to-teal-50/30 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-emerald-900/10 border border-emerald-500/20 shadow-xs relative overflow-hidden">
+            <p className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+              <MapPin className="size-4" />
+              <span>Based in</span>
+            </p>
+            <p className="mt-1 text-lg font-bold text-ink">
+              Dhaka, Bangladesh
+            </p>
 
-              <div className="mt-5 flex items-end gap-2">
-                <span className="text-[2.25rem] leading-none font-bold tracking-tight tabular-nums text-ink">
-                  {currentTime}
-                </span>
-                <span className="pb-1 text-meta font-medium text-ink-2">
-                  GMT+6
-                </span>
-              </div>
-
-              <p className="mt-2 inline-flex items-center gap-1.5 text-meta text-ink-2">
-                {isDay ? (
-                  <>
-                    <Sun className="size-4 text-amber-500" />
-                    <span>Daytime in Dhaka</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="size-4 text-indigo-400" />
-                    <span>Evening in Dhaka</span>
-                  </>
-                )}
-              </p>
+            <div className="mt-5 flex items-baseline gap-2">
+              <span className="text-[2.5rem] leading-none font-extrabold tracking-tight tabular-nums text-ink">
+                {currentTime}
+              </span>
+              <span className="text-xs font-semibold text-ink-3">
+                GMT+6
+              </span>
             </div>
+
+            <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-ink-2">
+              {isDay ? (
+                <>
+                  <Sun className="size-3.5 text-amber-500" />
+                  <span>Daytime in Dhaka</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="size-3.5 text-indigo-400" />
+                  <span>Evening in Dhaka</span>
+                </>
+              )}
+            </p>
           </div>
 
           {/* Works Remote-First Card */}
-          <div className="card-raised p-5">
-            <p className="flex items-center gap-2 text-meta font-medium text-ink-2">
-              <Globe className="size-4 text-link" />
+          <div className="rounded-[24px] p-6 bg-surface border border-line shadow-xs">
+            <p className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+              <Globe className="size-4" />
               <span>Works</span>
             </p>
-            <p className="mt-1 text-lead font-semibold text-ink">Remote-first</p>
-            <p className="mt-1 text-meta text-ink-2">
-              Comfortable working with teams in any time zone, from the Americas
-              to Europe to Asia-Pacific.
+            <p className="mt-1 text-lg font-bold text-ink">Remote-first</p>
+            <p className="mt-1 text-sm text-ink-2 leading-relaxed">
+              Comfortable working with teams in any time zone, from the Americas to Europe to Asia-Pacific.
             </p>
-            <ul className="mt-4 flex flex-wrap gap-1.5">
+            <ul className="mt-4 flex flex-wrap gap-2">
               {[
                 'Remote',
                 'Async-friendly',
@@ -158,9 +154,9 @@ export const AboutSection: React.FC = () => {
               ].map((item) => (
                 <li
                   key={item}
-                  className="inline-flex items-center gap-1 rounded-md bg-surface-2 px-2 py-0.5 text-meta text-ink-2 ring-1 ring-line"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-surface-2 px-2.5 py-1 text-xs font-medium text-ink-2 border border-line"
                 >
-                  <Check className="size-3.5 text-link" />
+                  <Check className="size-3.5 text-emerald-500" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -168,17 +164,17 @@ export const AboutSection: React.FC = () => {
           </div>
 
           {/* Languages Card (Spans across 2 columns) */}
-          <div className="card-raised p-5 sm:col-span-2">
-            <p className="flex items-center gap-2 text-meta font-medium text-ink-2">
-              <Globe className="size-4 text-link" />
+          <div className="rounded-[24px] p-6 bg-surface border border-line shadow-xs sm:col-span-2">
+            <p className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+              <Globe className="size-4" />
               <span>Languages</span>
             </p>
 
-            <ul className="mt-4 grid gap-5 sm:grid-cols-3">
+            <ul className="mt-5 grid gap-6 sm:grid-cols-3">
               {languagesData.map((lang) => (
                 <li key={lang.name} className="relative group">
                   <div className="flex h-7 items-center gap-2">
-                    <span className="text-body font-semibold text-ink">
+                    <span className="text-base font-semibold text-ink">
                       {lang.name}
                     </span>
                     <div className="relative inline-flex items-center">
@@ -187,13 +183,13 @@ export const AboutSection: React.FC = () => {
                         onMouseEnter={() => setTooltipLang(lang.name)}
                         onMouseLeave={() => setTooltipLang(null)}
                         aria-label={`${lang.name} voice note coming soon`}
-                        className="btn btn-secondary grid size-6 place-items-center rounded-full cursor-pointer hover:bg-surface"
+                        className="btn-secondary grid size-6 place-items-center rounded-full cursor-pointer hover:bg-surface-2"
                       >
                         <Volume2 className="size-3.5 text-ink-3" />
                       </button>
 
                       {tooltipLang === lang.name && (
-                        <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded-md bg-ink px-2 py-0.5 text-micro font-medium whitespace-nowrap text-surface shadow-md">
+                        <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded-md bg-ink px-2 py-0.5 text-[10px] font-medium whitespace-nowrap text-surface shadow-md">
                           Recording soon
                         </span>
                       )}
@@ -202,7 +198,7 @@ export const AboutSection: React.FC = () => {
 
                   {/* 5-bar rating meter */}
                   <div
-                    className="mt-2 flex gap-1"
+                    className="mt-2.5 flex gap-1.5"
                     role="meter"
                     aria-valuemin={0}
                     aria-valuemax={5}
@@ -213,16 +209,19 @@ export const AboutSection: React.FC = () => {
                         key={idx}
                         className={`h-1.5 flex-1 rounded-full ${
                           idx <= lang.rating
-                            ? 'bg-gradient-to-r from-brand-400 to-brand-600'
-                            : 'bg-line'
+                            ? 'bg-emerald-500'
+                            : 'bg-zinc-200 dark:bg-zinc-800'
                         }`}
                       />
                     ))}
                   </div>
 
-                  <span className="badge mt-3">{lang.proficiency}</span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-2 text-xs font-medium text-ink-2 mt-3.5 border border-line">
+                    <span className="size-1.5 rounded-full bg-emerald-500" />
+                    <span>{lang.proficiency}</span>
+                  </span>
                   {lang.note && (
-                    <p className="mt-2 text-meta text-ink-3">{lang.note}</p>
+                    <p className="mt-2 text-xs text-ink-3">{lang.note}</p>
                   )}
                 </li>
               ))}

@@ -75,26 +75,25 @@ export const ExperienceSection: React.FC = () => {
 
                 {/* Stat Highlights (Bidvers) */}
                 {exp.highlights && (
-                  <div className="halo relative rounded-3xl mt-3.5 border border-line bg-surface p-4 sm:p-5">
-                    <div className="halo-glow" aria-hidden="true" />
-                    <dl className="relative z-10 grid gap-x-5 gap-y-4 grid-cols-2 sm:grid-cols-3">
+                  <div className="relative rounded-[24px] mt-4 border border-emerald-500/20 bg-gradient-to-br from-emerald-100/50 via-teal-50/30 to-emerald-50/20 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-emerald-900/10 p-5 shadow-xs">
+                    <dl className="grid gap-x-5 gap-y-4 grid-cols-2 sm:grid-cols-3">
                       {exp.highlights.map((h, i) => (
                         <div
                           key={h.label}
-                          className={`flex flex-col-reverse justify-end gap-0.5 ${
+                          className={`flex flex-col-reverse justify-end gap-1 ${
                             i > 0 ? 'sm:border-l sm:border-line sm:pl-5' : ''
                           } ${i === 0 ? 'col-span-2 sm:col-span-1' : ''}`}
                         >
-                          <dt className="text-meta text-ink-3">{h.label}</dt>
+                          <dt className="text-xs text-ink-3 mt-1">{h.label}</dt>
                           <dd className="flex flex-col items-start gap-2">
-                            <span className="btn btn-secondary grid size-9 place-items-center rounded-xl">
-                              {h.icon === 'rocket' && <Rocket className="size-4.5 text-link" />}
-                              {h.icon === 'code' && <Code className="size-4.5 text-link" />}
-                              {h.icon === 'mobile' && <Smartphone className="size-4.5 text-link" />}
+                            <span className="size-8 rounded-lg bg-white dark:bg-zinc-800 shadow-xs border border-line grid place-items-center">
+                              {h.icon === 'rocket' && <Rocket className="size-4 text-emerald-600 dark:text-emerald-400" />}
+                              {h.icon === 'code' && <Code className="size-4 text-emerald-600 dark:text-emerald-400" />}
+                              {h.icon === 'mobile' && <Smartphone className="size-4 text-emerald-600 dark:text-emerald-400" />}
                             </span>
                             <span
                               className={`font-bold tracking-tight whitespace-nowrap tabular-nums ${
-                                i === 0 ? 'text-title text-link' : 'text-lead text-ink'
+                                i === 0 ? 'text-xl text-emerald-600 dark:text-emerald-400' : 'text-base text-ink'
                               }`}
                             >
                               {h.value}

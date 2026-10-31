@@ -35,12 +35,21 @@ export const ContextMenu: React.FC = () => {
 
   // Sync theme and sound state
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsDarkMode(!document.documentElement.classList.contains('light'));
-      const soundState = localStorage.getItem('folioframe-sound');
-      setIsSoundMuted(soundState !== 'on');
-      setCanGoBack(window.history.length > 1);
-    }
+    const syncThemeAndSound = () => {
+      if (typeof window !== 'undefined') {
+        const isDark = document.documentElement.classList.contains('dark') ||
+          (!document.documentElement.classList.contains('light') &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+        setIsDarkMode(isDark);
+        const soundState = localStorage.getItem('folioframe-sound');
+        setIsSoundMuted(soundState !== 'on');
+        setCanGoBack(window.history.length > 1);
+      }
+    };
+
+    syncThemeAndSound();
+    window.addEventListener('folioframe-theme-change', syncThemeAndSound);
+    return () => window.removeEventListener('folioframe-theme-change', syncThemeAndSound);
   }, [isOpen]);
 
   const closeMenu = useCallback(() => {
@@ -182,9 +191,9 @@ export const ContextMenu: React.FC = () => {
         top: `${position.y}px`,
         transformOrigin,
       }}
-      className="fixed z-[100] w-64 rounded-2xl shadow-2xl transition-[opacity,transform] duration-150 ease-out outline-none animate-in fade-in zoom-in-95"
+      className="fixed z-[100] w-[270px] select-none rounded-[22px] transition-[opacity,transform] duration-150 ease-out outline-none animate-in fade-in zoom-in-95"
     >
-      <div className="p-1.5 rounded-2xl border border-line bg-surface/95 backdrop-blur-xl shadow-2xl text-ink">
+      <div className="p-2 rounded-[22px] border border-zinc-200/80 dark:border-zinc-800 bg-white/95 dark:bg-[#151518]/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-ink">
         {/* 1. Top Row: Back, Forward, Reload, Copy Link */}
         <div className="grid grid-cols-4 gap-1" role="group" aria-label="Navigation">
           <button
@@ -195,7 +204,7 @@ export const ContextMenu: React.FC = () => {
               window.history.back();
               closeMenu();
             }}
-            className="group/item flex flex-col items-center gap-1 rounded-xl py-2 text-micro font-medium text-ink-2 outline-none transition-colors hover:bg-brand-500/10 hover:text-ink disabled:pointer-events-none disabled:opacity-35 cursor-pointer"
+            className="group/item flex flex-col items-center gap-1.5 rounded-xl py-2 text-[11px] font-medium text-zinc-700 dark:text-zinc-300 outline-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/80 disabled:pointer-events-none disabled:opacity-35 cursor-pointer"
           >
             <TablerArrowLeft className="size-5 transition-colors group-hover/item:text-brand-500" />
             <span>Back</span>
@@ -208,7 +217,7 @@ export const ContextMenu: React.FC = () => {
               window.history.forward();
               closeMenu();
             }}
-            className="group/item flex flex-col items-center gap-1 rounded-xl py-2 text-micro font-medium text-ink-2 outline-none transition-colors hover:bg-brand-500/10 hover:text-ink cursor-pointer"
+            className="group/item flex flex-col items-center gap-1.5 rounded-xl py-2 text-[11px] font-medium text-zinc-700 dark:text-zinc-300 outline-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/80 cursor-pointer"
           >
             <TablerArrowRight className="size-5 transition-colors group-hover/item:text-brand-500" />
             <span>Forward</span>
@@ -221,7 +230,7 @@ export const ContextMenu: React.FC = () => {
               window.location.reload();
               closeMenu();
             }}
-            className="group/item flex flex-col items-center gap-1 rounded-xl py-2 text-micro font-medium text-ink-2 outline-none transition-colors hover:bg-brand-500/10 hover:text-ink cursor-pointer"
+            className="group/item flex flex-col items-center gap-1.5 rounded-xl py-2 text-[11px] font-medium text-zinc-700 dark:text-zinc-300 outline-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/80 cursor-pointer"
           >
             <TablerReload className="size-5 transition-colors group-hover/item:text-brand-500" />
             <span>Reload</span>
@@ -231,10 +240,10 @@ export const ContextMenu: React.FC = () => {
             type="button"
             role="menuitem"
             onClick={() => handleCopy(window.location.href, 'page')}
-            className="group/item flex flex-col items-center gap-1 rounded-xl py-2 text-micro font-medium text-ink-2 outline-none transition-colors hover:bg-brand-500/10 hover:text-ink cursor-pointer"
+            className="group/item flex flex-col items-center gap-1.5 rounded-xl py-2 text-[11px] font-medium text-zinc-700 dark:text-zinc-300 outline-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/80 cursor-pointer"
           >
             {copiedType === 'page' ? (
-              <Check className="size-5 text-brand-500" />
+              <Check className="size-5 text-emerald-500" />
             ) : (
               <TablerLink className="size-5 transition-colors group-hover/item:text-brand-500" />
             )}
@@ -245,17 +254,17 @@ export const ContextMenu: React.FC = () => {
         {/* Dynamic Selection Item */}
         {targetData.selection && (
           <>
-            <div className="my-1.5 h-px bg-line" role="separator" />
+            <div className="my-1.5 h-px bg-zinc-200/70 dark:bg-zinc-800/80" role="separator" />
             <button
               type="button"
               role="menuitem"
               onClick={() => handleCopy(targetData.selection || '', 'selection')}
-              className="group/item flex h-10 w-full cursor-pointer items-center gap-3 rounded-xl px-2 text-left text-body font-medium text-ink outline-none transition-colors hover:bg-brand-500/10"
+              className="group/item flex h-10 w-full cursor-pointer items-center gap-3 rounded-xl px-2 text-left text-sm font-medium text-ink outline-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
             >
               <span className="flex-1 truncate">
                 {copiedType === 'selection' ? 'Copied!' : 'Copy selection'}
               </span>
-              <kbd className="text-micro text-ink-3">Ctrl+C</kbd>
+              <kbd className="text-[11px] text-ink-3">Ctrl+C</kbd>
             </button>
             <button
               type="button"
@@ -268,7 +277,7 @@ export const ContextMenu: React.FC = () => {
                 );
                 closeMenu();
               }}
-              className="group/item flex h-10 w-full cursor-pointer items-center gap-3 rounded-xl px-2 text-left text-body font-medium text-ink outline-none transition-colors hover:bg-brand-500/10"
+              className="group/item flex h-10 w-full cursor-pointer items-center gap-3 rounded-xl px-2 text-left text-sm font-medium text-ink outline-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
             >
               <span className="flex-1 truncate">
                 Search &ldquo;{targetData.selection.slice(0, 16)}&hellip;&rdquo;
@@ -280,7 +289,7 @@ export const ContextMenu: React.FC = () => {
         {/* Dynamic Link Item */}
         {targetData.link && (
           <>
-            <div className="my-1.5 h-px bg-line" role="separator" />
+            <div className="my-1.5 h-px bg-zinc-200/70 dark:bg-zinc-800/80" role="separator" />
             <button
               type="button"
               role="menuitem"
@@ -288,7 +297,7 @@ export const ContextMenu: React.FC = () => {
                 window.open(targetData.link, '_blank', 'noopener');
                 closeMenu();
               }}
-              className="group/item flex h-10 w-full cursor-pointer items-center gap-3 rounded-xl px-2 text-left text-body font-medium text-ink outline-none transition-colors hover:bg-brand-500/10"
+              className="group/item flex h-10 w-full cursor-pointer items-center gap-3 rounded-xl px-2 text-left text-sm font-medium text-ink outline-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
             >
               <span className="flex-1 truncate">Open link in new tab</span>
             </button>
@@ -296,7 +305,7 @@ export const ContextMenu: React.FC = () => {
               type="button"
               role="menuitem"
               onClick={() => handleCopy(targetData.link || '', 'link')}
-              className="group/item flex h-10 w-full cursor-pointer items-center gap-3 rounded-xl px-2 text-left text-body font-medium text-ink outline-none transition-colors hover:bg-brand-500/10"
+              className="group/item flex h-10 w-full cursor-pointer items-center gap-3 rounded-xl px-2 text-left text-sm font-medium text-ink outline-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
             >
               <span className="flex-1 truncate">
                 {copiedType === 'link' ? 'Copied link address!' : 'Copy link address'}
@@ -305,20 +314,20 @@ export const ContextMenu: React.FC = () => {
           </>
         )}
 
-        <div className="my-1.5 h-px bg-line" role="separator" />
+        <div className="my-1.5 h-px bg-zinc-200/70 dark:bg-zinc-800/80" role="separator" />
 
         {/* 2. Theme Toggle Row */}
         <button
           type="button"
           role="menuitem"
           onClick={toggleTheme}
-          className="group/item flex h-10 w-full cursor-pointer items-center gap-3 rounded-xl px-1.5 text-left text-body font-medium text-ink outline-none transition-colors hover:bg-brand-500/10"
+          className="group/item flex h-11 w-full cursor-pointer items-center gap-3.5 rounded-xl px-2 text-left text-[15px] font-medium text-zinc-800 dark:text-zinc-200 outline-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
         >
-          <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-surface-2 text-ink-2 ring-1 ring-line transition-colors group-hover/item:bg-brand-600 group-hover/item:text-white group-hover/item:ring-brand-600">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300 transition-colors">
             {isDarkMode ? (
-              <TablerSun className="size-4" />
+              <TablerSun className="size-4.5" />
             ) : (
-              <TablerMoon className="size-4" />
+              <TablerMoon className="size-4.5" />
             )}
           </span>
           <span>{isDarkMode ? 'Light mode' : 'Dark mode'}</span>
@@ -329,34 +338,34 @@ export const ContextMenu: React.FC = () => {
           type="button"
           role="menuitem"
           onClick={toggleSound}
-          className="group/item flex h-10 w-full cursor-pointer items-center gap-3 rounded-xl px-1.5 text-left text-body font-medium text-ink outline-none transition-colors hover:bg-brand-500/10"
+          className="group/item flex h-11 w-full cursor-pointer items-center gap-3.5 rounded-xl px-2 text-left text-[15px] font-medium text-zinc-800 dark:text-zinc-200 outline-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
         >
-          <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-surface-2 text-ink-2 ring-1 ring-line transition-colors group-hover/item:bg-brand-600 group-hover/item:text-white group-hover/item:ring-brand-600">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300 transition-colors">
             {isSoundMuted ? (
-              <TablerVolumeOff className="size-4" />
+              <TablerVolumeOff className="size-4.5" />
             ) : (
-              <TablerVolume className="size-4" />
+              <TablerVolume className="size-4.5" />
             )}
           </span>
-          <span>{isSoundMuted ? 'Turn sounds on' : 'Mute sounds'}</span>
+          <span>{isSoundMuted ? 'Turn sounds on' : 'Turn sounds off'}</span>
         </button>
 
-        <div className="my-1.5 h-px bg-line" role="separator" />
+        <div className="my-1.5 h-px bg-zinc-200/70 dark:bg-zinc-800/80" role="separator" />
 
         {/* 4. Get In Touch Row */}
         <button
           type="button"
           role="menuitem"
           onClick={scrollToContact}
-          className="group/item flex h-10 w-full cursor-pointer items-center gap-3 rounded-xl px-1.5 text-left text-body font-medium outline-none transition-colors hover:bg-brand-500/10"
+          className="group/item flex h-11 w-full cursor-pointer items-center gap-3.5 rounded-xl px-2 text-left text-[15px] font-semibold outline-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
         >
-          <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-surface-2 text-emerald-600 ring-1 ring-line transition-colors group-hover/item:bg-brand-600 group-hover/item:text-white group-hover/item:ring-brand-600">
-            <TablerMessageCircle className="size-4" />
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-emerald-600 dark:text-emerald-400 transition-colors">
+            <TablerMessageCircle className="size-4.5" />
           </span>
-          <span className="flex-1 font-semibold text-emerald-600 dark:text-emerald-400">
+          <span className="flex-1 text-emerald-600 dark:text-emerald-400">
             Get in touch
           </span>
-          <span className="pr-1 text-emerald-600 dark:text-emerald-400 font-bold transition-transform group-hover/item:translate-x-0.5">
+          <span className="pr-2 text-emerald-600 dark:text-emerald-400 font-bold transition-transform group-hover/item:translate-x-0.5">
             →
           </span>
         </button>

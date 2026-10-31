@@ -36,8 +36,12 @@ export const SkillsSection: React.FC = () => {
         </div>
         <ul className="flex flex-wrap gap-2.5">
           {topSkillsData.map((skill) => (
-            <li key={skill} className="badge">
-              {skill}
+            <li
+              key={skill}
+              className="inline-flex items-center gap-2 rounded-full bg-surface-2 px-3.5 py-1.5 text-sm font-medium text-ink border border-line"
+            >
+              <span className="size-1.5 rounded-full bg-emerald-500" />
+              <span>{skill}</span>
             </li>
           ))}
         </ul>
@@ -162,9 +166,9 @@ export const SkillsSection: React.FC = () => {
         </div>
 
         {/* PDF Resume Note Card */}
-        <div className="mt-8 rounded-xl border border-line bg-surface/50 p-4 text-center text-sm text-ink-2">
+        <div className="mt-8 rounded-2xl border border-line bg-surface-2/40 p-4 text-center text-sm text-ink-2">
           <p className="flex items-center justify-center gap-2">
-            <Download className="size-4 text-link" />
+            <Download className="size-4 text-emerald-600 dark:text-emerald-400" />
             <span>
               PDF résumé coming later. Then again, after seeing this site, do you really need one?
             </span>

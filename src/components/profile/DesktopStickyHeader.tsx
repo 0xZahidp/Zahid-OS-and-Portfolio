@@ -46,19 +46,21 @@ export const DesktopStickyHeader: React.FC<DesktopStickyHeaderProps> = ({
         size="icon"
         onClick={onShareClick}
         aria-label="Share profile"
-        className="rounded-[14px]"
+        className="rounded-[14px] size-11"
       >
         <TablerShare className="size-5" />
       </Button>
 
-      {/* "Get in touch" Button - 44px, primary green gradient, 14px radius */}
-      <Button
-        variant="primary"
-        onClick={onContactClick}
-        className="rounded-[14px] h-11 px-5.5 font-semibold text-sm"
-      >
-        Get in touch
-      </Button>
+      {/* "Get in touch" Button - Tactile 3D Capsule inside soft translucent halo */}
+      <div className="tactile-button-wrap">
+        <button
+          type="button"
+          onClick={onContactClick}
+          className="tactile-button"
+        >
+          Get in touch
+        </button>
+      </div>
     </header>
   );
 };
