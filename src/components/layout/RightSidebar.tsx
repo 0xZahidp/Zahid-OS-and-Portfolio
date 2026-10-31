@@ -48,7 +48,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   };
 
   return (
-    <aside className="sticky top-0 hidden min-h-dvh w-[22.5rem] shrink-0 self-start border-r border-line lg:block bg-surface">
+    <aside className="sticky top-0 hidden min-h-dvh w-80 shrink-0 self-start border-line lg:block xl:w-[22.5rem] xl:border-r bg-surface">
       {/* Top Header Bar with Follow Button - Aligned with desktop main header at h-[4.375rem] */}
       <div className="sticky top-0 z-10 flex h-[4.375rem] items-center justify-end px-6 border-b border-line bg-surface/85 backdrop-blur-md">
         <button

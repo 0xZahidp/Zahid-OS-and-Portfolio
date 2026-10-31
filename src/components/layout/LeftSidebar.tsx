@@ -28,13 +28,13 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       className={`sticky top-0 hidden h-dvh shrink-0 flex-col transition-[width] duration-200 md:flex border-r border-line bg-surface ${
         isCollapsed
           ? 'w-[4.75rem] items-center px-3 pb-5'
-          : 'w-[16.25rem] items-stretch px-4 pb-5'
+          : 'w-[4.75rem] items-center px-3 pb-5 xl:w-[16.25rem] xl:items-stretch xl:px-4'
       }`}
     >
       {/* Brand Logo & Name */}
       <div
         className={`flex h-[4.375rem] shrink-0 items-center ${
-          isCollapsed ? 'justify-center' : 'justify-start px-2'
+          isCollapsed ? 'justify-center' : 'justify-center xl:justify-start xl:px-2'
         }`}
       >
         <Link
@@ -49,7 +49,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </span>
 
           {!isCollapsed && (
-            <span className="text-xl font-bold tracking-tight text-ink">
+            <span className="hidden text-xl font-bold tracking-tight text-ink xl:inline-flex">
               zahid<span className="text-ink-3 transition-colors group-hover:text-link">.dev</span>
             </span>
           )}
@@ -66,12 +66,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       {/* Bottom Controls - Three circular buttons & copyright */}
       <div
         className={`mt-4 flex shrink-0 flex-col gap-3 ${
-          isCollapsed ? 'items-center' : 'items-start px-2'
+          isCollapsed ? 'items-center' : 'items-center xl:items-start xl:px-2'
         }`}
       >
         <div
           className={`flex gap-2.5 ${
-            isCollapsed ? 'flex-col' : 'flex-row items-center'
+            isCollapsed ? 'flex-col' : 'flex-col xl:flex-row xl:items-center'
           }`}
         >
           {/* Theme Toggle */}
@@ -90,14 +90,17 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             {isCollapsed ? (
               <TablerSidebarLeftExpand className="size-4.5 text-ink-2" />
             ) : (
-              <TablerSidebarLeftCollapse className="size-4.5 text-ink-2" />
+              <>
+                <TablerSidebarLeftExpand className="size-4.5 text-ink-2 xl:hidden" />
+                <TablerSidebarLeftCollapse className="size-4.5 text-ink-2 hidden xl:block" />
+              </>
             )}
           </button>
         </div>
 
         {/* Copyright */}
         {!isCollapsed && (
-          <p className="text-micro text-ink-3">
+          <p className="hidden text-micro text-ink-3 xl:block">
             © {new Date().getFullYear()} Md Zahid Hasan
           </p>
         )}
