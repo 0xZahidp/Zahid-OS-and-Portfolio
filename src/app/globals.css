@@ -1,24 +1,234 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg-base: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+
+  --color-brand-400: #34d399;
+  --color-brand-500: #10b981;
+  --color-brand-600: #059669;
+  --color-brand-700: #047857;
+  
+  --color-link: var(--link);
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Default: Dark Theme */
+  --background: #0d0d0f;
+  --surface: #171719;
+  --surface-2: #202024;
+  --surface-elevated: #26262b;
+  --line: #2b2b30;
+  --line-strong: #3f3f46;
+  
+  --ink: #f5f5f5;
+  --ink-2: #a1a1aa;
+  --ink-3: #71717a;
+  
+  --link: #10b981;
+  --ring: #10b981;
+
+  --cover-1: #10b981;
+  --cover-2: #059669;
+  --cover-3: #047857;
+  --cover-4: #064e3b;
+  --cover-5: #34d399;
+  --cover-6: #6ee7b7;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root.light {
+  /* Light Theme */
+  --background: #ffffff;
+  --surface: #f4f4f6;
+  --surface-2: #eaeaec;
+  --surface-elevated: #ffffff;
+  --line: #e4e4e7;
+  --line-strong: #d4d4d8;
+  
+  --ink: #18181b;
+  --ink-2: #52525b;
+  --ink-3: #71717a;
+  
+  --link: #059669;
+  --ring: #059669;
+
+  --cover-1: #a7f3d0;
+  --cover-2: #6ee7b7;
+  --cover-3: #34d399;
+  --cover-4: #10b981;
+  --cover-5: #d1fae5;
+  --cover-6: #059669;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--background);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base button styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: #10b981;
+  color: #000000;
+  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.25);
+}
+.btn-primary:hover {
+  background-color: #34d399;
+  box-shadow: 0 6px 20px 0 rgba(16, 185, 129, 0.35);
+}
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-secondary {
+  background-color: var(--surface-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.btn-secondary:hover {
+  background-color: var(--surface);
+  border-color: var(--line-strong);
+}
+.btn-secondary:active {
+  transform: scale(0.96);
+}
+
+/* Card styles */
+.card-raised {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.card-raised:hover {
+  border-color: var(--line-strong);
+}
+
+/* Halo interactive glow card */
+.halo {
+  position: relative;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background-color: var(--surface);
+}
+.halo-glow {
+  position: absolute;
+  pointer-events: none;
+  inset: -1px;
+  background: radial-gradient(350px circle at var(--mx, 50%) var(--my, 50%), rgba(16, 185, 129, 0.15), transparent 80%);
+  opacity: 1;
+  transition: opacity 0.3s;
+}
+
+.glass {
+  background: rgba(23, 23, 25, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+:root.light .glass {
+  background: rgba(255, 255, 255, 0.75);
+}
+
+/* Pill tags */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: var(--surface-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  transition: all 0.15s ease;
+}
+.pill:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: var(--surface-2);
+  color: var(--ink-2);
+  border: 1px solid var(--line);
+}
+
+/* Typography tokens */
+.text-title {
+  font-size: 1.375rem;
+  line-height: 1.75rem;
+}
+.text-lead {
+  font-size: 0.9375rem;
+  line-height: 1.375rem;
+}
+.text-body {
+  font-size: 0.84375rem;
+  line-height: 1.375rem;
+}
+.text-meta {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.text-micro {
+  font-size: 0.625rem;
+  line-height: 0.875rem;
+}
+
+/* Blob animations */
+@keyframes blob-float {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -20px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+}
+
+.cover-blob {
+  position: absolute;
+  width: 35%;
+  aspect-ratio: 1/1;
+  border-radius: 9999px;
+  background: var(--blob);
+  filter: blur(55px);
+  opacity: 0.4;
+  animation: blob-float var(--dur, 25s) ease-in-out infinite alternate;
+  animation-delay: var(--delay, 0s);
+  pointer-events: none;
 }

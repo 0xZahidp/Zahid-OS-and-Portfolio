@@ -1,0 +1,141 @@
+'use client';
+
+import React from 'react';
+import { Profile } from '@/types/profile';
+import { LeftSidebar } from './LeftSidebar';
+import { RightSidebar } from './RightSidebar';
+import { ProfileHeader } from '@/components/profile/ProfileHeader';
+import { AboutSection } from '@/components/sections/AboutSection';
+import { ExperienceSection } from '@/components/sections/ExperienceSection';
+import { SkillsSection } from '@/components/sections/SkillsSection';
+import { ProjectsSection } from '@/components/sections/ProjectsSection';
+import { ContactSection } from '@/components/sections/ContactSection';
+import {
+  GitHubIcon,
+  XIcon,
+  LinkedInIcon,
+  FacebookIcon,
+} from '@/components/ui/Icons';
+
+interface DesktopLayoutProps {
+  profile: Profile;
+  activeSection: string;
+  activeTab: 'resume' | 'work';
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+  onNavigate: (section: string) => void;
+  onTabChange: (tab: 'resume' | 'work') => void;
+}
+
+export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
+  profile,
+  activeSection,
+  activeTab,
+  isCollapsed,
+  onToggleCollapse,
+  onNavigate,
+  onTabChange,
+}) => {
+  const scrollToContact = () => {
+    const el = document.getElementById('contact');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <div className="mx-auto hidden min-h-dvh max-w-[1400px] md:flex">
+      {/* 1. Left Column (Sticky Sidebar) */}
+      <LeftSidebar
+        activeSection={activeSection}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={onToggleCollapse}
+        onNavigate={onNavigate}
+      />
+
+      {/* 2. Center Column (Scrollable Main Content) */}
+      <main className="min-w-0 flex-1 border-x border-line pb-16">
+        {/* Sticky Desktop Header & Profile Hero */}
+        <div id="top">
+          <ProfileHeader
+            profile={profile}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+            onContactClick={scrollToContact}
+          />
+        </div>
+
+        {/* Tab Content */}
+        <div className="px-6 py-10 lg:px-8">
+          {activeTab === 'resume' ? (
+            <>
+              {/* About Section */}
+              <AboutSection />
+
+              {/* Experience Section */}
+              <ExperienceSection />
+
+              {/* Skills and Tools Section */}
+              <SkillsSection />
+
+              {/* Contact Section */}
+              <ContactSection />
+            </>
+          ) : (
+            <>
+              {/* Work / Projects Tab */}
+              <ProjectsSection />
+
+              {/* Contact Section */}
+              <ContactSection />
+            </>
+          )}
+
+          {/* Center Column Footer (Social icons + Copyright) */}
+          <footer className="mt-16 pt-8 border-t border-line flex flex-col items-center gap-4 text-center">
+            <div className="flex items-center gap-4 text-ink-3">
+              <a
+                href="https://github.com/alnahian2003"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub"
+                className="hover:text-ink transition-colors"
+              >
+                <GitHubIcon className="size-4" />
+              </a>
+              <a
+                href="https://x.com/alnahian2003"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="X"
+                className="hover:text-ink transition-colors"
+              >
+                <XIcon className="size-4" />
+              </a>
+              <a
+                href="https://linkedin.com/in/alnahian2003"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn"
+                className="hover:text-ink transition-colors"
+              >
+                <LinkedInIcon className="size-4" />
+              </a>
+              <a
+                href="https://facebook.com/alnahian2003"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="hover:text-ink transition-colors"
+              >
+                <FacebookIcon className="size-4" />
+              </a>
+            </div>
+            <p className="text-xs text-ink-3">© 2026 Al Nahian</p>
+          </footer>
+        </div>
+      </main>
+
+      {/* 3. Right Column (Sticky Follow & Socials Sidebar) */}
+      <RightSidebar onContactClick={scrollToContact} />
+    </div>
+  );
+};
