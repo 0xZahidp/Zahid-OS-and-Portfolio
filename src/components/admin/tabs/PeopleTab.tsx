@@ -1,0 +1,172 @@
+'use client';
+
+import React from 'react';
+import Image from 'next/image';
+import { Users, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { usePortfolio } from '@/context/PortfolioContext';
+import { FollowerRecommendation } from '@/types/profile';
+
+export const PeopleTab: React.FC = () => {
+  const { content, updateSuggestedPeople } = usePortfolio();
+  const people = content.suggestedPeople;
+
+  const handleUpdate = (idx: number, patch: Partial<FollowerRecommendation>) => {
+    const updated = [...people];
+    updated[idx] = { ...updated[idx], ...patch };
+    updateSuggestedPeople(updated);
+  };
+
+  const handleAdd = () => {
+    const newPerson: FollowerRecommendation = {
+      id: `person-${Date.now()}`,
+      name: 'Person Name',
+      role: 'Creator & Developer',
+      avatar_url: '/images/avatar.webp',
+      url: 'https://x.com',
+      handle: 'username',
+    };
+    updateSuggestedPeople([...people, newPerson]);
+  };
+
+  const handleRemove = (idx: number) => {
+    updateSuggestedPeople(people.filter((_, i) => i !== idx));
+  };
+
+  const handleMove = (idx: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && idx === 0) return;
+    if (direction === 'down' && idx === people.length - 1) return;
+    const target = direction === 'up' ? idx - 1 : idx + 1;
+    const updated = [...people];
+    const temp = updated[idx];
+    updated[idx] = updated[target];
+    updated[target] = temp;
+    updateSuggestedPeople(updated);
+  };
+
+  return (
+    <div className="space-y-6 max-w-4xl">
+      <div className="card-raised rounded-2xl border border-line bg-surface p-6 shadow-xs space-y-6">
+        <div className="flex items-center justify-between pb-4 border-b border-line">
+          <div className="flex items-center gap-2.5">
+            <Users className="size-4.5 text-brand-500" />
+            <div>
+              <h2 className="text-sm font-bold text-ink">Who to Follow & Network</h2>
+              <p className="text-[11px] text-ink-3">
+                Recommended peers and creators displayed in the right sidebar.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleAdd}
+            className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
+          >
+            <Plus className="size-3.5" />
+            <span>Add Person</span>
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {people.map((person, idx) => (
+            <div
+              key={person.id || idx}
+              className="p-4 rounded-xl border border-line bg-surface-2/60 hover:bg-surface-2 transition-all space-y-3"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative size-9 rounded-full overflow-hidden bg-surface border border-line shrink-0">
+                    <Image
+                      src={person.avatar_url}
+                      alt={person.name}
+                      fill
+                      sizes="36px"
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-ink">{person.name}</h3>
+                    <p className="text-[11px] text-ink-3">
+                      @{person.handle} · {person.role}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handleMove(idx, 'up')}
+                    disabled={idx === 0}
+                    className="p-1.5 rounded-lg text-ink-3 hover:text-ink disabled:opacity-30"
+                    title="Move up"
+                  >
+                    <ChevronUp className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMove(idx, 'down')}
+                    disabled={idx === people.length - 1}
+                    className="p-1.5 rounded-lg text-ink-3 hover:text-ink disabled:opacity-30"
+                    title="Move down"
+                  >
+                    <ChevronDown className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(idx)}
+                    className="p-1.5 rounded-lg text-ink-3 hover:text-rose-500 transition-colors ml-1"
+                    title="Delete person"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-ink-3">Name</label>
+                  <input
+                    type="text"
+                    value={person.name}
+                    onChange={(e) => handleUpdate(idx, { name: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-1.5 text-xs text-ink focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-ink-3">Handle</label>
+                  <input
+                    type="text"
+                    value={person.handle}
+                    onChange={(e) => handleUpdate(idx, { handle: e.target.value })}
+                    placeholder="username"
+                    className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-1.5 text-xs text-ink focus:outline-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-ink-3">Profile Link</label>
+                  <input
+                    type="text"
+                    value={person.url}
+                    onChange={(e) => handleUpdate(idx, { url: e.target.value })}
+                    placeholder="https://..."
+                    className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-1.5 text-xs text-ink focus:outline-none"
+                  />
+                </div>
+                <div className="sm:col-span-3">
+                  <label className="text-[11px] font-semibold text-ink-3">Role / Bio</label>
+                  <input
+                    type="text"
+                    value={person.role || ''}
+                    onChange={(e) => handleUpdate(idx, { role: e.target.value })}
+                    placeholder="e.g. Creator of Livewire and Alpine.js"
+                    className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-1.5 text-xs text-ink focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
