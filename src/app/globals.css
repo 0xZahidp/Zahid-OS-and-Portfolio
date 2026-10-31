@@ -148,21 +148,84 @@ body {
   border-color: var(--line-strong);
 }
 
-/* Halo interactive glow card */
+/* Exact Halo Glowing Effect from nahian.bd */
 .halo {
   position: relative;
   border-radius: 1.5rem;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  background-color: var(--surface);
+  isolation: isolate;
 }
+
+@keyframes halo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .halo-glow {
-  position: absolute;
+  z-index: 0;
+  border-radius: 1.5rem;
+  filter: blur(26px);
+  opacity: 0.35;
   pointer-events: none;
-  inset: -1px;
-  background: radial-gradient(350px circle at var(--mx, 50%) var(--my, 50%), rgba(16, 185, 129, 0.15), transparent 80%);
+  transition: opacity 0.35s ease;
+  position: absolute;
+  inset: -8px;
+  overflow: hidden;
+  container-type: size;
+}
+
+.halo-glow::before {
+  content: "";
+  aspect-ratio: 1;
+  background: conic-gradient(
+    #34d399,
+    transparent 22%,
+    #10b981 38%,
+    transparent 55%,
+    #059669 72%,
+    transparent 88%,
+    #34d399
+  );
+  width: calc(1.6 * max(100cqw, 100cqh));
+  animation: 9s linear infinite halo-spin;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+:root.light .halo-glow::before {
+  background: conic-gradient(
+    #34d399,
+    transparent 20%,
+    #10b981 35%,
+    transparent 50%,
+    #6ee7b7 70%,
+    transparent 85%,
+    #34d399
+  );
+}
+
+.halo:hover .halo-glow {
+  opacity: 0.95;
+}
+
+.halo-spot {
+  border-radius: inherit;
+  background: radial-gradient(
+    26rem circle at var(--mx, 50%) var(--my, -20%),
+    rgba(52, 211, 153, 0.28),
+    transparent 60%
+  );
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.halo:hover .halo-spot {
   opacity: 1;
-  transition: opacity 0.3s;
 }
 
 .glass {

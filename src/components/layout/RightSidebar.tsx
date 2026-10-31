@@ -43,6 +43,14 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ onContactClick }) =>
     }
   };
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty('--mx', `${x}px`);
+    e.currentTarget.style.setProperty('--my', `${y}px`);
+  };
+
   return (
     <aside className="sticky top-0 hidden min-h-dvh w-80 shrink-0 self-start border-line lg:block xl:w-90 xl:border-r">
       {/* Top Header Bar with Follow Button */}
@@ -66,23 +74,37 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ onContactClick }) =>
       </div>
 
       <div className="flex flex-col gap-6 p-6 overflow-y-auto [scrollbar-width:none]">
-        {/* Open to Conversations Mini Card */}
-        <div className="card-raised p-4 bg-surface/80">
-        <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-500">
-          <span className="size-1.5 rounded-full bg-brand-500 animate-pulse" />
-          <span>Open to new conversations</span>
-        </p>
-        <p className="mt-1 text-xs text-ink-2 leading-relaxed">
-          Developer & Growth Strategist. Always happy to talk products, SaaS architectures, collaborations and consultations.
-        </p>
-        <button
-          type="button"
-          onClick={onContactClick}
-          className="mt-3 btn btn-primary h-7 px-3 rounded-lg text-xs font-bold"
+        {/* Open to Conversations Mini Card with Halo Hover Glow */}
+        <div
+          className="halo relative rounded-3xl cursor-default"
+          onMouseMove={handleMouseMove}
         >
-          Let’s talk
-        </button>
-      </div>
+          <div className="halo-glow" aria-hidden="true" />
+          <div className="glass relative z-10 h-full overflow-hidden p-5 rounded-3xl border border-line bg-surface/90 backdrop-blur-md">
+            <div className="halo-spot" aria-hidden="true" />
+            <div className="relative z-10">
+              <p className="flex items-center gap-2.5 text-body font-semibold text-ink">
+                <span className="relative flex size-2 shrink-0" aria-hidden="true">
+                  <span className="absolute inline-flex size-full rounded-full bg-brand-400 opacity-75 motion-safe:animate-ping" />
+                  <span className="relative inline-flex size-2 rounded-full bg-brand-500" />
+                </span>
+                <span>Open to new conversations</span>
+              </p>
+              <p className="mt-2 text-meta text-ink-2 leading-relaxed">
+                Software engineer and agentic builder. Always happy to talk products, collaborations and consultations.
+              </p>
+              <button
+                type="button"
+                onClick={onContactClick}
+                className="mt-4 btn btn-primary h-8 px-4 rounded-xl text-meta font-semibold shadow-md transition-all hover:scale-[1.02]"
+              >
+                <span className="btn-content">
+                  Let’s talk
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
 
       {/* Who to Follow Card */}
       <div id="who-to-follow" className="card-raised p-4">
