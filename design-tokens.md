@@ -270,3 +270,506 @@ Inside `main` and `right aside` at `top-0 z-20` (both perfectly aligned at `h-17
 - **Padding:** `0px` outer, `px-2 py-2` on each row
 - **Margin Bottom:** `36px`
 - **Items:** 4 social links (GitHub, X, LinkedIn, Facebook) with circular `40.5px` secondary tactile icons and hover highlight `rounded-xl hover:bg-surface-2`.
+
+
+---
+
+## 5. Precise Fact Cards & Right-Column Computed Styles (CDP Extracted)
+
+### Light Mode Tokens
+
+#### basedInHalo (`DIV` `halo relative rounded-3xl`)
+- **Dimensions:** width: `395px`, height: `229.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `27px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### basedInGlass (`DIV` `glass h-full overflow-hidden p-5`)
+- **Dimensions:** width: `395px`, height: `229.5px`, padding: `22.5px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `color(srgb 1 1 1 / 0.78) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `27px`, shadow: `rgba(255, 255, 255, 0.6) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.08) 0px -1px 0px 0px inset, rgba(0, 0, 0, 0.35) 0px 18px 40px -24px`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### basedInLabelP (`P` `flex items-center gap-2 text-meta font-medium text-ink-2`)
+- **Dimensions:** width: `350px`, height: `22.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(38, 38, 38)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(38, 38, 38)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `9px`
+
+#### basedInLabelIcon (`svg` ``)
+- **Dimensions:** width: `18px`, height: `18px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(10, 127, 79)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(10, 127, 79)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### basedInHeading (`P` `mt-1 text-lead font-semibold`)
+- **Dimensions:** width: `350px`, height: `29.25px`, padding: `0px`, margin: `4.5px 0px 0px`
+- **Typography:** fontSize: `19.125px`, fontWeight: `600`, lineHeight: `29.25px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### clockTime (`SPAN` `col-start-1 row-start-1`)
+- **Dimensions:** width: `182.34375px`, height: `40.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `40.5px`, fontWeight: `700`, lineHeight: `40.5px`, letterSpacing: `-1.0125px`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### clockGmt (`SPAN` `pb-1 text-meta font-medium text-ink-2`)
+- **Dimensions:** width: `48.265625px`, height: `27px`, padding: `0px 0px 4.5px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(38, 38, 38)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(38, 38, 38)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### clockStatus (`P` `mt-2 inline-flex items-center gap-1.5 text-meta text-ink-2`)
+- **Dimensions:** width: `139.96875px`, height: `22.5px`, padding: `0px`, margin: `9px 0px 0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(38, 38, 38)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(38, 38, 38)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `inline-flex`, alignItems: `center`, justifyContent: `normal`, gap: `6.75px`
+
+#### moonIcon (`svg` ``)
+- **Dimensions:** width: `0px`, height: `0px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(63, 63, 63)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(63, 63, 63)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `none`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### worksCard (`DIV` `card-raised p-5`)
+- **Dimensions:** width: `395px`, height: `229.5px`, padding: `22.5px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(rgb(255, 255, 255) 0%, rgb(247, 247, 247) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `27px`, shadow: `rgb(232, 232, 232) 0px 0px 0px 1px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px, rgba(0, 0, 0, 0.35) 0px 14px 32px -22px, rgba(255, 255, 255, 0.7) 0px 1px 0px 0px inset`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### worksLabelP (`P` `flex items-center gap-2 text-meta font-medium text-ink-2`)
+- **Dimensions:** width: `350px`, height: `22.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(82, 82, 82)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(82, 82, 82)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `9px`
+
+#### worksLabelIcon (`svg` ``)
+- **Dimensions:** width: `18px`, height: `18px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(10, 127, 79)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(10, 127, 79)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### worksHeading (`P` `mt-1 text-lead font-semibold`)
+- **Dimensions:** width: `350px`, height: `29.25px`, padding: `0px`, margin: `4.5px 0px 0px`
+- **Typography:** fontSize: `19.125px`, fontWeight: `600`, lineHeight: `29.25px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### worksDesc (`P` `mt-1 text-meta text-ink-2`)
+- **Dimensions:** width: `350px`, height: `45px`, padding: `0px`, margin: `4.5px 0px 0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(82, 82, 82)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(82, 82, 82)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### checkChipFirst (`LI` `inline-flex items-center gap-1 rounded-md bg-surface-2 px-2 py-0.5 text-meta text-ink-2 ring-1 ring-line`)
+- **Dimensions:** width: `90.25px`, height: `27px`, padding: `2.25px 9px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(82, 82, 82)`
+- **Surface & Border:** bg: `rgb(247, 247, 247) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(82, 82, 82)`, radius: `6.75px`, shadow: `rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(232, 232, 232) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `4.5px`
+
+#### checkChipsUl (`UL` `mt-4 flex flex-wrap gap-1.5`)
+- **Dimensions:** width: `350px`, height: `60.75px`, padding: `0px`, margin: `18px 0px 0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `normal`, justifyContent: `normal`, gap: `6.75px`
+
+#### languagesCard (`DIV` `card-raised p-5 sm:col-span-2`)
+- **Dimensions:** width: `803.5px`, height: `207px`, padding: `22.5px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(rgb(255, 255, 255) 0%, rgb(247, 247, 247) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `27px`, shadow: `rgb(232, 232, 232) 0px 0px 0px 1px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px, rgba(0, 0, 0, 0.35) 0px 14px 32px -22px, rgba(255, 255, 255, 0.7) 0px 1px 0px 0px inset`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### languagesLabelP (`P` `flex items-center gap-2 text-meta font-medium text-ink-2`)
+- **Dimensions:** width: `758.5px`, height: `22.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(82, 82, 82)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(82, 82, 82)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `9px`
+
+#### languagesLabelIcon (`svg` ``)
+- **Dimensions:** width: `18px`, height: `18px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(10, 127, 79)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(10, 127, 79)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### langName (`SPAN` `text-body font-semibold`)
+- **Dimensions:** width: `59.3125px`, height: `27px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `16.875px`, fontWeight: `600`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### speakerBtn (`BUTTON` `voice`)
+- **Dimensions:** width: `31.5px`, height: `31.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(107, 107, 107)`
+- **Surface & Border:** bg: `rgb(247, 247, 247) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(107, 107, 107)`, radius: `9999px`, shadow: `rgb(214, 214, 214) 0px 0px 0px 1px`
+- **Layout:** display: `grid`, alignItems: `center`, justifyContent: `normal`, gap: `normal`
+
+#### meterSegmentsActive (`SPAN` `h-1.5 flex-1 rounded-full bg-gradient-to-r from-brand-400 to-brand-600`)
+- **Dimensions:** width: `43.953125px`, height: `6.75px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(to right in oklab, rgb(34, 168, 106) 0%, rgb(10, 127, 79) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `3.35544e+07px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### meterSegmentsInactive (`SPAN` `h-1.5 flex-1 rounded-full bg-gradient-to-r from-brand-400 to-brand-600`)
+- **Dimensions:** width: `43.96875px`, height: `6.75px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(to right in oklab, rgb(34, 168, 106) 0%, rgb(10, 127, 79) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `3.35544e+07px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### levelPill (`SPAN` `badge mt-3`)
+- **Dimensions:** width: `115.265625px`, height: `29.25px`, padding: `3.375px 11.25px 3.375px 9px`, margin: `13.5px 0px 0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(82, 82, 82)`
+- **Surface & Border:** bg: `rgb(247, 247, 247) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(82, 82, 82)`, radius: `9999px`, shadow: `rgb(214, 214, 214) 0px 0px 0px 1px, rgba(255, 255, 255, 0.6) 0px 1px 0px 0px inset`
+- **Layout:** display: `inline-flex`, alignItems: `center`, justifyContent: `normal`, gap: `7.875px`
+
+#### noteText (`P` `mt-2 text-meta text-ink-3`)
+- **Dimensions:** width: `237.828125px`, height: `22.5px`, padding: `0px`, margin: `9px 0px 0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(107, 107, 107)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(107, 107, 107)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### whoToFollowSection (`SECTION` `card-raised p-4 hover:translate-0`)
+- **Dimensions:** width: `350px`, height: `328.5px`, padding: `18px`, margin: `0px 0px 36px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(rgb(255, 255, 255) 0%, rgb(247, 247, 247) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `27px`, shadow: `rgb(232, 232, 232) 0px 0px 0px 1px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px, rgba(0, 0, 0, 0.35) 0px 14px 32px -22px, rgba(255, 255, 255, 0.7) 0px 1px 0px 0px inset`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### whoRow (`LI` `flex items-center gap-2 rounded-xl px-2 py-2 transition-colors hover:bg-surface-2`)
+- **Dimensions:** width: `332px`, height: `67.5px`, padding: `9px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `13.5px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `9px`
+
+#### whoAvatar (`IMG` `rounded-full object-cover size-9 text-meta ring-1 ring-line`)
+- **Dimensions:** width: `40.5px`, height: `40.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `3.35544e+07px`, shadow: `rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(232, 232, 232) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### whoBadge (`SPAN` `absolute grid place-items-center rounded-full bg-surface text-ink shadow-sm ring-2 ring-surface size-4.5 -right-0.5 -bottom-0.5`)
+- **Dimensions:** width: `20.25px`, height: `20.25px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgb(255, 255, 255) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `3.35544e+07px`, shadow: `rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(255, 255, 255) 0px 0px 0px 2px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px`
+- **Layout:** display: `grid`, alignItems: `center`, justifyContent: `normal`, gap: `normal`
+
+#### whoName (`SPAN` `block truncate text-body font-semibold`)
+- **Dimensions:** width: `174.140625px`, height: `27px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `16.875px`, fontWeight: `600`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### whoRole (`SPAN` `block truncate text-meta text-ink-3`)
+- **Dimensions:** width: `174.140625px`, height: `22.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(107, 107, 107)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(107, 107, 107)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### whoFollowBtn (`A` `inline-flex shrink-0 cursor-pointer items-center justify-center rounded-xl font-semibold tracking-[-0.01em] whitespace-nowrap select-none btn btn-secondary h-8 px-3.5 text-meta`)
+- **Dimensions:** width: `76.859375px`, height: `36px`, padding: `0px 15.75px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `600`, lineHeight: `22.5px`, letterSpacing: `-0.14625px`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(rgb(255, 255, 255) 0%, rgb(247, 247, 247) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `13.5px`, shadow: `rgb(232, 232, 232) 0px 0px 0px 1px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px, rgba(0, 0, 0, 0.1) 0px 4px 12px -4px, rgba(255, 255, 255, 0.7) 0px 1px 0px 0px inset`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `center`, gap: `normal`
+
+#### whoFooterLink (`A` `-mx-2 mt-1 flex items-center justify-between gap-2 rounded-xl px-2 py-2 transition-colors hover:bg-surface-2`)
+- **Dimensions:** width: `332px`, height: `49.5px`, padding: `9px`, margin: `4.5px -9px 0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `13.5px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `space-between`, gap: `9px`
+
+#### whoFooterFaces (`SPAN` `facepile [--face:1.75rem] [--overlap:0.5rem]`)
+- **Dimensions:** width: `99px`, height: `31.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `normal`
+
+#### findMeSection (`SECTION` ``)
+- **Dimensions:** width: `350px`, height: `355.5px`, padding: `0px`, margin: `0px 0px 36px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### findMeRow (`A` `group flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-surface-2`)
+- **Dimensions:** width: `368px`, height: `67.5px`, padding: `9px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `13.5px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `13.5px`
+
+#### findMeIconCircle (`SPAN` `btn btn-secondary grid size-9 place-items-center rounded-full`)
+- **Dimensions:** width: `40.5px`, height: `40.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(rgb(255, 255, 255) 0%, rgb(247, 247, 247) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `3.35544e+07px`, shadow: `rgb(232, 232, 232) 0px 0px 0px 1px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px, rgba(0, 0, 0, 0.1) 0px 4px 12px -4px, rgba(255, 255, 255, 0.7) 0px 1px 0px 0px inset`
+- **Layout:** display: `grid`, alignItems: `center`, justifyContent: `normal`, gap: `normal`
+
+#### findMeName (`SPAN` `block text-body font-medium`)
+- **Dimensions:** width: `264.5px`, height: `27px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `16.875px`, fontWeight: `500`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### findMeHandle (`SPAN` `block truncate text-meta text-ink-3`)
+- **Dimensions:** width: `264.5px`, height: `22.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(107, 107, 107)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(107, 107, 107)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### findMeArrow (`svg` ``)
+- **Dimensions:** width: `18px`, height: `18px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### gridContainer (`DIV` `grid gap-3 sm:grid-cols-2`)
+- **Dimensions:** width: `803.5px`, height: `450px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(23, 23, 23)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(23, 23, 23)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `grid`, alignItems: `normal`, justifyContent: `normal`, gap: `13.5px`
+
+
+### Dark Mode Tokens
+
+#### basedInHalo (`DIV` `halo relative rounded-3xl`)
+- **Dimensions:** width: `395px`, height: `229.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `27px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### basedInGlass (`DIV` `glass h-full overflow-hidden p-5`)
+- **Dimensions:** width: `395px`, height: `229.5px`, padding: `22.5px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `color(srgb 0.0901961 0.0901961 0.101961 / 0.72) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `27px`, shadow: `rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.03) 0px -1px 0px 0px inset, rgba(0, 0, 0, 0.9) 0px 18px 40px -24px`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### basedInLabelP (`P` `flex items-center gap-2 text-meta font-medium text-ink-2`)
+- **Dimensions:** width: `350px`, height: `22.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(218, 218, 222)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(218, 218, 222)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `9px`
+
+#### basedInLabelIcon (`svg` ``)
+- **Dimensions:** width: `18px`, height: `18px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(87, 196, 140)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(87, 196, 140)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### basedInHeading (`P` `mt-1 text-lead font-semibold`)
+- **Dimensions:** width: `350px`, height: `29.25px`, padding: `0px`, margin: `4.5px 0px 0px`
+- **Typography:** fontSize: `19.125px`, fontWeight: `600`, lineHeight: `29.25px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### clockTime (`SPAN` `col-start-1 row-start-1`)
+- **Dimensions:** width: `182.34375px`, height: `40.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `40.5px`, fontWeight: `700`, lineHeight: `40.5px`, letterSpacing: `-1.0125px`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### clockGmt (`SPAN` `pb-1 text-meta font-medium text-ink-2`)
+- **Dimensions:** width: `48.265625px`, height: `27px`, padding: `0px 0px 4.5px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(218, 218, 222)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(218, 218, 222)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### clockStatus (`P` `mt-2 inline-flex items-center gap-1.5 text-meta text-ink-2`)
+- **Dimensions:** width: `139.96875px`, height: `22.5px`, padding: `0px`, margin: `9px 0px 0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(218, 218, 222)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(218, 218, 222)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `inline-flex`, alignItems: `center`, justifyContent: `normal`, gap: `6.75px`
+
+#### moonIcon (`svg` ``)
+- **Dimensions:** width: `0px`, height: `0px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(196, 196, 202)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(196, 196, 202)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `none`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### worksCard (`DIV` `card-raised p-5`)
+- **Dimensions:** width: `395px`, height: `229.5px`, padding: `22.5px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(rgb(34, 34, 38) 0%, rgb(23, 23, 26) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `27px`, shadow: `rgb(43, 43, 48) 0px 0px 0px 1px, rgba(0, 0, 0, 0.8) 0px 14px 32px -22px, rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### worksLabelP (`P` `flex items-center gap-2 text-meta font-medium text-ink-2`)
+- **Dimensions:** width: `350px`, height: `22.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(180, 180, 184)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(180, 180, 184)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `9px`
+
+#### worksLabelIcon (`svg` ``)
+- **Dimensions:** width: `18px`, height: `18px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(87, 196, 140)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(87, 196, 140)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### worksHeading (`P` `mt-1 text-lead font-semibold`)
+- **Dimensions:** width: `350px`, height: `29.25px`, padding: `0px`, margin: `4.5px 0px 0px`
+- **Typography:** fontSize: `19.125px`, fontWeight: `600`, lineHeight: `29.25px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### worksDesc (`P` `mt-1 text-meta text-ink-2`)
+- **Dimensions:** width: `350px`, height: `45px`, padding: `0px`, margin: `4.5px 0px 0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(180, 180, 184)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(180, 180, 184)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### checkChipFirst (`LI` `inline-flex items-center gap-1 rounded-md bg-surface-2 px-2 py-0.5 text-meta text-ink-2 ring-1 ring-line`)
+- **Dimensions:** width: `90.25px`, height: `27px`, padding: `2.25px 9px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(180, 180, 184)`
+- **Surface & Border:** bg: `rgb(23, 23, 26) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(180, 180, 184)`, radius: `6.75px`, shadow: `rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(43, 43, 48) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `4.5px`
+
+#### checkChipsUl (`UL` `mt-4 flex flex-wrap gap-1.5`)
+- **Dimensions:** width: `350px`, height: `60.75px`, padding: `0px`, margin: `18px 0px 0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `normal`, justifyContent: `normal`, gap: `6.75px`
+
+#### languagesCard (`DIV` `card-raised p-5 sm:col-span-2`)
+- **Dimensions:** width: `803.5px`, height: `207px`, padding: `22.5px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(rgb(34, 34, 38) 0%, rgb(23, 23, 26) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `27px`, shadow: `rgb(43, 43, 48) 0px 0px 0px 1px, rgba(0, 0, 0, 0.8) 0px 14px 32px -22px, rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### languagesLabelP (`P` `flex items-center gap-2 text-meta font-medium text-ink-2`)
+- **Dimensions:** width: `758.5px`, height: `22.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(180, 180, 184)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(180, 180, 184)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `9px`
+
+#### languagesLabelIcon (`svg` ``)
+- **Dimensions:** width: `18px`, height: `18px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(87, 196, 140)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(87, 196, 140)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### langName (`SPAN` `text-body font-semibold`)
+- **Dimensions:** width: `59.3125px`, height: `27px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `16.875px`, fontWeight: `600`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### speakerBtn (`BUTTON` `voice`)
+- **Dimensions:** width: `31.5px`, height: `31.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(154, 154, 160)`
+- **Surface & Border:** bg: `rgb(23, 23, 26) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(154, 154, 160)`, radius: `9999px`, shadow: `rgb(61, 61, 67) 0px 0px 0px 1px`
+- **Layout:** display: `grid`, alignItems: `center`, justifyContent: `normal`, gap: `normal`
+
+#### meterSegmentsActive (`SPAN` `h-1.5 flex-1 rounded-full bg-gradient-to-r from-brand-400 to-brand-600`)
+- **Dimensions:** width: `43.953125px`, height: `6.75px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(to right in oklab, rgb(34, 168, 106) 0%, rgb(10, 127, 79) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `3.35544e+07px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### meterSegmentsInactive (`SPAN` `h-1.5 flex-1 rounded-full bg-gradient-to-r from-brand-400 to-brand-600`)
+- **Dimensions:** width: `43.96875px`, height: `6.75px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(to right in oklab, rgb(34, 168, 106) 0%, rgb(10, 127, 79) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `3.35544e+07px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### levelPill (`SPAN` `badge mt-3`)
+- **Dimensions:** width: `115.265625px`, height: `29.25px`, padding: `3.375px 11.25px 3.375px 9px`, margin: `13.5px 0px 0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `500`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(180, 180, 184)`
+- **Surface & Border:** bg: `rgb(34, 34, 38) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(180, 180, 184)`, radius: `9999px`, shadow: `rgb(61, 61, 67) 0px 0px 0px 1px, rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset`
+- **Layout:** display: `inline-flex`, alignItems: `center`, justifyContent: `normal`, gap: `7.875px`
+
+#### noteText (`P` `mt-2 text-meta text-ink-3`)
+- **Dimensions:** width: `237.828125px`, height: `22.5px`, padding: `0px`, margin: `9px 0px 0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(154, 154, 160)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(154, 154, 160)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### whoToFollowSection (`SECTION` `card-raised p-4 hover:translate-0`)
+- **Dimensions:** width: `350px`, height: `328.5px`, padding: `18px`, margin: `0px 0px 36px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(rgb(34, 34, 38) 0%, rgb(23, 23, 26) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `27px`, shadow: `rgb(43, 43, 48) 0px 0px 0px 1px, rgba(0, 0, 0, 0.8) 0px 14px 32px -22px, rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### whoRow (`LI` `flex items-center gap-2 rounded-xl px-2 py-2 transition-colors hover:bg-surface-2`)
+- **Dimensions:** width: `332px`, height: `67.5px`, padding: `9px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `13.5px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `9px`
+
+#### whoAvatar (`IMG` `rounded-full object-cover size-9 text-meta ring-1 ring-line`)
+- **Dimensions:** width: `40.5px`, height: `40.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `3.35544e+07px`, shadow: `rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(43, 43, 48) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### whoBadge (`SPAN` `absolute grid place-items-center rounded-full bg-surface text-ink shadow-sm ring-2 ring-surface size-4.5 -right-0.5 -bottom-0.5`)
+- **Dimensions:** width: `20.25px`, height: `20.25px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgb(13, 13, 14) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `3.35544e+07px`, shadow: `rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(13, 13, 14) 0px 0px 0px 2px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px`
+- **Layout:** display: `grid`, alignItems: `center`, justifyContent: `normal`, gap: `normal`
+
+#### whoName (`SPAN` `block truncate text-body font-semibold`)
+- **Dimensions:** width: `174.140625px`, height: `27px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `16.875px`, fontWeight: `600`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### whoRole (`SPAN` `block truncate text-meta text-ink-3`)
+- **Dimensions:** width: `174.140625px`, height: `22.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(154, 154, 160)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(154, 154, 160)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### whoFollowBtn (`A` `inline-flex shrink-0 cursor-pointer items-center justify-center rounded-xl font-semibold tracking-[-0.01em] whitespace-nowrap select-none btn btn-secondary h-8 px-3.5 text-meta`)
+- **Dimensions:** width: `76.859375px`, height: `36px`, padding: `0px 15.75px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `600`, lineHeight: `22.5px`, letterSpacing: `-0.14625px`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(rgb(34, 34, 38) 0%, rgb(23, 23, 26) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `13.5px`, shadow: `rgb(43, 43, 48) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 4px 12px -4px, rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `center`, gap: `normal`
+
+#### whoFooterLink (`A` `-mx-2 mt-1 flex items-center justify-between gap-2 rounded-xl px-2 py-2 transition-colors hover:bg-surface-2`)
+- **Dimensions:** width: `332px`, height: `49.5px`, padding: `9px`, margin: `4.5px -9px 0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `13.5px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `space-between`, gap: `9px`
+
+#### whoFooterFaces (`SPAN` `facepile [--face:1.75rem] [--overlap:0.5rem]`)
+- **Dimensions:** width: `99px`, height: `31.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `normal`
+
+#### findMeSection (`SECTION` ``)
+- **Dimensions:** width: `350px`, height: `355.5px`, padding: `0px`, margin: `0px 0px 36px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### findMeRow (`A` `group flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-surface-2`)
+- **Dimensions:** width: `368px`, height: `67.5px`, padding: `9px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `13.5px`, shadow: `none`
+- **Layout:** display: `flex`, alignItems: `center`, justifyContent: `normal`, gap: `13.5px`
+
+#### findMeIconCircle (`SPAN` `btn btn-secondary grid size-9 place-items-center rounded-full`)
+- **Dimensions:** width: `40.5px`, height: `40.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) linear-gradient(rgb(34, 34, 38) 0%, rgb(23, 23, 26) 100%) repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `3.35544e+07px`, shadow: `rgb(43, 43, 48) 0px 0px 0px 1px, rgba(0, 0, 0, 0.6) 0px 4px 12px -4px, rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset`
+- **Layout:** display: `grid`, alignItems: `center`, justifyContent: `normal`, gap: `normal`
+
+#### findMeName (`SPAN` `block text-body font-medium`)
+- **Dimensions:** width: `264.5px`, height: `27px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `16.875px`, fontWeight: `500`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### findMeHandle (`SPAN` `block truncate text-meta text-ink-3`)
+- **Dimensions:** width: `264.5px`, height: `22.5px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `14.625px`, fontWeight: `400`, lineHeight: `22.5px`, letterSpacing: `normal`, color: `rgb(154, 154, 160)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(154, 154, 160)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### findMeArrow (`svg` ``)
+- **Dimensions:** width: `18px`, height: `18px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `block`, alignItems: `normal`, justifyContent: `normal`, gap: `normal`
+
+#### gridContainer (`DIV` `grid gap-3 sm:grid-cols-2`)
+- **Dimensions:** width: `803.5px`, height: `450px`, padding: `0px`, margin: `0px`
+- **Typography:** fontSize: `18px`, fontWeight: `400`, lineHeight: `27px`, letterSpacing: `normal`, color: `rgb(237, 237, 237)`
+- **Surface & Border:** bg: `rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box`, border: `0px solid rgb(237, 237, 237)`, radius: `0px`, shadow: `none`
+- **Layout:** display: `grid`, alignItems: `normal`, justifyContent: `normal`, gap: `13.5px`
+

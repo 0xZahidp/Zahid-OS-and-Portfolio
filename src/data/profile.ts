@@ -222,7 +222,7 @@ export const suggestedPeople: FollowerRecommendation[] = [
     name: 'HM Nayem',
     role: 'Founder of Stack Learne...',
     avatar_url: '/images/nayem.jpg',
-    url: 'https://x.com/hmnayem',
+    url: 'https://github.com/hmnayem',
     handle: '@hmnayem',
   },
 ];

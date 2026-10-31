@@ -365,6 +365,34 @@ body {
   box-shadow: 0 0 10px color-mix(in srgb, var(--ai, #10b981) 25%, transparent);
 }
 
+/* Badge pill system (e.g. Languages proficiency) */
+.badge {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  white-space: nowrap;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  box-shadow: 0 0 0 1px var(--line-strong), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border-radius: 9999px;
+  align-items: center;
+  gap: 0.4375rem;
+  padding: 0.1875rem 0.625rem 0.1875rem 0.5rem;
+  font-weight: 500;
+  display: inline-flex;
+}
+.badge::before {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 6px;
+  background-color: var(--color-brand-400);
+  border-radius: 9999px;
+}
+.dark .badge {
+  background: var(--surface-3);
+  box-shadow: 0 0 0 1px var(--line-strong), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
 /* Cover and Blob animations matching nahian.bd */
 .cover {
   isolation: isolate;
