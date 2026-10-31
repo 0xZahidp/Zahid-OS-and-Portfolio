@@ -15,6 +15,7 @@ import {
   LinkedInIcon,
   FacebookIcon,
 } from '@/components/ui/Icons';
+import { TactileButton } from '@/components/ui/TactileButton';
 
 interface RightSidebarProps {
   onContactClick: () => void;
@@ -55,22 +56,18 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ onContactClick }) =>
     <aside className="sticky top-0 hidden min-h-dvh w-80 shrink-0 self-start border-line lg:block xl:w-90 xl:border-r">
       {/* Top Header Bar with Follow Button */}
       <div className="sticky top-0 z-10 flex h-17.5 items-center justify-end gap-2 border-b border-line bg-surface/85 px-6 backdrop-blur-md">
-        <a
-          href="https://x.com/0xZahidP"
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => setIsFollowingMain(!isFollowingMain)}
-          className={`btn ${
-            isFollowingMain
-              ? 'btn-secondary text-brand-500'
-              : 'btn-secondary hover:border-line-strong'
-          } h-9 px-4.5 rounded-xl font-semibold text-xs tracking-tight transition-all`}
+        <TactileButton
+          variant="obsidian"
+          size="sm"
+          onClick={() => {
+            setIsFollowingMain(!isFollowingMain);
+            window.open('https://x.com/0xZahidP', '_blank', 'noopener,noreferrer');
+          }}
+          title="Follow @0xZahidP on X"
         >
-          <span className="btn-content inline-flex items-center gap-1.5">
-            <XIcon className="size-3.5 text-ink" />
-            <span className="text-ink">{isFollowingMain ? 'Following' : 'Follow'}</span>
-          </span>
-        </a>
+          <XIcon className="size-3.5 text-white" />
+          <span>{isFollowingMain ? 'Following' : 'Follow'}</span>
+        </TactileButton>
       </div>
 
       <div className="flex flex-col gap-6 p-6 overflow-y-auto [scrollbar-width:none]">
@@ -93,15 +90,11 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ onContactClick }) =>
               <p className="mt-2 text-meta text-ink-2 leading-relaxed">
                 Software engineer and agentic builder. Always happy to talk products, collaborations and consultations.
               </p>
-              <button
-                type="button"
-                onClick={onContactClick}
-                className="mt-4 btn btn-primary h-8 px-4 rounded-xl text-meta font-semibold shadow-md transition-all hover:scale-[1.02]"
-              >
-                <span className="btn-content">
+              <div className="mt-4">
+                <TactileButton size="sm" onClick={onContactClick}>
                   Let’s talk
-                </span>
-              </button>
+                </TactileButton>
+              </div>
             </div>
           </div>
         </div>

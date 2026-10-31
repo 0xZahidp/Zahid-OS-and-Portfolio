@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Briefcase, MapPin } from 'lucide-react';
 import { Profile } from '@/types/profile';
 import { VerifiedBadgeIcon, TablerShare } from '@/components/ui/Icons';
+import { TactileButton } from '@/components/ui/TactileButton';
 import { ShareModal } from '@/components/ui/ShareModal';
 import { ProfileBanner } from './ProfileBanner';
 import { ProfileAvatar } from './ProfileAvatar';
@@ -137,15 +138,9 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
         {/* Mobile Action Buttons */}
         <div className="mt-7 flex gap-3 md:hidden">
-          <button
-            type="button"
-            onClick={onContactClick}
-            className="btn btn-primary h-10 px-5 rounded-full font-bold text-sm shadow-[0_4px_16px_rgba(16,185,129,0.35)]"
-          >
-            <span className="btn-content inline-flex items-center gap-2">
-              Get in touch
-            </span>
-          </button>
+          <TactileButton onClick={onContactClick}>
+            Get in touch
+          </TactileButton>
           <button
             type="button"
             onClick={() => setIsShareOpen(true)}

@@ -1,6 +1,8 @@
 import React from 'react';
-import { ExternalLink, Layers } from 'lucide-react';
+import { Globe, Layers } from 'lucide-react';
 import { projectsData } from '@/data/profile';
+import { TactileButton } from '@/components/ui/TactileButton';
+import { GitHubIcon } from '@/components/ui/Icons';
 
 export const ProjectsSection: React.FC = () => {
   return (
@@ -26,17 +28,34 @@ export const ProjectsSection: React.FC = () => {
                 <h3 className="text-base font-semibold text-ink group-hover:text-link transition-colors">
                   {project.title}
                 </h3>
-                {project.project_url && (
-                  <a
-                    href={project.project_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`Visit ${project.title}`}
-                    className="btn btn-secondary grid size-8 place-items-center rounded-lg text-ink-3 hover:text-ink shrink-0"
-                  >
-                    <ExternalLink className="size-4" />
-                  </a>
-                )}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {project.project_url && (
+                    <TactileButton
+                      variant="obsidian"
+                      size="xs"
+                      href={project.project_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`Visit ${project.title}`}
+                    >
+                      <Globe className="size-3.5" />
+                      <span>Website</span>
+                    </TactileButton>
+                  )}
+                  {project.repository_url && (
+                    <TactileButton
+                      variant="obsidian"
+                      size="xs"
+                      href={project.repository_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`View ${project.title} repository`}
+                    >
+                      <GitHubIcon className="size-3.5" />
+                      <span>Source</span>
+                    </TactileButton>
+                  )}
+                </div>
               </div>
 
               <p className="mt-2.5 text-body leading-relaxed text-ink-2">

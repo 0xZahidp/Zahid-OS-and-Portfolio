@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { Mail, Send, Check, Copy } from 'lucide-react';
+import { TactileButton } from '@/components/ui/TactileButton';
 
 export const ContactSection: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [messageSent, setMessageSent] = useState(false);
-  const email = 'contact@nahian.bd';
+  const email = 'mdzahidhasanpatwary@gmail.com';
 
   const handleCopyEmail = async () => {
     try {
@@ -59,15 +60,13 @@ export const ContactSection: React.FC = () => {
             </button>
           </div>
 
-          <a
+          <TactileButton
             href={`mailto:${email}`}
-            className="btn btn-primary h-10 px-5 rounded-xl font-semibold text-sm"
+            size="md"
           >
-            <span className="btn-content inline-flex items-center gap-2">
-              <Send className="size-4" />
-              Send Email
-            </span>
-          </a>
+            <Send className="size-4" />
+            <span>Send Email</span>
+          </TactileButton>
         </div>
 
         {/* Quick Message Form */}
