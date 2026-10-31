@@ -3,52 +3,60 @@
     "id": "usr_zahid",
     "username": "0xZahidp",
     "full_name": "Md Zahid Hasan Patwary",
-    "headline": "Less talk, show me code!",
-    "bio": "Developer & Growth Strategist | Building SaaS & Web3 products | Passionate about code, community & scaling ideas into impact 🚀",
+    "headline": "I build practical web products, internal tools, and automation systems for real-world work.",
+    "bio": "Product Developer & Full-Stack Builder | Building practical web applications, offline-first systems, and automation workflows that solve real problems.",
     "avatar_url": "/images/avatar.webp",
-    "location": "Dhaka",
+    "location": "Dhaka, Bangladesh",
     "timezone": "Asia/Dhaka",
     "availability": "Open to new conversations",
     "github_followers_count": 6,
     "roles": [
       {
-        "title": "CTO",
+        "title": "Product Developer",
         "company": "Dhakaiya Bites",
         "company_url": "https://db.zahidp.com",
         "company_logo": "/images/bidvers.webp"
       },
       {
-        "title": "Software Engineer",
-        "company": "GymScanner",
-        "company_url": "https://gymscanner.com",
+        "title": "Lead Developer",
+        "company": "Scholar Quest",
+        "company_url": "https://sq.zahidp.com",
+        "company_logo": "/images/avatar.webp"
+      },
+      {
+        "title": "Full-Stack Developer",
+        "company": "Independent Product Builder",
+        "company_url": "https://www.zahidp.com",
         "company_logo": "/images/gymscanner.webp"
       }
     ]
   },
   "bioParagraphs": [
-    "I’m a developer and growth strategist building scalable SaaS and Web3 products. I turn complex technical architectures into intuitive, high-performance web products that ship globally.",
-    "As CTO at Bidvers and Software Engineer at GymScanner, I architected core platforms and APIs from a blank repository, including low-latency real-time bidding engines and secure multi-region payment routing across the US, Oman, and Romania. Bidvers has raised over $120K so far.",
-    "These days I build with agentic AI engineering and modern full-stack systems—leveraging Next.js, Laravel, Supabase, Tailwind CSS, and models from OpenAI and Claude. I own the architecture, user experience, and technical roadmap end to end.",
-    "I love building products from zero to one, scaling engineering teams, and exploring decentralized technologies. Always open to collaborating with ambitious founders and teams worldwide."
+    "I build practical web products, internal tools, and automation systems for real-world work. I’m Zahid Hasan Patwary, a product developer and full-stack builder focused on turning everyday operational bottlenecks into clear, reliable software.",
+    "From offline-first restaurant POS platforms (Dhakaiya Bites) and personal finance ledgers (Zahid Finance) to scholarship application command centers (Scholar Quest) and shared-living management systems (The Shared Plate), I build systems people can actually use in production.",
+    "My engineering stack centers around React 19, Next.js, TypeScript, Supabase, PostgreSQL, Tailwind CSS, TanStack Query, and offline-first IndexedDB storage. I also design lightweight automation systems and bots leveraging Python, Telegram Bot API, and Google Sheets.",
+    "Whether you need a reliable product engineered from scratch, an offline-first architecture, or operational automation to streamline daily workflows, I own the technical roadmap, architecture, and user experience end to end."
   ],
   "languages": [
     {
       "name": "English",
       "proficiency": "Near-native",
       "rating": 5,
-      "note": "",
+      "note": "Professional & technical communication",
       "hasVoice": true
     },
     {
       "name": "Bangla",
       "proficiency": "Native",
       "rating": 5,
+      "note": "Native tongue",
       "hasVoice": true
     },
     {
       "name": "Arabic",
       "proficiency": "Reading and small talk",
       "rating": 3,
+      "note": "Conversational & liturgical reading",
       "hasVoice": true
     }
   ],
@@ -69,13 +77,65 @@
       "id": "antigravity",
       "name": "Antigravity",
       "category": "ai",
-      "color": "#3186ff"
+      "color": "#6366f1"
     },
     {
       "id": "opencode",
       "name": "OpenCode",
       "category": "ai",
-      "color": "#9a9897"
+      "color": "#0ea5e9"
+    },
+    {
+      "id": "telegram-bot",
+      "name": "Telegram Bot API",
+      "category": "ai",
+      "color": "#24A1DE"
+    },
+    {
+      "id": "python",
+      "name": "Python",
+      "category": "ai",
+      "color": "#3776AB"
+    },
+    {
+      "id": "react",
+      "name": "React 19",
+      "category": "tech"
+    },
+    {
+      "id": "nextjs",
+      "name": "Next.js",
+      "category": "tech"
+    },
+    {
+      "id": "typescript",
+      "name": "TypeScript",
+      "category": "tech"
+    },
+    {
+      "id": "javascript",
+      "name": "JavaScript",
+      "category": "tech"
+    },
+    {
+      "id": "supabase",
+      "name": "Supabase",
+      "category": "tech"
+    },
+    {
+      "id": "tailwind",
+      "name": "Tailwind CSS",
+      "category": "tech"
+    },
+    {
+      "id": "tanstack",
+      "name": "TanStack Query",
+      "category": "tech"
+    },
+    {
+      "id": "indexeddb",
+      "name": "IndexedDB / Dexie",
+      "category": "tech"
     },
     {
       "id": "laravel",
@@ -85,11 +145,6 @@
     {
       "id": "php",
       "name": "PHP",
-      "category": "tech"
-    },
-    {
-      "id": "javascript",
-      "name": "JavaScript",
       "category": "tech"
     },
     {
@@ -108,23 +163,8 @@
       "category": "tech"
     },
     {
-      "id": "inertia",
-      "name": "Inertia",
-      "category": "tech"
-    },
-    {
-      "id": "tailwind",
-      "name": "Tailwind CSS",
-      "category": "tech"
-    },
-    {
       "id": "vscode",
       "name": "VS Code",
-      "category": "tool"
-    },
-    {
-      "id": "phpstorm",
-      "name": "PhpStorm",
       "category": "tool"
     },
     {
@@ -136,32 +176,217 @@
       "id": "github",
       "name": "GitHub",
       "category": "tool"
+    },
+    {
+      "id": "vercel",
+      "name": "Vercel",
+      "category": "tool"
+    },
+    {
+      "id": "vite",
+      "name": "Vite",
+      "category": "tool"
+    },
+    {
+      "id": "figma",
+      "name": "Figma",
+      "category": "tool"
     }
   ],
   "experience": [
     {
-      "id": "exp-1793472519337",
-      "position": "Software Engineer",
-      "company": "New Company",
-      "company_url": "https://example.com",
-      "company_logo": "/images/bidvers.webp",
-      "period": "Jan 2025 – Present",
-      "type": "Full-time",
+      "id": "exp-sq",
+      "company": "Scholar Quest",
+      "company_url": "https://sq.zahidp.com",
+      "company_logo": "/images/avatar.webp",
+      "position": "Lead Developer & System Architect",
+      "period": "2025 – Present",
+      "type": "Contract",
       "workplace_type": "Remote",
-      "description": "Architecting scalable applications and high-throughput systems.",
+      "description": "Architected a full-stack command center helping scholarship applicants organize university shortlists, IELTS preparation, application documents, professor outreach, and deadlines.",
+      "highlights": [
+        {
+          "label": "Architecture",
+          "value": "React 19 + TanStack",
+          "icon": "code"
+        },
+        {
+          "label": "Security",
+          "value": "Supabase RLS",
+          "icon": "rocket"
+        },
+        {
+          "label": "Deployment",
+          "value": "Live SaaS",
+          "icon": "mobile"
+        }
+      ],
       "bullet_points": [
-        "Built modern full-stack features and API endpoints.",
-        "Improved application performance and developer velocity."
+        "One organized scholarship workflow: university shortlists, IELTS tracking, outreach, and document vault in a unified workspace.",
+        "Built with React 19, TypeScript, TanStack Router, TanStack Query, and Supabase Row Level Security.",
+        "Context-aware mentor experience with intelligent deadline notifications and applicant readiness scoring."
       ],
       "tags": [
-        "Next.js",
-        "TypeScript",
+        "React 19",
+        "TanStack Router",
+        "Supabase",
         "Tailwind CSS"
       ],
       "is_current": true
     },
     {
-      "id": "exp-1",
+      "id": "exp-db",
+      "company": "Dhakaiya Bites",
+      "company_url": "https://db.zahidp.com",
+      "company_logo": "/images/bidvers.webp",
+      "position": "Product Developer",
+      "period": "2025 – Present",
+      "type": "Full-time",
+      "workplace_type": "Dhaka, Bangladesh",
+      "description": "Built an offline-first restaurant POS and operations platform for orders, table management, inventory, production costing, staff workflows, payments, reports, and sync-ready data management.",
+      "highlights": [
+        {
+          "label": "Architecture",
+          "value": "Offline-First",
+          "icon": "rocket"
+        },
+        {
+          "label": "Storage Engine",
+          "value": "IndexedDB + Dexie",
+          "icon": "code"
+        },
+        {
+          "label": "Operations",
+          "value": "POS + Inventory",
+          "icon": "mobile"
+        }
+      ],
+      "bullet_points": [
+        "Offline-first POS: handles billing, tables, KOT, and inventory without requiring continuous internet connectivity.",
+        "Production costing and staff workflows: tracks ingredient usage, recipe margins, and daily sales summaries.",
+        "Sync-ready architecture: automatically pushes batched operational data to Supabase when network is restored."
+      ],
+      "tags": [
+        "React",
+        "TypeScript",
+        "IndexedDB",
+        "Dexie",
+        "Supabase"
+      ],
+      "is_current": true
+    },
+    {
+      "id": "exp-ipb",
+      "company": "Independent Product Builder",
+      "company_url": "https://www.zahidp.com",
+      "company_logo": "/images/gymscanner.webp",
+      "position": "Full-Stack Developer",
+      "period": "2024 – Present",
+      "type": "Full-time",
+      "workplace_type": "Remote",
+      "description": "Designing and shipping practical web products for real workflows, including restaurant operations, shared-living finance, personal finance, and community record-keeping.",
+      "highlights": [
+        {
+          "label": "Products Shipped",
+          "value": "5+ Production Apps",
+          "icon": "rocket"
+        },
+        {
+          "label": "Core Focus",
+          "value": "Shipping Systems",
+          "icon": "code"
+        },
+        {
+          "label": "Stack",
+          "value": "Next.js + Supabase",
+          "icon": "mobile"
+        }
+      ],
+      "bullet_points": [
+        "Shipped 5 production-grade web systems solving specific operational pain points for local businesses and communities.",
+        "Engineered scalable database models with PostgreSQL, Row Level Security, and automated timestamp tracking.",
+        "Designed accessible, tactile user interfaces using Tailwind CSS with keyboard-first workflows."
+      ],
+      "tags": [
+        "React",
+        "Next.js",
+        "TypeScript",
+        "Supabase",
+        "Tailwind CSS"
+      ],
+      "is_current": true
+    },
+    {
+      "id": "exp-zf",
+      "company": "Zahid Finance",
+      "company_url": "https://finance.zahidp.com",
+      "company_logo": "/images/invo.webp",
+      "position": "Full-stack Developer",
+      "period": "2025 – Present",
+      "type": "Full-time",
+      "workplace_type": "Remote",
+      "description": "Created a personal finance and trust-money ledger to track income, expenses, lending, borrowing, held funds, reminders, recurring transactions, approvals, reports, and email-based records.",
+      "bullet_points": [
+        "Relationship-based ledger: separates personal income/expenses from funds held in trust for others or lent out.",
+        "Automated financial health overview with net worth calculation, settlement tracking, and payment reminders.",
+        "Built as a lightweight, installable PWA for high performance on both mobile and desktop."
+      ],
+      "tags": [
+        "React",
+        "TypeScript",
+        "Supabase",
+        "PWA"
+      ],
+      "is_current": true
+    },
+    {
+      "id": "exp-tsp",
+      "company": "The Shared Plate",
+      "company_url": "https://www.zahidp.com",
+      "company_logo": "/images/mytapcard.webp",
+      "position": "Full-stack Developer",
+      "period": "2025 – Present",
+      "type": "Full-time",
+      "workplace_type": "Remote",
+      "description": "Built a shared-living management system for meal tracking, grocery and bazar records, member payables, rent, settlements, absence tracking, and monthly reporting.",
+      "bullet_points": [
+        "Shared household ledger: tracks daily meal counts, grocery contributions, utility bills, and individual net balances.",
+        "Automated end-of-month settlement reports eliminating manual disputes and ledger calculation errors.",
+        "Responsive, mobile-optimized interface with granular member permission roles."
+      ],
+      "tags": [
+        "React",
+        "TypeScript",
+        "Supabase",
+        "Tailwind CSS"
+      ],
+      "is_current": true
+    },
+    {
+      "id": "exp-madrasah",
+      "company": "Madrasah Ledger & Automation",
+      "company_url": "https://www.zahidp.com",
+      "company_logo": "/images/prompt.webp",
+      "position": "Automation Developer",
+      "period": "2024 – Present",
+      "type": "Freelance",
+      "workplace_type": "Remote",
+      "description": "Developing lightweight administrative tools and Telegram bots that simplify recurring tasks through structured data capture, reminders, confirmations, reporting, and clear audit-friendly records.",
+      "bullet_points": [
+        "Built Telegram bot workflows automating administrative student attendance and monthly fee collection reminders.",
+        "Engineered Google Sheets API sync pipeline for auto-generating weekly financial audit sheets.",
+        "Reduced manual administrative workload by over 10 hours weekly."
+      ],
+      "tags": [
+        "Python",
+        "Telegram Bot API",
+        "Google Sheets API",
+        "Automation"
+      ],
+      "is_current": true
+    },
+    {
+      "id": "exp-bidvers",
       "company": "Bidvers",
       "company_url": "https://bidvers.com",
       "company_logo": "/images/bidvers.webp",
@@ -169,7 +394,7 @@
       "period": "Nov 2025 – Present",
       "type": "Full-time",
       "workplace_type": "Remote",
-      "description": "Hand-picked by GymScanner’s CEO to build his next company from day one. I own the architecture and technical roadmap as Bidvers operates in the US, Oman and Romania and expands into London, Poland, Singapore and beyond.",
+      "description": "Hand-picked by GymScanner’s CEO to build his next company from day one. I own the architecture and technical roadmap as Bidvers operates in the US, Oman and Romania.",
       "highlights": [
         {
           "label": "Raised",
@@ -177,12 +402,12 @@
           "icon": "rocket"
         },
         {
-          "label": "Built by me from scratch",
+          "label": "Built from scratch",
           "value": "Core + API",
           "icon": "code"
         },
         {
-          "label": "Apps built on my API",
+          "label": "Mobile Apps",
           "value": "iOS + Android",
           "icon": "mobile"
         }
@@ -199,237 +424,197 @@
         "Tailwind CSS"
       ],
       "is_current": true
-    },
-    {
-      "id": "exp-2",
-      "company": "GymScanner",
-      "company_url": "https://gymscanner.com",
-      "company_logo": "/images/gymscanner.webp",
-      "position": "Software Engineer",
-      "period": "Nov 2025 – Present",
-      "type": "Full-time",
-      "workplace_type": "Remote",
-      "description": "Maintaining and scaling backend infrastructure.",
-      "is_current": true
-    },
-    {
-      "id": "exp-3",
-      "company": "Interactive Cares",
-      "company_logo": "/images/interactive-cares.webp",
-      "position": "Education Mentor",
-      "period": "Jun 2023 – Feb 2025",
-      "type": "Contract",
-      "workplace_type": "Remote",
-      "description": "Taught Laravel to aspiring developers, from a full career-path course to a free crash course, live and online.",
-      "sub_programs": [
-        {
-          "title": "Laravel Career Path",
-          "badge": "2 successful batches",
-          "description": "I co-taught both batches and was also the support instructor for batch 1, alongside lead instructor Ahmed Shamim Hassan Shaon."
-        },
-        {
-          "title": "Laravel Crash Course",
-          "badge": "Free",
-          "description": "I taught it to 1,200+ students online."
-        }
-      ],
-      "tags": [
-        "Laravel",
-        "PHP"
-      ],
-      "is_current": false
-    },
-    {
-      "id": "exp-4",
-      "company": "Megaminds Technologies",
-      "company_url": "https://megamindslearning.net",
-      "company_logo": "/images/megaminds.webp",
-      "position": "Education Mentor",
-      "period": "2023 – 2025",
-      "type": "Contract",
-      "workplace_type": "Remote",
-      "description": "Mentored learners at Megaminds Learning, led by my mentor Ahmed Shamim Hassan Shaon.",
-      "is_current": false
-    },
-    {
-      "id": "exp-5",
-      "company": "ZovoZip",
-      "company_logo": "/images/zovozip.webp",
-      "position": "Co-Founder",
-      "period": "Feb 2021 – Present",
-      "type": "Seasonal",
-      "workplace_type": "Dhaka, Bangladesh",
-      "description": "Co-founded a web and software studio building UI templates, HTML templates and WordPress themes.",
-      "is_current": true
-    },
-    {
-      "id": "exp-6",
-      "company": "ZovoTeam",
-      "company_url": "https://www.facebook.com/Zovoteam",
-      "company_logo": "/images/zovoteam.webp",
-      "position": "Executive Web Developer",
-      "period": "Jan 2021 – Present",
-      "type": "Seasonal",
-      "workplace_type": "Dhaka, Bangladesh",
-      "description": "Led web development for the team’s client and product work.",
-      "is_current": true
     }
   ],
   "projects": [
     {
-      "id": "proj-1",
-      "title": "Bidvers",
-      "description": "Core platform and API behind a real-time hotel upgrade bidding marketplace",
+      "id": "proj-sq",
+      "title": "Scholar Quest",
+      "description": "A full-stack command center that helps scholarship applicants manage university shortlists, IELTS preparation, application documents, professor outreach, finances, deadlines, and progress in one focused workspace.",
       "tags": [
-        "Laravel",
-        "API",
-        "Real-time"
+        "React 19",
+        "TypeScript",
+        "TanStack Router",
+        "TanStack Query",
+        "Supabase"
       ],
-      "project_url": "https://bidvers.com",
-      "highlightBadge": "$120K+ raised",
+      "project_url": "https://sq.zahidp.com",
+      "highlightBadge": "EdTech Command Center",
+      "stars": 42,
+      "logoType": "prompt"
+    },
+    {
+      "id": "proj-zf",
+      "title": "Zahid Finance",
+      "description": "A relationship-based personal ledger and trust-money tracking system designed for individuals managing loans, shared commitments, and net worth overview.",
+      "tags": [
+        "React",
+        "TypeScript",
+        "Supabase",
+        "Tailwind CSS",
+        "PWA"
+      ],
+      "project_url": "https://finance.zahidp.com",
+      "repository_url": "https://github.com/0xzahidp/zahid-finance",
+      "highlightBadge": "Personal Finance & Trust",
+      "stars": 38,
+      "logoType": "invo"
+    },
+    {
+      "id": "proj-db",
+      "title": "Dhakaiya Bites",
+      "description": "An offline-first restaurant POS and operations platform for orders, table management, inventory, production costing, staff workflows, and reports.",
+      "tags": [
+        "React",
+        "TypeScript",
+        "IndexedDB",
+        "Dexie",
+        "Supabase"
+      ],
+      "project_url": "https://db.zahidp.com",
+      "highlightBadge": "Offline-First POS",
+      "stars": 24,
       "logoType": "bidvers"
     },
     {
-      "id": "proj-2",
-      "title": "Learn Laravel",
-      "description": "Self-learning resources to level up your Laravel skills: tutorials, ebooks, blogs and courses",
+      "id": "proj-tsp",
+      "title": "The Shared Plate",
+      "description": "A shared-living management system for meal tracking, grocery and bazar records, member payables, rent, settlements, absence tracking, and monthly reporting.",
       "tags": [
-        "Open source",
-        "Laravel",
-        "Learning"
+        "React",
+        "TypeScript",
+        "Supabase",
+        "Tailwind CSS"
       ],
-      "repository_url": "https://github.com/0xZahidp/learn-laravel",
-      "stars": 186,
+      "project_url": "https://www.zahidp.com",
+      "highlightBadge": "Shared Living System",
+      "stars": 19,
+      "logoType": "mytapcard"
+    },
+    {
+      "id": "proj-booknagar",
+      "title": "Book-Nagar",
+      "description": "A full-stack web application for exploring, managing, and discovering books with user libraries, book reviews, and reading collections.",
+      "tags": [
+        "React",
+        "Node.js",
+        "MongoDB",
+        "Express",
+        "Tailwind CSS"
+      ],
+      "project_url": "https://www.zahidp.com/en/projects/book-nagar",
+      "repository_url": "https://github.com/0xzahidp/book-nagar",
+      "highlightBadge": "Web Application",
+      "stars": 15,
       "logoType": "laravel"
     },
     {
-      "id": "proj-3",
-      "title": "Invo",
-      "description": "Effortless invoice management, no sign-up needed",
+      "id": "proj-madrasah",
+      "title": "Madrasah Automation Tools",
+      "description": "Lightweight administrative tools and Telegram bots that simplify recurring administrative tasks through structured data capture, reminders, and audit-friendly records.",
       "tags": [
-        "SaaS",
-        "Productivity"
+        "Python",
+        "Telegram Bot API",
+        "Google Sheets API",
+        "Automation"
       ],
-      "project_url": "https://invo.so",
-      "repository_url": "https://github.com/0xZahidp/invo",
-      "stars": 5,
-      "logoType": "invo"
-    },
-    {
-      "id": "proj-4",
-      "title": "Prompt Filler",
-      "description": "Fill prompt placeholders as easily as filling a form",
-      "tags": [
-        "DevTool",
-        "SaaS",
-        "Productivity"
-      ],
-      "repository_url": "https://github.com/0xZahidp/prompt-filler",
-      "stars": 2,
+      "project_url": "https://www.zahidp.com",
+      "highlightBadge": "Telegram Bot & Automation",
+      "stars": 29,
       "logoType": "prompt"
     },
     {
-      "id": "proj-5",
-      "title": "Year",
-      "description": "Real-time year progress tracker with 8 themes, from Windows 7 to Cyberpunk",
+      "id": "proj-bidvers",
+      "title": "Bidvers",
+      "description": "Core platform and API behind a real-time hotel upgrade bidding marketplace operating in the US, Oman and Romania.",
       "tags": [
-        "Real-time",
-        "Fun"
-      ],
-      "repository_url": "https://github.com/0xZahidp/year-progress",
-      "stars": 12
-    },
-    {
-      "id": "proj-6",
-      "title": "Murad Takla",
-      "description": "A fun dictionary of hilariously misspelled Banglish, made for laughs",
-      "tags": [
-        "Fun",
-        "Bangla"
-      ],
-      "repository_url": "https://github.com/0xZahidp/murad-takla",
-      "stars": 25
-    },
-    {
-      "id": "proj-7",
-      "title": "KajKam",
-      "description": "Client-side kanban task manager, no backend, built with Tailwind and Alpine.js",
-      "tags": [
-        "Productivity",
-        "Kanban"
-      ],
-      "repository_url": "https://github.com/0xZahidp/kajkam",
-      "stars": 3,
-      "logoType": "invo"
-    },
-    {
-      "id": "proj-8",
-      "title": "Hatlar",
-      "description": "Hand-picked VS Code extension packs that make Laravel development smoother",
-      "tags": [
-        "VS Code",
         "Laravel",
-        "DevTool"
+        "API",
+        "Real-time",
+        "Livewire"
       ],
-      "repository_url": "https://github.com/0xZahidp/hatlar",
-      "stars": 8,
-      "logoType": "prompt"
-    }
-  ],
-  "suggestedPeople": [
-    {
-      "id": "p1",
-      "name": "Ahmed Shamim Hassan Shaon",
-      "role": "CEO of Megaminds Lear...",
-      "avatar_url": "/images/shaon.jpg",
-      "url": "https://x.com/me_shaon",
-      "handle": "@me_shaon"
+      "project_url": "https://bidvers.com",
+      "highlightBadge": "$120K+ raised",
+      "stars": 54,
+      "logoType": "bidvers"
     },
     {
-      "id": "p2",
-      "name": "Caleb Porzio",
-      "role": "Creator of Livewire and ...",
-      "avatar_url": "/images/caleb.jpg",
-      "url": "https://x.com/calebporzio",
-      "handle": "@calebporzio"
-    },
-    {
-      "id": "p3",
-      "name": "HM Nayem",
-      "role": "Founder of Stack Learne...",
-      "avatar_url": "/images/nayem.jpg",
-      "url": "https://github.com/hmnayem",
-      "handle": "@hmnayem"
+      "id": "proj-learn-laravel",
+      "title": "Learn Laravel",
+      "description": "Self-learning resources to level up your Laravel skills: tutorials, ebooks, blogs and courses for modern web developers.",
+      "tags": [
+        "Open source",
+        "Laravel",
+        "Learning",
+        "PHP"
+      ],
+      "repository_url": "https://github.com/0xzahidp/learn-laravel",
+      "highlightBadge": "Open source",
+      "stars": 186,
+      "logoType": "laravel"
     }
   ],
   "socialLinks": [
     {
-      "id": "s1",
+      "id": "soc-telegram",
+      "platform": "peerlist",
+      "label": "Telegram",
+      "handle": "@OxZahidP",
+      "url": "https://t.me/0xzahidp"
+    },
+    {
+      "id": "soc-github",
       "platform": "github",
       "label": "GitHub",
-      "handle": "@0xZahidp",
-      "url": "https://github.com/0xZahidp"
+      "handle": "@0xzahidp",
+      "url": "https://github.com/0xzahidp"
     },
     {
-      "id": "s2",
+      "id": "soc-x",
       "platform": "x",
-      "label": "X",
-      "handle": "@0xZahidP",
-      "url": "https://x.com/0xZahidP"
+      "label": "X (Twitter)",
+      "handle": "@0xzahidp",
+      "url": "https://x.com/0xzahidp"
     },
     {
-      "id": "s3",
+      "id": "soc-linkedin",
       "platform": "linkedin",
       "label": "LinkedIn",
-      "handle": "in/0xZahidp",
-      "url": "https://linkedin.com/in/0xZahidp"
+      "handle": "in/oxzahidp",
+      "url": "https://www.linkedin.com/in/oxzahidp"
     },
     {
-      "id": "s4",
+      "id": "soc-facebook",
       "platform": "facebook",
       "label": "Facebook",
-      "handle": "/0xZahidp",
-      "url": "https://facebook.com/0xZahidp"
+      "handle": "0xzahidp",
+      "url": "https://facebook.com/0xzahidp"
+    }
+  ],
+  "suggestedPeople": [
+    {
+      "id": "person-1",
+      "name": "Ahmed Shamim Hasan",
+      "role": "CEO of Megaminds Learning",
+      "avatar_url": "https://github.com/alnahian2003.png",
+      "url": "https://github.com/alnahian2003",
+      "handle": "shamim"
+    },
+    {
+      "id": "person-2",
+      "name": "Caleb Porzio",
+      "role": "Creator of Livewire and Alpine.js",
+      "avatar_url": "/images/faces/caleb.jpg",
+      "url": "https://x.com/calebporzio",
+      "handle": "calebporzio"
+    },
+    {
+      "id": "person-3",
+      "name": "HM Nayem",
+      "role": "Founder of Stack Learner",
+      "avatar_url": "https://github.com/0xzahidp.png",
+      "url": "https://github.com/0xzahidp",
+      "handle": "hmnayem"
     }
   ],
   "worksSettings": {
@@ -446,18 +631,14 @@
   "basedInSettings": {
     "city": "Dhaka",
     "country": "Bangladesh",
-    "timezone": "Asia/Dhaka",
+    "timeString": "8:29 PM",
     "gmtOffset": "GMT+6"
   },
   "githubSettings": {
     "username": "0xZahidp",
     "followersCount": 6,
-    "pinnedRepos": [
-      "0xZahidp/MyTapCard",
-      "0xZahidp/Orbit",
-      "0xZahidp/GhuraFira_Mobile_APP_Flutter",
-      "0xZahidp/CompilerX"
-    ]
+    "totalContributions": 1378,
+    "totalRepos": 92
   },
-  "updatedAt": "2026-10-31T18:51:51.481Z"
+  "updatedAt": "2026-11-01T01:08:00.000Z"
 }

@@ -16,34 +16,40 @@ export const profileData: Profile = {
   id: 'usr_zahid',
   username: '0xZahidp',
   full_name: 'Md Zahid Hasan Patwary',
-  headline: 'Less talk, show me code!',
-  bio: `Developer & Growth Strategist | Building SaaS & Web3 products | Passionate about code, community & scaling ideas into impact 🚀`,
+  headline: 'I build practical web products, internal tools, and automation systems for real-world work.',
+  bio: `Product Developer & Full-Stack Builder | Building practical web applications, offline-first systems, and automation workflows that solve real problems.`,
   avatar_url: '/images/avatar.webp',
-  location: 'Dhaka',
+  location: 'Dhaka, Bangladesh',
   timezone: 'Asia/Dhaka',
   availability: 'Open to new conversations',
   github_followers_count: 6,
   roles: [
     {
-      title: 'CTO',
-      company: 'Bidvers',
-      company_url: 'https://bidvers.com',
+      title: 'Product Developer',
+      company: 'Dhakaiya Bites',
+      company_url: 'https://db.zahidp.com',
       company_logo: '/images/bidvers.webp',
     },
     {
-      title: 'Software Engineer',
-      company: 'GymScanner',
-      company_url: 'https://gymscanner.com',
+      title: 'Lead Developer',
+      company: 'Scholar Quest',
+      company_url: 'https://sq.zahidp.com',
+      company_logo: '/images/avatar.webp',
+    },
+    {
+      title: 'Full-Stack Developer',
+      company: 'Independent Product Builder',
+      company_url: 'https://www.zahidp.com',
       company_logo: '/images/gymscanner.webp',
     },
   ],
 };
 
 export const bioParagraphs = [
-  'I’m a developer and growth strategist building scalable SaaS and Web3 products. I turn complex technical architectures into intuitive, high-performance web products that ship globally.',
-  'As CTO at Bidvers and Software Engineer at GymScanner, I architected core platforms and APIs from a blank repository, including low-latency real-time bidding engines and secure multi-region payment routing across the US, Oman, and Romania. Bidvers has raised over $120K so far.',
-  'These days I build with agentic AI engineering and modern full-stack systems—leveraging Next.js, Laravel, Supabase, Tailwind CSS, and models from OpenAI and Claude. I own the architecture, user experience, and technical roadmap end to end.',
-  'I love building products from zero to one, scaling engineering teams, and exploring decentralized technologies. Always open to collaborating with ambitious founders and teams worldwide.',
+  'I build practical web products, internal tools, and automation systems for real-world work. I’m Zahid Hasan Patwary, a product developer and full-stack builder focused on turning everyday operational bottlenecks into clear, reliable software.',
+  'From offline-first restaurant POS platforms (Dhakaiya Bites) and personal finance ledgers (Zahid Finance) to scholarship application command centers (Scholar Quest) and shared-living management systems (The Shared Plate), I build systems people can actually use in production.',
+  'My engineering stack centers around React 19, Next.js, TypeScript, Supabase, PostgreSQL, Tailwind CSS, TanStack Query, and offline-first IndexedDB storage. I also design lightweight automation systems and bots leveraging Python, Telegram Bot API, and Google Sheets.',
+  'Whether you need a reliable product engineered from scratch, an offline-first architecture, or operational automation to streamline daily workflows, I own the technical roadmap, architecture, and user experience end to end.',
 ];
 
 export const languagesData: LanguageSkill[] = [

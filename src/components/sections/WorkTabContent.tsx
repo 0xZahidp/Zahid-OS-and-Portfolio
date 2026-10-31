@@ -193,7 +193,18 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
     return weeks;
   }, []);
 
-  const displayedWeeks = liveWeeks && liveWeeks.length > 0 ? liveWeeks : fallbackContributionWeeks;
+  // Ensure displayedWeeks is always exactly 53 weeks (371 days)
+  const displayedWeeks = useMemo(() => {
+    const raw = liveWeeks && liveWeeks.length > 0 ? liveWeeks : fallbackContributionWeeks;
+    if (raw.length === 53) return raw;
+    if (raw.length > 53) return raw.slice(-53);
+    // Pad start if fewer than 53 weeks
+    const diff = 53 - raw.length;
+    const padding: ContributionDay[][] = Array.from({ length: diff }, () =>
+      Array.from({ length: 7 }, () => ({ date: '', count: 0, level: 0 }))
+    );
+    return [...padding, ...raw];
+  }, [liveWeeks, fallbackContributionWeeks]);
 
   // Auto-scroll the heatmap to show the most recent weeks first on smaller screens
   useEffect(() => {
@@ -335,30 +346,30 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
         </div>
 
         {/* Summary text - Muted gray with uniform weight */}
-        <p className="mt-2 mb-4.5 text-body text-ink-3 font-normal">
+        <p className="mt-2 mb-4 text-body text-ink-3 font-normal">
           {effectiveContributions.toLocaleString()} contributions in the last year
         </p>
 
         {/* Heatmap Card Wrapper (.card-raised) */}
-        <div className="card-raised relative rounded-3xl border border-line bg-surface p-6 shadow-xs">
+        <div className="card-raised relative rounded-3xl border border-line bg-surface p-6 sm:p-7 shadow-xs">
           {/* Scroll container for responsiveness */}
           <div
             ref={scrollRef}
             className="overflow-x-auto pb-1 [scrollbar-width:thin] sm:overflow-visible sm:pb-0"
           >
-            <div className="min-w-[580px]">
+            <div className="w-[686px] min-w-[686px]">
               {/* Month Labels Grid */}
               <div
-                className="grid gap-[2px] sm:gap-[3px] mb-1.5"
+                className="grid gap-[3px] mb-2.5 text-micro text-ink-3 font-normal select-none"
                 style={{
-                  gridTemplateColumns: `repeat(${displayedWeeks.length}, minmax(0.625rem, 1fr))`,
+                  gridTemplateColumns: 'repeat(53, 10px)',
                 }}
               >
                 {monthLabels.map((m) => (
                   <span
                     key={`${m.name}-${m.col}`}
-                    className="text-micro whitespace-nowrap text-ink-3 font-normal"
-                    style={{ gridColumn: `${m.col} / span 4` }}
+                    className="whitespace-nowrap overflow-visible"
+                    style={{ gridColumnStart: m.col }}
                   >
                     {m.name}
                   </span>
@@ -367,9 +378,10 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
 
               {/* Cells Grid (53 columns x 7 rows) */}
               <div
-                className="grid grid-flow-col grid-rows-7 gap-[2px] sm:gap-[3px]"
+                className="grid grid-flow-col gap-[3px] h-[88px]"
                 style={{
-                  gridTemplateColumns: `repeat(${displayedWeeks.length}, minmax(0.625rem, 1fr))`,
+                  gridTemplateColumns: 'repeat(53, 10px)',
+                  gridTemplateRows: 'repeat(7, 10px)',
                 }}
                 role="img"
                 aria-label={`${effectiveContributions} GitHub contributions in the last year`}
@@ -398,7 +410,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
                     return (
                       <span
                         key={`${wIdx}-${dIdx}`}
-                        className={`aspect-square rounded-[2px] cursor-pointer transition-shadow hover:ring-2 hover:ring-ink/40 ${bgClass}`}
+                        className={`size-2.5 rounded-[2px] cursor-pointer transition-shadow hover:ring-2 hover:ring-ink/40 ${bgClass}`}
                         title={tooltipText}
                         onMouseEnter={(e) => {
                           const rect = e.currentTarget.getBoundingClientRect();
@@ -450,7 +462,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
           )}
 
           {/* Legend inside bottom-right */}
-          <div className="mt-3.5 flex items-center justify-end gap-1 text-micro text-ink-3 select-none">
+          <div className="mt-3.5 flex items-center justify-end gap-1.5 text-micro text-ink-3 select-none">
             <span>Less</span>
             <span className="size-2.5 rounded-[2px] bg-graph-0" />
             <span className="size-2.5 rounded-[2px] bg-graph-1 ring-1 ring-black/5 dark:ring-white/10" />
@@ -470,7 +482,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
             href={`https://github.com/${githubUsername}?tab=repositories`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-xl font-semibold tracking-[-0.01em] whitespace-nowrap select-none btn btn-secondary h-8 px-3.5 text-meta"
+            className="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-[13.5px] font-semibold tracking-[-0.01em] whitespace-nowrap select-none btn btn-secondary h-9 px-4 text-meta shadow-xs ring-1 ring-line/50 hover:bg-surface-2 transition-all"
             title="View all repositories on GitHub"
           >
             <span className="btn-content inline-flex items-center gap-1.5">
