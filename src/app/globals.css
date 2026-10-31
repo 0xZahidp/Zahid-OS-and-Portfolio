@@ -9,6 +9,7 @@
   --color-bg-base: var(--background);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-surface-elevated: var(--surface-elevated);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
@@ -30,6 +31,7 @@
   --background: #0d0d0f;
   --surface: #171719;
   --surface-2: #202024;
+  --surface-3: #26262b;
   --surface-elevated: #26262b;
   --line: #2b2b30;
   --line-strong: #3f3f46;
@@ -50,27 +52,28 @@
 }
 
 :root.light {
-  /* Light Theme */
+  /* Light Theme - exact nahian.bd tokens */
   --background: #ffffff;
-  --surface: #f4f4f6;
-  --surface-2: #eaeaec;
+  --surface: #ffffff;
+  --surface-2: #f7f7f7;
+  --surface-3: #efefef;
   --surface-elevated: #ffffff;
-  --line: #e4e4e7;
-  --line-strong: #d4d4d8;
+  --line: #e8e8e8;
+  --line-strong: #d6d6d6;
   
-  --ink: #18181b;
-  --ink-2: #52525b;
-  --ink-3: #71717a;
+  --ink: #171717;
+  --ink-2: #525252;
+  --ink-3: #6b6b6b;
   
   --link: #059669;
   --ring: #059669;
 
-  --cover-1: #a7f3d0;
-  --cover-2: #6ee7b7;
-  --cover-3: #34d399;
-  --cover-4: #10b981;
-  --cover-5: #d1fae5;
-  --cover-6: #059669;
+  --cover-1: #34d399;
+  --cover-2: #2dd4bf;
+  --cover-3: #10b981;
+  --cover-4: #5eead4;
+  --cover-5: #a7f3d0;
+  --cover-6: #0f9459;
 }
 
 body {

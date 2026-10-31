@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Briefcase, MapPin, Check } from 'lucide-react';
+import { Briefcase, MapPin } from 'lucide-react';
 import { Profile } from '@/types/profile';
 import { VerifiedBadgeIcon, TablerShare } from '@/components/ui/Icons';
+import { ShareModal } from '@/components/ui/ShareModal';
 import { ProfileBanner } from './ProfileBanner';
 import { ProfileAvatar } from './ProfileAvatar';
 import { ProfileBadges } from './ProfileBadges';
@@ -24,7 +25,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   onContactClick,
 }) => {
   const [localTime, setLocalTime] = useState<string>('6:11 PM');
-  const [copied, setCopied] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -46,26 +47,6 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     const timer = setInterval(updateTime, 10000);
     return () => clearInterval(timer);
   }, [profile.timezone]);
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${profile.full_name} (Zahid) - Developer Profile`,
-          text: `${profile.full_name} - ${profile.headline}`,
-          url: window.location.href,
-        });
-        return;
-      } catch {
-        // Fallback to clipboard
-      }
-    }
-    if (navigator.clipboard) {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   return (
     <div className="w-full">
@@ -93,23 +74,19 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
         <button
           type="button"
-          onClick={handleShare}
+          onClick={() => setIsShareOpen(true)}
           aria-label="Share profile"
-          className="btn btn-secondary grid size-10 place-items-center rounded-xl transition-all"
+          className="btn btn-secondary grid size-10 place-items-center rounded-xl transition-all hover:bg-surface-2"
         >
           <span className="btn-content">
-            {copied ? (
-              <Check className="size-4.5 text-brand-500" />
-            ) : (
-              <TablerShare className="size-4.5" />
-            )}
+            <TablerShare className="size-4.5" />
           </span>
         </button>
 
         <button
           type="button"
           onClick={onContactClick}
-          className="btn btn-primary h-10 px-5 rounded-xl font-bold text-sm tracking-[-0.01em]"
+          className="btn btn-primary h-10 px-5 rounded-full font-bold text-sm tracking-[-0.01em] shadow-[0_4px_16px_rgba(16,185,129,0.35)]"
         >
           <span className="btn-content inline-flex items-center gap-2">
             Get in touch
@@ -207,7 +184,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <button
             type="button"
             onClick={onContactClick}
-            className="btn btn-primary h-10 px-5 rounded-xl font-bold text-sm"
+            className="btn btn-primary h-10 px-5 rounded-full font-bold text-sm shadow-[0_4px_16px_rgba(16,185,129,0.35)]"
           >
             <span className="btn-content inline-flex items-center gap-2">
               Get in touch
@@ -215,21 +192,12 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </button>
           <button
             type="button"
-            onClick={handleShare}
-            className="btn btn-secondary h-10 px-4.5 rounded-xl font-semibold text-sm"
+            onClick={() => setIsShareOpen(true)}
+            className="btn btn-secondary h-10 px-4.5 rounded-xl font-semibold text-sm hover:bg-surface-2"
           >
             <span className="btn-content inline-flex items-center gap-2">
-              {copied ? (
-                <>
-                  <Check className="size-4.5 text-brand-500" />
-                  <span>Copied</span>
-                </>
-              ) : (
-                <>
-                  <TablerShare className="size-4.5" />
-                  <span>Share</span>
-                </>
-              )}
+              <TablerShare className="size-4.5" />
+              <span>Share</span>
             </span>
           </button>
         </div>
@@ -237,6 +205,13 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
       {/* Profile Tabs (Resume / Work) */}
       <ProfileTabs activeTab={activeTab} onTabChange={onTabChange} />
+
+      {/* Share Profile Modal */}
+      <ShareModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        profile={profile}
+      />
     </div>
   );
 };

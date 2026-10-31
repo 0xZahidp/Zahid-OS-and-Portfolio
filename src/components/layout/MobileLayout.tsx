@@ -10,12 +10,13 @@ import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
 import { ProfileBadges } from '@/components/profile/ProfileBadges';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { VerifiedBadgeIcon, TablerShare } from '@/components/ui/Icons';
+import { ShareModal } from '@/components/ui/ShareModal';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { ExperienceSection } from '@/components/sections/ExperienceSection';
 import { SkillsSection } from '@/components/sections/SkillsSection';
 import { ProjectsSection } from '@/components/sections/ProjectsSection';
 import { ContactSection } from '@/components/sections/ContactSection';
-import { Briefcase, MapPin, Check } from 'lucide-react';
+import { Briefcase, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import {
   GitHubIcon,
@@ -40,31 +41,11 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   onTabChange,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const scrollToContact = () => {
     const el = document.getElementById('contact');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${profile.full_name} (Zahid) - Developer Profile`,
-          text: `${profile.full_name} - ${profile.headline}`,
-          url: window.location.href,
-        });
-        return;
-      } catch {
-        // fallback
-      }
-    }
-    if (navigator.clipboard) {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
   };
 
   return (
@@ -172,27 +153,18 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             <button
               type="button"
               onClick={scrollToContact}
-              className="flex-1 btn btn-primary h-10 px-5 rounded-xl font-bold text-sm tracking-[-0.01em]"
+              className="flex-1 btn btn-primary h-10 px-5 rounded-full font-bold text-sm tracking-[-0.01em] shadow-[0_4px_16px_rgba(16,185,129,0.35)]"
             >
               <span className="btn-content">Get in touch</span>
             </button>
             <button
               type="button"
-              onClick={handleShare}
-              className="flex-1 btn btn-secondary h-10 px-4.5 rounded-xl font-semibold text-sm"
+              onClick={() => setIsShareOpen(true)}
+              className="flex-1 btn btn-secondary h-10 px-4.5 rounded-xl font-semibold text-sm hover:bg-surface-2"
             >
               <span className="btn-content inline-flex items-center gap-2">
-                {copied ? (
-                  <>
-                    <Check className="size-4 text-brand-500" />
-                    <span>Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <TablerShare className="size-4.5" />
-                    <span>Share</span>
-                  </>
-                )}
+                <TablerShare className="size-4.5" />
+                <span>Share</span>
               </span>
             </button>
           </div>
@@ -262,6 +234,13 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       <MobileBottomBar
         activeSection={activeSection}
         onNavigate={onNavigate}
+      />
+
+      {/* Share Profile Modal */}
+      <ShareModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        profile={profile}
       />
     </div>
   );
