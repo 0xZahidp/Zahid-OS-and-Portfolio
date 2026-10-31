@@ -71,7 +71,7 @@ export interface Project {
 
 export interface SocialLink {
   id: string;
-  platform: 'github' | 'x' | 'linkedin' | 'facebook' | 'producthunt' | 'devto' | 'behance';
+  platform: 'github' | 'x' | 'linkedin' | 'facebook' | 'producthunt' | 'devto' | 'behance' | 'peerlist';
   url: string;
   handle: string;
   label: string;
@@ -84,6 +84,52 @@ export interface FollowerRecommendation {
   avatar_url: string;
   url: string;
   handle: string;
+}
+
+export interface Person {
+  id: string;
+  name: string;
+  verified?: boolean;
+  avatar_url: string;
+  role: string;
+  primaryHandle: string;
+  primaryPlatform: 'x' | 'youtube' | 'github' | 'linkedin' | 'website';
+  primaryUrl: string;
+  quote?: string;
+  tags?: string[];
+  platforms: {
+    platform: 'x' | 'github' | 'linkedin' | 'facebook' | 'youtube' | 'website';
+    url: string;
+  }[];
+}
+
+export interface OpenSourceRepo {
+  id: string;
+  name: string;
+  repo: string;
+  description: string;
+  language: string;
+  languageColor: string;
+  stars: number;
+  forks?: number;
+  url: string;
+}
+
+export interface ServiceItem {
+  id: string;
+  title: string;
+  description: string;
+  icon: 'consultation' | 'call' | 'english';
+  actionText: string;
+  actionUrl: string;
+}
+
+export interface DirectContactItem {
+  id: string;
+  title: string;
+  handle: string;
+  url: string;
+  icon: 'email' | 'x' | 'messenger' | 'whatsapp';
 }
 
 export interface LanguageSkill {

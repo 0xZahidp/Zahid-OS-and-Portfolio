@@ -18,24 +18,19 @@ export default function Home() {
       return;
     }
 
-    if (section === 'profile') {
-      setActiveTab('resume');
+    if (section === 'people') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
     if (section === 'contact') {
-      setActiveSection('profile');
-      setTimeout(() => {
-        const el = document.getElementById('contact');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 50);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-    if (section === 'people') {
-      const el = document.getElementById('who-to-follow');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    if (section === 'profile') {
+      setActiveTab('resume');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
