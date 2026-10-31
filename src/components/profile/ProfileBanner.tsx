@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { BackgroundRippleEffect } from '@/components/ui/background-ripple-effect';
+import { WaterRippleMatrix } from './WaterRippleMatrix';
 
 export const ProfileBanner: React.FC = () => {
   return (
     <div className="relative overflow-hidden h-36 sm:h-52 w-full border-b border-line bg-surface flex items-center justify-center select-none">
-      {/* Background subtle glowing blobs */}
+      {/* Background ambient glowing blobs */}
       <div className="cover absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
         <span
           className="cover-blob"
@@ -50,12 +50,8 @@ export const ProfileBanner: React.FC = () => {
         />
       </div>
 
-      {/* Interactive Framer Motion Background Ripple Effect */}
-      <BackgroundRippleEffect
-        rows={12}
-        cols={80}
-        className="w-full h-full justify-center"
-      />
+      {/* Interactive Water Ripple Matrix Canvas */}
+      <WaterRippleMatrix className="h-full w-full" />
     </div>
   );
 };
