@@ -34,6 +34,17 @@ export const TablerBooks = ({ className = 'size-6' }: { className?: string }) =>
   </svg>
 );
 
+export const TablerTools = ({ className = 'size-6' }: { className?: string }) => (
+  <svg width="1em" height="1em" viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 21h4l13 -13a1.5 1.5 0 0 0 -4 -4l-13 13v4" />
+    <path d="M14.5 5.5l4 4" />
+    <path d="M12 8l-5 -5l-4 4l5 5" />
+    <path d="M7 8l-1.5 1.5" />
+    <path d="M16 12l5 5l-4 4l-5 -5" />
+    <path d="M16 17l-1.5 1.5" />
+  </svg>
+);
+
 export const TablerHeadphones = ({ className = 'size-6' }: { className?: string }) => (
   <svg width="1em" height="1em" viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M4 15a2 2 0 0 1 2-2h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm11 0a2 2 0 0 1 2-2h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2z" />
