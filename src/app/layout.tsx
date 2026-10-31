@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { ContextMenu } from '@/components/ui/ContextMenu';
 import './globals.css';
 
 const geistSans = Geist({
@@ -81,6 +82,7 @@ export default function RootLayout({
     <html lang="en" className={`scroll-smooth ${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <body className="min-h-dvh antialiased font-sans [scrollbar-gutter:stable]">
         {children}
+        <ContextMenu />
       </body>
     </html>
   );

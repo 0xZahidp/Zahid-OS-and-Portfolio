@@ -85,6 +85,31 @@ export const TablerMenu2 = ({ className = 'size-4.5' }: { className?: string }) 
   </svg>
 );
 
+export const TablerArrowLeft = ({ className = 'size-5' }: { className?: string }) => (
+  <svg width="1em" height="1em" viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M5 12h14M5 12l6 6m-6-6l6-6" />
+  </svg>
+);
+
+export const TablerArrowRight = ({ className = 'size-5' }: { className?: string }) => (
+  <svg width="1em" height="1em" viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M19 12H5m14 0l-6-6m6 6l-6 6" />
+  </svg>
+);
+
+export const TablerReload = ({ className = 'size-5' }: { className?: string }) => (
+  <svg width="1em" height="1em" viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M19.933 13.041a8 8 0 1 1-9.925-8.788c3.899-1 7.935 1.007 9.425 4.747" />
+    <path d="M20 4v5h-5" />
+  </svg>
+);
+
+export const TablerMessageCircle = ({ className = 'size-4' }: { className?: string }) => (
+  <svg width="1em" height="1em" viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 20l1.3-3.9a9 8 0 1 1 3.4 2.9l-4.7 1" />
+  </svg>
+);
+
 export const TablerX = ({ className = 'size-4.5' }: { className?: string }) => (
   <svg width="1em" height="1em" viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M18 6L6 18M6 6l12 12" />
