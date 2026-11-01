@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2026-11-01T15:49:07.510Z",
+  "updatedAt": "2026-11-01T16:55:24.374Z",
   "messages": [
     {
       "id": "msg_resend_b419aead-04b0-4a5f-a125-2905486e7337",
-      "folder": "inbox",
+      "folder": "trash",
       "from": {
         "name": "Md Zahid Hasan Patwary",
         "email": "mdzahidhasanpatwary@gmail.com"
@@ -22,7 +22,7 @@
       "createdAt": "2026-11-01T15:13:40.468+00:00",
       "isRead": true,
       "isStarred": false,
-      "isTrashed": false,
+      "isTrashed": true,
       "isArchived": false,
       "label": "inbox",
       "direction": "inbound",
