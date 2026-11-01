@@ -138,3 +138,4 @@ export async function optimizeCompanyIcon(
     img.src = objectUrl;
   });
 }
+

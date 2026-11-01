@@ -17,11 +17,13 @@ import {
   CornerUpLeft,
   X,
   ExternalLink,
+  ArrowLeft,
 } from 'lucide-react';
 import { MailMessage, MailFolder } from '@/types/mail';
 
 export const InboxTab: React.FC = () => {
   const [folder, setFolder] = useState<MailFolder>('inbox');
+  const [mobileView, setMobileView] = useState<'list' | 'message'>('list');
   const [messages, setMessages] = useState<MailMessage[]>([]);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,6 +157,7 @@ export const InboxTab: React.FC = () => {
   // Select a message and mark as read
   const handleSelectMessage = (msg: MailMessage) => {
     setSelectedMessageId(msg.id);
+    setMobileView('message');
     if (!msg.isRead) {
       handleToggleRead(msg);
     }
@@ -268,7 +271,7 @@ export const InboxTab: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8.5rem)] rounded-2xl border border-line bg-surface overflow-hidden shadow-xs">
+    <div className="flex flex-col h-[calc(100vh-7.5rem)] sm:h-[calc(100vh-8.5rem)] rounded-2xl border border-line bg-surface overflow-hidden shadow-xs">
       {/* Toast Feedback */}
       {statusMessage && (
         <div
@@ -292,10 +295,48 @@ export const InboxTab: React.FC = () => {
         </div>
       )}
 
+      {/* Mobile/Tablet Folder Selector Bar (< lg) */}
+      <div className="lg:hidden p-2.5 border-b border-line bg-surface flex items-center justify-between gap-2 overflow-x-auto shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
+          {(['inbox', 'starred', 'sent', 'trash'] as MailFolder[]).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => {
+                setFolder(f);
+                fetchMessages(f);
+                setMobileView('list');
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize flex items-center gap-1.5 transition-colors cursor-pointer ${
+                folder === f
+                  ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold border border-brand-500/20'
+                  : 'text-ink-3 hover:text-ink hover:bg-surface-2'
+              }`}
+            >
+              <span>{f}</span>
+              {f === 'inbox' && unreadCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-brand-500 text-white">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsComposeOpen(true)}
+          className="h-7.5 px-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
+        >
+          <Plus className="size-3.5" />
+          <span className="hidden xs:inline">Compose</span>
+        </button>
+      </div>
+
       {/* 3-Column Split Interface */}
       <div className="flex flex-1 min-h-0 divide-x divide-line">
-        {/* PANE 1: Folder Navigation & Actions (Width: 200px) */}
-        <div className="w-52 shrink-0 bg-surface flex flex-col justify-between p-3.5">
+        {/* PANE 1: Folder Navigation & Actions (Desktop only >= lg) */}
+        <div className="hidden lg:flex w-48 xl:w-52 shrink-0 bg-surface flex-col justify-between p-3.5">
           <div className="space-y-4">
             {/* Compose Button */}
             <button
@@ -406,8 +447,12 @@ export const InboxTab: React.FC = () => {
           </div>
         </div>
 
-        {/* PANE 2: Message List (Width: 320px) */}
-        <div className="w-80 shrink-0 flex flex-col bg-surface-2/30">
+        {/* PANE 2: Message List */}
+        <div
+          className={`w-full md:w-72 xl:w-80 shrink-0 flex flex-col bg-surface-2/30 ${
+            mobileView === 'message' ? 'hidden md:flex' : 'flex'
+          }`}
+        >
           {/* Search bar */}
           <div className="p-3 border-b border-line flex items-center gap-2">
             <div className="relative flex-1">
@@ -517,20 +562,35 @@ export const InboxTab: React.FC = () => {
         </div>
 
         {/* PANE 3: Reading Pane & Quick Reply (Flexible Width) */}
-        <div className="flex-1 flex flex-col min-w-0 bg-surface">
+        <div
+          className={`flex-1 flex flex-col min-w-0 bg-surface ${
+            mobileView === 'list' ? 'hidden md:flex' : 'flex'
+          }`}
+        >
           {selectedMessage ? (
             <div className="flex-1 flex flex-col min-h-0">
               {/* Header Toolbar */}
-              <div className="p-4 border-b border-line flex items-center justify-between gap-3 bg-surface">
-                <div className="min-w-0">
-                  <h3 className="text-base font-bold text-ink truncate leading-tight">
-                    {selectedMessage.subject}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-ink-3">
-                    <span className="font-semibold text-ink">{selectedMessage.from.name}</span>
-                    <span>&lt;{selectedMessage.from.email}&gt;</span>
-                    <span>·</span>
-                    <span>{new Date(selectedMessage.createdAt).toLocaleString()}</span>
+              <div className="p-3 sm:p-4 border-b border-line flex items-center justify-between gap-3 bg-surface">
+                <div className="flex items-center gap-2 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setMobileView('list')}
+                    className="md:hidden p-1.5 -ml-1 text-ink-3 hover:text-ink hover:bg-surface-2 rounded-lg transition-colors cursor-pointer shrink-0"
+                    title="Back to messages list"
+                  >
+                    <ArrowLeft className="size-4" />
+                  </button>
+
+                  <div className="min-w-0">
+                    <h3 className="text-sm sm:text-base font-bold text-ink truncate leading-tight">
+                      {selectedMessage.subject}
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-0.5 sm:mt-1 text-[11px] sm:text-xs text-ink-3">
+                      <span className="font-semibold text-ink truncate">{selectedMessage.from.name}</span>
+                      <span className="truncate">&lt;{selectedMessage.from.email}&gt;</span>
+                      <span className="hidden sm:inline">·</span>
+                      <span className="hidden sm:inline">{new Date(selectedMessage.createdAt).toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -641,10 +701,10 @@ export const InboxTab: React.FC = () => {
 
       {/* COMPOSE MODAL DIALOG */}
       {isComposeOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="card-raised rounded-2xl border border-line bg-surface max-w-lg w-full shadow-2xl overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="card-raised rounded-2xl border border-line bg-surface max-w-lg w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Modal Header */}
-            <div className="px-5 py-3.5 border-b border-line flex items-center justify-between bg-surface-2/50">
+            <div className="px-4 sm:px-5 py-3.5 border-b border-line flex items-center justify-between bg-surface-2/50 shrink-0">
               <div className="flex items-center gap-2">
                 <div className="size-7 rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-400 grid place-items-center">
                   <Send className="size-3.5" />
@@ -661,7 +721,7 @@ export const InboxTab: React.FC = () => {
             </div>
 
             {/* Compose Form */}
-            <form onSubmit={handleSendCompose} className="p-5 space-y-4">
+            <form onSubmit={handleSendCompose} className="p-4 sm:p-5 space-y-4 overflow-y-auto">
               <div>
                 <label className="block text-[11px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
                   From (Verified Domain: zahidp.com)

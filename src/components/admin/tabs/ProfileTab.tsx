@@ -50,7 +50,7 @@ export const ProfileTab: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl">
       {/* 1. Identity & Avatar Card */}
-      <div className="card-raised rounded-2xl border border-line bg-surface p-6 shadow-xs space-y-6">
+      <div className="card-raised rounded-2xl border border-line bg-surface p-4 sm:p-6 shadow-xs space-y-5 sm:space-y-6">
         <div className="flex items-center gap-2.5 pb-4 border-b border-line">
           <User className="size-4.5 text-brand-500" />
           <h2 className="text-sm font-bold text-ink">Personal Identity</h2>
@@ -164,7 +164,7 @@ export const ProfileTab: React.FC = () => {
       </div>
 
       {/* 2. Hero Affiliation Roles Card */}
-      <div className="card-raised rounded-2xl border border-line bg-surface p-6 shadow-xs space-y-5">
+      <div className="card-raised rounded-2xl border border-line bg-surface p-4 sm:p-6 shadow-xs space-y-5">
         <div className="flex items-center justify-between pb-4 border-b border-line">
           <div className="flex items-center gap-2.5">
             <Building className="size-4.5 text-brand-500" />

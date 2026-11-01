@@ -63,10 +63,10 @@ export const ProjectsTab: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="card-raised rounded-2xl border border-line bg-surface p-6 shadow-xs space-y-6">
+      <div className="card-raised rounded-2xl border border-line bg-surface p-4 sm:p-6 shadow-xs space-y-5 sm:space-y-6">
         <div className="flex items-center justify-between pb-4 border-b border-line">
           <div className="flex items-center gap-2.5">
-            <Layers className="size-4.5 text-brand-500" />
+            <Layers className="size-4.5 text-brand-500 shrink-0" />
             <div>
               <h2 className="text-sm font-bold text-ink">Featured Projects & Products</h2>
               <p className="text-[11px] text-ink-3">
@@ -77,10 +77,10 @@ export const ProjectsTab: React.FC = () => {
           <button
             type="button"
             onClick={handleAddProject}
-            className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
+            className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 shrink-0"
           >
             <Plus className="size-3.5" />
-            <span>Add Project</span>
+            <span className="hidden xs:inline">Add Project</span>
           </button>
         </div>
 
@@ -88,7 +88,7 @@ export const ProjectsTab: React.FC = () => {
           {projects.map((proj, idx) => (
             <div
               key={proj.id || idx}
-              className="p-5 rounded-2xl border border-line bg-surface-2/60 hover:bg-surface-2 transition-all space-y-4"
+              className="p-3.5 sm:p-5 rounded-2xl border border-line bg-surface-2/60 hover:bg-surface-2 transition-all space-y-4"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">

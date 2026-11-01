@@ -56,7 +56,7 @@ export const FactsTab: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl">
       {/* 1. Based In Card */}
-      <div className="card-raised rounded-2xl border border-line bg-surface p-6 shadow-xs space-y-5">
+      <div className="card-raised rounded-2xl border border-line bg-surface p-4 sm:p-6 shadow-xs space-y-5">
         <div className="flex items-center gap-2.5 pb-4 border-b border-line">
           <MapPin className="size-4.5 text-brand-500" />
           <div>
@@ -113,7 +113,7 @@ export const FactsTab: React.FC = () => {
       </div>
 
       {/* 2. Works Setup Card */}
-      <div className="card-raised rounded-2xl border border-line bg-surface p-6 shadow-xs space-y-5">
+      <div className="card-raised rounded-2xl border border-line bg-surface p-4 sm:p-6 shadow-xs space-y-5">
         <div className="flex items-center gap-2.5 pb-4 border-b border-line">
           <Briefcase className="size-4.5 text-brand-500" />
           <div>
@@ -185,7 +185,7 @@ export const FactsTab: React.FC = () => {
       </div>
 
       {/* 3. Languages Card */}
-      <div className="card-raised rounded-2xl border border-line bg-surface p-6 shadow-xs space-y-5">
+      <div className="card-raised rounded-2xl border border-line bg-surface p-4 sm:p-6 shadow-xs space-y-5">
         <div className="flex items-center justify-between pb-4 border-b border-line">
           <div className="flex items-center gap-2.5">
             <Languages className="size-4.5 text-brand-500" />

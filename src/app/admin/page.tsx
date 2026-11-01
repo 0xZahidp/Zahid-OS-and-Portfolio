@@ -97,6 +97,7 @@ function AdminDashboardInner() {
 
   const [activeTab, setActiveTab] = useState<AdminTab>('profile');
   const [showPreview, setShowPreview] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [supabaseReady, setSupabaseReady] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -209,12 +210,14 @@ function AdminDashboardInner() {
     <div className="min-h-screen bg-surface flex flex-col font-sans">
       {/* 2-Column Layout: Sidebar + Main Workspace */}
       <div className="flex flex-1 min-h-screen">
-        {/* Left Vertical Navigation Sidebar */}
+        {/* Left Vertical Navigation Sidebar & Mobile Drawer */}
         <AdminSidebar
           activeTab={activeTab}
           onSelectTab={setActiveTab}
           supabaseReady={supabaseReady}
           onSave={handleSave}
+          isMobileOpen={isMobileMenuOpen}
+          onCloseMobile={() => setIsMobileMenuOpen(false)}
         />
 
         {/* Right Main Area */}
@@ -231,12 +234,13 @@ function AdminDashboardInner() {
             onSave={handleSave}
             onReset={handleReset}
             onExport={exportJson}
+            onToggleMobileMenu={() => setIsMobileMenuOpen((open) => !open)}
           />
 
           {/* Body: Editor Workspace + Optional Live Preview Pane */}
           <div className="flex-1 flex">
             {/* Form Editor Column */}
-            <main className="flex-1 p-6 lg:p-8 overflow-y-auto max-w-5xl">
+            <main className="flex-1 p-3.5 sm:p-6 lg:p-8 overflow-y-auto max-w-5xl w-full min-w-0 mx-auto">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}

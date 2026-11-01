@@ -43,7 +43,7 @@ export const SocialsTab: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="card-raised rounded-2xl border border-line bg-surface p-6 shadow-xs space-y-6">
+      <div className="card-raised rounded-2xl border border-line bg-surface p-4 sm:p-6 shadow-xs space-y-5 sm:space-y-6">
         <div className="flex items-center justify-between pb-4 border-b border-line">
           <div className="flex items-center gap-2.5">
             <Share2 className="size-4.5 text-brand-500" />

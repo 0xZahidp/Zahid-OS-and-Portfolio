@@ -73,10 +73,10 @@ export const GitHubTab: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl">
       {/* 1. Account & Token Card */}
-      <div className="card-raised rounded-2xl border border-line bg-surface p-6 shadow-xs space-y-6">
-        <div className="flex items-center justify-between pb-4 border-b border-line">
+      <div className="card-raised rounded-2xl border border-line bg-surface p-4 sm:p-6 shadow-xs space-y-5 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-line">
           <div className="flex items-center gap-2.5">
-            <GitBranch className="size-4.5 text-brand-500" />
+            <GitBranch className="size-4.5 text-brand-500 shrink-0" />
             <div>
               <h2 className="text-sm font-bold text-ink">GitHub Integration & Secret Token</h2>
               <p className="text-[11px] text-ink-3">
@@ -85,12 +85,12 @@ export const GitHubTab: React.FC = () => {
             </div>
           </div>
           {secretStatus?.configured ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 self-start sm:self-auto">
               <ShieldCheck className="size-3.5" />
-              <span>Token Configured in Supabase</span>
+              <span>Token Configured</span>
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 self-start sm:self-auto">
               <Key className="size-3.5" />
               <span>No Token Stored</span>
             </span>
@@ -123,7 +123,7 @@ export const GitHubTab: React.FC = () => {
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1">
                 <input
                   type={showToken ? 'text' : 'password'}
@@ -139,7 +139,7 @@ export const GitHubTab: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowToken(!showToken)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink p-1"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink p-1 cursor-pointer"
                   title={showToken ? 'Hide token' : 'Show token'}
                 >
                   {showToken ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
@@ -150,7 +150,7 @@ export const GitHubTab: React.FC = () => {
                 type="button"
                 onClick={handleDirectUploadToSupabase}
                 disabled={isUploading || !tokenInput.trim()}
-                className="btn btn-primary h-9 px-4 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                className="btn btn-primary h-9 px-4 rounded-xl text-xs font-semibold inline-flex items-center justify-center gap-1.5 shrink-0 disabled:opacity-50 w-full sm:w-auto cursor-pointer"
               >
                 {isUploading ? (
                   <RefreshCw className="size-3.5 animate-spin" />

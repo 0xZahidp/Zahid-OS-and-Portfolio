@@ -414,7 +414,7 @@ export const SupabaseTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* View Mode Toggle */}
           <div className="p-1 rounded-xl bg-surface-2 border border-line flex items-center gap-1">
             <button
@@ -567,16 +567,16 @@ export const SupabaseTab: React.FC = () => {
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 {/* Search in table */}
-                <div className="relative">
+                <div className="relative flex-1 sm:flex-initial">
                   <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search rows..."
-                    className="h-8 pl-8 pr-3 rounded-lg bg-surface border border-line text-xs text-ink placeholder:text-ink-4 focus:outline-none focus:ring-1 focus:ring-brand-500 w-48 sm:w-56"
+                    className="h-8 pl-8 pr-3 rounded-lg bg-surface border border-line text-xs text-ink placeholder:text-ink-4 focus:outline-none focus:ring-1 focus:ring-brand-500 w-full sm:w-56"
                   />
                 </div>
 

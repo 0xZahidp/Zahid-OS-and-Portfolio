@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   User,
   FileText,
@@ -20,6 +21,7 @@ import {
   LogOut,
   Mail,
   Settings,
+  X,
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAdminAuth } from '@/context/AdminAuthContext';
@@ -45,6 +47,8 @@ interface AdminSidebarProps {
   onSelectTab: (tab: AdminTab) => void;
   supabaseReady: boolean;
   onSave: () => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({
@@ -52,6 +56,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onSelectTab,
   supabaseReady,
   onSave,
+  isMobileOpen = false,
+  onCloseMobile,
 }) => {
   const { content, isDirty, isSaving } = usePortfolio();
   const { user, signOut, isLocalBypass } = useAdminAuth();
@@ -74,6 +80,18 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     return () => clearInterval(interval);
   }, []);
 
+  // Keyboard shortcut: close drawer on Escape
+  useEffect(() => {
+    if (!isMobileOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onCloseMobile?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileOpen, onCloseMobile]);
+
   const navGroups = [
     {
       label: 'COMMUNICATION & INBOX',
@@ -93,25 +111,70 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     {
       label: 'IDENTITY & STORY',
       items: [
-        { id: 'profile' as AdminTab, label: 'Profile & Roles', icon: User, badge: `${content.profile.roles.length} roles` },
-        { id: 'bio' as AdminTab, label: 'Story & Biography', icon: FileText, badge: `${content.bioParagraphs.length} para` },
+        {
+          id: 'profile' as AdminTab,
+          label: 'Profile & Roles',
+          icon: User,
+          badge: `${content.profile?.roles?.length ?? 0} roles`,
+        },
+        {
+          id: 'bio' as AdminTab,
+          label: 'Story & Biography',
+          icon: FileText,
+          badge: `${content.bioParagraphs?.length ?? 0} para`,
+        },
       ],
     },
     {
       label: 'PORTFOLIO & CODE',
       items: [
-        { id: 'experience' as AdminTab, label: 'Experience', icon: Briefcase, badge: `${content.experience.length}` },
-        { id: 'projects' as AdminTab, label: 'Featured Projects', icon: Layers, badge: `${content.projects.length}` },
-        { id: 'skills' as AdminTab, label: 'Skills & Tools', icon: Sparkles, badge: `${content.skills.length}` },
-        { id: 'github' as AdminTab, label: 'GitHub Activity', icon: GitBranch, badge: 'Live' },
+        {
+          id: 'experience' as AdminTab,
+          label: 'Experience',
+          icon: Briefcase,
+          badge: `${content.experience?.length ?? 0}`,
+        },
+        {
+          id: 'projects' as AdminTab,
+          label: 'Featured Projects',
+          icon: Layers,
+          badge: `${content.projects?.length ?? 0}`,
+        },
+        {
+          id: 'skills' as AdminTab,
+          label: 'Skills & Tools',
+          icon: Sparkles,
+          badge: `${content.skills?.length ?? 0}`,
+        },
+        {
+          id: 'github' as AdminTab,
+          label: 'GitHub Activity',
+          icon: GitBranch,
+          badge: 'Live',
+        },
       ],
     },
     {
       label: 'DETAILS & SOCIAL',
       items: [
-        { id: 'facts' as AdminTab, label: 'Facts & Languages', icon: Globe, badge: `${content.languages.length} lang` },
-        { id: 'socials' as AdminTab, label: 'Social Channels', icon: Share2, badge: `${content.socialLinks.length}` },
-        { id: 'people' as AdminTab, label: 'Who to Follow', icon: Users, badge: `${content.suggestedPeople.length}` },
+        {
+          id: 'facts' as AdminTab,
+          label: 'Facts & Languages',
+          icon: Globe,
+          badge: `${content.languages?.length ?? 0} lang`,
+        },
+        {
+          id: 'socials' as AdminTab,
+          label: 'Social Channels',
+          icon: Share2,
+          badge: `${content.socialLinks?.length ?? 0}`,
+        },
+        {
+          id: 'people' as AdminTab,
+          label: 'Who to Follow',
+          icon: Users,
+          badge: `${content.suggestedPeople?.length ?? 0}`,
+        },
       ],
     },
     {
@@ -126,16 +189,29 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
             : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
         },
-        { id: 'settings' as AdminTab, label: 'Settings & Security', icon: Settings, badge: 'Passkey' },
+        {
+          id: 'settings' as AdminTab,
+          label: 'Settings & Security',
+          icon: Settings,
+          badge: 'Passkey',
+          badgeColor: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
+        },
         { id: 'backups' as AdminTab, label: 'Backup & Snapshots', icon: Archive, badge: 'JSON' },
       ],
     },
   ];
 
-  return (
-    <aside className="w-68 shrink-0 border-r border-line bg-surface flex flex-col h-screen sticky top-0 select-none">
+  const handleTabClick = (tabId: AdminTab) => {
+    onSelectTab(tabId);
+    if (onCloseMobile) {
+      onCloseMobile();
+    }
+  };
+
+  const renderSidebarBody = (isMobile = false) => (
+    <>
       {/* Brand Header */}
-      <div className="p-4.5 border-b border-line flex items-center justify-between">
+      <div className="p-4 sm:p-4.5 border-b border-line flex items-center justify-between shrink-0">
         <Link href="/" className="flex items-center gap-3 group">
           <div className="size-9 rounded-xl bg-gradient-to-b from-brand-500 to-brand-700 shadow-sm flex items-center justify-center text-white font-black text-lg transition-transform group-hover:scale-105">
             Z
@@ -151,18 +227,32 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           </div>
         </Link>
 
-        <Link
-          href="/"
-          target="_blank"
-          title="Open Live Portfolio"
-          className="size-8 rounded-lg border border-line bg-surface-2 flex items-center justify-center text-ink-3 hover:text-ink hover:bg-surface-3 transition-colors"
-        >
-          <ExternalLink className="size-4" />
-        </Link>
+        <div className="flex items-center gap-1.5">
+          <Link
+            href="/"
+            target="_blank"
+            title="Open Live Portfolio"
+            className="size-8 rounded-lg border border-line bg-surface-2 flex items-center justify-center text-ink-3 hover:text-ink hover:bg-surface-3 transition-colors"
+          >
+            <ExternalLink className="size-4" />
+          </Link>
+
+          {isMobile && onCloseMobile && (
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              className="size-8 rounded-lg border border-line bg-surface-2 flex items-center justify-center text-ink-3 hover:text-ink hover:bg-surface-3 transition-colors"
+              title="Close menu"
+              aria-label="Close navigation menu"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Profile Mini Card */}
-      <div className="p-3 mx-3 my-2.5 rounded-xl border border-line bg-surface-2/60 flex items-center gap-3">
+      <div className="p-3 mx-3 my-2.5 rounded-xl border border-line bg-surface-2/60 flex items-center gap-3 shrink-0">
         <div className="relative size-10 rounded-full overflow-hidden bg-surface-3 shrink-0 ring-1 ring-line">
           {content.profile.avatar_url ? (
             <Image
@@ -212,7 +302,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => onSelectTab(item.id)}
+                    onClick={() => handleTabClick(item.id)}
                     className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                       isActive
                         ? 'bg-surface-2 font-semibold text-ink shadow-xs ring-1 ring-line/80'
@@ -252,7 +342,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </nav>
 
       {/* Quick Action Footer */}
-      <div className="p-3 border-t border-line space-y-2 bg-surface">
+      <div className="p-3 border-t border-line space-y-2 bg-surface shrink-0">
         {/* Unsaved changes status */}
         <div className="flex items-center justify-between px-1 text-[11px] text-ink-3">
           <span className="flex items-center gap-1.5">
@@ -271,7 +361,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {/* Quick Save Button */}
         <button
           type="button"
-          onClick={onSave}
+          onClick={() => {
+            onSave();
+            if (isMobile && onCloseMobile) {
+              onCloseMobile();
+            }
+          }}
           disabled={isSaving}
           className={`w-full btn btn-primary h-9 text-xs font-semibold flex items-center justify-center gap-2 rounded-xl shadow-sm transition-all ${
             isDirty ? 'ring-2 ring-emerald-500/30' : ''
@@ -307,6 +402,44 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           </button>
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* 1. Desktop Fixed Sidebar (visible on lg screens >= 1024px) */}
+      <aside className="hidden lg:flex w-68 shrink-0 border-r border-line bg-surface flex-col h-screen sticky top-0 select-none">
+        {renderSidebarBody(false)}
+      </aside>
+
+      {/* 2. Mobile / Tablet Animated Slide-Over Drawer (< 1024px) */}
+      <AnimatePresence>
+        {isMobileOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden flex">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={onCloseMobile}
+              className="fixed inset-0 bg-black/65 backdrop-blur-xs"
+              aria-hidden="true"
+            />
+
+            {/* Slide-over Drawer Panel */}
+            <motion.aside
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 280 }}
+              className="relative z-10 w-72 max-w-[85vw] bg-surface border-r border-line flex flex-col h-full shadow-2xl select-none"
+            >
+              {renderSidebarBody(true)}
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
