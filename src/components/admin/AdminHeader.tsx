@@ -6,8 +6,10 @@ import {
   RotateCcw,
   SplitSquareVertical,
   Download,
+  LogOut,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { useAdminAuth } from '@/context/AdminAuthContext';
 import { AdminTab } from './AdminSidebar';
 
 interface AdminHeaderProps {
@@ -35,6 +37,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   onReset,
   onExport,
 }) => {
+  const { signOut } = useAdminAuth();
   return (
     <header className="sticky top-0 z-20 h-16 border-b border-line bg-surface/90 backdrop-blur-md px-6 flex items-center justify-between gap-4">
       {/* Left: Tab Title & Breadcrumbs */}
@@ -90,6 +93,16 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
         {/* Theme Toggle */}
         <ThemeToggle className="btn btn-secondary size-8.5 grid place-items-center rounded-xl" />
+
+        {/* Sign Out Button */}
+        <button
+          type="button"
+          onClick={signOut}
+          className="btn btn-secondary size-8.5 grid place-items-center rounded-xl text-ink-3 hover:text-rose-500 hover:border-rose-300 dark:hover:border-rose-900 transition-colors"
+          title="Sign out of CMS Studio"
+        >
+          <LogOut className="size-3.5" />
+        </button>
 
         {/* Reset Button */}
         <button

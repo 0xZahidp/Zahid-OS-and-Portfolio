@@ -6,6 +6,9 @@ import { usePortfolio } from '@/context/PortfolioContext';
 import { AdminSidebar, AdminTab } from '@/components/admin/AdminSidebar';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { LivePreviewPane } from '@/components/admin/LivePreviewPane';
+import { AdminAuthProvider, useAdminAuth } from '@/context/AdminAuthContext';
+import { AdminLogin } from '@/components/admin/AdminLogin';
+import { Loader2 } from 'lucide-react';
 
 // Tabs
 import { ProfileTab } from '@/components/admin/tabs/ProfileTab';
@@ -18,6 +21,7 @@ import { FactsTab } from '@/components/admin/tabs/FactsTab';
 import { SocialsTab } from '@/components/admin/tabs/SocialsTab';
 import { PeopleTab } from '@/components/admin/tabs/PeopleTab';
 import { SupabaseTab } from '@/components/admin/tabs/SupabaseTab';
+import { SecurityTab } from '@/components/admin/tabs/SecurityTab';
 import { BackupsTab } from '@/components/admin/tabs/BackupsTab';
 
 const TAB_META: Record<AdminTab, { title: string; description: string }> = {
@@ -61,13 +65,18 @@ const TAB_META: Record<AdminTab, { title: string; description: string }> = {
     title: 'Supabase Cloud Integration',
     description: 'Real-time database connection diagnostics, schema migration, and tables.',
   },
+  security: {
+    title: 'Security, Passkeys & Session',
+    description: 'Register biometric Passkeys (Apple Touch ID, YubiKey) and manage auth methods.',
+  },
   backups: {
     title: 'Backups, Snapshots & Data',
     description: 'Download JSON snapshots, restore previous versions, or reset defaults.',
   },
 };
 
-export default function AdminDashboard() {
+function AdminDashboardInner() {
+  const { user, isLocalBypass, isLoading } = useAdminAuth();
   const {
     isDirty,
     isSaving,
@@ -158,12 +167,31 @@ export default function AdminDashboard() {
         return <PeopleTab />;
       case 'supabase':
         return <SupabaseTab />;
+      case 'security':
+        return <SecurityTab />;
       case 'backups':
         return <BackupsTab />;
       default:
         return <ProfileTab />;
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-surface flex flex-col items-center justify-center gap-3 select-none">
+        <div className="size-11 rounded-2xl bg-brand-500/10 border border-brand-500/20 text-brand-600 dark:text-brand-400 grid place-items-center">
+          <Loader2 className="size-5.5 animate-spin" />
+        </div>
+        <p className="text-xs font-semibold text-ink-3">Verifying authentication session...</p>
+      </div>
+    );
+  }
+
+  // Gated login if not authenticated and not in local bypass
+  if (!user && !isLocalBypass) {
+    return <AdminLogin />;
+  }
 
   return (
     <div className="min-h-screen bg-surface flex flex-col font-sans">
@@ -236,5 +264,13 @@ export default function AdminDashboard() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <AdminAuthProvider>
+      <AdminDashboardInner />
+    </AdminAuthProvider>
   );
 }

@@ -17,8 +17,11 @@ import {
   Archive,
   ExternalLink,
   Save,
+  Key,
+  LogOut,
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
+import { useAdminAuth } from '@/context/AdminAuthContext';
 
 export type AdminTab =
   | 'profile'
@@ -31,6 +34,7 @@ export type AdminTab =
   | 'socials'
   | 'people'
   | 'supabase'
+  | 'security'
   | 'backups';
 
 interface AdminSidebarProps {
@@ -47,6 +51,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onSave,
 }) => {
   const { content, isDirty, isSaving } = usePortfolio();
+  const { user, signOut, isLocalBypass } = useAdminAuth();
 
   const navGroups = [
     {
@@ -85,6 +90,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
             : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
         },
+        { id: 'security' as AdminTab, label: 'Security & Passkeys', icon: Key, badge: 'Passkey' },
         { id: 'backups' as AdminTab, label: 'Backup & Snapshots', icon: Archive, badge: 'JSON' },
       ],
     },
@@ -238,6 +244,32 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <Save className="size-3.5" />
           <span>{isSaving ? 'Saving Changes...' : 'Save Changes'}</span>
         </button>
+
+        {/* Authenticated User Status & Logout */}
+        <div className="pt-2 border-t border-line flex items-center justify-between gap-2 px-1">
+          <div className="min-w-0 flex items-center gap-2">
+            <div className="size-6.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-600 dark:text-brand-400 font-bold text-[10px] grid place-items-center shrink-0">
+              {user?.email ? user.email.charAt(0).toUpperCase() : 'A'}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold text-ink truncate leading-tight">
+                {user?.email || (isLocalBypass ? 'Dev Bypass' : 'Admin')}
+              </p>
+              <p className="text-[9.5px] text-ink-3 truncate leading-none">
+                {isLocalBypass ? 'Local Mode' : 'Online Session'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={signOut}
+            className="p-1.5 text-ink-3 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer shrink-0"
+            title="Sign out of CMS"
+          >
+            <LogOut className="size-3.5" />
+          </button>
+        </div>
       </div>
     </aside>
   );
