@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, ChevronUp, ChevronDown, Layers, X } from 'lucide-react';
+import Image from 'next/image';
+import { Plus, Trash2, ChevronUp, ChevronDown, Layers, X, Sparkles } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { Project } from '@/types/profile';
+import { CompanyLogoUploader } from '@/components/admin/CompanyLogoUploader';
 
 export const ProjectsTab: React.FC = () => {
   const { content, updateProjects } = usePortfolio();
@@ -84,6 +86,21 @@ export const ProjectsTab: React.FC = () => {
           </button>
         </div>
 
+        {/* Clear Image Guideline Banner */}
+        <div className="p-3.5 rounded-xl border border-brand-500/20 bg-brand-500/5 text-xs text-ink-2 space-y-1">
+          <div className="flex items-center gap-1.5 font-bold text-brand-700 dark:text-brand-300">
+            <Sparkles className="size-3.5" />
+            <span>Project Logo & Icon Upload Instructions</span>
+          </div>
+          <p className="text-[11px] leading-relaxed text-ink-3">
+            • <strong>Target Dimensions</strong>: Exactly <strong>64 × 64 px</strong> (1:1 square ratio) for high-DPI retina sharpness.
+            <br />
+            • <strong>Automatic Optimization</strong>: Upload any image of any size (e.g. 500×500, 1080p, or 4K photo). It is automatically center-cropped and optimized to <strong>exact 64×64 px</strong> without distortion or file bloat.
+            <br />
+            • <strong>Recommended Formats</strong>: Transparent PNG, SVG, or WebP for optimal contrast in dark and light modes.
+          </p>
+        </div>
+
         <div className="space-y-4">
           {projects.map((proj, idx) => (
             <div
@@ -92,9 +109,22 @@ export const ProjectsTab: React.FC = () => {
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-xl bg-black text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs ring-1 ring-white/10">
-                    {proj.title.charAt(0)}
-                  </div>
+                  {proj.image_url ? (
+                    <div className="relative size-10 rounded-xl overflow-hidden bg-surface border border-line shrink-0 flex items-center justify-center shadow-xs">
+                      <Image
+                        src={proj.image_url}
+                        alt={proj.title}
+                        fill
+                        sizes="40px"
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
+                  ) : (
+                    <div className="size-10 rounded-xl bg-black text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs ring-1 ring-white/10">
+                      {proj.title.charAt(0)}
+                    </div>
+                  )}
                   <div>
                     <h3 className="text-xs font-bold text-ink flex items-center gap-2">
                       <span>{proj.title}</span>
@@ -105,7 +135,7 @@ export const ProjectsTab: React.FC = () => {
                       )}
                     </h3>
                     <p className="text-[11px] text-ink-3">
-                      Logo: {proj.logoType || 'default'} · {proj.tags?.join(', ')}
+                      Logo: {proj.image_url ? 'Custom Uploaded Icon' : (proj.logoType || 'default')} · {proj.tags?.join(', ')}
                     </p>
                   </div>
                 </div>
@@ -140,6 +170,16 @@ export const ProjectsTab: React.FC = () => {
                 </div>
               </div>
 
+              {/* Project Icon / Logo Uploader with Auto-Optimization */}
+              <div className="pt-2 border-t border-line/60">
+                <CompanyLogoUploader
+                  currentLogo={proj.image_url || ''}
+                  companyName={proj.title}
+                  label="Project Icon / Logo"
+                  onLogoChange={(newLogoUrl) => handleUpdate(idx, { image_url: newLogoUrl })}
+                />
+              </div>
+
               <div className="grid gap-3.5 sm:grid-cols-2">
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-ink-3">Project Title</label>
@@ -163,7 +203,7 @@ export const ProjectsTab: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-ink-3">Logo Icon Style</label>
+                  <label className="text-[11px] font-semibold text-ink-3">Preset Vector Icon (Fallback if no uploaded icon)</label>
                   <select
                     value={proj.logoType || 'bidvers'}
                     onChange={(e) => handleUpdate(idx, { logoType: e.target.value as Project['logoType'] })}

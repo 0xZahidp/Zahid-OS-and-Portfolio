@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import {
   Layers,
   ArrowUpRight,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 import { GitHubIcon } from '@/components/ui/Icons';
 import { usePortfolio } from '@/context/PortfolioContext';
+import { Project } from '@/types/profile';
 
 interface ContributionDay {
   date: string;
@@ -270,8 +272,23 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
     return pinnedRepos;
   }, [content.githubSettings?.pinnedRepos, pinnedRepos]);
 
-  const renderRowIcon = (id: string) => {
-    switch (id) {
+  const renderRowIcon = (project: Project) => {
+    if (project.image_url) {
+      return (
+        <div className="relative size-12 rounded-[16px] overflow-hidden bg-surface-2 border border-line shrink-0 flex items-center justify-center shadow-xs">
+          <Image
+            src={project.image_url}
+            alt={project.title}
+            fill
+            sizes="48px"
+            className="object-cover"
+            unoptimized
+          />
+        </div>
+      );
+    }
+
+    switch (project.id) {
       case 'proj-1': // Bidvers
         return (
           <div className="size-12 rounded-[16px] bg-black text-white font-extrabold text-xl grid place-items-center shrink-0 shadow-xs ring-1 ring-white/10">
@@ -626,7 +643,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
                 className="group flex items-start gap-4 rounded-[20px] border border-line bg-surface p-4 hover:border-line-strong hover:bg-surface-2/40 transition-all duration-200 shadow-xs cursor-pointer"
               >
                 {/* 48px square icon badge */}
-                {renderRowIcon(project.id)}
+                {renderRowIcon(project)}
 
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-bold text-ink group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">

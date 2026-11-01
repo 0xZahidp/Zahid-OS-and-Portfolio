@@ -15,12 +15,14 @@ export const ProjectsSection: React.FC = () => {
   const renderFloatingBadge = (project: Project) => {
     if (project.image_url) {
       return (
-        <div className="relative size-16 sm:size-20 rounded-2xl overflow-hidden shadow-lg ring-4 ring-white/40 dark:ring-white/15 transition-transform group-hover:scale-105 duration-200">
+        <div className="relative size-16 sm:size-20 rounded-2xl overflow-hidden shadow-lg ring-4 ring-white/40 dark:ring-white/15 transition-transform group-hover:scale-105 duration-200 bg-surface-2 flex items-center justify-center">
           <Image
             src={project.image_url}
             alt={project.title}
             fill
+            sizes="80px"
             className="object-cover"
+            unoptimized
           />
         </div>
       );
@@ -86,7 +88,7 @@ export const ProjectsSection: React.FC = () => {
       <div className="grid gap-5 sm:grid-cols-2">
         {projectsData.map((project) => {
           const link = project.project_url || project.repository_url || '#';
-          const hasVisual = !!project.logoType;
+          const hasVisual = !!project.image_url || !!project.logoType;
 
           return (
             <a

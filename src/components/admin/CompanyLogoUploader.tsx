@@ -18,12 +18,14 @@ interface CompanyLogoUploaderProps {
   currentLogo: string;
   companyName: string;
   onLogoChange: (newLogoUrl: string) => void;
+  label?: string;
 }
 
 export const CompanyLogoUploader: React.FC<CompanyLogoUploaderProps> = ({
   currentLogo,
   companyName,
   onLogoChange,
+  label = 'Company Logo / Icon',
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -46,13 +48,14 @@ export const CompanyLogoUploader: React.FC<CompanyLogoUploaderProps> = ({
       });
 
       // 2. Upload to server API /api/upload
-      const safeCompany = (companyName || 'company').toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const safePrefix = label.toLowerCase().includes('project') ? 'project' : 'logo';
+      const safeName = (companyName || 'item').toLowerCase().replace(/[^a-z0-9]/g, '-');
       const uploadRes = await fetch('/api/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           dataUrl: result.dataUrl,
-          filename: `logo-${safeCompany}`,
+          filename: `${safePrefix}-${safeName}`,
         }),
       });
 
@@ -103,7 +106,7 @@ export const CompanyLogoUploader: React.FC<CompanyLogoUploaderProps> = ({
       <div className="flex items-center justify-between">
         <label className="text-[11px] font-medium text-ink-3 flex items-center gap-1.5">
           <ImageIcon className="size-3 text-brand-500" />
-          <span>Company Logo / Icon</span>
+          <span>{label}</span>
         </label>
 
         {/* Clear Size Guideline Pill */}
