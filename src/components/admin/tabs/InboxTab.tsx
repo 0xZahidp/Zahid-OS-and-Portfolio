@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { supabase } from '@/lib/supabase/client';
 import {
@@ -21,8 +21,22 @@ import {
   ExternalLink,
   ArrowLeft,
   Paperclip,
+  Archive,
+  ArchiveRestore,
+  AtSign,
+  Filter,
+  Check,
 } from 'lucide-react';
 import { MailMessage, MailFolder } from '@/types/mail';
+
+interface FolderCounts {
+  inbox: number;
+  unread: number;
+  sent: number;
+  starred: number;
+  archive: number;
+  trash: number;
+}
 
 export const InboxTab: React.FC = () => {
   const [folder, setFolder] = useState<MailFolder>('inbox');
@@ -30,7 +44,15 @@ export const InboxTab: React.FC = () => {
   const [messages, setMessages] = useState<MailMessage[]>([]);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [selectedAlias, setSelectedAlias] = useState<string>('all');
+  const [counts, setCounts] = useState<FolderCounts>({
+    inbox: 0,
+    unread: 0,
+    sent: 0,
+    starred: 0,
+    archive: 0,
+    trash: 0,
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -40,6 +62,7 @@ export const InboxTab: React.FC = () => {
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [replyFrom, setReplyFrom] = useState('Md Zahid Hasan <hello@zahidp.com>');
   const [isEditingReplyFrom, setIsEditingReplyFrom] = useState(false);
+  const [isSavingSenderDefault, setIsSavingSenderDefault] = useState(false);
 
   // Compose Modal state
   const [isComposeOpen, setIsComposeOpen] = useState(false);
@@ -63,36 +86,42 @@ export const InboxTab: React.FC = () => {
   }, []);
 
   // Fetch messages from API
-  const fetchMessages = useCallback(async (currentFolder = folder, query = searchQuery) => {
-    setIsLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (currentFolder) params.set('folder', currentFolder);
-      if (query.trim()) params.set('search', query.trim());
+  const fetchMessages = useCallback(
+    async (currentFolder = folder, query = searchQuery, alias = selectedAlias) => {
+      setIsLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (currentFolder) params.set('folder', currentFolder);
+        if (query.trim()) params.set('search', query.trim());
+        if (alias && alias !== 'all') params.set('alias', alias.trim());
 
-      const res = await fetch(`/api/mail/messages?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(data.messages || []);
-        setUnreadCount(data.unreadCount || 0);
+        const res = await fetch(`/api/mail/messages?${params.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          const msgs: MailMessage[] = data.messages || [];
+          setMessages(msgs);
+          if (data.counts) {
+            setCounts(data.counts);
+          }
 
-        // Auto select first message if none selected
-        if (!selectedMessageId && data.messages?.length > 0) {
-          setSelectedMessageId(data.messages[0].id);
-        } else if (selectedMessageId) {
-          // If selected message is not in new list, reset or select first
-          const exists = data.messages?.some((m: MailMessage) => m.id === selectedMessageId);
-          if (!exists && data.messages?.length > 0) {
-            setSelectedMessageId(data.messages[0].id);
+          // Auto select first message if none selected
+          if (!selectedMessageId && msgs.length > 0) {
+            setSelectedMessageId(msgs[0].id);
+          } else if (selectedMessageId) {
+            const exists = msgs.some((m) => m.id === selectedMessageId);
+            if (!exists && msgs.length > 0) {
+              setSelectedMessageId(msgs[0].id);
+            }
           }
         }
+      } catch (err) {
+        console.error('Failed to load messages:', err);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error('Failed to load messages:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [folder, searchQuery, selectedMessageId]);
+    },
+    [folder, searchQuery, selectedAlias, selectedMessageId]
+  );
 
   useEffect(() => {
     fetchMessages();
@@ -110,7 +139,7 @@ export const InboxTab: React.FC = () => {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'inbox_messages' },
           () => {
-            fetchMessages(folder, searchQuery);
+            fetchMessages(folder, searchQuery, selectedAlias);
           }
         )
         .subscribe();
@@ -121,9 +150,30 @@ export const InboxTab: React.FC = () => {
     } catch (e) {
       console.warn('Realtime subscription not available:', e);
     }
-  }, [fetchMessages, folder, searchQuery]);
+  }, [fetchMessages, folder, searchQuery, selectedAlias]);
 
-  // Manual one-click sync from Resend Receiving API
+  // Extract distinct detected aliases across loaded messages for alias filter
+  const detectedAliases = useMemo(() => {
+    const aliasSet = new Set<string>();
+    aliasSet.add('hello@zahidp.com');
+    aliasSet.add('test@zahidp.com');
+    aliasSet.add('contact@zahidp.com');
+
+    messages.forEach((m) => {
+      m.to?.forEach((t) => {
+        if (t.email && t.email.includes('@zahidp.com')) {
+          aliasSet.add(t.email.toLowerCase().trim());
+        }
+      });
+      if (m.from?.email && m.from.email.includes('@zahidp.com')) {
+        aliasSet.add(m.from.email.toLowerCase().trim());
+      }
+    });
+
+    return Array.from(aliasSet);
+  }, [messages]);
+
+  // Sync from Resend Receiving API
   const handleSyncResend = async () => {
     setIsSyncing(true);
     setStatusMessage(null);
@@ -135,7 +185,7 @@ export const InboxTab: React.FC = () => {
           type: 'success',
           text: `Synced ${data.count} emails from Resend Receiving!`,
         });
-        fetchMessages(folder, searchQuery);
+        fetchMessages(folder, searchQuery, selectedAlias);
       } else {
         setStatusMessage({
           type: 'error',
@@ -155,6 +205,16 @@ export const InboxTab: React.FC = () => {
 
   const selectedMessage = messages.find((m) => m.id === selectedMessageId) || null;
 
+  // Whenever a new message is selected, automatically update replyFrom to match the recipient alias if it's @zahidp.com
+  useEffect(() => {
+    if (selectedMessage && selectedMessage.to && selectedMessage.to.length > 0) {
+      const recipientEmail = selectedMessage.to[0].email;
+      if (recipientEmail && recipientEmail.includes('@zahidp.com')) {
+        setReplyFrom(`Md Zahid Hasan <${recipientEmail}>`);
+      }
+    }
+  }, [selectedMessage]);
+
   // Toggle Read
   const handleToggleRead = async (message: MailMessage, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -168,7 +228,7 @@ export const InboxTab: React.FC = () => {
       if (res.ok) {
         const data = await res.json();
         setMessages((prev) => prev.map((m) => (m.id === message.id ? { ...m, isRead: newStatus } : m)));
-        setUnreadCount(data.unreadCount ?? unreadCount);
+        if (data.counts) setCounts(data.counts);
       }
     } catch {
       // ignore
@@ -186,18 +246,55 @@ export const InboxTab: React.FC = () => {
         body: JSON.stringify({ id: message.id, isStarred: newStarred }),
       });
       if (res.ok) {
+        const data = await res.json();
         setMessages((prev) =>
           prev.map((m) => (m.id === message.id ? { ...m, isStarred: newStarred } : m))
         );
+        if (data.counts) setCounts(data.counts);
       }
     } catch {
       // ignore
     }
   };
 
-  // Move to Trash or Restore
-  const handleMoveToTrash = async (message: MailMessage) => {
-    const isAlreadyTrash = message.folder === 'trash';
+  // Toggle Archive
+  const handleToggleArchive = async (message: MailMessage, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const isCurrentlyArchived = message.folder === 'archive' || message.isArchived;
+    const targetFolder = isCurrentlyArchived ? 'inbox' : 'archive';
+    try {
+      const res = await fetch('/api/mail/messages', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: message.id,
+          folder: targetFolder,
+          isArchived: !isCurrentlyArchived,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setMessages((prev) => prev.filter((m) => m.id !== message.id));
+        if (selectedMessageId === message.id) {
+          setSelectedMessageId(null);
+        }
+        if (data.counts) setCounts(data.counts);
+        setStatusMessage({
+          type: 'success',
+          text: isCurrentlyArchived ? 'Message moved to Inbox.' : 'Message archived.',
+        });
+      }
+    } catch {
+      // ignore
+    }
+    setTimeout(() => setStatusMessage(null), 3000);
+  };
+
+  // Move to Trash or Permanent Delete
+  const handleMoveToTrash = async (message: MailMessage, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const isAlreadyTrash = message.folder === 'trash' || message.isTrashed;
     try {
       if (isAlreadyTrash) {
         // Permanent delete
@@ -205,27 +302,52 @@ export const InboxTab: React.FC = () => {
           method: 'DELETE',
         });
         if (res.ok) {
+          const data = await res.json();
           setMessages((prev) => prev.filter((m) => m.id !== message.id));
-          setSelectedMessageId(null);
-          setStatusMessage({ type: 'success', text: 'Message deleted permanently.' });
+          if (selectedMessageId === message.id) setSelectedMessageId(null);
+          if (data.counts) setCounts(data.counts);
+          setStatusMessage({ type: 'success', text: 'Message deleted permanently from Supabase.' });
         }
       } else {
         // Move to trash
         const res = await fetch('/api/mail/messages', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: message.id, folder: 'trash' }),
+          body: JSON.stringify({ id: message.id, folder: 'trash', isTrashed: true }),
         });
         if (res.ok) {
+          const data = await res.json();
           setMessages((prev) => prev.filter((m) => m.id !== message.id));
-          setSelectedMessageId(null);
+          if (selectedMessageId === message.id) setSelectedMessageId(null);
+          if (data.counts) setCounts(data.counts);
           setStatusMessage({ type: 'success', text: 'Message moved to Trash.' });
         }
       }
-      setTimeout(() => setStatusMessage(null), 3000);
     } catch {
       // ignore
     }
+    setTimeout(() => setStatusMessage(null), 3000);
+  };
+
+  // Empty Trash
+  const handleEmptyTrash = async () => {
+    if (!window.confirm('Are you sure you want to permanently delete all messages in Trash?')) return;
+    try {
+      const res = await fetch('/api/mail/messages?emptyTrash=true', { method: 'DELETE' });
+      if (res.ok) {
+        const data = await res.json();
+        setMessages([]);
+        setSelectedMessageId(null);
+        if (data.counts) setCounts(data.counts);
+        setStatusMessage({
+          type: 'success',
+          text: `Emptied trash (${data.removedCount} messages removed).`,
+        });
+      }
+    } catch {
+      // ignore
+    }
+    setTimeout(() => setStatusMessage(null), 3000);
   };
 
   // Select a message and mark as read
@@ -234,6 +356,29 @@ export const InboxTab: React.FC = () => {
     setMobileView('message');
     if (!msg.isRead) {
       handleToggleRead(msg);
+    }
+  };
+
+  // Save customized sender as system default in Supabase
+  const handleSaveSenderAsDefault = async (senderToSave: string) => {
+    setIsSavingSenderDefault(true);
+    try {
+      const res = await fetch('/api/mail/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ defaultSender: senderToSave }),
+      });
+      if (res.ok) {
+        setStatusMessage({
+          type: 'success',
+          text: `Default sender saved to Supabase: ${senderToSave}`,
+        });
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsSavingSenderDefault(false);
+      setTimeout(() => setStatusMessage(null), 3000);
     }
   };
 
@@ -256,6 +401,8 @@ export const InboxTab: React.FC = () => {
       (selectedMessage.resendId ? `<${selectedMessage.resendId}@resend.com>` : undefined);
     const references = selectedMessage.headers?.references || inReplyTo;
 
+    const senderEmailOnly = (replyFrom.match(/<(.+?)>/)?.[1] || replyFrom.trim() || 'hello@zahidp.com');
+
     try {
       const res = await fetch('/api/mail/send', {
         method: 'POST',
@@ -264,8 +411,8 @@ export const InboxTab: React.FC = () => {
           to: recipient,
           subject: replySubject,
           text: quickReplyText.trim(),
-          from: replyFrom.trim() || composeFrom.trim() || 'Md Zahid Hasan <hello@zahidp.com>',
-          replyTo: (replyFrom.trim() || composeFrom.trim()).match(/<(.+?)>/)?.[1] || (replyFrom.trim() || composeFrom.trim()) || 'hello@zahidp.com',
+          from: replyFrom.trim() || 'Md Zahid Hasan <hello@zahidp.com>',
+          replyTo: senderEmailOnly,
           inReplyTo,
           references,
         }),
@@ -278,10 +425,9 @@ export const InboxTab: React.FC = () => {
         setQuickReplyText('');
         setStatusMessage({
           type: 'success',
-          text: `Reply dispatched via Resend to ${recipient}!`,
+          text: `Reply dispatched from ${senderEmailOnly} to ${recipient}!`,
         });
-        // Refresh sent
-        fetchMessages(folder);
+        fetchMessages(folder, searchQuery, selectedAlias);
       } else {
         setStatusMessage({
           type: 'error',
@@ -307,6 +453,8 @@ export const InboxTab: React.FC = () => {
     setIsSendingCompose(true);
     setStatusMessage(null);
 
+    const senderEmailOnly = composeFrom.match(/<(.+?)>/)?.[1] || composeFrom.trim() || 'hello@zahidp.com';
+
     try {
       const res = await fetch('/api/mail/send', {
         method: 'POST',
@@ -316,7 +464,7 @@ export const InboxTab: React.FC = () => {
           to: composeTo.trim(),
           subject: composeSubject.trim(),
           text: composeBody.trim(),
-          replyTo: composeFrom.match(/<(.+?)>/)?.[1] || composeFrom.trim() || 'hello@zahidp.com',
+          replyTo: senderEmailOnly,
         }),
       });
 
@@ -330,11 +478,10 @@ export const InboxTab: React.FC = () => {
         setComposeBody('');
         setStatusMessage({
           type: 'success',
-          text: `Email successfully delivered to ${composeTo} via Resend!`,
+          text: `Email delivered to ${composeTo} via Resend!`,
         });
-        // Switch to Sent folder to view sent message
         setFolder('sent');
-        fetchMessages('sent');
+        fetchMessages('sent', '', selectedAlias);
       } else {
         setStatusMessage({
           type: 'error',
@@ -380,13 +527,13 @@ export const InboxTab: React.FC = () => {
       {/* Mobile/Tablet Folder Selector Bar (< lg) */}
       <div className="lg:hidden p-2.5 border-b border-line bg-surface flex items-center justify-between gap-2 overflow-x-auto shrink-0">
         <div className="flex items-center gap-1.5 shrink-0">
-          {(['inbox', 'starred', 'sent', 'trash'] as MailFolder[]).map((f) => (
+          {(['inbox', 'starred', 'sent', 'archive', 'trash'] as MailFolder[]).map((f) => (
             <button
               key={f}
               type="button"
               onClick={() => {
                 setFolder(f);
-                fetchMessages(f);
+                fetchMessages(f, searchQuery, selectedAlias);
                 setMobileView('list');
               }}
               className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize flex items-center gap-1.5 transition-colors cursor-pointer ${
@@ -396,9 +543,14 @@ export const InboxTab: React.FC = () => {
               }`}
             >
               <span>{f}</span>
-              {f === 'inbox' && unreadCount > 0 && (
+              {f === 'inbox' && counts.unread > 0 && (
                 <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-brand-500 text-white">
-                  {unreadCount}
+                  {counts.unread}
+                </span>
+              )}
+              {f === 'archive' && counts.archive > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-semibold bg-surface-2 text-ink-3">
+                  {counts.archive}
                 </span>
               )}
             </button>
@@ -436,11 +588,11 @@ export const InboxTab: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setFolder('inbox');
-                  fetchMessages('inbox');
+                  fetchMessages('inbox', searchQuery, selectedAlias);
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   folder === 'inbox'
-                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold'
                     : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
                 }`}
               >
@@ -448,9 +600,9 @@ export const InboxTab: React.FC = () => {
                   <Inbox className="size-4" />
                   <span>Inbox</span>
                 </div>
-                {unreadCount > 0 && (
+                {counts.unread > 0 && (
                   <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-brand-500 text-white">
-                    {unreadCount}
+                    {counts.unread}
                   </span>
                 )}
               </button>
@@ -459,11 +611,11 @@ export const InboxTab: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setFolder('starred');
-                  fetchMessages('starred');
+                  fetchMessages('starred', searchQuery, selectedAlias);
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   folder === 'starred'
-                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold'
                     : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
                 }`}
               >
@@ -471,17 +623,20 @@ export const InboxTab: React.FC = () => {
                   <Star className="size-4 text-amber-500" />
                   <span>Starred</span>
                 </div>
+                {counts.starred > 0 && (
+                  <span className="text-[10px] text-ink-3 font-semibold">{counts.starred}</span>
+                )}
               </button>
 
               <button
                 type="button"
                 onClick={() => {
                   setFolder('sent');
-                  fetchMessages('sent');
+                  fetchMessages('sent', searchQuery, selectedAlias);
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   folder === 'sent'
-                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold'
                     : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
                 }`}
               >
@@ -489,17 +644,41 @@ export const InboxTab: React.FC = () => {
                   <Send className="size-4 text-emerald-500" />
                   <span>Sent</span>
                 </div>
+                {counts.sent > 0 && (
+                  <span className="text-[10px] text-ink-3 font-semibold">{counts.sent}</span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setFolder('archive');
+                  fetchMessages('archive', searchQuery, selectedAlias);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                  folder === 'archive'
+                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold'
+                    : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Archive className="size-4 text-indigo-500" />
+                  <span>Archive</span>
+                </div>
+                {counts.archive > 0 && (
+                  <span className="text-[10px] text-ink-3 font-semibold">{counts.archive}</span>
+                )}
               </button>
 
               <button
                 type="button"
                 onClick={() => {
                   setFolder('trash');
-                  fetchMessages('trash');
+                  fetchMessages('trash', searchQuery, selectedAlias);
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   folder === 'trash'
-                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold'
                     : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
                 }`}
               >
@@ -507,30 +686,35 @@ export const InboxTab: React.FC = () => {
                   <Trash2 className="size-4 text-rose-500" />
                   <span>Trash</span>
                 </div>
+                {counts.trash > 0 && (
+                  <span className="text-[10px] text-ink-3 font-semibold">{counts.trash}</span>
+                )}
               </button>
             </nav>
           </div>
 
-          {/* Resend Connection Info */}
-          <div className="pt-3 border-t border-line text-[11px] space-y-1.5">
+          {/* Resend Connection Info & Sender Setup */}
+          <div className="pt-3 border-t border-line text-[11px] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-ink-3">Resend Status</span>
+              <span className="font-semibold text-ink-3">Resend Receiving</span>
               <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
                 <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live
+                Active
               </span>
             </div>
-            <p className="text-[10px] text-ink-3 truncate">
-              Domain: <span className="font-mono text-ink">zahidp.com</span>
-            </p>
-            <p className="text-[10px] text-ink-3 truncate">
-              Sender: <span className="text-ink">hello@zahidp.com</span>
-            </p>
+            <div className="space-y-0.5">
+              <p className="text-[10px] text-ink-3 truncate">
+                Domain: <span className="font-mono text-ink">zahidp.com</span>
+              </p>
+              <p className="text-[10px] text-ink-3 truncate" title="Catch-all enabled: Any address @zahidp.com works">
+                Catch-all: <span className="font-mono text-emerald-600 dark:text-emerald-400 font-medium">*@zahidp.com</span>
+              </p>
+            </div>
             <button
               type="button"
               onClick={handleSyncResend}
               disabled={isSyncing}
-              className="w-full mt-2 h-7.5 px-2.5 rounded-lg border border-line bg-surface hover:bg-surface-2 text-ink-2 hover:text-ink text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full mt-1.5 h-7.5 px-2.5 rounded-lg border border-line bg-surface hover:bg-surface-2 text-ink-2 hover:text-ink text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             >
               <RefreshCw className={`size-3 ${isSyncing ? 'animate-spin text-brand-500' : ''}`} />
               <span>{isSyncing ? 'Syncing...' : 'Sync from Resend'}</span>
@@ -538,44 +722,86 @@ export const InboxTab: React.FC = () => {
           </div>
         </div>
 
-        {/* PANE 2: Message List */}
+        {/* PANE 2: Message List & Alias Filter */}
         <div
-          className={`w-full md:w-72 xl:w-80 shrink-0 flex flex-col bg-surface-2/30 ${
+          className={`w-full md:w-80 xl:w-96 shrink-0 flex flex-col bg-surface-2/30 ${
             mobileView === 'message' ? 'hidden md:flex' : 'flex'
           }`}
         >
-          {/* Search bar */}
-          <div className="p-3 border-b border-line flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  fetchMessages(folder, e.target.value);
-                }}
-                placeholder="Search subject or sender..."
-                className="w-full h-8 pl-8 pr-3 rounded-lg bg-surface border border-line text-xs text-ink placeholder:text-ink-4 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              />
+          {/* Search bar & Refresh */}
+          <div className="p-3 border-b border-line space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    fetchMessages(folder, e.target.value, selectedAlias);
+                  }}
+                  placeholder="Search subject, sender, alias..."
+                  className="w-full h-8 pl-8 pr-3 rounded-lg bg-surface border border-line text-xs text-ink placeholder:text-ink-4 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => fetchMessages(folder, searchQuery, selectedAlias)}
+                className="p-1.5 rounded-lg border border-line text-ink-3 hover:text-ink hover:bg-surface transition-colors cursor-pointer shrink-0"
+                title="Refresh messages"
+              >
+                <RefreshCw className={`size-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+              {folder === 'trash' && messages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleEmptyTrash}
+                  className="p-1.5 rounded-lg border border-rose-500/30 text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer shrink-0"
+                  title="Empty Trash"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={() => fetchMessages(folder, searchQuery)}
-              className="p-1.5 rounded-lg border border-line text-ink-3 hover:text-ink hover:bg-surface transition-colors cursor-pointer"
-              title="Refresh"
-            >
-              <RefreshCw className={`size-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            </button>
-            <button
-              type="button"
-              onClick={handleSyncResend}
-              disabled={isSyncing}
-              className="p-1.5 rounded-lg border border-line text-ink-3 hover:text-brand-500 hover:bg-surface transition-colors cursor-pointer disabled:opacity-50"
-              title="Sync & import from Resend Receiving"
-            >
-              <Inbox className={`size-3.5 ${isSyncing ? 'animate-bounce text-brand-500' : ''}`} />
-            </button>
+
+            {/* Alias Switcher & Pill Filter */}
+            <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 text-[11px] no-scrollbar">
+              <div className="flex items-center gap-1 text-ink-3 shrink-0 mr-0.5">
+                <Filter className="size-3" />
+                <span className="text-[10px] font-semibold uppercase">Alias:</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedAlias('all');
+                  fetchMessages(folder, searchQuery, 'all');
+                }}
+                className={`px-2 py-0.5 rounded-md text-[10px] font-mono whitespace-nowrap transition-colors cursor-pointer shrink-0 ${
+                  selectedAlias === 'all'
+                    ? 'bg-brand-500 text-white font-bold'
+                    : 'bg-surface border border-line text-ink-3 hover:text-ink'
+                }`}
+              >
+                All (@zahidp.com)
+              </button>
+              {detectedAliases.map((al) => (
+                <button
+                  key={al}
+                  type="button"
+                  onClick={() => {
+                    setSelectedAlias(al);
+                    fetchMessages(folder, searchQuery, al);
+                  }}
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-mono whitespace-nowrap transition-colors cursor-pointer shrink-0 ${
+                    selectedAlias === al
+                      ? 'bg-brand-500 text-white font-bold'
+                      : 'bg-surface border border-line text-ink-3 hover:text-ink'
+                  }`}
+                >
+                  {al.replace('@zahidp.com', '')}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* List items */}
@@ -589,7 +815,9 @@ export const InboxTab: React.FC = () => {
               <div className="p-8 text-center text-xs text-ink-3 space-y-1">
                 <Mail className="size-6 mx-auto opacity-30" />
                 <p className="font-semibold">No messages in {folder}</p>
-                <p className="text-[11px] opacity-75">All clear!</p>
+                <p className="text-[11px] opacity-75">
+                  {selectedAlias !== 'all' ? `Filtered by ${selectedAlias}` : 'All clear!'}
+                </p>
               </div>
             ) : (
               messages.map((msg) => {
@@ -598,12 +826,13 @@ export const InboxTab: React.FC = () => {
                   month: 'short',
                   day: 'numeric',
                 });
+                const recipientEmail = msg.to?.[0]?.email || 'hello@zahidp.com';
 
                 return (
                   <div
                     key={msg.id}
                     onClick={() => handleSelectMessage(msg)}
-                    className={`p-3.5 transition-all cursor-pointer relative ${
+                    className={`p-3.5 transition-all cursor-pointer relative group ${
                       isSelected
                         ? 'bg-brand-500/10 border-l-2 border-brand-500'
                         : msg.isRead
@@ -633,26 +862,63 @@ export const InboxTab: React.FC = () => {
                       {msg.snippet || msg.body}
                     </p>
 
-                    <div className="mt-2 flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        {msg.tags?.slice(0, 2).map((t) => (
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      {/* Alias pill & tags */}
+                      <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+                        <span
+                          className="px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 truncate"
+                          title={`Delivered to: ${recipientEmail}`}
+                        >
+                          to: {recipientEmail.split('@')[0]}
+                        </span>
+                        {msg.folder === 'archive' && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                            Archived
+                          </span>
+                        )}
+                        {msg.tags?.slice(0, 1).map((t) => (
                           <span
                             key={t}
-                            className="px-1.5 py-0.5 rounded text-[9.5px] font-semibold bg-surface-2 border border-line text-ink-3"
+                            className="hidden xs:inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-surface-2 border border-line text-ink-3 truncate"
                           >
                             {t}
                           </span>
                         ))}
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={(e) => handleToggleStar(msg, e)}
-                        className="text-ink-4 hover:text-amber-500 p-0.5 rounded transition-colors"
-                        title={msg.isStarred ? 'Unstar' : 'Star'}
-                      >
-                        <Star className={`size-3.5 ${msg.isStarred ? 'fill-amber-400 text-amber-500' : ''}`} />
-                      </button>
+                      {/* Row Hover Actions (Star, Archive, Trash) */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleArchive(msg, e)}
+                          className="opacity-0 group-hover:opacity-100 text-ink-4 hover:text-indigo-500 p-0.5 rounded transition-opacity"
+                          title={msg.folder === 'archive' ? 'Move to Inbox' : 'Archive'}
+                        >
+                          {msg.folder === 'archive' ? (
+                            <ArchiveRestore className="size-3.5" />
+                          ) : (
+                            <Archive className="size-3.5" />
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(e) => handleMoveToTrash(msg, e)}
+                          className="opacity-0 group-hover:opacity-100 text-ink-4 hover:text-rose-500 p-0.5 rounded transition-opacity"
+                          title={msg.folder === 'trash' ? 'Delete permanently' : 'Move to Trash'}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleStar(msg, e)}
+                          className="text-ink-4 hover:text-amber-500 p-0.5 rounded transition-colors"
+                          title={msg.isStarred ? 'Unstar' : 'Star'}
+                        >
+                          <Star className={`size-3.5 ${msg.isStarred ? 'fill-amber-400 text-amber-500' : ''}`} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -696,6 +962,21 @@ export const InboxTab: React.FC = () => {
 
                 {/* Actions Toolbar */}
                 <div className="flex items-center gap-1 shrink-0">
+                  {/* Archive Action */}
+                  <button
+                    type="button"
+                    onClick={() => handleToggleArchive(selectedMessage)}
+                    className="p-2 rounded-lg border border-line text-ink-3 hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors cursor-pointer"
+                    title={selectedMessage.folder === 'archive' ? 'Move to Inbox' : 'Archive message'}
+                  >
+                    {selectedMessage.folder === 'archive' ? (
+                      <ArchiveRestore className="size-4" />
+                    ) : (
+                      <Archive className="size-4" />
+                    )}
+                  </button>
+
+                  {/* Star Action */}
                   <button
                     type="button"
                     onClick={() => handleToggleStar(selectedMessage)}
@@ -705,6 +986,7 @@ export const InboxTab: React.FC = () => {
                     <Star className={`size-4 ${selectedMessage.isStarred ? 'fill-amber-400 text-amber-500' : ''}`} />
                   </button>
 
+                  {/* Read / Unread */}
                   <button
                     type="button"
                     onClick={() => handleToggleRead(selectedMessage)}
@@ -714,11 +996,12 @@ export const InboxTab: React.FC = () => {
                     {selectedMessage.isRead ? <Mail className="size-4" /> : <MailCheck className="size-4" />}
                   </button>
 
+                  {/* Delete / Trash */}
                   <button
                     type="button"
                     onClick={() => handleMoveToTrash(selectedMessage)}
                     className="p-2 rounded-lg border border-line text-ink-3 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                    title={selectedMessage.folder === 'trash' ? 'Delete permanently' : 'Move to Trash'}
+                    title={selectedMessage.folder === 'trash' ? 'Delete permanently from Supabase' : 'Move to Trash'}
                   >
                     <Trash2 className="size-4" />
                   </button>
@@ -727,13 +1010,16 @@ export const InboxTab: React.FC = () => {
 
               {/* Message Content View */}
               <div className="flex-1 p-6 overflow-y-auto space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-line/60 text-xs text-ink-3">
-                  <div>
-                    To: <span className="font-medium text-ink">{selectedMessage.to?.map((t) => t.email || t.name).join(', ') || 'hello@zahidp.com'}</span>
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-line/60 text-xs text-ink-3">
+                  <div className="flex items-center gap-1.5">
+                    <span>Delivered To:</span>
+                    <span className="font-mono font-medium text-ink bg-surface-2 px-2 py-0.5 rounded border border-line">
+                      {selectedMessage.to?.map((t) => t.email || t.name).join(', ') || 'hello@zahidp.com'}
+                    </span>
                   </div>
                   {selectedMessage.resendId && (
                     <div className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                      Resend ID: {selectedMessage.resendId.substring(0, 16)}...
+                      Resend: {selectedMessage.resendId.substring(0, 16)}...
                     </div>
                   )}
                 </div>
@@ -799,30 +1085,85 @@ export const InboxTab: React.FC = () => {
                         <CornerUpLeft className="size-3.5 text-brand-500" />
                         <span>Reply to {selectedMessage.from.name || selectedMessage.from.email}</span>
                       </label>
-                      <div className="flex items-center gap-1.5 text-[11px] text-ink-3">
-                        <span>From:</span>
+
+                      {/* Dynamic Any @zahidp.com Sender Identity Customizer */}
+                      <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-ink-3">
+                        <span className="font-semibold text-ink-2">From:</span>
                         {isEditingReplyFrom ? (
-                          <input
-                            type="text"
-                            value={replyFrom}
-                            onChange={(e) => setReplyFrom(e.target.value)}
-                            onBlur={() => setIsEditingReplyFrom(false)}
-                            autoFocus
-                            placeholder="e.g. Md Zahid Hasan <hello@zahidp.com>"
-                            className="h-6 px-2 text-xs font-mono rounded bg-surface border border-brand-500 text-ink focus:outline-none"
-                          />
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="text"
+                              value={replyFrom}
+                              onChange={(e) => setReplyFrom(e.target.value)}
+                              placeholder="e.g. anything@zahidp.com"
+                              className="h-6 px-2 text-xs font-mono rounded bg-surface border border-brand-500 text-ink focus:outline-none w-56 sm:w-64"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingReplyFrom(false)}
+                              className="p-1 rounded bg-brand-500 text-white hover:bg-brand-600 transition-colors"
+                              title="Done"
+                            >
+                              <Check className="size-3" />
+                            </button>
+                          </div>
                         ) : (
-                          <button
-                            type="button"
-                            onClick={() => setIsEditingReplyFrom(true)}
-                            className="font-mono text-ink hover:text-brand-500 underline decoration-dotted cursor-pointer transition-colors"
-                            title="Click to edit sender identity"
-                          >
-                            {replyFrom || composeFrom || 'hello@zahidp.com'}
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingReplyFrom(true)}
+                              className="font-mono text-ink hover:text-brand-500 underline decoration-dotted cursor-pointer transition-colors"
+                              title="Click to type ANY @zahidp.com sender identity"
+                            >
+                              {replyFrom || 'hello@zahidp.com'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingReplyFrom(true)}
+                              className="text-[10px] text-brand-500 hover:underline cursor-pointer"
+                            >
+                              Change
+                            </button>
+                          </div>
                         )}
-                        <span className="text-[10px] text-ink-4">via Resend</span>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveSenderAsDefault(replyFrom)}
+                          disabled={isSavingSenderDefault}
+                          className="text-[9.5px] text-ink-4 hover:text-ink hover:underline cursor-pointer ml-1"
+                          title="Save this sender address as system default in Supabase"
+                        >
+                          {isSavingSenderDefault ? 'Saving...' : 'Set as default'}
+                        </button>
                       </div>
+                    </div>
+
+                    {/* Quick Alias Chips for Quick Reply */}
+                    <div className="flex flex-wrap items-center gap-1">
+                      <span className="text-[10px] text-ink-4 font-semibold uppercase">Preset Aliases:</span>
+                      {[
+                        selectedMessage.to?.[0]?.email || 'hello@zahidp.com',
+                        'hello@zahidp.com',
+                        'test@zahidp.com',
+                        'contact@zahidp.com',
+                        'admin@zahidp.com',
+                        'support@zahidp.com',
+                      ]
+                        .filter((v, i, a) => a.indexOf(v) === i)
+                        .map((alias) => (
+                          <button
+                            key={alias}
+                            type="button"
+                            onClick={() => setReplyFrom(`Md Zahid Hasan <${alias}>`)}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer border ${
+                              replyFrom.includes(alias)
+                                ? 'bg-brand-500/10 border-brand-500 text-brand-600 dark:text-brand-400 font-bold'
+                                : 'bg-surface border-line text-ink-3 hover:text-ink'
+                            }`}
+                          >
+                            {alias.split('@')[0]}
+                          </button>
+                        ))}
                     </div>
 
                     <textarea
@@ -835,7 +1176,7 @@ export const InboxTab: React.FC = () => {
 
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] text-ink-3">
-                        Enter sends email directly to recipient inbox.
+                        Dispatches via Resend API to recipient inbox with reply threading.
                       </span>
 
                       <button
@@ -891,14 +1232,20 @@ export const InboxTab: React.FC = () => {
             {/* Compose Form */}
             <form onSubmit={handleSendCompose} className="p-4 sm:p-5 space-y-4 overflow-y-auto">
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-semibold text-ink-3 uppercase tracking-wider">
-                  From (Sender Identity)
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-[11px] font-semibold text-ink-3 uppercase tracking-wider">
+                    From (Sender Identity - Any @zahidp.com)
+                  </label>
+                  <span className="text-[10px] text-ink-4 flex items-center gap-1 font-mono">
+                    <AtSign className="size-3" />
+                    zahidp.com
+                  </span>
+                </div>
                 <input
                   type="text"
                   value={composeFrom}
                   onChange={(e) => setComposeFrom(e.target.value)}
-                  placeholder="e.g. Md Zahid Hasan <hello@zahidp.com> or test@zahidp.com"
+                  placeholder="e.g. anything@zahidp.com or Md Zahid Hasan <anything@zahidp.com>"
                   required
                   className="w-full h-9 px-3 rounded-xl bg-surface-2 border border-line text-xs font-mono text-ink placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                 />
@@ -906,19 +1253,22 @@ export const InboxTab: React.FC = () => {
                   <span className="text-[10px] text-ink-4 uppercase font-semibold">Presets:</span>
                   {[
                     'Md Zahid Hasan <hello@zahidp.com>',
-                    'hello@zahidp.com',
-                    'test@zahidp.com',
-                    'contact@zahidp.com',
                     'Md Zahid Hasan <test@zahidp.com>',
-                    'Md Zahid Hasan <zahid@zahidp.com>',
+                    'Md Zahid Hasan <contact@zahidp.com>',
+                    'Md Zahid Hasan <admin@zahidp.com>',
+                    'Md Zahid Hasan <support@zahidp.com>',
                   ].map((preset) => (
                     <button
                       key={preset}
                       type="button"
                       onClick={() => setComposeFrom(preset)}
-                      className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface border border-line text-ink-3 hover:text-ink hover:border-brand-500 transition-colors cursor-pointer"
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono border transition-colors cursor-pointer ${
+                        composeFrom === preset
+                          ? 'bg-brand-500/10 border-brand-500 text-brand-600 dark:text-brand-400 font-bold'
+                          : 'bg-surface border-line text-ink-3 hover:text-ink'
+                      }`}
                     >
-                      {preset}
+                      {preset.match(/<(.+?)>/)?.[1] || preset}
                     </button>
                   ))}
                 </div>
@@ -969,7 +1319,7 @@ export const InboxTab: React.FC = () => {
               {/* Action buttons */}
               <div className="pt-2 flex items-center justify-between border-t border-line">
                 <span className="text-[11px] text-ink-3 flex items-center gap-1">
-                  <span>Powered by Resend API</span>
+                  <span>Delivered via Resend</span>
                   <ExternalLink className="size-3" />
                 </span>
 
@@ -1003,4 +1353,3 @@ export const InboxTab: React.FC = () => {
     </div>
   );
 };
-

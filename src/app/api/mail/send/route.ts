@@ -45,7 +45,11 @@ export async function POST(req: NextRequest) {
       process.env.CONTACT_FROM_EMAIL ||
       'Md Zahid Hasan <hello@zahidp.com>';
 
-    const fromAddress = from?.trim() || configuredSender;
+    let fromAddress = from?.trim() || configuredSender;
+    // Format if bare email is passed (e.g. test@zahidp.com -> Md Zahid Hasan <test@zahidp.com>)
+    if (fromAddress && !fromAddress.includes('<') && fromAddress.includes('@')) {
+      fromAddress = `Md Zahid Hasan <${fromAddress}>`;
+    }
 
     const resend = new Resend(apiKey);
     const emailText = text || (html ? html.replace(/<[^>]+>/g, ' ') : '');

@@ -6,26 +6,30 @@ import {
   deleteMailMessage,
   emptyTrash,
   getUnreadCount,
+  getMailFolderCounts,
 } from '@/lib/mail/store';
 import { MailMessage } from '@/types/mail';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/mail/messages?folder=inbox&search=keyword
+// GET /api/mail/messages?folder=inbox&search=keyword&alias=test@zahidp.com
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const folder = searchParams.get('folder') || 'inbox';
     const search = searchParams.get('search') || undefined;
+    const alias = searchParams.get('alias') || undefined;
 
-    const messages = await listMailMessages({ folder, search });
+    const messages = await listMailMessages({ folder, search, alias });
     const unreadCount = await getUnreadCount();
+    const counts = await getMailFolderCounts();
 
     return NextResponse.json({
       success: true,
       folder,
       count: messages.length,
       unreadCount,
+      counts,
       messages,
     });
   } catch (err: unknown) {
@@ -38,7 +42,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, subject, message, tags } = body;
+    const { name, email, subject, message, tags, recipient } = body;
 
     if (!name || !email || !message) {
       return NextResponse.json(
@@ -46,6 +50,8 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const targetRecipient = (recipient || 'hello@zahidp.com').trim();
 
     const newMessage: MailMessage = {
       id: `msg_inbox_${Date.now()}`,
@@ -57,7 +63,7 @@ export async function POST(req: NextRequest) {
       to: [
         {
           name: 'Md Zahid Hasan',
-          email: 'hello@zahidp.com',
+          email: targetRecipient,
         },
       ],
       replyTo: email.trim(),
@@ -67,6 +73,8 @@ export async function POST(req: NextRequest) {
       createdAt: new Date().toISOString(),
       isRead: false,
       isStarred: false,
+      isArchived: false,
+      isTrashed: false,
       tags: tags || ['Inquiry', 'Website'],
     };
 
@@ -82,11 +90,11 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PATCH /api/mail/messages (Update isRead, isStarred, folder)
+// PATCH /api/mail/messages (Update isRead, isStarred, folder, isArchived, isTrashed)
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, isRead, isStarred, folder } = body;
+    const { id, isRead, isStarred, folder, isArchived, isTrashed } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'Message ID is required.' }, { status: 400 });
@@ -95,6 +103,8 @@ export async function PATCH(req: NextRequest) {
     const updates: Partial<MailMessage> = {};
     if (typeof isRead === 'boolean') updates.isRead = isRead;
     if (typeof isStarred === 'boolean') updates.isStarred = isStarred;
+    if (typeof isArchived === 'boolean') updates.isArchived = isArchived;
+    if (typeof isTrashed === 'boolean') updates.isTrashed = isTrashed;
     if (folder) updates.folder = folder;
 
     const updated = await updateMailMessage(id, updates);
@@ -103,11 +113,13 @@ export async function PATCH(req: NextRequest) {
     }
 
     const unreadCount = await getUnreadCount();
+    const counts = await getMailFolderCounts();
 
     return NextResponse.json({
       success: true,
       message: updated,
       unreadCount,
+      counts,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to update message';
@@ -115,7 +127,7 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
-// DELETE /api/mail/messages (Trash or empty trash)
+// DELETE /api/mail/messages (Trash or empty trash or permanent delete)
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -125,7 +137,8 @@ export async function DELETE(req: NextRequest) {
 
     if (emptyTrashAction) {
       const removed = await emptyTrash();
-      return NextResponse.json({ success: true, removedCount: removed });
+      const counts = await getMailFolderCounts();
+      return NextResponse.json({ success: true, removedCount: removed, counts });
     }
 
     if (!id) {
@@ -134,14 +147,15 @@ export async function DELETE(req: NextRequest) {
 
     const success = await deleteMailMessage(id, permanent);
     const unreadCount = await getUnreadCount();
+    const counts = await getMailFolderCounts();
 
     return NextResponse.json({
       success,
       unreadCount,
+      counts,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to delete message';
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
 }
-

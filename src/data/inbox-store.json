@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-01T15:29:27.526Z",
+  "updatedAt": "2026-11-01T15:49:07.510Z",
   "messages": [
     {
       "id": "msg_resend_b419aead-04b0-4a5f-a125-2905486e7337",
@@ -23,6 +23,7 @@
       "isRead": true,
       "isStarred": false,
       "isTrashed": false,
+      "isArchived": false,
       "label": "inbox",
       "direction": "inbound",
       "attachments": [],
@@ -52,6 +53,7 @@
       "isRead": true,
       "isStarred": false,
       "isTrashed": false,
+      "isArchived": false,
       "label": "inbox",
       "direction": "outbound",
       "attachments": [],
@@ -81,6 +83,7 @@
       "isRead": true,
       "isStarred": false,
       "isTrashed": false,
+      "isArchived": false,
       "label": "inbox",
       "direction": "outbound",
       "attachments": [],
@@ -90,7 +93,7 @@
     },
     {
       "id": "msg_resend_4995eb6f-2eef-4e28-8dd6-3101e3d42194",
-      "folder": "trash",
+      "folder": "inbox",
       "from": {
         "name": "Max Lane",
         "email": "max.lane@thetechnomart.com"
@@ -110,6 +113,7 @@
       "isRead": true,
       "isStarred": false,
       "isTrashed": false,
+      "isArchived": false,
       "label": "inbox",
       "direction": "inbound",
       "attachments": [],
@@ -139,6 +143,7 @@
       "isRead": true,
       "isStarred": false,
       "isTrashed": false,
+      "isArchived": false,
       "label": "inbox",
       "direction": "inbound",
       "attachments": [],
