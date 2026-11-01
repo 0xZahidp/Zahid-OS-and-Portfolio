@@ -41,3 +41,4 @@ export interface CrudResponse<T = Record<string, unknown>> {
   hint?: string;
   source?: 'supabase' | 'local_fallback';
 }
+

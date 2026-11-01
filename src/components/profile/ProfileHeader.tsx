@@ -83,48 +83,41 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
         {/* Roles and Location Row */}
         <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-body text-ink-2">
-          <li className="inline-flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1">
-            <Briefcase className="size-4.5 text-ink-3 shrink-0" />
-            <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-              CTO at{' '}
-              <a
-                href={profile.roles[0]?.company_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-medium text-ink underline decoration-line-strong underline-offset-2 transition-colors hover:decoration-ink"
-              >
-                <Image
-                  src={profile.roles[0]?.company_logo || ''}
-                  alt={profile.roles[0]?.company || ''}
-                  width={18}
-                  height={18}
-                  className="size-4.5 rounded-md ring-1 ring-line object-cover"
-                />
-                {profile.roles[0]?.company}
-              </a>
-            </span>
-            <span className="text-ink-3" aria-hidden="true">
-              ·
-            </span>
-            <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-              Software Engineer at{' '}
-              <a
-                href={profile.roles[1]?.company_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-medium text-ink underline decoration-line-strong underline-offset-2 transition-colors hover:decoration-ink"
-              >
-                <Image
-                  src={profile.roles[1]?.company_logo || ''}
-                  alt={profile.roles[1]?.company || ''}
-                  width={18}
-                  height={18}
-                  className="size-4.5 rounded-md ring-1 ring-line object-cover"
-                />
-                {profile.roles[1]?.company}
-              </a>
-            </span>
-          </li>
+          {profile.roles?.length > 0 && (
+            <li className="inline-flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1">
+              <Briefcase className="size-4.5 text-ink-3 shrink-0" />
+              {profile.roles.map((role, idx) => (
+                <React.Fragment key={idx}>
+                  {idx > 0 && (
+                    <span className="text-ink-3" aria-hidden="true">
+                      ·
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                    {role.title} at{' '}
+                    <a
+                      href={role.company_url || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 font-medium text-ink underline decoration-line-strong underline-offset-2 transition-colors hover:decoration-ink"
+                    >
+                      {role.company_logo && (
+                        <Image
+                          src={role.company_logo}
+                          alt={role.company || ''}
+                          width={18}
+                          height={18}
+                          className="size-4.5 rounded-md ring-1 ring-line object-cover"
+                          unoptimized
+                        />
+                      )}
+                      <span>{role.company}</span>
+                    </a>
+                  </span>
+                </React.Fragment>
+              ))}
+            </li>
+          )}
 
           <li className="inline-flex items-center gap-1.5">
             <MapPin className="size-4.5 text-ink-3 shrink-0" />

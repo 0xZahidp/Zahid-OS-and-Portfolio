@@ -120,32 +120,27 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
 
               {/* Role and Location Information */}
               <ul className="mt-4 flex flex-col items-center justify-center gap-2 text-body text-ink-2">
-                <li className="inline-flex flex-wrap items-center justify-center gap-1.5">
-                  <Briefcase className="size-4.5 text-ink-3 shrink-0" />
-                  <span className="inline-flex items-center gap-1 whitespace-nowrap">
-                    CTO at{' '}
-                    <a
-                      href={profile.roles[0]?.company_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-ink underline decoration-line-strong underline-offset-2"
-                    >
-                      {profile.roles[0]?.company}
-                    </a>
-                  </span>
-                  <span className="text-ink-3">·</span>
-                  <span className="inline-flex items-center gap-1 whitespace-nowrap">
-                    Software Engineer at{' '}
-                    <a
-                      href={profile.roles[1]?.company_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-ink underline decoration-line-strong underline-offset-2"
-                    >
-                      {profile.roles[1]?.company}
-                    </a>
-                  </span>
-                </li>
+                {profile.roles?.length > 0 && (
+                  <li className="inline-flex flex-wrap items-center justify-center gap-1.5">
+                    <Briefcase className="size-4.5 text-ink-3 shrink-0" />
+                    {profile.roles.map((role, idx) => (
+                      <React.Fragment key={idx}>
+                        {idx > 0 && <span className="text-ink-3">·</span>}
+                        <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                          {role.title} at{' '}
+                          <a
+                            href={role.company_url || '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-ink underline decoration-line-strong underline-offset-2"
+                          >
+                            {role.company}
+                          </a>
+                        </span>
+                      </React.Fragment>
+                    ))}
+                  </li>
+                )}
 
                 <li className="inline-flex items-center gap-1.5">
                   <MapPin className="size-4.5 text-ink-3 shrink-0" />
