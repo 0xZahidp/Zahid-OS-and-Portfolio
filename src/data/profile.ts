@@ -11,6 +11,7 @@ import {
   ServiceItem,
   DirectContactItem,
 } from '@/types/profile';
+import { defaultRecommendedPeople } from './default-people';
 
 export const profileData: Profile = {
   id: 'usr_zahid',
@@ -206,104 +207,7 @@ export const experiencesData: Experience[] = [
   },
 ];
 
-export const suggestedPeople: FollowerRecommendation[] = [
-  {
-    id: 'person-hasin',
-    name: 'Hasin Hayder',
-    role: 'Product Architect & Founder of TyroLabs',
-    avatar_url: 'https://avatars.githubusercontent.com/u/490779?v=4',
-    url: 'https://github.com/hasinhayder',
-    handle: '@hasinhayder',
-  },
-  {
-    id: 'person-zahin',
-    name: 'Zahin Mohammad',
-    role: 'Web Developer (React, Next.js, Go)',
-    avatar_url: 'https://avatars.githubusercontent.com/u/105446082?v=4',
-    url: 'https://github.com/IsHereZahin',
-    handle: '@IsHereZahin',
-  },
-  {
-    id: 'person-rezaur',
-    name: 'Rezaur Rahman',
-    role: 'Senior Software Engineer (Distributed Systems)',
-    avatar_url: 'https://avatars.githubusercontent.com/u/68007353?v=4',
-    url: 'https://github.com/RezaurOfficial',
-    handle: '@RezaurOfficial',
-  },
-  {
-    id: 'person-aniruddha',
-    name: 'Aniruddha Adhikary (Ani)',
-    role: 'Software Engineer @GovTechSG (Singapore)',
-    avatar_url: 'https://avatars.githubusercontent.com/u/932949?v=4',
-    url: 'https://github.com/aniruddha-adhikary',
-    handle: '@aniruddha-adhikary',
-  },
-  {
-    id: 'person-tahsin',
-    name: 'Md. Tahsinul Hoque Siddiki',
-    role: 'DevOps & Cloud Automation Engineer',
-    avatar_url: 'https://avatars.githubusercontent.com/u/107357207?v=4',
-    url: 'https://github.com/tahsinulhoque',
-    handle: '@tahsinulhoque',
-  },
-  {
-    id: 'person-emran',
-    name: 'Emran Haque',
-    role: 'Web3 & Community Relations Specialist',
-    avatar_url: 'https://avatars.githubusercontent.com/u/55331321?v=4',
-    url: 'https://github.com/Emranrx02',
-    handle: '@Emranrx02',
-  },
-  {
-    id: 'person-sani',
-    name: 'Sanaullah Sani',
-    role: 'Full Stack Web Developer',
-    avatar_url: 'https://avatars.githubusercontent.com/u/66258879?v=4',
-    url: 'https://github.com/ssani7',
-    handle: '@ssani7',
-  },
-  {
-    id: 'person-benaiah',
-    name: 'Benaiah',
-    role: 'Full Stack Builder & Software Engineer',
-    avatar_url: 'https://avatars.githubusercontent.com/u/65370456?v=4',
-    url: 'https://github.com/Benrobo',
-    handle: '@Benrobo',
-  },
-  {
-    id: 'person-roman',
-    name: 'Roman Mendaliev',
-    role: 'Software Developer',
-    avatar_url: 'https://avatars.githubusercontent.com/u/21079607?v=4',
-    url: 'https://github.com/reacheight',
-    handle: '@reacheight',
-  },
-  {
-    id: 'person-prottoy',
-    name: 'ABM Prottoy',
-    role: 'Software Developer (Dhaka)',
-    avatar_url: 'https://avatars.githubusercontent.com/u/115341293?v=4',
-    url: 'https://github.com/abmprottoy',
-    handle: '@abmprottoy',
-  },
-  {
-    id: 'person-shakib',
-    name: 'Shakibul Islam',
-    role: 'Web Developer (Dhaka)',
-    avatar_url: 'https://avatars.githubusercontent.com/u/206897066?v=4',
-    url: 'https://github.com/shakib5551',
-    handle: '@shakib5551',
-  },
-  {
-    id: 'person-syed',
-    name: 'Syed Eftasum Alam',
-    role: 'Computer Science & Engineering Graduate',
-    avatar_url: 'https://avatars.githubusercontent.com/u/62606974?v=4',
-    url: 'https://github.com/Syed-Eftasum-Alam',
-    handle: '@Syed-Eftasum-Alam',
-  },
-];
+export const suggestedPeople: FollowerRecommendation[] = defaultRecommendedPeople;
 
 export const socialLinksData: SocialLink[] = [
   {

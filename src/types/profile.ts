@@ -84,6 +84,16 @@ export interface FollowerRecommendation {
   avatar_url: string;
   url: string;
   handle: string;
+  verified?: boolean;
+  primaryHandle?: string;
+  primaryPlatform?: 'x' | 'youtube' | 'github' | 'linkedin' | 'facebook' | 'website';
+  primaryUrl?: string;
+  quote?: string;
+  tags?: string[];
+  platforms?: {
+    platform: 'x' | 'github' | 'linkedin' | 'facebook' | 'youtube' | 'website';
+    url: string;
+  }[];
 }
 
 export interface Person {
@@ -93,7 +103,7 @@ export interface Person {
   avatar_url: string;
   role: string;
   primaryHandle: string;
-  primaryPlatform: 'x' | 'youtube' | 'github' | 'linkedin' | 'website';
+  primaryPlatform: 'x' | 'youtube' | 'github' | 'linkedin' | 'facebook' | 'website';
   primaryUrl: string;
   quote?: string;
   tags?: string[];

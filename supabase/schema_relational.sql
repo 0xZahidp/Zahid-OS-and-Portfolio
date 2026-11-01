@@ -107,6 +107,13 @@ CREATE TABLE IF NOT EXISTS public.suggested_people (
   sort_order INTEGER NOT NULL DEFAULT 0,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE public.suggested_people ADD COLUMN IF NOT EXISTS verified BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.suggested_people ADD COLUMN IF NOT EXISTS primary_handle TEXT DEFAULT '';
+ALTER TABLE public.suggested_people ADD COLUMN IF NOT EXISTS primary_platform TEXT DEFAULT 'x';
+ALTER TABLE public.suggested_people ADD COLUMN IF NOT EXISTS primary_url TEXT DEFAULT '';
+ALTER TABLE public.suggested_people ADD COLUMN IF NOT EXISTS quote TEXT DEFAULT '';
+ALTER TABLE public.suggested_people ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.suggested_people ADD COLUMN IF NOT EXISTS platforms JSONB DEFAULT '[]'::jsonb;
 
 -- 9. SITE SETTINGS TABLE
 CREATE TABLE IF NOT EXISTS public.site_settings (

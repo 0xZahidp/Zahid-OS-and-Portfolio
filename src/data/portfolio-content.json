@@ -722,124 +722,365 @@
   ],
   "suggestedPeople": [
     {
-      "id": "person-hasin",
-      "name": "Hasin Hayder",
-      "role": "Product Architect & Founder of TyroLabs",
-      "avatar_url": "https://avatars.githubusercontent.com/u/490779?v=4",
-      "url": "https://github.com/hasinhayder",
-      "handle": "hasinhayder",
-      "sort_order": 0,
-      "updated_at": "2026-11-01T13:37:53.028+00:00"
-    },
-    {
-      "id": "person-zahin",
-      "name": "Zahin Mohammad",
-      "role": "Web Developer (React, Next.js, Go)",
-      "avatar_url": "https://avatars.githubusercontent.com/u/105446082?v=4",
-      "url": "https://github.com/IsHereZahin",
-      "handle": "IsHereZahin",
-      "sort_order": 1,
-      "updated_at": "2026-11-01T13:37:53.028+00:00"
-    },
-    {
-      "id": "person-rezaur",
-      "name": "Rezaur Rahman",
-      "role": "Senior Software Engineer (Distributed Systems)",
-      "avatar_url": "https://avatars.githubusercontent.com/u/68007353?v=4",
-      "url": "https://github.com/RezaurOfficial",
-      "handle": "RezaurOfficial",
-      "sort_order": 2,
-      "updated_at": "2026-11-01T13:37:53.028+00:00"
-    },
-    {
-      "id": "person-aniruddha",
-      "name": "Aniruddha Adhikary (Ani)",
-      "role": "Software Engineer @GovTechSG (Singapore)",
-      "avatar_url": "https://avatars.githubusercontent.com/u/932949?v=4",
-      "url": "https://github.com/aniruddha-adhikary",
-      "handle": "aniruddha-adhikary",
-      "sort_order": 3,
-      "updated_at": "2026-11-01T13:37:53.028+00:00"
-    },
-    {
-      "id": "person-tahsin",
-      "name": "Md. Tahsinul Hoque Siddiki",
-      "role": "DevOps & Cloud Automation Engineer",
-      "avatar_url": "https://avatars.githubusercontent.com/u/107357207?v=4",
-      "url": "https://github.com/tahsinulhoque",
-      "handle": "tahsinulhoque",
-      "sort_order": 4,
-      "updated_at": "2026-11-01T13:37:53.028+00:00"
+      "id": "person-shaon",
+      "name": "Ahmed Shamim Hassan Shaon",
+      "verified": true,
+      "avatar_url": "/images/shaon.jpg",
+      "role": "CEO of Megaminds Learning, software architect and Laravel contributor",
+      "primaryHandle": "@me_shaon",
+      "primaryPlatform": "x",
+      "primaryUrl": "https://x.com/me_shaon",
+      "url": "https://x.com/me_shaon",
+      "handle": "me_shaon",
+      "quote": "My mentor and the senior brother everyone wants by their side. I admire him the most.",
+      "tags": [
+        "Laravel",
+        "Open source"
+      ],
+      "platforms": [
+        {
+          "platform": "x",
+          "url": "https://x.com/me_shaon"
+        },
+        {
+          "platform": "github",
+          "url": "https://github.com/me-shaon"
+        },
+        {
+          "platform": "linkedin",
+          "url": "https://linkedin.com"
+        },
+        {
+          "platform": "facebook",
+          "url": "https://facebook.com"
+        }
+      ]
     },
     {
       "id": "person-emran",
-      "name": "Emran Haque",
-      "role": "Web3 & Community Relations Specialist",
-      "avatar_url": "https://avatars.githubusercontent.com/u/55331321?v=4",
-      "url": "https://github.com/Emranrx02",
-      "handle": "Emranrx02",
-      "sort_order": 5,
-      "updated_at": "2026-11-01T13:37:53.028+00:00"
+      "name": "Mohammad Emran Hasan",
+      "verified": false,
+      "avatar_url": "https://github.com/phpfour.png",
+      "role": "Building SaaS at klasio.com and helping teams ship Laravel products at figlab.io",
+      "primaryHandle": "@phpfour",
+      "primaryPlatform": "x",
+      "primaryUrl": "https://x.com/phpfour",
+      "url": "https://x.com/phpfour",
+      "handle": "phpfour",
+      "quote": "The guru of gurus, with extensive experience behind every tip.",
+      "tags": [
+        "PHP",
+        "Laravel"
+      ],
+      "platforms": [
+        {
+          "platform": "x",
+          "url": "https://x.com/phpfour"
+        },
+        {
+          "platform": "linkedin",
+          "url": "https://linkedin.com"
+        },
+        {
+          "platform": "github",
+          "url": "https://github.com/phpfour"
+        },
+        {
+          "platform": "facebook",
+          "url": "https://facebook.com"
+        }
+      ]
     },
     {
-      "id": "person-sani",
-      "name": "Sanaullah Sani",
-      "role": "Full Stack Web Developer",
-      "avatar_url": "https://avatars.githubusercontent.com/u/66258879?v=4",
-      "url": "https://github.com/ssani7",
-      "handle": "ssani7",
-      "sort_order": 6,
-      "updated_at": "2026-11-01T13:37:53.028+00:00"
+      "id": "person-caleb",
+      "name": "Caleb Porzio",
+      "verified": false,
+      "avatar_url": "/images/caleb.jpg",
+      "role": "Creator of Livewire and Alpine.js",
+      "primaryHandle": "@calebporzio",
+      "primaryPlatform": "x",
+      "primaryUrl": "https://x.com/calebporzio",
+      "url": "https://x.com/calebporzio",
+      "handle": "calebporzio",
+      "quote": "The reason I enjoy full-stack development so much.",
+      "tags": [
+        "Livewire",
+        "Alpine.js"
+      ],
+      "platforms": [
+        {
+          "platform": "x",
+          "url": "https://x.com/calebporzio"
+        },
+        {
+          "platform": "github",
+          "url": "https://github.com/calebporzio"
+        },
+        {
+          "platform": "website",
+          "url": "https://calebporzio.com"
+        }
+      ]
     },
     {
-      "id": "person-benaiah",
-      "name": "Benaiah",
-      "role": "Full Stack Builder & Software Engineer",
-      "avatar_url": "https://avatars.githubusercontent.com/u/65370456?v=4",
-      "url": "https://github.com/Benrobo",
-      "handle": "Benrobo",
-      "sort_order": 7,
-      "updated_at": "2026-11-01T13:37:53.028+00:00"
+      "id": "person-nayem",
+      "name": "HM Nayem",
+      "verified": false,
+      "avatar_url": "/images/nayem.jpg",
+      "role": "Founder of Stack Learner",
+      "primaryHandle": "@hmnayem",
+      "primaryPlatform": "x",
+      "primaryUrl": "https://x.com/hmnayem",
+      "url": "https://x.com/hmnayem",
+      "handle": "hmnayem",
+      "quote": "Great educator and developer advocate in Bangladesh.",
+      "tags": [
+        "JavaScript",
+        "Teaching"
+      ],
+      "platforms": [
+        {
+          "platform": "x",
+          "url": "https://x.com/hmnayem"
+        },
+        {
+          "platform": "github",
+          "url": "https://github.com/hmnayem"
+        },
+        {
+          "platform": "youtube",
+          "url": "https://youtube.com/@StackLearner"
+        },
+        {
+          "platform": "website",
+          "url": "https://stacklearner.com"
+        }
+      ]
     },
     {
-      "id": "person-roman",
-      "name": "Roman Mendaliev",
-      "role": "Software Developer",
-      "avatar_url": "https://avatars.githubusercontent.com/u/21079607?v=4",
-      "url": "https://github.com/reacheight",
-      "handle": "reacheight",
-      "sort_order": 8,
-      "updated_at": "2026-11-01T13:37:53.028+00:00"
+      "id": "person-povilas",
+      "name": "Povilas Korop",
+      "verified": false,
+      "avatar_url": "https://github.com/PovilasKorop.png",
+      "role": "Laravel Daily: practical Laravel tips every day",
+      "primaryHandle": "@LaravelDaily",
+      "primaryPlatform": "youtube",
+      "primaryUrl": "https://youtube.com/@LaravelDaily",
+      "url": "https://youtube.com/@LaravelDaily",
+      "handle": "LaravelDaily",
+      "quote": "I call him Uncle Povilas (পভিলাস কাকু), if anyone cares.",
+      "tags": [
+        "Laravel",
+        "Teaching"
+      ],
+      "platforms": [
+        {
+          "platform": "youtube",
+          "url": "https://youtube.com/@LaravelDaily"
+        },
+        {
+          "platform": "x",
+          "url": "https://x.com/PovilasKorop"
+        },
+        {
+          "platform": "github",
+          "url": "https://github.com/PovilasKorop"
+        },
+        {
+          "platform": "linkedin",
+          "url": "https://linkedin.com"
+        }
+      ]
     },
     {
-      "id": "person-prottoy",
-      "name": "ABM Prottoy",
-      "role": "Software Developer (Dhaka)",
-      "avatar_url": "https://avatars.githubusercontent.com/u/115341293?v=4",
-      "url": "https://github.com/abmprottoy",
-      "handle": "abmprottoy",
-      "sort_order": 9,
-      "updated_at": "2026-11-01T13:37:53.028+00:00"
+      "id": "person-aaron",
+      "name": "Aaron Francis",
+      "verified": false,
+      "avatar_url": "https://github.com/aarondfrancis.png",
+      "role": "VP of Marketing & Community at Laravel, creator of Solo, Database School and faster.dev",
+      "primaryHandle": "@aarondfrancis",
+      "primaryPlatform": "youtube",
+      "primaryUrl": "https://youtube.com/@aarondfrancis",
+      "url": "https://youtube.com/@aarondfrancis",
+      "handle": "aarondfrancis",
+      "quote": "The voice that makes databases exciting and approachable.",
+      "tags": [
+        "Databases",
+        "Laravel"
+      ],
+      "platforms": [
+        {
+          "platform": "x",
+          "url": "https://x.com/aarondfrancis"
+        },
+        {
+          "platform": "website",
+          "url": "https://aaronfrancis.com"
+        },
+        {
+          "platform": "youtube",
+          "url": "https://youtube.com/@aarondfrancis"
+        },
+        {
+          "platform": "github",
+          "url": "https://github.com/aarondfrancis"
+        }
+      ]
     },
     {
-      "id": "person-shakib",
-      "name": "Shakibul Islam",
-      "role": "Web Developer (Dhaka)",
-      "avatar_url": "https://avatars.githubusercontent.com/u/206897066?v=4",
-      "url": "https://github.com/shakib5551",
-      "handle": "shakib5551",
-      "sort_order": 10,
-      "updated_at": "2026-11-01T13:37:53.028+00:00"
+      "id": "person-taylor",
+      "name": "Taylor Otwell",
+      "verified": false,
+      "avatar_url": "https://github.com/taylorotwell.png",
+      "role": "Creator of Laravel",
+      "primaryHandle": "@taylorotwell",
+      "primaryPlatform": "x",
+      "primaryUrl": "https://x.com/taylorotwell",
+      "url": "https://x.com/taylorotwell",
+      "handle": "taylorotwell",
+      "quote": "Built the ecosystem that transformed modern PHP web development.",
+      "tags": [
+        "Laravel",
+        "PHP"
+      ],
+      "platforms": [
+        {
+          "platform": "x",
+          "url": "https://x.com/taylorotwell"
+        },
+        {
+          "platform": "github",
+          "url": "https://github.com/taylorotwell"
+        },
+        {
+          "platform": "website",
+          "url": "https://laravel.com"
+        }
+      ]
     },
     {
-      "id": "person-syed",
-      "name": "Syed Eftasum Alam",
-      "role": "Computer Science & Engineering Graduate",
-      "avatar_url": "https://avatars.githubusercontent.com/u/62606974?v=4",
-      "url": "https://github.com/Syed-Eftasum-Alam",
-      "handle": "Syed-Eftasum-Alam",
-      "sort_order": 11,
-      "updated_at": "2026-11-01T13:37:53.028+00:00"
+      "id": "person-freek",
+      "name": "Freek Van der Herten",
+      "verified": false,
+      "avatar_url": "https://github.com/freekmurze.png",
+      "role": "Developer and partner at Spatie, open-source maintainer",
+      "primaryHandle": "@freekmurze",
+      "primaryPlatform": "github",
+      "primaryUrl": "https://github.com/freekmurze",
+      "url": "https://github.com/freekmurze",
+      "handle": "freekmurze",
+      "quote": "Prolific open-source author who has built hundreds of packages.",
+      "tags": [
+        "Open source",
+        "Laravel"
+      ],
+      "platforms": [
+        {
+          "platform": "github",
+          "url": "https://github.com/freekmurze"
+        },
+        {
+          "platform": "x",
+          "url": "https://x.com/freekmurze"
+        },
+        {
+          "platform": "website",
+          "url": "https://freek.dev"
+        }
+      ]
+    },
+    {
+      "id": "person-adam",
+      "name": "Adam Wathan",
+      "verified": false,
+      "avatar_url": "https://github.com/adamwathan.png",
+      "role": "Creator of Tailwind CSS",
+      "primaryHandle": "@adamwathan",
+      "primaryPlatform": "x",
+      "primaryUrl": "https://x.com/adamwathan",
+      "url": "https://x.com/adamwathan",
+      "handle": "adamwathan",
+      "quote": "Revolutionized how the entire industry designs on the web.",
+      "tags": [
+        "Tailwind CSS",
+        "CSS"
+      ],
+      "platforms": [
+        {
+          "platform": "x",
+          "url": "https://x.com/adamwathan"
+        },
+        {
+          "platform": "github",
+          "url": "https://github.com/adamwathan"
+        },
+        {
+          "platform": "website",
+          "url": "https://adamwathan.me"
+        }
+      ]
+    },
+    {
+      "id": "person-nuno",
+      "name": "Nuno Maduro",
+      "verified": false,
+      "avatar_url": "https://github.com/nunomaduro.png",
+      "role": "Laravel core engineer, creator of Pest PHP and Termwind",
+      "primaryHandle": "@enunomaduro",
+      "primaryPlatform": "github",
+      "primaryUrl": "https://github.com/nunomaduro",
+      "url": "https://github.com/nunomaduro",
+      "handle": "enunomaduro",
+      "quote": "Crafted the most elegant testing framework in PHP.",
+      "tags": [
+        "Testing",
+        "PHP"
+      ],
+      "platforms": [
+        {
+          "platform": "github",
+          "url": "https://github.com/nunomaduro"
+        },
+        {
+          "platform": "x",
+          "url": "https://x.com/enunomaduro"
+        },
+        {
+          "platform": "website",
+          "url": "https://nunomaduro.com"
+        }
+      ]
+    },
+    {
+      "id": "person-jeffrey",
+      "name": "Jeffrey Way",
+      "verified": false,
+      "avatar_url": "https://github.com/JeffreyWay.png",
+      "role": "Creator of Laracasts, inspiring developer educator",
+      "primaryHandle": "@jeffrey_way",
+      "primaryPlatform": "website",
+      "primaryUrl": "https://laracasts.com",
+      "url": "https://laracasts.com",
+      "handle": "jeffrey_way",
+      "quote": "Taught an entire generation how to code with clarity and elegance.",
+      "tags": [
+        "Education",
+        "Laravel"
+      ],
+      "platforms": [
+        {
+          "platform": "website",
+          "url": "https://laracasts.com"
+        },
+        {
+          "platform": "x",
+          "url": "https://x.com/jeffrey_way"
+        },
+        {
+          "platform": "facebook",
+          "url": "https://facebook.com"
+        }
+      ]
     }
   ],
   "worksSettings": {

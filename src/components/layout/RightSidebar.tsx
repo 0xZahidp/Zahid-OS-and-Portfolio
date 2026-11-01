@@ -8,6 +8,7 @@ import {
   ArrowRight,
   ShieldCheck,
   Check,
+  Globe,
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import {
@@ -15,6 +16,7 @@ import {
   XIcon,
   LinkedInIcon,
   FacebookIcon,
+  YouTubeIcon,
 } from '@/components/ui/Icons';
 
 interface RightSidebarProps {
@@ -33,6 +35,24 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   const socialLinksData = content.socialLinks;
   const [followedState, setFollowedState] = useState<Record<string, boolean>>({});
   const [isFollowingMain, setIsFollowingMain] = useState(false);
+
+  const renderSidebarPlatformIcon = (platform: string) => {
+    switch (platform) {
+      case 'x':
+        return <XIcon className="size-2.75 text-ink" />;
+      case 'github':
+        return <GitHubIcon className="size-2.75 text-ink" />;
+      case 'linkedin':
+        return <LinkedInIcon className="size-2.75 text-ink" />;
+      case 'facebook':
+        return <FacebookIcon className="size-2.75 text-ink" />;
+      case 'youtube':
+        return <YouTubeIcon className="size-2.75 text-red-500" />;
+      case 'website':
+      default:
+        return <Globe className="size-2.75 text-ink" />;
+    }
+  };
 
   const toggleFollow = (id: string) => {
     setFollowedState((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -114,7 +134,18 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
             <ul className="-mx-2">
               {suggestedPeople.slice(0, 3).map((person) => {
                 const isFollowing = followedState[person.id] || false;
-                const isGitHub = person.url.includes('github.com');
+                const platformKey =
+                  person.primaryPlatform ||
+                  (person.url?.includes('github.com')
+                    ? 'github'
+                    : person.url?.includes('youtube.com')
+                    ? 'youtube'
+                    : person.url?.includes('linkedin.com')
+                    ? 'linkedin'
+                    : person.url?.includes('facebook.com')
+                    ? 'facebook'
+                    : 'x');
+                const targetUrl = person.primaryUrl || person.url || '#';
 
                 return (
                   <li
@@ -122,7 +153,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                     className="flex items-center gap-2 rounded-xl px-2 py-2 transition-colors hover:bg-surface-2"
                   >
                     <a
-                      href={person.url}
+                      href={targetUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex min-w-0 flex-1 items-center gap-3"
@@ -130,7 +161,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                     >
                       <span className="relative inline-block shrink-0 self-start">
                         <Image
-                          src={person.avatar_url}
+                          src={person.avatar_url || '/images/avatar.webp'}
                           alt={person.name}
                           width={36}
                           height={36}
@@ -139,22 +170,23 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                         />
                         <span
                           className="absolute grid place-items-center rounded-full bg-surface text-ink shadow-sm ring-2 ring-surface size-4.5 -right-0.5 -bottom-0.5"
-                          title={isGitHub ? 'GitHub' : 'X'}
+                          title={platformKey.toUpperCase()}
                         >
-                          {isGitHub ? (
-                            <GitHubIcon className="size-2.75 text-ink" />
-                          ) : (
-                            <XIcon className="size-2.75 text-ink" />
-                          )}
+                          {renderSidebarPlatformIcon(platformKey)}
                         </span>
                       </span>
 
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-body font-semibold text-ink">
-                          {person.name}
+                        <span className="flex items-center gap-1 text-body font-semibold text-ink truncate">
+                          <span className="truncate">{person.name}</span>
+                          {person.verified && (
+                            <span className="text-emerald-500 text-xs shrink-0 select-none" title="Verified">
+                              💚
+                            </span>
+                          )}
                         </span>
                         <span className="block truncate text-meta text-ink-3">
-                          {person.role}
+                          {person.primaryHandle ? `${person.primaryHandle} · ` : ''}{person.role}
                         </span>
                       </span>
                     </a>

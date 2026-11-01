@@ -53,6 +53,7 @@ export async function GET() {
           const worksSetting = setRes.data?.find((s) => s.key === 'works_settings')?.value;
           const basedInSetting = setRes.data?.find((s) => s.key === 'based_in_settings')?.value;
           const githubSetting = setRes.data?.find((s) => s.key === 'github_settings')?.value;
+          const richPeopleSetting = setRes.data?.find((s) => s.key === 'suggested_people_rich')?.value;
 
           const assembled: PortfolioContent = {
             profile: {
@@ -74,7 +75,11 @@ export async function GET() {
             skills: (skillRes.data && skillRes.data.length > 0) ? skillRes.data : defaultPortfolioContent.skills,
             languages: (langRes.data && langRes.data.length > 0) ? langRes.data : defaultPortfolioContent.languages,
             socialLinks: (socRes.data && socRes.data.length > 0) ? socRes.data : defaultPortfolioContent.socialLinks,
-            suggestedPeople: (peepRes.data && peepRes.data.length > 0) ? peepRes.data : defaultPortfolioContent.suggestedPeople,
+            suggestedPeople: (Array.isArray(richPeopleSetting) && richPeopleSetting.length > 0)
+              ? richPeopleSetting
+              : (peepRes.data && peepRes.data.length > 0)
+              ? peepRes.data
+              : defaultPortfolioContent.suggestedPeople,
             worksSettings: worksSetting || defaultPortfolioContent.worksSettings,
             basedInSettings: basedInSetting || defaultPortfolioContent.basedInSettings,
             githubSettings: githubSetting || defaultPortfolioContent.githubSettings,
@@ -259,19 +264,25 @@ export async function POST(req: NextRequest) {
         }));
         const socPromise = socRows.length > 0 ? supabase.from('social_links').upsert(socRows) : Promise.resolve();
 
-        // Upsert Suggested People
+        // Upsert Suggested People (safe columns for relational table)
         const peepRows = (sanitizedContent.suggestedPeople || []).map((peep, idx) => ({
-          ...peep,
+          id: peep.id,
+          name: peep.name,
+          role: peep.role || '',
+          avatar_url: peep.avatar_url || '',
+          url: peep.primaryUrl || peep.url || '',
+          handle: peep.primaryHandle || peep.handle || '',
           sort_order: idx,
           updated_at: new Date().toISOString(),
         }));
         const peepPromise = peepRows.length > 0 ? supabase.from('suggested_people').upsert(peepRows) : Promise.resolve();
 
-        // Upsert Site Settings
+        // Upsert Site Settings (persisting rich people data with full quotes, platforms, tags, verified status)
         const settingsRows = [
           { key: 'works_settings', value: sanitizedContent.worksSettings, updated_at: new Date().toISOString() },
           { key: 'based_in_settings', value: sanitizedContent.basedInSettings, updated_at: new Date().toISOString() },
           { key: 'github_settings', value: sanitizedContent.githubSettings, updated_at: new Date().toISOString() },
+          { key: 'suggested_people_rich', value: sanitizedContent.suggestedPeople, updated_at: new Date().toISOString() },
         ];
         const setPromise = supabase.from('site_settings').upsert(settingsRows);
 
