@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getUnreadCount } from '@/lib/mail/store';
-import { getAppSecret } from '@/lib/env-vault';
+import { getAppSecret, setAppSecret } from '@/lib/env-vault';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +9,13 @@ export async function GET() {
     const apiKey = await getAppSecret('RESEND_API_KEY');
     const isConfigured = Boolean(apiKey && apiKey.startsWith('re_'));
     const unreadCount = await getUnreadCount();
+
+    const configuredSender =
+      (await getAppSecret('RESEND_DEFAULT_SENDER')) ||
+      (await getAppSecret('CONTACT_FROM_EMAIL')) ||
+      process.env.RESEND_DEFAULT_SENDER ||
+      process.env.CONTACT_FROM_EMAIL ||
+      'Md Zahid Hasan <hello@zahidp.com>';
 
     let domainStatus = 'unknown';
     let verifiedDomain = 'zahidp.com';
@@ -36,7 +43,7 @@ export async function GET() {
       configured: isConfigured,
       verifiedDomain,
       domainStatus,
-      defaultSender: 'Md Zahid Hasan <hello@zahidp.com>',
+      defaultSender: configuredSender,
       unreadCount,
     });
   } catch (err: unknown) {
@@ -45,3 +52,42 @@ export async function GET() {
   }
 }
 
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { defaultSender } = body;
+
+    if (!defaultSender || typeof defaultSender !== 'string') {
+      return NextResponse.json({ success: false, error: 'defaultSender is required' }, { status: 400 });
+    }
+
+    const cleanSender = defaultSender.trim();
+    const result = await setAppSecret(
+      'RESEND_DEFAULT_SENDER',
+      cleanSender,
+      false,
+      'Default sender address for emails dispatched by Resend'
+    );
+
+    // Keep CONTACT_FROM_EMAIL synced as well
+    await setAppSecret(
+      'CONTACT_FROM_EMAIL',
+      cleanSender,
+      false,
+      'Sender header for emails dispatched by Resend'
+    );
+
+    if (result.success) {
+      return NextResponse.json({
+        success: true,
+        defaultSender: cleanSender,
+        message: 'Default sender address successfully updated in Supabase.',
+      });
+    } else {
+      return NextResponse.json({ success: false, error: result.error || 'Failed to update sender' }, { status: 500 });
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to update sender address';
+    return NextResponse.json({ success: false, error: msg }, { status: 500 });
+  }
+}

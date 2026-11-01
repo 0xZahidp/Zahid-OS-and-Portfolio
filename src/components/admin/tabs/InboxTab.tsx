@@ -38,6 +38,8 @@ export const InboxTab: React.FC = () => {
   // Quick reply state
   const [quickReplyText, setQuickReplyText] = useState('');
   const [isSendingReply, setIsSendingReply] = useState(false);
+  const [replyFrom, setReplyFrom] = useState('Md Zahid Hasan <hello@zahidp.com>');
+  const [isEditingReplyFrom, setIsEditingReplyFrom] = useState(false);
 
   // Compose Modal state
   const [isComposeOpen, setIsComposeOpen] = useState(false);
@@ -46,6 +48,19 @@ export const InboxTab: React.FC = () => {
   const [composeSubject, setComposeSubject] = useState('');
   const [composeBody, setComposeBody] = useState('');
   const [isSendingCompose, setIsSendingCompose] = useState(false);
+
+  // Fetch dynamic default sender configuration
+  useEffect(() => {
+    fetch('/api/mail/status')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.defaultSender) {
+          setComposeFrom(data.defaultSender);
+          setReplyFrom(data.defaultSender);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Fetch messages from API
   const fetchMessages = useCallback(async (currentFolder = folder, query = searchQuery) => {
@@ -249,8 +264,8 @@ export const InboxTab: React.FC = () => {
           to: recipient,
           subject: replySubject,
           text: quickReplyText.trim(),
-          from: 'Md Zahid Hasan <hello@zahidp.com>',
-          replyTo: 'hello@zahidp.com',
+          from: replyFrom.trim() || composeFrom.trim() || 'Md Zahid Hasan <hello@zahidp.com>',
+          replyTo: (replyFrom.trim() || composeFrom.trim()).match(/<(.+?)>/)?.[1] || (replyFrom.trim() || composeFrom.trim()) || 'hello@zahidp.com',
           inReplyTo,
           references,
         }),
@@ -297,11 +312,11 @@ export const InboxTab: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: composeFrom,
+          from: composeFrom.trim() || 'Md Zahid Hasan <hello@zahidp.com>',
           to: composeTo.trim(),
           subject: composeSubject.trim(),
           text: composeBody.trim(),
-          replyTo: 'hello@zahidp.com',
+          replyTo: composeFrom.match(/<(.+?)>/)?.[1] || composeFrom.trim() || 'hello@zahidp.com',
         }),
       });
 
@@ -779,14 +794,35 @@ export const InboxTab: React.FC = () => {
               {selectedMessage.folder !== 'trash' && (
                 <div className="p-4 border-t border-line bg-surface-2/40">
                   <form onSubmit={handleSendQuickReply} className="space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <label className="text-xs font-bold text-ink flex items-center gap-1.5">
                         <CornerUpLeft className="size-3.5 text-brand-500" />
                         <span>Reply to {selectedMessage.from.name || selectedMessage.from.email}</span>
                       </label>
-                      <span className="text-[11px] text-ink-3">
-                        Sending from <strong className="text-ink">hello@zahidp.com</strong> via Resend
-                      </span>
+                      <div className="flex items-center gap-1.5 text-[11px] text-ink-3">
+                        <span>From:</span>
+                        {isEditingReplyFrom ? (
+                          <input
+                            type="text"
+                            value={replyFrom}
+                            onChange={(e) => setReplyFrom(e.target.value)}
+                            onBlur={() => setIsEditingReplyFrom(false)}
+                            autoFocus
+                            placeholder="e.g. Md Zahid Hasan <hello@zahidp.com>"
+                            className="h-6 px-2 text-xs font-mono rounded bg-surface border border-brand-500 text-ink focus:outline-none"
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingReplyFrom(true)}
+                            className="font-mono text-ink hover:text-brand-500 underline decoration-dotted cursor-pointer transition-colors"
+                            title="Click to edit sender identity"
+                          >
+                            {replyFrom || composeFrom || 'hello@zahidp.com'}
+                          </button>
+                        )}
+                        <span className="text-[10px] text-ink-4">via Resend</span>
+                      </div>
                     </div>
 
                     <textarea
@@ -854,20 +890,38 @@ export const InboxTab: React.FC = () => {
 
             {/* Compose Form */}
             <form onSubmit={handleSendCompose} className="p-4 sm:p-5 space-y-4 overflow-y-auto">
-              <div>
-                <label className="block text-[11px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                  From (Verified Domain: zahidp.com)
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-semibold text-ink-3 uppercase tracking-wider">
+                  From (Sender Identity)
                 </label>
-                <select
+                <input
+                  type="text"
                   value={composeFrom}
                   onChange={(e) => setComposeFrom(e.target.value)}
-                  className="w-full h-9 px-3 rounded-xl bg-surface-2 border border-line text-xs font-medium text-ink focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                >
-                  <option value="Md Zahid Hasan <hello@zahidp.com>">Md Zahid Hasan &lt;hello@zahidp.com&gt;</option>
-                  <option value="Md Zahid Hasan <contact@zahidp.com>">Md Zahid Hasan &lt;contact@zahidp.com&gt;</option>
-                  <option value="Md Zahid Hasan <zahid@zahidp.com>">Md Zahid Hasan &lt;zahid@zahidp.com&gt;</option>
-                  <option value="FolioFrame <onboarding@resend.dev>">FolioFrame &lt;onboarding@resend.dev&gt; (Testing Sandbox)</option>
-                </select>
+                  placeholder="e.g. Md Zahid Hasan <hello@zahidp.com> or test@zahidp.com"
+                  required
+                  className="w-full h-9 px-3 rounded-xl bg-surface-2 border border-line text-xs font-mono text-ink placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                />
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="text-[10px] text-ink-4 uppercase font-semibold">Presets:</span>
+                  {[
+                    'Md Zahid Hasan <hello@zahidp.com>',
+                    'hello@zahidp.com',
+                    'test@zahidp.com',
+                    'contact@zahidp.com',
+                    'Md Zahid Hasan <test@zahidp.com>',
+                    'Md Zahid Hasan <zahid@zahidp.com>',
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setComposeFrom(preset)}
+                      className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface border border-line text-ink-3 hover:text-ink hover:border-brand-500 transition-colors cursor-pointer"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>

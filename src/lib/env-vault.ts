@@ -159,6 +159,11 @@ export async function listAppSecrets(): Promise<EnvVaultItem[]> {
       description: 'Destination email address where public contact inquiries are sent',
     },
     {
+      key: 'RESEND_DEFAULT_SENDER',
+      isSecret: false,
+      description: 'Default sender address for emails dispatched by Resend (e.g. "Md Zahid Hasan <hello@zahidp.com>" or "test@zahidp.com")',
+    },
+    {
       key: 'CONTACT_FROM_EMAIL',
       isSecret: false,
       description: 'Sender header for emails dispatched by Resend (e.g. "Md Zahid <hello@zahidp.com>")',

@@ -25,6 +25,7 @@ import {
   Check,
   Database,
   Sparkles,
+  Save,
 } from 'lucide-react';
 import { useAdminAuth, PasskeyItem } from '@/context/AdminAuthContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -70,6 +71,9 @@ export const SettingsTab: React.FC = () => {
     unreadCount?: number;
   } | null>(null);
   const [isLoadingMailStatus, setIsLoadingMailStatus] = useState(false);
+  const [customSender, setCustomSender] = useState('');
+  const [isSavingSender, setIsSavingSender] = useState(false);
+  const [senderFeedback, setSenderFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Env Vault State
   const [envItems, setEnvItems] = useState<EnvVaultItem[]>([]);
@@ -122,6 +126,9 @@ export const SettingsTab: React.FC = () => {
       if (res.ok) {
         const data = await res.json();
         setMailStatus(data);
+        if (data.defaultSender) {
+          setCustomSender(data.defaultSender);
+        }
       }
     } catch {
       // ignore
@@ -129,6 +136,43 @@ export const SettingsTab: React.FC = () => {
       setIsLoadingMailStatus(false);
     }
   }, []);
+
+  // Save custom default sender to Supabase
+  const handleSaveSender = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!customSender.trim()) return;
+
+    setIsSavingSender(true);
+    setSenderFeedback(null);
+
+    try {
+      const res = await fetch('/api/mail/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ defaultSender: customSender.trim() }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setSenderFeedback({
+          type: 'success',
+          message: `✓ Default sender updated to "${customSender.trim()}" in Supabase!`,
+        });
+        await loadMailStatus();
+        await loadEnvVault();
+      } else {
+        setSenderFeedback({
+          type: 'error',
+          message: data.error || 'Failed to update sender identity.',
+        });
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Save failed';
+      setSenderFeedback({ type: 'error', message: msg });
+    } finally {
+      setIsSavingSender(false);
+    }
+  };
 
   useEffect(() => {
     loadPasskeys();
@@ -196,6 +240,11 @@ export const SettingsTab: React.FC = () => {
       const data = await res.json();
       if (data.success) {
         setEnvFeedback({ type: 'success', message: `✓ Variable "${key}" removed from Supabase.` });
+        if (envKey.toUpperCase() === key.toUpperCase()) {
+          setEnvKey('');
+          setEnvValue('');
+          setEnvDesc('');
+        }
         await loadEnvVault();
       } else {
         setEnvFeedback({ type: 'error', message: data.error || 'Failed to delete variable.' });
@@ -904,28 +953,44 @@ export const SettingsTab: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
-                {envKey && (
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  {envKey.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteEnv(envKey.trim().toUpperCase())}
+                      className="h-8 px-3 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                      title={`Delete "${envKey.trim().toUpperCase()}" from Supabase database`}
+                    >
+                      <Trash2 className="size-3.5" />
+                      <span>Delete from Supabase</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {envKey && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEnvKey('');
+                        setEnvValue('');
+                        setEnvDesc('');
+                      }}
+                      className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
                   <button
-                    type="button"
-                    onClick={() => {
-                      setEnvKey('');
-                      setEnvValue('');
-                      setEnvDesc('');
-                    }}
-                    className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold cursor-pointer"
+                    type="submit"
+                    disabled={isSavingEnv || !envKey.trim() || !envValue.trim()}
+                    className="btn btn-primary h-8 px-4 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
-                    Clear
+                    {isSavingEnv ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
+                    <span>{isSavingEnv ? 'Saving to Supabase...' : 'Save Secret to Supabase'}</span>
                   </button>
-                )}
-                <button
-                  type="submit"
-                  disabled={isSavingEnv || !envKey.trim() || !envValue.trim()}
-                  className="btn btn-primary h-8 px-4 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  {isSavingEnv ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
-                  <span>{isSavingEnv ? 'Saving to Supabase...' : 'Save Secret to Supabase'}</span>
-                </button>
+                </div>
               </div>
             </form>
 
@@ -1040,20 +1105,31 @@ export const SettingsTab: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleQuickFill(item.key, item.description || '', item.isSecret)}
-                            className="px-2 py-1 text-[11px] font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-500/10 rounded-lg transition-colors cursor-pointer"
+                            className="px-2.5 py-1 text-xs font-semibold text-brand-600 dark:text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/20 rounded-lg transition-colors cursor-pointer"
                             title="Edit or override this variable"
                           >
                             Edit
                           </button>
 
-                          {isFromDb && (
+                          {isFromDb ? (
                             <button
                               type="button"
                               onClick={() => handleDeleteEnv(item.key)}
-                              className="p-1.5 text-ink-3 hover:text-rose-600 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer"
-                              title="Delete from Supabase"
+                              className="px-2.5 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
+                              title={`Delete "${item.key}" from Supabase database`}
                             >
-                              <Trash2 className="size-3.5" />
+                              <Trash2 className="size-3" />
+                              <span>Delete</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteEnv(item.key)}
+                              className="px-2 py-1 text-xs text-ink-4 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
+                              title={`Remove any Supabase entry for "${item.key}"`}
+                            >
+                              <Trash2 className="size-3" />
+                              <span>Delete</span>
                             </button>
                           )}
                         </div>
@@ -1125,6 +1201,83 @@ export const SettingsTab: React.FC = () => {
                   Unread Inquiries: <strong>{mailStatus?.unreadCount ?? 0}</strong>
                 </p>
               </div>
+            </div>
+
+            {/* Sender Customization Card */}
+            <div className="p-4 sm:p-5 rounded-xl bg-surface-2/60 border border-line space-y-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <h4 className="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
+                    <span>Default Outbound Sender Address</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+                      Saved in Supabase
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-ink-3">
+                    The default &apos;From&apos; identity used when replying to messages or dispatching emails via Resend. Change anytime without needing a Vercel redeployment.
+                  </p>
+                </div>
+              </div>
+
+              {senderFeedback && (
+                <div
+                  className={`p-3 rounded-xl border text-xs flex items-center gap-2 ${
+                    senderFeedback.type === 'success'
+                      ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                      : 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400'
+                  }`}
+                >
+                  {senderFeedback.type === 'success' ? (
+                    <CheckCircle2 className="size-3.5 text-emerald-500 shrink-0" />
+                  ) : (
+                    <AlertCircle className="size-3.5 text-rose-500 shrink-0" />
+                  )}
+                  <span>{senderFeedback.message}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSaveSender} className="space-y-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <input
+                    type="text"
+                    value={customSender}
+                    onChange={(e) => setCustomSender(e.target.value)}
+                    placeholder="e.g. Md Zahid Hasan <hello@zahidp.com>"
+                    required
+                    className="flex-1 h-9 px-3 text-xs font-mono rounded-xl bg-surface border border-line focus:border-brand-500 focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSavingSender || !customSender.trim()}
+                    className="btn btn-primary h-9 px-4 rounded-xl text-xs font-bold shrink-0 inline-flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSavingSender ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+                    <span>{isSavingSender ? 'Saving...' : 'Save Default Sender'}</span>
+                  </button>
+                </div>
+
+                {/* Quick Preset Chips */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                  <span className="text-[10px] text-ink-4 uppercase font-semibold">Quick Presets:</span>
+                  {[
+                    'Md Zahid Hasan <hello@zahidp.com>',
+                    'hello@zahidp.com',
+                    'test@zahidp.com',
+                    'contact@zahidp.com',
+                    'Md Zahid Hasan <test@zahidp.com>',
+                    'Md Zahid Hasan <zahid@zahidp.com>',
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setCustomSender(preset)}
+                      className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-surface hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400 border border-line transition-colors cursor-pointer"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </form>
             </div>
 
             <div className="pt-2 flex items-center justify-between border-t border-line">

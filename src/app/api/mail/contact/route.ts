@@ -51,10 +51,22 @@ export async function POST(req: NextRequest) {
     const apiKey = await getAppSecret('RESEND_API_KEY');
     if (apiKey) {
       try {
+        const configuredSender =
+          (await getAppSecret('RESEND_DEFAULT_SENDER')) ||
+          (await getAppSecret('CONTACT_FROM_EMAIL')) ||
+          process.env.RESEND_DEFAULT_SENDER ||
+          process.env.CONTACT_FROM_EMAIL ||
+          'FolioFrame Inquiries <hello@zahidp.com>';
+
+        const destinationEmail =
+          (await getAppSecret('CONTACT_TO_EMAIL')) ||
+          process.env.CONTACT_TO_EMAIL ||
+          'mdzahidhasanpatwary@gmail.com';
+
         const resend = new Resend(apiKey);
         await resend.emails.send({
-          from: 'FolioFrame Inquiries <hello@zahidp.com>',
-          to: ['mdzahidhasanpatwary@gmail.com'],
+          from: configuredSender,
+          to: [destinationEmail],
           replyTo: email.trim(),
           subject: `[New Inquiry] ${cleanSubject}`,
           text: `You received a new portfolio inquiry from ${name} (${email}):\n\n${message}`,

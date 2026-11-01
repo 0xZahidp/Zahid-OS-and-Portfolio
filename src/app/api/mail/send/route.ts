@@ -37,8 +37,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Sender default: zahidp.com is verified on Resend!
-    const fromAddress = from?.trim() || 'Md Zahid Hasan <hello@zahidp.com>';
+    // Sender default: check Supabase dynamic vault, then fallback to verified address
+    const configuredSender =
+      (await getAppSecret('RESEND_DEFAULT_SENDER')) ||
+      (await getAppSecret('CONTACT_FROM_EMAIL')) ||
+      process.env.RESEND_DEFAULT_SENDER ||
+      process.env.CONTACT_FROM_EMAIL ||
+      'Md Zahid Hasan <hello@zahidp.com>';
+
+    const fromAddress = from?.trim() || configuredSender;
 
     const resend = new Resend(apiKey);
     const emailText = text || (html ? html.replace(/<[^>]+>/g, ' ') : '');
@@ -68,7 +75,7 @@ export async function POST(req: NextRequest) {
       subject: subject.trim(),
       text: emailText,
       ...(html ? { html } : {}),
-      replyTo: replyTo || 'hello@zahidp.com',
+      replyTo: replyTo || (fromAddress.match(/<(.+?)>/)?.[1] || 'hello@zahidp.com'),
       ...(Object.keys(emailHeaders).length > 0 ? { headers: emailHeaders } : {}),
     };
 
