@@ -115,19 +115,50 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 10. INBOX MESSAGES TABLE
+-- 10. INBOX MESSAGES TABLE (Real Resend Receiving & Webhook Sync)
 CREATE TABLE IF NOT EXISTS public.inbox_messages (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  name TEXT NOT NULL,
-  email TEXT NOT NULL,
-  subject TEXT NOT NULL,
-  body TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'unread',
+  resend_id TEXT UNIQUE,
+  from_name TEXT DEFAULT '',
+  from_email TEXT NOT NULL DEFAULT '',
+  to_email TEXT NOT NULL DEFAULT 'hello@zahidp.com',
+  subject TEXT NOT NULL DEFAULT '',
+  text_body TEXT DEFAULT '',
+  html_body TEXT DEFAULT '',
+  received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
   is_starred BOOLEAN NOT NULL DEFAULT FALSE,
-  is_sent BOOLEAN NOT NULL DEFAULT FALSE,
+  is_trashed BOOLEAN NOT NULL DEFAULT FALSE,
+  label TEXT DEFAULT 'inbox',
+  direction TEXT NOT NULL DEFAULT 'inbound',
+  in_reply_to TEXT DEFAULT '',
+  references_header TEXT DEFAULT '',
+  raw_headers JSONB DEFAULT '{}'::jsonb,
+  attachments JSONB DEFAULT '[]'::jsonb,
+  name TEXT DEFAULT '',
+  email TEXT DEFAULT '',
   recipient TEXT DEFAULT '',
+  body TEXT DEFAULT '',
+  status TEXT DEFAULT 'unread',
+  is_sent BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS resend_id TEXT UNIQUE;
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS from_name TEXT DEFAULT '';
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS from_email TEXT DEFAULT '';
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS to_email TEXT DEFAULT '';
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS text_body TEXT DEFAULT '';
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS html_body TEXT DEFAULT '';
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS received_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS is_starred BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS is_trashed BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS label TEXT DEFAULT 'inbox';
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS direction TEXT DEFAULT 'inbound';
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS in_reply_to TEXT DEFAULT '';
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS references_header TEXT DEFAULT '';
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS raw_headers JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.inbox_messages ADD COLUMN IF NOT EXISTS attachments JSONB DEFAULT '[]'::jsonb;
 
 -- 11. APP SETTINGS & ENV SECRETS VAULT TABLE
 CREATE TABLE IF NOT EXISTS public.app_settings (

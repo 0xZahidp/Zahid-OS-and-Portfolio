@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import DOMPurify from 'dompurify';
+import { supabase } from '@/lib/supabase/client';
 import {
   Inbox,
   Send,
@@ -18,6 +20,7 @@ import {
   X,
   ExternalLink,
   ArrowLeft,
+  Paperclip,
 } from 'lucide-react';
 import { MailMessage, MailFolder } from '@/types/mail';
 
@@ -29,6 +32,7 @@ export const InboxTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Quick reply state
@@ -78,6 +82,61 @@ export const InboxTab: React.FC = () => {
   useEffect(() => {
     fetchMessages();
   }, [fetchMessages]);
+
+  // Realtime Supabase Subscription for incoming emails & status updates
+  useEffect(() => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl || supabaseUrl.includes('placeholder.supabase.co')) return;
+
+    try {
+      const channel = supabase
+        .channel('realtime_inbox_messages')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'inbox_messages' },
+          () => {
+            fetchMessages(folder, searchQuery);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } catch (e) {
+      console.warn('Realtime subscription not available:', e);
+    }
+  }, [fetchMessages, folder, searchQuery]);
+
+  // Manual one-click sync from Resend Receiving API
+  const handleSyncResend = async () => {
+    setIsSyncing(true);
+    setStatusMessage(null);
+    try {
+      const res = await fetch('/api/mail/backfill', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setStatusMessage({
+          type: 'success',
+          text: `Synced ${data.count} emails from Resend Receiving!`,
+        });
+        fetchMessages(folder, searchQuery);
+      } else {
+        setStatusMessage({
+          type: 'error',
+          text: data.error || 'Failed to sync from Resend.',
+        });
+      }
+    } catch (err) {
+      setStatusMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Error syncing from Resend',
+      });
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => setStatusMessage(null), 4000);
+    }
+  };
 
   const selectedMessage = messages.find((m) => m.id === selectedMessageId) || null;
 
@@ -176,6 +235,12 @@ export const InboxTab: React.FC = () => {
       ? selectedMessage.subject
       : `Re: ${selectedMessage.subject}`;
 
+    const inReplyTo =
+      selectedMessage.headers?.['message-id'] ||
+      selectedMessage.headers?.['Message-ID'] ||
+      (selectedMessage.resendId ? `<${selectedMessage.resendId}@resend.com>` : undefined);
+    const references = selectedMessage.headers?.references || inReplyTo;
+
     try {
       const res = await fetch('/api/mail/send', {
         method: 'POST',
@@ -186,6 +251,8 @@ export const InboxTab: React.FC = () => {
           text: quickReplyText.trim(),
           from: 'Md Zahid Hasan <hello@zahidp.com>',
           replyTo: 'hello@zahidp.com',
+          inReplyTo,
+          references,
         }),
       });
 
@@ -444,6 +511,15 @@ export const InboxTab: React.FC = () => {
             <p className="text-[10px] text-ink-3 truncate">
               Sender: <span className="text-ink">hello@zahidp.com</span>
             </p>
+            <button
+              type="button"
+              onClick={handleSyncResend}
+              disabled={isSyncing}
+              className="w-full mt-2 h-7.5 px-2.5 rounded-lg border border-line bg-surface hover:bg-surface-2 text-ink-2 hover:text-ink text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`size-3 ${isSyncing ? 'animate-spin text-brand-500' : ''}`} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync from Resend'}</span>
+            </button>
           </div>
         </div>
 
@@ -475,6 +551,15 @@ export const InboxTab: React.FC = () => {
               title="Refresh"
             >
               <RefreshCw className={`size-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              type="button"
+              onClick={handleSyncResend}
+              disabled={isSyncing}
+              className="p-1.5 rounded-lg border border-line text-ink-3 hover:text-brand-500 hover:bg-surface transition-colors cursor-pointer disabled:opacity-50"
+              title="Sync & import from Resend Receiving"
+            >
+              <Inbox className={`size-3.5 ${isSyncing ? 'animate-bounce text-brand-500' : ''}`} />
             </button>
           </div>
 
@@ -629,7 +714,7 @@ export const InboxTab: React.FC = () => {
               <div className="flex-1 p-6 overflow-y-auto space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-line/60 text-xs text-ink-3">
                   <div>
-                    To: <span className="font-medium text-ink">Md Zahid Hasan &lt;hello@zahidp.com&gt;</span>
+                    To: <span className="font-medium text-ink">{selectedMessage.to?.map((t) => t.email || t.name).join(', ') || 'hello@zahidp.com'}</span>
                   </div>
                   {selectedMessage.resendId && (
                     <div className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
@@ -638,9 +723,56 @@ export const InboxTab: React.FC = () => {
                   )}
                 </div>
 
-                <div className="prose dark:prose-invert max-w-none text-xs sm:text-sm text-ink leading-relaxed whitespace-pre-wrap">
-                  {selectedMessage.body}
-                </div>
+                {/* Sanitized HTML Body with fallback to Text Body */}
+                {selectedMessage.htmlBody ? (
+                  <div
+                    className="prose dark:prose-invert max-w-none text-xs sm:text-sm text-ink leading-relaxed overflow-x-auto bg-surface p-4 rounded-xl border border-line/60 shadow-xs"
+                    dangerouslySetInnerHTML={{
+                      __html: typeof window !== 'undefined' ? DOMPurify.sanitize(selectedMessage.htmlBody) : selectedMessage.htmlBody,
+                    }}
+                  />
+                ) : (
+                  <div className="prose dark:prose-invert max-w-none text-xs sm:text-sm text-ink leading-relaxed whitespace-pre-wrap">
+                    {selectedMessage.textBody || selectedMessage.body}
+                  </div>
+                )}
+
+                {/* Attachments if present */}
+                {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
+                  <div className="pt-3 border-t border-line/60 space-y-2">
+                    <span className="text-[11px] font-semibold text-ink-3 flex items-center gap-1.5">
+                      <Paperclip className="size-3.5 text-brand-500" />
+                      <span>Attachments ({selectedMessage.attachments.length})</span>
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedMessage.attachments.map((att, idx) => (
+                        <div
+                          key={att.id || idx}
+                          className="px-2.5 py-1.5 rounded-lg border border-line bg-surface-2/80 text-xs flex items-center gap-2"
+                        >
+                          <span className="font-medium text-ink truncate max-w-[200px]">
+                            {att.filename || 'attachment'}
+                          </span>
+                          {att.size && (
+                            <span className="text-[10px] text-ink-3">
+                              ({Math.round(att.size / 1024)} KB)
+                            </span>
+                          )}
+                          {(att.url || att.download_url) && (
+                            <a
+                              href={(att.url || att.download_url) ?? undefined}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-brand-500 hover:underline text-[10px]"
+                            >
+                              Download
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Quick Reply Box */}

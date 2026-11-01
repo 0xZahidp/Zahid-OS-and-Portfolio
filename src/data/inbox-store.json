@@ -1,74 +1,150 @@
-[
-  {
-    "id": "msg_sent_1793536860630",
-    "name": "Md Zahid Hasan",
-    "email": "hello@zahidp.com",
-    "subject": "Re: Speaking Invitation: Global Developer Summit 2027",
-    "body": "Dear Alexandre,\n\nThank you for considering me for the keynote speaker opportunity at DevSummit 2027.\n\nI'm honored by the invitation and interested in learning more about the event and the Full-Stack Systems track.\n\nCould you please share the official event website, proposed dates and location, speaker deck, and more details about the keynote expectations?\n\nI'd also appreciate information about speaker arrangements, including compensation, travel, and accommodation support.\n\nLooking forward to learning more about this opportunity.\n\nBest regards,\nZahid",
-    "status": "read",
-    "is_starred": false,
-    "is_sent": true,
-    "recipient": "alex@devsummit.global",
-    "created_at": "2026-11-01T12:41:00.630Z"
-  },
-  {
-    "id": "msg_sent_1793536830769",
-    "name": "Md Zahid Hasan",
-    "email": "hello@zahidp.com",
-    "subject": "Re: Tech Advisory & Full-Stack Consultation",
-    "body": "Hi David,\n\nThanks for reaching out and considering me for the consulting opportunity.\n\nThe areas you mentioned, particularly Next.js architecture, scalable authentication, edge caching, and modern development infrastructure, sound interesting.\n\nI'd be open to exploring a potential engagement. Could you share more details about TechVentures, the startups you're working with, the expected scope of consulting, and the anticipated time commitment and budget?\n\nI'd be happy to review the details and see if there's a good fit.\n\nLooking forward to hearing from you.\n\nBest regards,\nZahid",
-    "status": "read",
-    "is_starred": false,
-    "is_sent": true,
-    "recipient": "david@techventures.co",
-    "created_at": "2026-11-01T12:40:30.769Z"
-  },
-  {
-    "id": "msg_inbox_1",
-    "name": "Sarah Lin",
-    "email": "sarah.lin@apexstudio.io",
-    "subject": "Project Collaboration: AI-Driven Design System & Web App",
-    "body": "Hi Zahid,\n\nI came across your portfolio and was blown away by the craftsmanship of your tactile UI components and full-stack architecture. We are currently architecting an AI agent workflow platform at Apex Studio and need a lead frontend / full-stack engineer who understands design systems, real-time sync, and Supabase integration.\n\nCould we schedule a 20-minute intro call this week to discuss scope, timeline, and rates?\n\nBest regards,\nSarah Lin\nHead of Engineering @ Apex Studio",
-    "status": "read",
-    "is_starred": false,
-    "is_sent": false,
-    "recipient": "hello@zahidp.com",
-    "created_at": "2026-11-01T15:30:00.000Z"
-  },
-  {
-    "id": "msg_inbox_2",
-    "name": "David Miller",
-    "email": "david@techventures.co",
-    "subject": "Tech Advisory & Full-Stack Consultation",
-    "body": "Hey Zahid,\n\nHope you're doing well! We are reviewing several early-stage dev-tools startups in our portfolio that are looking for advisory on Next.js 15 App Router architecture, edge caching, and scalable authentication patterns.\n\nYour profile stood out given your track record with modern web infrastructure and agentic tooling. Let me know if you have bandwidth for a consulting engagement this quarter.\n\nCheers,\nDavid Miller\nPartner, TechVentures",
-    "status": "read",
-    "is_starred": false,
-    "is_sent": false,
-    "recipient": "hello@zahidp.com",
-    "created_at": "2026-10-31T20:15:00.000Z"
-  },
-  {
-    "id": "msg_inbox_3",
-    "name": "Alexandre Dumas",
-    "email": "alex@devsummit.global",
-    "subject": "Speaking Invitation: Global Developer Summit 2027",
-    "body": "Dear Zahid,\n\nWe would love to invite you as a keynote speaker for the Full-Stack Systems track at DevSummit 2027. We noticed your public engineering work on GitHub and thought your experience building tactile UI frameworks and real-time portfolio architecture would be immensely valuable to our 4,000+ attendees.\n\nPlease let us know if you'd be interested and we'll send over the speaker deck.\n\nWarm regards,\nAlexandre Dumas",
-    "status": "read",
-    "is_starred": false,
-    "is_sent": false,
-    "recipient": "hello@zahidp.com",
-    "created_at": "2026-10-30T11:00:00.000Z"
-  },
-  {
-    "id": "msg_sent_1",
-    "name": "Md Zahid Hasan",
-    "email": "hello@zahidp.com",
-    "subject": "Re: Architecture Review for Micro-frontends on Vercel",
-    "body": "Hi Marcus,\n\nThanks for reaching out! I reviewed the RFC you shared. The separation of concerns between your auth service and dashboard microfrontends looks solid. I added inline annotations on the edge routing middleware and cache headers.\n\nLooking forward to sync on Thursday.\n\nBest,\nZahid",
-    "status": "read",
-    "is_starred": false,
-    "is_sent": true,
-    "recipient": "marcus@cloudscale.io",
-    "created_at": "2026-10-29T14:22:00.000Z"
-  }
-]
+{
+  "updatedAt": "2026-11-01T15:24:09.740Z",
+  "messages": [
+    {
+      "id": "msg_resend_b419aead-04b0-4a5f-a125-2905486e7337",
+      "folder": "inbox",
+      "from": {
+        "name": "Md Zahid Hasan Patwary",
+        "email": "mdzahidhasanpatwary@gmail.com"
+      },
+      "to": [
+        {
+          "name": "Md Zahid Hasan",
+          "email": "test@zahidp.com"
+        }
+      ],
+      "replyTo": "mdzahidhasanpatwary@gmail.com",
+      "subject": "Test",
+      "body": "test\n",
+      "textBody": "test\n",
+      "snippet": "test ",
+      "createdAt": "2026-11-01T15:13:40.468+00:00",
+      "isRead": true,
+      "isStarred": false,
+      "isTrashed": false,
+      "label": "inbox",
+      "direction": "inbound",
+      "attachments": [],
+      "tags": [
+        "Inquiry"
+      ]
+    },
+    {
+      "id": "msg_sent_1793536860630",
+      "folder": "sent",
+      "from": {
+        "name": "Md Zahid Hasan",
+        "email": "hello@zahidp.com"
+      },
+      "to": [
+        {
+          "name": "Recipient",
+          "email": "alex@devsummit.global"
+        }
+      ],
+      "replyTo": "hello@zahidp.com",
+      "subject": "Re: Speaking Invitation: Global Developer Summit 2027",
+      "body": "Dear Alexandre,\n\nThank you for considering me for the keynote speaker opportunity at DevSummit 2027.\n\nI'm honored by the invitation and interested in learning more about the event and the Full-Stack Systems track.\n\nCould you please share the official event website, proposed dates and location, speaker deck, and more details about the keynote expectations?\n\nI'd also appreciate information about speaker arrangements, including compensation, travel, and accommodation support.\n\nLooking forward to learning more about this opportunity.\n\nBest regards,\nZahid",
+      "textBody": "Dear Alexandre,\n\nThank you for considering me for the keynote speaker opportunity at DevSummit 2027.\n\nI'm honored by the invitation and interested in learning more about the event and the Full-Stack Systems track.\n\nCould you please share the official event website, proposed dates and location, speaker deck, and more details about the keynote expectations?\n\nI'd also appreciate information about speaker arrangements, including compensation, travel, and accommodation support.\n\nLooking forward to learning more about this opportunity.\n\nBest regards,\nZahid",
+      "snippet": "Dear Alexandre, Thank you for considering me for the keynote speaker opportunity at DevSummit 2027. I'm honored by the i",
+      "createdAt": "2026-11-01T12:41:00.63+00:00",
+      "isRead": true,
+      "isStarred": false,
+      "isTrashed": false,
+      "label": "inbox",
+      "direction": "outbound",
+      "attachments": [],
+      "tags": [
+        "Outbound"
+      ]
+    },
+    {
+      "id": "msg_sent_1793536830769",
+      "folder": "sent",
+      "from": {
+        "name": "Md Zahid Hasan",
+        "email": "hello@zahidp.com"
+      },
+      "to": [
+        {
+          "name": "Recipient",
+          "email": "david@techventures.co"
+        }
+      ],
+      "replyTo": "hello@zahidp.com",
+      "subject": "Re: Tech Advisory & Full-Stack Consultation",
+      "body": "Hi David,\n\nThanks for reaching out and considering me for the consulting opportunity.\n\nThe areas you mentioned, particularly Next.js architecture, scalable authentication, edge caching, and modern development infrastructure, sound interesting.\n\nI'd be open to exploring a potential engagement. Could you share more details about TechVentures, the startups you're working with, the expected scope of consulting, and the anticipated time commitment and budget?\n\nI'd be happy to review the details and see if there's a good fit.\n\nLooking forward to hearing from you.\n\nBest regards,\nZahid",
+      "textBody": "Hi David,\n\nThanks for reaching out and considering me for the consulting opportunity.\n\nThe areas you mentioned, particularly Next.js architecture, scalable authentication, edge caching, and modern development infrastructure, sound interesting.\n\nI'd be open to exploring a potential engagement. Could you share more details about TechVentures, the startups you're working with, the expected scope of consulting, and the anticipated time commitment and budget?\n\nI'd be happy to review the details and see if there's a good fit.\n\nLooking forward to hearing from you.\n\nBest regards,\nZahid",
+      "snippet": "Hi David, Thanks for reaching out and considering me for the consulting opportunity. The areas you mentioned, particular",
+      "createdAt": "2026-11-01T12:40:30.769+00:00",
+      "isRead": true,
+      "isStarred": false,
+      "isTrashed": false,
+      "label": "inbox",
+      "direction": "outbound",
+      "attachments": [],
+      "tags": [
+        "Outbound"
+      ]
+    },
+    {
+      "id": "msg_resend_4995eb6f-2eef-4e28-8dd6-3101e3d42194",
+      "folder": "inbox",
+      "from": {
+        "name": "Max Lane",
+        "email": "max.lane@thetechnomart.com"
+      },
+      "to": [
+        {
+          "name": "Md Zahid Hasan",
+          "email": "hello@zahidp.com"
+        }
+      ],
+      "replyTo": "max.lane@thetechnomart.com",
+      "subject": "Website Revamp & SEO Boost Plan for Zahidp.com",
+      "body": "Dear Business Owner of *Zahidp.com*,\n\nWhile reviewing *Zahidp.com*, I discovered that while it functioned well,\nthere were a few places where minor adjustments may enhance the site's\noverall design clarity, mobile usability, and efficiency.\n\nI have experience working with a variety of platforms, such as OpenCart,\nMagento, and WordPress, Shopify, etc. to assist companies in modernizing\ntheir websites and increasing user engagement.\n\nWould you prefer a brief proposal that includes site-specific\nrecommendations?\n\nSimply respond \"*Send the Proposal with Basic Features*,\" and I will\nforward the proposal document.\n\nBest Regards,\n\n*Max LaneWeb Expert*\n\n\n*Unsubscribe\n<https://thetechnomart-dot-yamm-track.appspot.com/22qMkv2WRJbDyEulitgX-PkoEmZ-TvG2P-naRsHikUL6OuRmMoQEgHo0SYvrkha_qlofQ0F_XmNohrywXAZVzGpGTFsgV_GgokY8y-mTiDQmepm_W6avwcNgvecc4RK9DMOtMJxIT2LytQvQ3BQOuP-pFwEcfGpF3T-a3nbmyam79dDQeb4Y>*\n[image: beacon]\n",
+      "textBody": "Dear Business Owner of *Zahidp.com*,\n\nWhile reviewing *Zahidp.com*, I discovered that while it functioned well,\nthere were a few places where minor adjustments may enhance the site's\noverall design clarity, mobile usability, and efficiency.\n\nI have experience working with a variety of platforms, such as OpenCart,\nMagento, and WordPress, Shopify, etc. to assist companies in modernizing\ntheir websites and increasing user engagement.\n\nWould you prefer a brief proposal that includes site-specific\nrecommendations?\n\nSimply respond \"*Send the Proposal with Basic Features*,\" and I will\nforward the proposal document.\n\nBest Regards,\n\n*Max LaneWeb Expert*\n\n\n*Unsubscribe\n<https://thetechnomart-dot-yamm-track.appspot.com/22qMkv2WRJbDyEulitgX-PkoEmZ-TvG2P-naRsHikUL6OuRmMoQEgHo0SYvrkha_qlofQ0F_XmNohrywXAZVzGpGTFsgV_GgokY8y-mTiDQmepm_W6avwcNgvecc4RK9DMOtMJxIT2LytQvQ3BQOuP-pFwEcfGpF3T-a3nbmyam79dDQeb4Y>*\n[image: beacon]\n",
+      "snippet": "Dear Business Owner of *Zahidp.com*, While reviewing *Zahidp.com*, I discovered that while it functioned well, there wer",
+      "createdAt": "2026-10-30T09:17:42.797+00:00",
+      "isRead": false,
+      "isStarred": false,
+      "isTrashed": false,
+      "label": "inbox",
+      "direction": "inbound",
+      "attachments": [],
+      "tags": [
+        "Inquiry"
+      ]
+    },
+    {
+      "id": "msg_resend_1ce0f0f7-9651-4f09-91e5-0b97946cbf73",
+      "folder": "inbox",
+      "from": {
+        "name": "cvudhxh",
+        "email": "cvudhxh@taxinsightworld.com"
+      },
+      "to": [
+        {
+          "name": "Md Zahid Hasan",
+          "email": "hello@zahidp.com"
+        }
+      ],
+      "replyTo": "cvudhxh@taxinsightworld.com",
+      "subject": "EMAIL LISTS 2026 - 100% MX TESTED EMAILS",
+      "body": "\nEMAIL LISTS 2026\n100% MX TESTED EMAILS\n\n---------------------------------\nTalk to us:\n\nOn WhatsApp:\n+55 21 98684 2873\n\nOn Telegram:\n+55 21 98684 2873\n\nOn Teams:\nCorbett Software\n---------------------------------\n\nThe best email lists for your email blasting:\n\n- Choose any country, any region, any type, any categoy.\n- We deliver your lists in 4 hours after payment.\n- 100% fresh, updated, one by one MX tested emails.\n- 100% replacement policy, no questions asked.\n\n---------------------------------\nTalk to us:\n\nOn WhatsApp:\n+55 21 98684 2873\n\nOn Telegram:\n+55 21 98684 2873\n\nOn Teams:\nCorbett Software\n---------------------------------\n\nBest regards,\n\nSUPER LIST\nThe best email lists since 1998\n\n\n\nwfwoykm bwrnvdxo\n\nmail.acess.gob.ec:25:0:45.182.115.114:4153:socks4:25\n\n",
+      "textBody": "\nEMAIL LISTS 2026\n100% MX TESTED EMAILS\n\n---------------------------------\nTalk to us:\n\nOn WhatsApp:\n+55 21 98684 2873\n\nOn Telegram:\n+55 21 98684 2873\n\nOn Teams:\nCorbett Software\n---------------------------------\n\nThe best email lists for your email blasting:\n\n- Choose any country, any region, any type, any categoy.\n- We deliver your lists in 4 hours after payment.\n- 100% fresh, updated, one by one MX tested emails.\n- 100% replacement policy, no questions asked.\n\n---------------------------------\nTalk to us:\n\nOn WhatsApp:\n+55 21 98684 2873\n\nOn Telegram:\n+55 21 98684 2873\n\nOn Teams:\nCorbett Software\n---------------------------------\n\nBest regards,\n\nSUPER LIST\nThe best email lists since 1998\n\n\n\nwfwoykm bwrnvdxo\n\nmail.acess.gob.ec:25:0:45.182.115.114:4153:socks4:25\n\n",
+      "snippet": " EMAIL LISTS 2026 100% MX TESTED EMAILS --------------------------------- Talk to us: On WhatsApp: +55 21 98684 2873 On ",
+      "createdAt": "2026-10-05T10:47:23.489+00:00",
+      "isRead": false,
+      "isStarred": false,
+      "isTrashed": false,
+      "label": "inbox",
+      "direction": "inbound",
+      "attachments": [],
+      "tags": [
+        "Inquiry"
+      ]
+    }
+  ]
+}

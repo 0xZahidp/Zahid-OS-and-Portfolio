@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { addMailMessage } from '@/lib/mail/store';
-import { MailMessage } from '@/types/mail';
+import { saveSentMessage } from '@/lib/mail/store';
 import { getAppSecret } from '@/lib/env-vault';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = await getAppSecret('RESEND_API_KEY');
+    const apiKey = (await getAppSecret('RESEND_API_KEY')) || process.env.RESEND_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { success: false, error: 'RESEND_API_KEY is not configured in Supabase or environment.' },
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { to, subject, text, html, replyTo, from } = body;
+    const { to, subject, text, html, replyTo, from, inReplyTo, references } = body;
 
     if (!to || !subject || (!text && !html)) {
       return NextResponse.json(
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
     // Standardize recipient
     const recipientList = Array.isArray(to) ? to : [to];
-    const cleanTo = recipientList.map((t) => t.trim()).filter(Boolean);
+    const cleanTo = recipientList.map((t) => String(t).trim()).filter(Boolean);
 
     if (cleanTo.length === 0) {
       return NextResponse.json(
@@ -38,12 +38,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Sender default: zahidp.com is verified on Resend!
-    // Format: 'Md Zahid Hasan <hello@zahidp.com>' or 'Md Zahid Hasan <onboarding@resend.dev>'
     const fromAddress = from?.trim() || 'Md Zahid Hasan <hello@zahidp.com>';
 
     const resend = new Resend(apiKey);
-
     const emailText = text || (html ? html.replace(/<[^>]+>/g, ' ') : '');
+
+    // Construct custom headers for email threading (In-Reply-To & References)
+    const emailHeaders: Record<string, string> = {};
+    if (inReplyTo) {
+      emailHeaders['In-Reply-To'] = inReplyTo.trim();
+    }
+    if (references) {
+      emailHeaders['References'] = references.trim();
+    } else if (inReplyTo) {
+      emailHeaders['References'] = inReplyTo.trim();
+    }
 
     const emailPayload: {
       from: string;
@@ -52,21 +61,23 @@ export async function POST(req: NextRequest) {
       text: string;
       html?: string;
       replyTo?: string;
+      headers?: Record<string, string>;
     } = {
       from: fromAddress,
       to: cleanTo,
       subject: subject.trim(),
       text: emailText,
       ...(html ? { html } : {}),
-      ...(replyTo ? { replyTo } : {}),
+      replyTo: replyTo || 'hello@zahidp.com',
+      ...(Object.keys(emailHeaders).length > 0 ? { headers: emailHeaders } : {}),
     };
 
-    // Call Resend
+    // Call Resend API
     let resendResult;
     try {
       resendResult = await resend.emails.send(emailPayload);
     } catch (sendErr: unknown) {
-      // If custom domain fails for any reason (e.g. testing tier restriction), attempt fallback to onboarding@resend.dev
+      // If custom domain fails for any reason, attempt fallback to onboarding@resend.dev
       if (fromAddress !== 'onboarding@resend.dev') {
         try {
           emailPayload.from = 'FolioFrame <onboarding@resend.dev>';
@@ -94,32 +105,26 @@ export async function POST(req: NextRequest) {
     const senderName = fromMatch ? fromMatch[1].trim() : 'Md Zahid Hasan';
     const senderEmail = fromMatch ? fromMatch[2].trim() : fromAddress;
 
-    // Create Sent message in local store
-    const sentMessage: MailMessage = {
+    // Save outbound sent message to Supabase inbox_messages with direction='outbound'
+    const savedSent = await saveSentMessage({
       id: messageId,
-      folder: 'sent',
-      from: {
-        name: senderName,
-        email: senderEmail,
-      },
-      to: cleanTo.map((e) => ({ name: e.split('@')[0], email: e })),
-      subject: subject.trim(),
-      body: text || html || '',
-      snippet: (text || html || '').substring(0, 120) + '...',
-      createdAt: new Date().toISOString(),
-      isRead: true,
-      isStarred: false,
       resendId,
-      tags: ['Sent', 'Resend'],
-    };
-
-    await addMailMessage(sentMessage);
+      fromName: senderName,
+      fromEmail: senderEmail,
+      toEmail: cleanTo.join(', '),
+      subject: subject.trim(),
+      text: emailText,
+      html: html || undefined,
+      inReplyTo: inReplyTo || undefined,
+      references: references || undefined,
+    });
 
     return NextResponse.json({
       success: true,
-      messageId,
+      messageId: savedSent.id,
       resendId,
-      sentAt: sentMessage.createdAt,
+      direction: 'outbound',
+      sentAt: savedSent.createdAt,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to send email via Resend';
