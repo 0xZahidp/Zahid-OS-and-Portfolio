@@ -21,10 +21,24 @@ export async function GET(req: NextRequest) {
 
   const table = searchParams.get('table');
   const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)));
   const search = searchParams.get('search') || '';
   const sortBy = searchParams.get('sortBy');
   const order = searchParams.get('order') === 'desc' ? 'desc' : 'asc';
+
+  const colFiltersParam = searchParams.get('colFilters');
+  const colFilters: Record<string, string> = {};
+  if (colFiltersParam) {
+    try {
+      Object.assign(colFilters, JSON.parse(colFiltersParam));
+    } catch {}
+  }
+  searchParams.forEach((val, key) => {
+    if (key.startsWith('filter_')) {
+      const colName = key.substring(7);
+      if (colName && val) colFilters[colName] = val;
+    }
+  });
 
   if (!table) {
     return NextResponse.json({ success: false, error: 'Table name is required.' }, { status: 400 });
@@ -78,6 +92,20 @@ export async function GET(req: NextRequest) {
         filteredRows = data.filter((row: Record<string, unknown>) =>
           JSON.stringify(row).toLowerCase().includes(q)
         );
+      }
+
+      // Per-column filter
+      const activeFilterKeys = Object.keys(colFilters);
+      if (activeFilterKeys.length > 0 && Array.isArray(filteredRows)) {
+        filteredRows = filteredRows.filter((row: Record<string, unknown>) => {
+          return activeFilterKeys.every((col) => {
+            const filterVal = colFilters[col]?.toLowerCase().trim();
+            if (!filterVal) return true;
+            const cell = row[col];
+            if (cell === undefined || cell === null) return false;
+            return String(cell).toLowerCase().includes(filterVal);
+          });
+        });
       }
 
       return NextResponse.json({
