@@ -192,8 +192,14 @@ function AdminDashboardInner() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface flex flex-col items-center justify-center gap-3 select-none">
-        <div className="size-11 rounded-2xl bg-brand-500/10 border border-brand-500/20 text-brand-600 dark:text-brand-400 grid place-items-center">
+      <div
+        suppressHydrationWarning
+        className="min-h-screen bg-surface flex flex-col items-center justify-center gap-3 select-none"
+      >
+        <div
+          suppressHydrationWarning
+          className="size-11 rounded-2xl bg-brand-500/10 border border-brand-500/20 text-brand-600 dark:text-brand-400 grid place-items-center"
+        >
           <Loader2 className="size-5.5 animate-spin" />
         </div>
         <p className="text-xs font-semibold text-ink-3">Verifying authentication session...</p>
@@ -207,7 +213,7 @@ function AdminDashboardInner() {
   }
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col font-sans">
+    <div suppressHydrationWarning className="min-h-screen bg-surface flex flex-col font-sans">
       {/* 2-Column Layout: Sidebar + Main Workspace */}
       <div className="flex flex-1 min-h-screen">
         {/* Left Vertical Navigation Sidebar & Mobile Drawer */}
