@@ -24,7 +24,6 @@ import {
   Copy,
   Check,
   Database,
-  Sparkles,
   Save,
   ShieldCheck,
   QrCode,
@@ -101,6 +100,7 @@ export const SettingsTab: React.FC = () => {
   const [copiedSecret, setCopiedSecret] = useState(false);
   const [showPostEnrollWarning, setShowPostEnrollWarning] = useState(false);
   const [enrolledSecretBackup, setEnrolledSecretBackup] = useState<string | null>(null);
+  const [copiedBackupSecret, setCopiedBackupSecret] = useState(false);
 
   // Mail status state
   const [mailStatus, setMailStatus] = useState<{
@@ -910,14 +910,11 @@ export const SettingsTab: React.FC = () => {
 
             {/* Diagnostic Alert: detects leftover factors with AAL1 session */}
             {mfaFactors.some((f) => f.status === 'verified') && mfaLevel?.currentLevel === 'aal1' && (
-              <div className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 text-xs text-amber-800 dark:text-amber-300 space-y-1.5">
-                <div className="flex items-center gap-2 font-bold">
-                  <AlertTriangle className="size-4 text-amber-500 shrink-0" />
-                  <span>Diagnostic Detected: Leftover MFA Factor with AAL1 Session</span>
-                </div>
-                <p className="text-[11px] leading-relaxed text-ink-2">
-                  Your Supabase user has a verified factor (<strong>{mfaFactors.find((f) => f.status === 'verified')?.friendly_name || 'Enrolled Factor'}</strong>), but your current session is at <strong>AAL1</strong>. This is why &quot;Add Passkey&quot; was blocked with an AAL2 error. You can remove this leftover factor below or verify with your authenticator code.
-                </p>
+              <div className="p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                <AlertTriangle className="size-4 text-amber-500 shrink-0" />
+                <span className="text-[11px] text-ink-2">
+                  Session is at <strong>AAL1</strong> with active 2FA. Re-authenticate or remove factor to manage passkeys.
+                </span>
               </div>
             )}
 
@@ -939,33 +936,53 @@ export const SettingsTab: React.FC = () => {
               </div>
             )}
 
-            {/* REQUIREMENT 3: One-time warning after enrollment */}
+            {/* Clean, one-time post-enrollment secret backup */}
             {showPostEnrollWarning && (
-              <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs space-y-2 text-ink-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
-                    <AlertTriangle className="size-4 text-amber-500 shrink-0" />
-                    <span>Save the secret key somewhere safe. Supabase has no recovery codes.</span>
+              <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <ShieldCheck className="size-4 text-emerald-500 shrink-0" />
+                  <div className="flex flex-wrap items-center gap-2 text-ink-2 text-xs">
+                    <span className="font-semibold text-amber-900 dark:text-amber-200">
+                      Save your secret key somewhere safe (no recovery codes):
+                    </span>
+                    {enrolledSecretBackup && (
+                      <div className="inline-flex items-center gap-1.5">
+                        <code className="px-2 py-0.5 rounded-md bg-surface border border-line font-mono text-[11px] font-bold text-ink select-all">
+                          {enrolledSecretBackup}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(enrolledSecretBackup);
+                            setCopiedBackupSecret(true);
+                            setTimeout(() => setCopiedBackupSecret(false), 2000);
+                          }}
+                          className="px-2 py-0.5 rounded-md bg-surface border border-line text-[11px] font-semibold text-ink-2 hover:text-ink flex items-center gap-1 cursor-pointer transition-colors"
+                          title="Copy Secret"
+                        >
+                          {copiedBackupSecret ? (
+                            <>
+                              <Check className="size-3 text-emerald-500" />
+                              <span className="text-emerald-500 font-bold">Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="size-3" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowPostEnrollWarning(false)}
-                    className="text-ink-3 hover:text-ink text-[11px] underline cursor-pointer"
-                  >
-                    Dismiss
-                  </button>
                 </div>
-                <p className="text-[11px] leading-relaxed text-ink-2">
-                  Supabase Auth does not generate static recovery codes. If you ever lose your authenticator app, you must remove the factor directly in the Supabase Dashboard (<strong>Authentication → Users → Factors → Delete</strong>).
-                </p>
-                {enrolledSecretBackup && (
-                  <div className="pt-1 flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-semibold text-ink-3">Enrolled Secret Key Backup:</span>
-                    <code className="px-2 py-0.5 rounded bg-surface border border-line font-mono text-[11px] font-bold text-ink select-all">
-                      {enrolledSecretBackup}
-                    </code>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setShowPostEnrollWarning(false)}
+                  className="self-start sm:self-center text-[11px] font-semibold text-ink-3 hover:text-ink px-2 py-1 rounded-lg hover:bg-surface/50 cursor-pointer transition-colors shrink-0"
+                >
+                  Dismiss
+                </button>
               </div>
             )}
 
@@ -1157,37 +1174,21 @@ export const SettingsTab: React.FC = () => {
               </div>
             )}
 
-            {/* Recovery Notice Alert */}
-            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs space-y-2 text-ink-2">
-              <h4 className="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-                <AlertTriangle className="size-3.5 text-amber-500" />
-                <span>Account Recovery Notice</span>
-              </h4>
-              <p className="text-[11px] leading-relaxed">
-                • <strong>No built-in recovery codes</strong>: Supabase Auth does not generate static recovery codes. Enroll a backup authenticator above to ensure continuous access.
-                <br />
-                • <strong>Lost Device Fallback</strong>: If you lose all your authenticator devices, an administrator must remove the factor in the Supabase Dashboard under <strong>Authentication → Users → Factors → Delete Factor</strong>.
-              </p>
-            </div>
           </div>
 
           {/* Session Invalidation Card */}
-          <div className="card-raised rounded-2xl border border-line bg-surface p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="size-9 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 grid place-items-center">
-                <Shield className="size-4.5" />
+          <div className="card-raised rounded-2xl border border-line bg-surface p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 grid place-items-center shrink-0">
+                  <Shield className="size-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-ink">Sign Out Everywhere</h3>
+                  <p className="text-[11px] text-ink-3">Revoke active sessions across all devices.</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-ink">Sign Out Everywhere</h3>
-                <p className="text-xs text-ink-3">Invalidate active sessions on all browsers and devices.</p>
-              </div>
-            </div>
 
-            <p className="text-xs text-ink-2 leading-relaxed max-w-lg">
-              If you suspect unauthorized access or lost a device, you can revoke all session tokens immediately. You will be prompted to sign in again.
-            </p>
-
-            <div>
               <button
                 type="button"
                 onClick={async () => {
@@ -1195,7 +1196,7 @@ export const SettingsTab: React.FC = () => {
                     await signOutAllDevices();
                   }
                 }}
-                className="btn btn-secondary h-8 px-3.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:border-rose-500/30 inline-flex items-center gap-1.5"
+                className="btn btn-secondary h-8 px-3.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:border-rose-500/30 inline-flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
                 <LogOut className="size-3.5" />
                 <span>Sign Out Everywhere</span>
@@ -1288,12 +1289,9 @@ export const SettingsTab: React.FC = () => {
               </div>
 
               {passkeys.length === 0 ? (
-                <div className="p-8 text-center rounded-xl border border-dashed border-line text-ink-3 space-y-2">
-                  <Fingerprint className="size-8 mx-auto opacity-40" />
+                <div className="p-6 text-center rounded-xl border border-dashed border-line text-ink-3">
+                  <Fingerprint className="size-6 mx-auto opacity-40 mb-1" />
                   <p className="text-xs font-medium">No passkeys enrolled yet</p>
-                  <p className="text-[11px] max-w-sm mx-auto">
-                    Register your Apple Touch ID, Face ID, or YubiKey above to unlock 1-click passwordless login on this device.
-                  </p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -1339,21 +1337,6 @@ export const SettingsTab: React.FC = () => {
                   })}
                 </div>
               )}
-            </div>
-
-            {/* Hardware Guide Banner */}
-            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-xs space-y-2">
-              <h4 className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                <CheckCircle2 className="size-3.5" />
-                Hardware & Ecosystem Compatibility
-              </h4>
-              <p className="text-ink-2 leading-relaxed text-[11px]">
-                • <strong>Apple Devices</strong>: Uses Touch ID or Face ID, synced automatically across your devices via iCloud Keychain.
-                <br />
-                • <strong>YubiKey / Security Keys</strong>: FIDO2 / WebAuthn compliant. Touch the gold contact when prompted.
-                <br />
-                • <strong>Windows & Android</strong>: Windows Hello PIN / fingerprint, or Google Password Manager.
-              </p>
             </div>
 
             {/* Inline TOTP Step-Up Modal for Passkey Enrollment */}
@@ -1466,21 +1449,6 @@ export const SettingsTab: React.FC = () => {
                 <RefreshCw className={`size-3.5 ${isLoadingEnv ? 'animate-spin' : ''}`} />
                 <span>Refresh</span>
               </button>
-            </div>
-
-            {/* Architecture Explanation Banner */}
-            <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 text-xs space-y-2">
-              <h4 className="font-bold text-violet-800 dark:text-violet-300 flex items-center gap-1.5">
-                <Sparkles className="size-3.5" />
-                How the Dynamic Vault Works
-              </h4>
-              <p className="text-ink-2 leading-relaxed text-[11px]">
-                • <strong>Zero Vercel Re-deploys</strong>: Traditional environment variables stored in Vercel require a complete project rebuild and deployment every time a key is rotated. Values stored here are fetched live at runtime by server routes (cached for 30s in-memory for lightning speed).
-                <br />
-                • <strong>Supabase Security</strong>: Saved to the <code className="px-1 py-0.5 rounded bg-surface-2 font-mono text-[10px] text-brand-600 dark:text-brand-400">public.app_settings</code> table. Only server-side route handlers using the service role can access plaintext secrets; raw secret values are masked before reaching the browser.
-                <br />
-                • <strong>Automatic Fallback</strong>: If a variable hasn&apos;t been added to Supabase yet, the server gracefully falls back to your local <code className="px-1 py-0.5 rounded bg-surface-2 font-mono text-[10px] text-ink-3">.env.local</code>.
-              </p>
             </div>
 
             {/* Quick Presets */}

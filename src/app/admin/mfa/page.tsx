@@ -262,18 +262,14 @@ export default function AdminMfaChallengePage() {
             </button>
           </div>
 
-          {/* REQUIREMENT 2: Emergency Helper Card with text explaining the Supabase Dashboard fallback only */}
+          {/* Emergency Helper Card */}
           {showEmergencyHelp && (
-            <div className="w-full mt-2 p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 text-[11px] space-y-2 text-left text-ink-2">
+            <div className="w-full mt-2 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 text-[11px] text-left text-ink-2 space-y-1.5">
               <p className="font-semibold text-amber-800 dark:text-amber-300">
-                Lost your authenticator device?
+                Lost your authenticator?
               </p>
-              <p className="leading-relaxed text-ink-3">
-                Supabase requires AAL2 authentication when a verified factor is active. Supabase does not have recovery codes. If you lost your device or authenticator app:
-              </p>
-
-              <div className="pt-2 border-t border-amber-500/20 text-[11px] text-ink-2">
-                <span className="font-bold text-ink">Supabase Dashboard Fallback:</span> Go to{' '}
+              <p className="text-ink-3 leading-relaxed">
+                Supabase has no recovery codes. Remove the factor in{' '}
                 <a
                   href="https://supabase.com/dashboard"
                   target="_blank"
@@ -283,9 +279,8 @@ export default function AdminMfaChallengePage() {
                   <span>Supabase Dashboard</span>
                   <ExternalLink className="size-2.5" />
                 </a>{' '}
-                → <strong>Authentication</strong> → <strong>Users</strong> → click{' '}
-                <code className="font-mono px-1 py-0.5 rounded bg-surface border border-line text-[10px]">{user?.email}</code> → <strong>Factors</strong> → <strong>Delete</strong>.
-              </div>
+                → <strong>Authentication → Users → Factors</strong>.
+              </p>
             </div>
           )}
         </div>
