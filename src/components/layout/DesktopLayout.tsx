@@ -13,6 +13,7 @@ import { SkillsSection } from '@/components/sections/SkillsSection';
 import { ProjectsSection } from '@/components/sections/ProjectsSection';
 import { PeopleSection } from '@/components/sections/PeopleSection';
 import { ContactSection } from '@/components/sections/ContactSection';
+import { LibrarySection } from '@/components/sections/LibrarySection';
 import { WorkTabContent } from '@/components/sections/WorkTabContent';
 import {
   GitHubIcon,
@@ -160,6 +161,18 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               {/* People Hero Banner & Filter Carousel & Cards */}
               <PeopleSection />
 
+              {renderFooter()}
+            </div>
+          </div>
+        ) : activeSection === 'library' ? (
+          <div>
+            {/* Sticky Header for Library View */}
+            <header className="sticky top-0 z-30 flex h-[4.375rem] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
+              <h1 className="text-xl font-bold tracking-tight text-ink">Library</h1>
+            </header>
+
+            <div className="px-6 py-8 lg:px-8">
+              <LibrarySection />
               {renderFooter()}
             </div>
           </div>

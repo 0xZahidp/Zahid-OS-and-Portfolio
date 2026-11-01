@@ -7,6 +7,7 @@ import {
   FollowerRecommendation,
   LanguageSkill,
 } from './profile';
+import { LibraryContent } from './library';
 
 export interface WorksSettings {
   heading: string;
@@ -42,6 +43,7 @@ export interface PortfolioContent {
   worksSettings: WorksSettings;
   basedInSettings: BasedInSettings;
   githubSettings: GitHubSettings;
+  libraryData?: LibraryContent;
   updatedAt?: string;
 }
 

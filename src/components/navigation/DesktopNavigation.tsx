@@ -22,15 +22,15 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
   onNavigate,
 }) => {
   const mainNavItems = [
-    { id: 'profile', label: 'Profile', icon: TablerUserCircle },
-    { id: 'projects', label: 'Projects', icon: TablerBox },
-    { id: 'people', label: 'People', icon: TablerUsers },
-    { id: 'contact', label: 'Contact', icon: TablerMail },
+    { id: 'profile', label: 'Profile', icon: TablerUserCircle, note: 0 },
+    { id: 'projects', label: 'Projects', icon: TablerBox, note: 1 },
+    { id: 'people', label: 'People', icon: TablerUsers, note: 2 },
+    { id: 'contact', label: 'Contact', icon: TablerMail, note: 3 },
   ];
 
   const secondaryNavItems = [
-    { id: 'library', label: 'Library', icon: TablerBooks },
-    { id: 'focus', label: 'Focus', icon: TablerHeadphones },
+    { id: 'library', label: 'Library', icon: TablerBooks, note: 4 },
+    { id: 'focus', label: 'Focus', icon: TablerHeadphones, note: 5 },
   ];
 
   const renderItem = (item: (typeof mainNavItems)[0]) => {
@@ -42,6 +42,7 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
         <button
           key={item.id}
           type="button"
+          data-note={item.note}
           onClick={() => onNavigate(item.id)}
           title={item.label}
           aria-label={item.label}
@@ -60,6 +61,7 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
       <button
         key={item.id}
         type="button"
+        data-note={item.note}
         onClick={() => onNavigate(item.id)}
         title={item.label}
         aria-label={item.label}

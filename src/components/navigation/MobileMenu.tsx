@@ -85,12 +85,13 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 
         {/* Navigation list */}
         <nav className="mt-8 flex flex-col gap-1.5 flex-1 overflow-y-auto">
-          {navItems.map((item) => {
+          {navItems.map((item, idx) => {
             const Icon = item.icon;
             return (
               <button
                 key={item.id}
                 type="button"
+                data-note={idx}
                 onClick={() => handleNavClick(item.id)}
                 className="flex items-center gap-3.5 rounded-xl px-3.5 py-3 text-lead font-medium text-ink hover:bg-surface-2 transition-colors text-left"
               >

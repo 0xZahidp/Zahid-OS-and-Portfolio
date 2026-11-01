@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { ContextMenu } from '@/components/ui/ContextMenu';
 import { ThemeManager } from '@/components/ui/ThemeManager';
+import { SoundManager } from '@/components/ui/SoundManager';
 import { PortfolioProvider } from '@/context/PortfolioContext';
 import './globals.css';
 
@@ -85,6 +86,7 @@ export default function RootLayout({
       <body className="min-h-dvh antialiased font-sans [scrollbar-gutter:stable]" suppressHydrationWarning>
         <PortfolioProvider>
           <ThemeManager />
+          <SoundManager />
           {children}
           <ContextMenu />
         </PortfolioProvider>

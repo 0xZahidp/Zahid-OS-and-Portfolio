@@ -1,27 +1,49 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TablerVolume, TablerVolumeOff } from '@/components/ui/Icons';
+import { isSoundEnabled, toggleSound } from '@/lib/sound';
 
 export const SoundToggle: React.FC<{ className?: string }> = ({ className = '' }) => {
-  const [muted, setMuted] = useState(false);
+  const [enabled, setEnabled] = useState(true);
 
-  const toggleSound = () => {
-    setMuted(!muted);
+  useEffect(() => {
+    setEnabled(isSoundEnabled());
+
+    const handleSoundChange = (e: Event) => {
+      const detail = (e as CustomEvent<{ enabled: boolean }>).detail;
+      if (detail && typeof detail.enabled === 'boolean') {
+        setEnabled(detail.enabled);
+      }
+    };
+
+    window.addEventListener('folioframe-sound-change', handleSoundChange);
+    return () => {
+      window.removeEventListener('folioframe-sound-change', handleSoundChange);
+    };
+  }, []);
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = toggleSound();
+    setEnabled(next);
   };
 
   return (
     <button
       type="button"
-      onClick={toggleSound}
-      aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}
-      className={`btn btn-secondary grid size-9 place-items-center rounded-full transition-transform active:scale-95 ${className}`}
+      onClick={handleToggle}
+      aria-label={enabled ? 'Mute sound effects' : 'Enable sound effects'}
+      aria-pressed={enabled}
+      title={enabled ? 'Sound effects enabled (Click to mute)' : 'Sound effects muted (Click to enable)'}
+      data-no-sound
+      className={`btn btn-secondary grid size-9 place-items-center rounded-full transition-all active:scale-95 cursor-pointer ${className}`}
     >
       <span className="btn-content">
-        {muted ? (
-          <TablerVolumeOff className="size-4.5 text-zinc-400" />
+        {enabled ? (
+          <TablerVolume className="size-4.5 text-brand-600 dark:text-emerald-400" />
         ) : (
-          <TablerVolume className="size-4.5 text-zinc-300 dark:text-zinc-300 text-zinc-700" />
+          <TablerVolumeOff className="size-4.5 text-ink-3" />
         )}
       </span>
     </button>

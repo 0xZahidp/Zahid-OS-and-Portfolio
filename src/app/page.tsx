@@ -36,11 +36,8 @@ export default function Home() {
     }
 
     if (section === 'library') {
-      setActiveSection('profile');
-      setTimeout(() => {
-        const el = document.getElementById('skills');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 50);
+      setActiveSection('library');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 

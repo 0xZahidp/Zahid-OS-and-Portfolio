@@ -22,6 +22,7 @@ import {
   Mail,
   Settings,
   X,
+  Bookmark,
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAdminAuth } from '@/context/AdminAuthContext';
@@ -36,6 +37,7 @@ export type AdminTab =
   | 'facts'
   | 'socials'
   | 'people'
+  | 'library'
   | 'inbox'
   | 'supabase'
   | 'settings'
@@ -92,7 +94,16 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isMobileOpen, onCloseMobile]);
 
-  const navGroups = [
+  const navGroups: {
+    label: string;
+    items: {
+      id: AdminTab;
+      label: string;
+      icon: React.ComponentType<{ className?: string }>;
+      badge?: string;
+      badgeColor?: string;
+    }[];
+  }[] = [
     {
       label: 'COMMUNICATION & INBOX',
       items: [
@@ -174,6 +185,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           label: 'Who to Follow',
           icon: Users,
           badge: `${content.suggestedPeople?.length ?? 0}`,
+        },
+        {
+          id: 'library' as AdminTab,
+          label: 'Library & Curations',
+          icon: Bookmark,
+          badge: `${(content.libraryData?.aiSkills?.length ?? 5) + (content.libraryData?.bookmarks?.length ?? 5)}`,
         },
       ],
     },

@@ -11,6 +11,7 @@ import {
   FollowerRecommendation,
   LanguageSkill,
 } from '@/types/profile';
+import { LibraryContent } from '@/types/library';
 import { defaultPortfolioContent } from '@/data/default-content';
 
 interface PortfolioContextType {
@@ -31,6 +32,7 @@ interface PortfolioContextType {
   updateGitHubSettings: (settings: Partial<GitHubSettings>) => void;
   updateSocialLinks: (socials: SocialLink[]) => void;
   updateSuggestedPeople: (people: FollowerRecommendation[]) => void;
+  updateLibraryData: (library: LibraryContent) => void;
   saveContent: () => Promise<boolean>;
   resetToDefault: () => void;
   exportJson: () => void;
@@ -147,6 +149,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setSaveStatus('idle');
   }, []);
 
+  const updateLibraryData = useCallback((library: LibraryContent) => {
+    setContent((prev) => ({ ...prev, libraryData: library }));
+    setIsDirty(true);
+    setSaveStatus('idle');
+  }, []);
+
   const saveContent = useCallback(async (): Promise<boolean> => {
     setIsSaving(true);
     setSaveStatus('saving');
@@ -235,6 +243,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updateGitHubSettings,
         updateSocialLinks,
         updateSuggestedPeople,
+        updateLibraryData,
         saveContent,
         resetToDefault,
         exportJson,

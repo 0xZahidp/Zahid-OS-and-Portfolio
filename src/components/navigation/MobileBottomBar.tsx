@@ -29,7 +29,7 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
       className="fixed bottom-0 inset-x-0 z-30 flex h-16 items-center justify-around border-t border-line bg-surface/95 backdrop-blur-xl px-2 pb-[env(safe-area-inset-bottom)] md:hidden shadow-lg select-none"
       aria-label="Mobile Bottom Navigation"
     >
-      {items.map((item) => {
+      {items.map((item, idx) => {
         const Icon = item.icon;
         const isActive = activeSection === item.id;
 
@@ -37,6 +37,7 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
           <button
             key={item.id}
             type="button"
+            data-note={idx}
             onClick={() => onNavigate(item.id)}
             className={`flex flex-col items-center justify-center gap-1 w-16 py-1 transition-colors ${
               isActive

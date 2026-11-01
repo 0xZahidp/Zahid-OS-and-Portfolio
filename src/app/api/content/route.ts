@@ -54,6 +54,7 @@ export async function GET() {
           const basedInSetting = setRes.data?.find((s) => s.key === 'based_in_settings')?.value;
           const githubSetting = setRes.data?.find((s) => s.key === 'github_settings')?.value;
           const richPeopleSetting = setRes.data?.find((s) => s.key === 'suggested_people_rich')?.value;
+          const librarySetting = setRes.data?.find((s) => s.key === 'library_data')?.value;
 
           const assembled: PortfolioContent = {
             profile: {
@@ -83,6 +84,7 @@ export async function GET() {
             worksSettings: worksSetting || defaultPortfolioContent.worksSettings,
             basedInSettings: basedInSetting || defaultPortfolioContent.basedInSettings,
             githubSettings: githubSetting || defaultPortfolioContent.githubSettings,
+            libraryData: librarySetting || defaultPortfolioContent.libraryData,
             updatedAt: profileRow.updated_at || new Date().toISOString(),
           };
 
@@ -283,6 +285,7 @@ export async function POST(req: NextRequest) {
           { key: 'based_in_settings', value: sanitizedContent.basedInSettings, updated_at: new Date().toISOString() },
           { key: 'github_settings', value: sanitizedContent.githubSettings, updated_at: new Date().toISOString() },
           { key: 'suggested_people_rich', value: sanitizedContent.suggestedPeople, updated_at: new Date().toISOString() },
+          { key: 'library_data', value: sanitizedContent.libraryData, updated_at: new Date().toISOString() },
         ];
         const setPromise = supabase.from('site_settings').upsert(settingsRows);
 

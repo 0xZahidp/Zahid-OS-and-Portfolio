@@ -17,6 +17,7 @@ import { SkillsSection } from '@/components/sections/SkillsSection';
 import { ProjectsSection } from '@/components/sections/ProjectsSection';
 import { PeopleSection } from '@/components/sections/PeopleSection';
 import { ContactSection } from '@/components/sections/ContactSection';
+import { LibrarySection } from '@/components/sections/LibrarySection';
 import { WorkTabContent } from '@/components/sections/WorkTabContent';
 import { Briefcase, MapPin } from 'lucide-react';
 import {
@@ -80,6 +81,11 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           <div className="px-4 py-6">
             <h1 className="text-xl font-bold tracking-tight text-ink mb-6">People</h1>
             <PeopleSection />
+          </div>
+        ) : activeSection === 'library' ? (
+          <div className="px-4 py-6">
+            <h1 className="text-xl font-bold tracking-tight text-ink mb-6">Library</h1>
+            <LibrarySection />
           </div>
         ) : activeSection === 'contact' ? (
           <div className="px-4 py-6">
