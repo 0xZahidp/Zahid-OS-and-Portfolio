@@ -9,7 +9,6 @@ import {
   Loader2,
   AlertCircle,
   KeyRound,
-  Trash2,
   ExternalLink,
   LogOut,
 } from 'lucide-react';
@@ -18,7 +17,7 @@ import { supabase } from '@/lib/supabase/client';
 
 export default function AdminMfaChallengePage() {
   const router = useRouter();
-  const { user, session, mfaLevel, verifyMfaCode, unenrollMfaFactor, signOut, isLoading } = useAdminAuth();
+  const { user, session, mfaLevel, checkMfaLevel, verifyMfaCode, signOut, isLoading } = useAdminAuth();
 
   const [code, setCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -27,7 +26,6 @@ export default function AdminMfaChallengePage() {
   const [selectedFactorId, setSelectedFactorId] = useState<string>('');
   const [isLoadingFactors, setIsLoadingFactors] = useState(true);
   const [showEmergencyHelp, setShowEmergencyHelp] = useState(false);
-  const [isRemovingFactor, setIsRemovingFactor] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -60,6 +58,7 @@ export default function AdminMfaChallengePage() {
             setSelectedFactorId(verified[0].id);
           } else {
             // No verified factors found: user doesn't actually need MFA
+            await checkMfaLevel();
             router.push('/admin');
           }
         }
@@ -75,7 +74,7 @@ export default function AdminMfaChallengePage() {
     return () => {
       mounted = false;
     };
-  }, [isLoading, session, user, mfaLevel, router]);
+  }, [isLoading, session, user, mfaLevel, checkMfaLevel, router]);
 
   // Focus input automatically
   useEffect(() => {
@@ -131,33 +130,6 @@ export default function AdminMfaChallengePage() {
           }
         });
       }, 50);
-    }
-  };
-
-  const handleEmergencyRemoveFactor = async () => {
-    if (!selectedFactorId) return;
-    if (
-      !window.confirm(
-        'Are you sure you want to remove this authentication factor? If this was a leftover factor, removing it will disable 2FA and allow you into FolioFrame Studio.'
-      )
-    ) {
-      return;
-    }
-
-    setIsRemovingFactor(true);
-    setErrorMessage(null);
-
-    const res = await unenrollMfaFactor(selectedFactorId);
-    setIsRemovingFactor(false);
-
-    if (res.success) {
-      alert('Authentication factor removed successfully! You can now access FolioFrame Studio.');
-      router.push('/admin');
-    } else {
-      setErrorMessage(
-        res.error ||
-          'Failed to remove factor automatically. Please remove it directly from Supabase Dashboard: Authentication -> Users -> Factors.'
-      );
     }
   };
 
@@ -290,44 +262,29 @@ export default function AdminMfaChallengePage() {
             </button>
           </div>
 
-          {/* Emergency Helper Card */}
+          {/* REQUIREMENT 2: Emergency Helper Card with text explaining the Supabase Dashboard fallback only */}
           {showEmergencyHelp && (
-            <div className="w-full mt-2 p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 text-[11px] space-y-2.5 text-left text-ink-2">
+            <div className="w-full mt-2 p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 text-[11px] space-y-2 text-left text-ink-2">
               <p className="font-semibold text-amber-800 dark:text-amber-300">
-                Leftover Factor / Lost Authenticator Device?
+                Lost your authenticator device?
               </p>
-              <p className="leading-relaxed">
-                Supabase requires AAL2 whenever a verified factor exists. If you lost your device or this is an old leftover factor:
+              <p className="leading-relaxed text-ink-3">
+                Supabase requires AAL2 authentication when a verified factor is active. Supabase does not have recovery codes. If you lost your device or authenticator app:
               </p>
 
-              {/* One-click emergency remove via authenticated service-role API */}
-              <button
-                type="button"
-                onClick={handleEmergencyRemoveFactor}
-                disabled={isRemovingFactor || !selectedFactorId}
-                className="w-full py-1.5 px-3 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                {isRemovingFactor ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <Trash2 className="size-3.5" />
-                )}
-                <span>Remove Factor via Admin API</span>
-              </button>
-
-              <div className="pt-1 border-t border-amber-500/20 text-[10px] text-ink-3">
-                <span className="font-semibold text-ink-2">Dashboard Fallback:</span> Go to{' '}
+              <div className="pt-2 border-t border-amber-500/20 text-[11px] text-ink-2">
+                <span className="font-bold text-ink">Supabase Dashboard Fallback:</span> Go to{' '}
                 <a
                   href="https://supabase.com/dashboard"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-brand-500 hover:underline inline-flex items-center gap-0.5"
+                  className="text-brand-500 hover:underline inline-flex items-center gap-0.5 font-semibold"
                 >
                   <span>Supabase Dashboard</span>
                   <ExternalLink className="size-2.5" />
                 </a>{' '}
                 → <strong>Authentication</strong> → <strong>Users</strong> → click{' '}
-                <code className="font-mono">{user?.email}</code> → <strong>Factors</strong> → <strong>Delete</strong>.
+                <code className="font-mono px-1 py-0.5 rounded bg-surface border border-line text-[10px]">{user?.email}</code> → <strong>Factors</strong> → <strong>Delete</strong>.
               </div>
             </div>
           )}
@@ -336,4 +293,3 @@ export default function AdminMfaChallengePage() {
     </div>
   );
 }
-

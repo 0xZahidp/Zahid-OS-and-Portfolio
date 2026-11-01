@@ -99,6 +99,8 @@ export const SettingsTab: React.FC = () => {
   const [isVerifyingEnroll, setIsVerifyingEnroll] = useState(false);
   const [isEnrollingLoading, setIsEnrollingLoading] = useState(false);
   const [copiedSecret, setCopiedSecret] = useState(false);
+  const [showPostEnrollWarning, setShowPostEnrollWarning] = useState(false);
+  const [enrolledSecretBackup, setEnrolledSecretBackup] = useState<string | null>(null);
 
   // Mail status state
   const [mailStatus, setMailStatus] = useState<{
@@ -462,6 +464,7 @@ export const SettingsTab: React.FC = () => {
   const handleStartEnroll = async (friendlyName?: string) => {
     setIsEnrollingLoading(true);
     setMfaFeedback(null);
+    setShowPostEnrollWarning(false);
 
     try {
       // 1. Clean up unverified factors before starting a new enrollment, so stale ones never pile up
@@ -477,8 +480,14 @@ export const SettingsTab: React.FC = () => {
         }
       }
 
-      // 2. Start new TOTP enrollment
-      const factorName = friendlyName?.trim() || enrollFriendlyName.trim() || 'FolioFrame Authenticator';
+      // 2. Start new TOTP enrollment with a UNIQUE friendlyName per enrollment
+      // Supabase rejects duplicate friendly names, so append timestamp
+      const baseName = friendlyName?.trim() || enrollFriendlyName.trim() || 'FolioFrame';
+      const now = new Date();
+      const datePart = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const timePart = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const factorName = `${baseName} (${datePart} ${timePart})`;
+
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: 'totp',
         friendlyName: factorName,
@@ -531,16 +540,26 @@ export const SettingsTab: React.FC = () => {
         return;
       }
 
+      // Preserve secret for the one-time warning alert
+      const savedSecret = enrollData.secret;
+
+      // REQUIREMENT 3: Call refreshSession() and re-run getAuthenticatorAssuranceLevel()
+      // so the UI shows 2FA enabled and the session is AAL2 without re-login.
+      await supabase.auth.refreshSession();
+      await checkMfaLevel();
+      await loadMfaState();
+
       // Enrollment verified!
       setIsEnrollingMfa(false);
       setEnrollData(null);
       setEnrollCode('');
       setEnrollFriendlyName('');
+      setEnrolledSecretBackup(savedSecret);
+      setShowPostEnrollWarning(true);
       setMfaFeedback({
         type: 'success',
         message: '✓ Two-Factor Authentication (TOTP) successfully activated! Your session has been stepped up to AAL2.',
       });
-      await loadMfaState();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Verification failed';
       setMfaFeedback({ type: 'error', message: msg });
@@ -560,14 +579,17 @@ export const SettingsTab: React.FC = () => {
     }
 
     setMfaFeedback(null);
+    setShowPostEnrollWarning(false);
     const res = await unenrollMfaFactor(factorId);
 
     if (res.success) {
+      await supabase.auth.refreshSession();
+      await checkMfaLevel();
+      await loadMfaState();
       setMfaFeedback({
         type: 'success',
         message: `✓ Factor "${friendlyName || factorId}" successfully removed.`,
       });
-      await loadMfaState();
     } else {
       setMfaFeedback({
         type: 'error',
@@ -914,6 +936,36 @@ export const SettingsTab: React.FC = () => {
                   <AlertCircle className="size-4 shrink-0 mt-0.5" />
                 )}
                 <span>{mfaFeedback.message}</span>
+              </div>
+            )}
+
+            {/* REQUIREMENT 3: One-time warning after enrollment */}
+            {showPostEnrollWarning && (
+              <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs space-y-2 text-ink-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
+                    <AlertTriangle className="size-4 text-amber-500 shrink-0" />
+                    <span>Save the secret key somewhere safe. Supabase has no recovery codes.</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPostEnrollWarning(false)}
+                    className="text-ink-3 hover:text-ink text-[11px] underline cursor-pointer"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+                <p className="text-[11px] leading-relaxed text-ink-2">
+                  Supabase Auth does not generate static recovery codes. If you ever lose your authenticator app, you must remove the factor directly in the Supabase Dashboard (<strong>Authentication → Users → Factors → Delete</strong>).
+                </p>
+                {enrolledSecretBackup && (
+                  <div className="pt-1 flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-semibold text-ink-3">Enrolled Secret Key Backup:</span>
+                    <code className="px-2 py-0.5 rounded bg-surface border border-line font-mono text-[11px] font-bold text-ink select-all">
+                      {enrolledSecretBackup}
+                    </code>
+                  </div>
+                )}
               </div>
             )}
 

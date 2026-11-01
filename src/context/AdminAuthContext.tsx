@@ -63,15 +63,24 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Helper to query current Authenticator Assurance Level (AAL)
   const checkMfaLevel = useCallback(async (): Promise<MfaAssuranceLevel> => {
     try {
-      const { data, error: aalErr } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      if (!aalErr && data) {
-        const lvl: MfaAssuranceLevel = {
-          currentLevel: (data.currentLevel as 'aal1' | 'aal2' | null) ?? 'aal1',
-          nextLevel: (data.nextLevel as 'aal1' | 'aal2' | null) ?? 'aal1',
-        };
-        setMfaLevel(lvl);
-        return lvl;
-      }
+      const [aalRes, factorsRes] = await Promise.all([
+        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+        supabase.auth.mfa.listFactors(),
+      ]);
+
+      const verifiedFactors = factorsRes.data?.all?.filter((f) => f.status === 'verified') || [];
+      const hasVerified = verifiedFactors.length > 0;
+
+      const currentLevel = (aalRes.data?.currentLevel as 'aal1' | 'aal2' | null) ?? 'aal1';
+      // CRITICAL: If no verified factor exists, nextLevel MUST be 'aal1', never 'aal2'!
+      // This completely eliminates stale nextLevel flags and prevents redirect loops.
+      const nextLevel = hasVerified
+        ? ((aalRes.data?.nextLevel as 'aal1' | 'aal2' | null) ?? 'aal1')
+        : 'aal1';
+
+      const lvl: MfaAssuranceLevel = { currentLevel, nextLevel };
+      setMfaLevel(lvl);
+      return lvl;
     } catch (e) {
       console.warn('Failed to query MFA assurance level:', e);
     }
@@ -169,13 +178,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setIsLocalBypass(false);
 
       // Evaluate MFA requirement
-      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      const currentLevel = (aal?.currentLevel as 'aal1' | 'aal2' | null) ?? 'aal1';
-      const nextLevel = (aal?.nextLevel as 'aal1' | 'aal2' | null) ?? 'aal1';
-      const lvl: MfaAssuranceLevel = { currentLevel, nextLevel };
-      setMfaLevel(lvl);
-
-      const requiresMfa = currentLevel === 'aal1' && nextLevel === 'aal2';
+      const lvl = await checkMfaLevel();
+      const requiresMfa = lvl.currentLevel === 'aal1' && lvl.nextLevel === 'aal2';
 
       return { success: true, requiresMfa };
     } catch (err: unknown) {
@@ -183,7 +187,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setError(msg);
       return { success: false, error: msg };
     }
-  }, []);
+  }, [checkMfaLevel]);
 
   // 2. Email + Password Sign Up
   const signUpWithEmail = useCallback(async (email: string, password: string) => {
@@ -320,18 +324,19 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (data?.user) {
         setUser(data.user);
       }
+      await supabase.auth.refreshSession();
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData?.session) {
         setSession(sessionData.session);
       }
-      setMfaLevel({ currentLevel: 'aal2', nextLevel: 'aal2' });
+      await checkMfaLevel();
       return { success: true };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'MFA verification failed';
       setError(msg);
       return { success: false, error: msg };
     }
-  }, []);
+  }, [checkMfaLevel]);
 
   // 6. Unenroll an MFA factor (with AAL1 server fallback)
   const unenrollMfaFactor = useCallback(async (factorId: string) => {
@@ -340,6 +345,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // 1. Attempt standard client unenroll (succeeds if session is AAL2)
       const { error: unenrollErr } = await supabase.auth.mfa.unenroll({ factorId });
       if (!unenrollErr) {
+        await supabase.auth.refreshSession();
         await checkMfaLevel();
         return { success: true };
       }
@@ -357,6 +363,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         });
         const data = await res.json();
         if (data.success) {
+          await supabase.auth.refreshSession();
           await checkMfaLevel();
           return { success: true };
         }
