@@ -1,13 +1,31 @@
 'use client';
 
 import React from 'react';
-import { projectsData, openSourceReposData } from '@/data/profile';
+import Image from 'next/image';
+import { openSourceReposData } from '@/data/profile';
 import { GitHubIcon } from '@/components/ui/Icons';
 import { Project } from '@/types/profile';
 import { GitFork } from 'lucide-react';
+import { usePortfolio } from '@/context/PortfolioContext';
 
 export const ProjectsSection: React.FC = () => {
+  const { content } = usePortfolio();
+  const projectsData = content.projects || [];
+
   const renderFloatingBadge = (project: Project) => {
+    if (project.image_url) {
+      return (
+        <div className="relative size-16 sm:size-20 rounded-2xl overflow-hidden shadow-lg ring-4 ring-white/40 dark:ring-white/15 transition-transform group-hover:scale-105 duration-200">
+          <Image
+            src={project.image_url}
+            alt={project.title}
+            fill
+            className="object-cover"
+          />
+        </div>
+      );
+    }
+
     switch (project.logoType) {
       case 'bidvers':
         return (
@@ -56,7 +74,7 @@ export const ProjectsSection: React.FC = () => {
       default:
         return (
           <div className="size-16 sm:size-18 rounded-2xl bg-zinc-900 text-white font-bold text-2xl grid place-items-center shadow-lg ring-4 ring-white/40 dark:ring-white/15 transition-transform group-hover:scale-105 duration-200">
-            G
+            {project.title.charAt(0) || 'P'}
           </div>
         );
     }

@@ -12,22 +12,16 @@
     "github_followers_count": 6,
     "roles": [
       {
-        "title": "Product Developer",
+        "title": "CTO & Co-Founder",
         "company": "Dhakaiya Bites",
-        "company_url": "https://db.zahidp.com",
-        "company_logo": "/images/bidvers.webp"
+        "company_url": "https://dhakaiyabites-zeta.vercel.app/",
+        "company_logo": "/uploads/logos/logo-dhakaiya-bites-1793536613357.png"
       },
       {
-        "title": "Lead Developer",
-        "company": "Scholar Quest",
-        "company_url": "https://sq.zahidp.com",
-        "company_logo": "/images/avatar.webp"
-      },
-      {
-        "title": "Full-Stack Developer",
-        "company": "Independent Product Builder",
-        "company_url": "https://www.zahidp.com",
-        "company_logo": "/images/gymscanner.webp"
+        "title": "Jr. Software Engineer",
+        "company": "TwinForce Soluations Ltd",
+        "company_url": "https://twinforce.net",
+        "company_logo": "/uploads/logos/logo-scholar-quest-1793536616620.png"
       }
     ]
   },
@@ -703,6 +697,7 @@
   "basedInSettings": {
     "city": "Dhaka",
     "country": "Bangladesh",
+    "timezone": "Asia/Dhaka",
     "timeString": "8:29 PM",
     "gmtOffset": "GMT+6"
   },
@@ -712,5 +707,5 @@
     "totalContributions": 1378,
     "totalRepos": 92
   },
-  "updatedAt": "2026-11-01T01:08:00.000Z"
+  "updatedAt": "2026-11-01T12:38:33.412Z"
 }
