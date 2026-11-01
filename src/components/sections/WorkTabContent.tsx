@@ -655,7 +655,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
                   </p>
 
                   {/* Tags */}
-                  {project.tags && (
+                  {project.tags && project.tags.length > 0 && (
                     <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] text-ink-3">
                       <Tag className="size-3 text-ink-3" />
                       <span>{project.tags.join(', ')}</span>

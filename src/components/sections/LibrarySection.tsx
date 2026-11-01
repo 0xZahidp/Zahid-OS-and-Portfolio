@@ -419,7 +419,7 @@ export const LibrarySection: React.FC = () => {
       </section>
 
       {/* 5. Voiceovers & Media */}
-      {library.voiceovers && (
+      {library.voiceovers && library.voiceovers.items && library.voiceovers.items.length > 0 && (
         <section id="voiceovers" className="space-y-6">
           <div className="flex items-end justify-between gap-4">
             <div className="flex items-center gap-3">

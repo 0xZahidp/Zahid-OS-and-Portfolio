@@ -77,7 +77,7 @@ export const ExperienceSection: React.FC = () => {
                 <p className="mt-2.5 text-body leading-relaxed text-ink">{exp.description}</p>
 
                 {/* Stat Highlights (Bidvers) */}
-                {exp.highlights && (
+                {exp.highlights && exp.highlights.length > 0 && (
                   <div className="relative rounded-[24px] mt-4 border border-emerald-500/20 bg-gradient-to-br from-emerald-100/50 via-teal-50/30 to-emerald-50/20 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-emerald-900/10 p-5 shadow-xs">
                     <dl className="grid gap-x-5 gap-y-4 grid-cols-2 sm:grid-cols-3">
                       {exp.highlights.map((h, i) => (
@@ -109,7 +109,7 @@ export const ExperienceSection: React.FC = () => {
                 )}
 
                 {/* Bullets */}
-                {exp.bullet_points && (
+                {exp.bullet_points && exp.bullet_points.length > 0 && (
                   <ul className="mt-3 list-disc space-y-1.5 pl-5 text-body leading-relaxed text-ink-2 marker:text-ink-3">
                     {exp.bullet_points.map((pt, idx) => (
                       <li key={idx}>{pt}</li>
@@ -118,7 +118,7 @@ export const ExperienceSection: React.FC = () => {
                 )}
 
                 {/* Sub programs (Interactive Cares) */}
-                {exp.sub_programs && (
+                {exp.sub_programs && exp.sub_programs.length > 0 && (
                   <ol className="mt-4 space-y-3 pl-2">
                     {exp.sub_programs.map((sub) => (
                       <li key={sub.title} className="relative flex gap-3">
@@ -138,7 +138,7 @@ export const ExperienceSection: React.FC = () => {
                 )}
 
                 {/* Tags */}
-                {exp.tags && (
+                {exp.tags && exp.tags.length > 0 && (
                   <p className="mt-3 flex flex-wrap gap-1.5">
                     {exp.tags.map((tag) => (
                       <span
