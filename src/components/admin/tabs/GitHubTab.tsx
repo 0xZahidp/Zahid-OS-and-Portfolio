@@ -246,54 +246,6 @@ export const GitHubTab: React.FC = () => {
               </span>
             </div>
           </div>
-
-          {/* Followers count override */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-ink">Followers Count Override</label>
-            <input
-              type="number"
-              value={settings.followersCount ?? ''}
-              onChange={(e) =>
-                updateGitHubSettings({
-                  followersCount: e.target.value === '' ? undefined : Number(e.target.value),
-                })
-              }
-              placeholder="e.g. 6 (leave blank for live count)"
-              className="w-full rounded-xl border border-line bg-surface-2 px-3.5 py-2 text-xs text-ink focus:border-brand-500 focus:bg-surface focus:outline-none transition-all font-mono"
-            />
-          </div>
-
-          {/* Total Contributions Override */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-ink">Total Contributions Override</label>
-            <input
-              type="number"
-              value={settings.totalContributions ?? ''}
-              onChange={(e) =>
-                updateGitHubSettings({
-                  totalContributions: e.target.value === '' ? undefined : Number(e.target.value),
-                })
-              }
-              placeholder="e.g. 102 (leave blank for live count)"
-              className="w-full rounded-xl border border-line bg-surface-2 px-3.5 py-2 text-xs text-ink focus:border-brand-500 focus:bg-surface focus:outline-none transition-all font-mono"
-            />
-          </div>
-
-          {/* Total Repos Override */}
-          <div className="space-y-1.5 sm:col-span-2">
-            <label className="text-xs font-semibold text-ink">Total Repositories Override</label>
-            <input
-              type="number"
-              value={settings.totalRepos ?? ''}
-              onChange={(e) =>
-                updateGitHubSettings({
-                  totalRepos: e.target.value === '' ? undefined : Number(e.target.value),
-                })
-              }
-              placeholder="e.g. 26 (leave blank for live count)"
-              className="w-full rounded-xl border border-line bg-surface-2 px-3.5 py-2 text-xs text-ink focus:border-brand-500 focus:bg-surface focus:outline-none transition-all font-mono"
-            />
-          </div>
         </div>
       </div>
 

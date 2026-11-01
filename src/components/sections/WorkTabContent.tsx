@@ -252,9 +252,10 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
     return list;
   }, [displayedWeeks]);
 
-  const effectiveContributions = content.githubSettings?.totalContributions ?? totalContributions;
-  const effectiveRepos = content.githubSettings?.totalRepos ?? totalRepos;
-  const effectiveFollowers = content.githubSettings?.followersCount ?? followersCount;
+  // Always use authentic live metrics fetched directly from GitHub (no manual overrides)
+  const effectiveContributions = totalContributions;
+  const effectiveRepos = totalRepos;
+  const effectiveFollowers = followersCount;
   const githubUsername = content.githubSettings?.username || '0xZahidp';
   const effectivePinnedRepos = useMemo(() => {
     if (content.githubSettings?.pinnedRepos && content.githubSettings.pinnedRepos.length > 0) {

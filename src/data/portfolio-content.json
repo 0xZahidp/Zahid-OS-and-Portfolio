@@ -72,7 +72,7 @@
       ],
       "is_current": true,
       "sort_order": 0,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.027+00:00"
     },
     {
       "id": "exp-db",
@@ -115,7 +115,7 @@
       ],
       "is_current": true,
       "sort_order": 1,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.027+00:00"
     },
     {
       "id": "exp-ipb",
@@ -158,7 +158,7 @@
       ],
       "is_current": true,
       "sort_order": 2,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.027+00:00"
     },
     {
       "id": "exp-zf",
@@ -184,7 +184,7 @@
       ],
       "is_current": true,
       "sort_order": 3,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.027+00:00"
     },
     {
       "id": "exp-tsp",
@@ -210,7 +210,7 @@
       ],
       "is_current": true,
       "sort_order": 4,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.027+00:00"
     },
     {
       "id": "exp-madrasah",
@@ -236,7 +236,7 @@
       ],
       "is_current": true,
       "sort_order": 5,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.027+00:00"
     },
     {
       "id": "exp-bidvers",
@@ -278,7 +278,7 @@
       ],
       "is_current": true,
       "sort_order": 6,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.027+00:00"
     }
   ],
   "projects": [
@@ -297,10 +297,10 @@
       "project_url": "https://sq.zahidp.com",
       "repository_url": "",
       "stars": 42,
-      "highlight_badge": "EdTech Command Center",
-      "logo_type": "prompt",
+      "highlight_badge": "",
+      "logo_type": "",
       "sort_order": 0,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "proj-zf",
@@ -317,10 +317,10 @@
       "project_url": "https://finance.zahidp.com",
       "repository_url": "https://github.com/0xzahidp/zahid-finance",
       "stars": 38,
-      "highlight_badge": "Personal Finance & Trust",
-      "logo_type": "invo",
+      "highlight_badge": "",
+      "logo_type": "",
       "sort_order": 1,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "proj-db",
@@ -337,10 +337,10 @@
       "project_url": "https://db.zahidp.com",
       "repository_url": "",
       "stars": 24,
-      "highlight_badge": "Offline-First POS",
-      "logo_type": "bidvers",
+      "highlight_badge": "",
+      "logo_type": "",
       "sort_order": 2,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "proj-tsp",
@@ -356,10 +356,10 @@
       "project_url": "https://www.zahidp.com",
       "repository_url": "",
       "stars": 19,
-      "highlight_badge": "Shared Living System",
-      "logo_type": "mytapcard",
+      "highlight_badge": "",
+      "logo_type": "",
       "sort_order": 3,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "proj-booknagar",
@@ -376,10 +376,10 @@
       "project_url": "https://www.zahidp.com/en/projects/book-nagar",
       "repository_url": "https://github.com/0xzahidp/book-nagar",
       "stars": 15,
-      "highlight_badge": "Web Application",
-      "logo_type": "laravel",
+      "highlight_badge": "",
+      "logo_type": "",
       "sort_order": 4,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "proj-madrasah",
@@ -395,10 +395,10 @@
       "project_url": "https://www.zahidp.com",
       "repository_url": "",
       "stars": 29,
-      "highlight_badge": "Telegram Bot & Automation",
-      "logo_type": "prompt",
+      "highlight_badge": "",
+      "logo_type": "",
       "sort_order": 5,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "proj-bidvers",
@@ -414,10 +414,10 @@
       "project_url": "https://bidvers.com",
       "repository_url": "",
       "stars": 54,
-      "highlight_badge": "$120K+ raised",
-      "logo_type": "bidvers",
+      "highlight_badge": "",
+      "logo_type": "",
       "sort_order": 6,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "proj-learn-laravel",
@@ -433,10 +433,10 @@
       "project_url": "",
       "repository_url": "https://github.com/0xzahidp/learn-laravel",
       "stars": 186,
-      "highlight_badge": "Open source",
-      "logo_type": "laravel",
+      "highlight_badge": "",
+      "logo_type": "",
       "sort_order": 7,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     }
   ],
   "skills": [
@@ -446,7 +446,7 @@
       "category": "ai",
       "color": "#d97757",
       "sort_order": 0,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "openai",
@@ -454,7 +454,7 @@
       "category": "ai",
       "color": "#10a37f",
       "sort_order": 1,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "antigravity",
@@ -462,7 +462,7 @@
       "category": "ai",
       "color": "#6366f1",
       "sort_order": 2,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "opencode",
@@ -470,7 +470,7 @@
       "category": "ai",
       "color": "#0ea5e9",
       "sort_order": 3,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "telegram-bot",
@@ -478,7 +478,7 @@
       "category": "ai",
       "color": "#24A1DE",
       "sort_order": 4,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "python",
@@ -486,7 +486,7 @@
       "category": "ai",
       "color": "#3776AB",
       "sort_order": 5,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "react",
@@ -494,7 +494,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 6,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "nextjs",
@@ -502,7 +502,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 7,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "typescript",
@@ -510,7 +510,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 8,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "javascript",
@@ -518,7 +518,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 9,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "supabase",
@@ -526,7 +526,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 10,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "tailwind",
@@ -534,7 +534,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 11,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "tanstack",
@@ -542,7 +542,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 12,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "indexeddb",
@@ -550,7 +550,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 13,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "laravel",
@@ -558,7 +558,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 14,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "php",
@@ -566,7 +566,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 15,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "livewire",
@@ -574,7 +574,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 16,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "alpine",
@@ -582,7 +582,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 17,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "vue",
@@ -590,7 +590,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 18,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "vscode",
@@ -598,7 +598,7 @@
       "category": "tool",
       "color": "",
       "sort_order": 19,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "git",
@@ -606,7 +606,7 @@
       "category": "tool",
       "color": "",
       "sort_order": 20,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "github",
@@ -614,7 +614,7 @@
       "category": "tool",
       "color": "",
       "sort_order": 21,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "vercel",
@@ -622,7 +622,7 @@
       "category": "tool",
       "color": "",
       "sort_order": 22,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "vite",
@@ -630,7 +630,7 @@
       "category": "tool",
       "color": "",
       "sort_order": 23,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "figma",
@@ -638,7 +638,7 @@
       "category": "tool",
       "color": "",
       "sort_order": 24,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     }
   ],
   "languages": [
@@ -650,7 +650,7 @@
       "note": "Professional & technical communication",
       "has_voice": true,
       "sort_order": 0,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "lang-bangla",
@@ -660,7 +660,7 @@
       "note": "Native tongue",
       "has_voice": true,
       "sort_order": 1,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "lang-arabic",
@@ -670,7 +670,7 @@
       "note": "Conversational & liturgical reading",
       "has_voice": true,
       "sort_order": 2,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     }
   ],
   "socialLinks": [
@@ -681,7 +681,7 @@
       "handle": "@OxZahidP",
       "label": "Telegram",
       "sort_order": 0,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "soc-github",
@@ -690,7 +690,7 @@
       "handle": "@0xzahidp",
       "label": "GitHub",
       "sort_order": 1,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "soc-x",
@@ -699,7 +699,7 @@
       "handle": "@0xzahidp",
       "label": "X (Twitter)",
       "sort_order": 2,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "soc-linkedin",
@@ -708,7 +708,7 @@
       "handle": "in/oxzahidp",
       "label": "LinkedIn",
       "sort_order": 3,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "soc-facebook",
@@ -717,7 +717,7 @@
       "handle": "0xzahidp",
       "label": "Facebook",
       "sort_order": 4,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     }
   ],
   "suggestedPeople": [
@@ -729,7 +729,7 @@
       "url": "https://github.com/hasinhayder",
       "handle": "hasinhayder",
       "sort_order": 0,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "person-zahin",
@@ -739,7 +739,7 @@
       "url": "https://github.com/IsHereZahin",
       "handle": "IsHereZahin",
       "sort_order": 1,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "person-rezaur",
@@ -749,7 +749,7 @@
       "url": "https://github.com/RezaurOfficial",
       "handle": "RezaurOfficial",
       "sort_order": 2,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "person-aniruddha",
@@ -759,7 +759,7 @@
       "url": "https://github.com/aniruddha-adhikary",
       "handle": "aniruddha-adhikary",
       "sort_order": 3,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "person-tahsin",
@@ -769,7 +769,7 @@
       "url": "https://github.com/tahsinulhoque",
       "handle": "tahsinulhoque",
       "sort_order": 4,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "person-emran",
@@ -779,7 +779,7 @@
       "url": "https://github.com/Emranrx02",
       "handle": "Emranrx02",
       "sort_order": 5,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "person-sani",
@@ -789,7 +789,7 @@
       "url": "https://github.com/ssani7",
       "handle": "ssani7",
       "sort_order": 6,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "person-benaiah",
@@ -799,7 +799,7 @@
       "url": "https://github.com/Benrobo",
       "handle": "Benrobo",
       "sort_order": 7,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "person-roman",
@@ -809,7 +809,7 @@
       "url": "https://github.com/reacheight",
       "handle": "reacheight",
       "sort_order": 8,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "person-prottoy",
@@ -819,7 +819,7 @@
       "url": "https://github.com/abmprottoy",
       "handle": "abmprottoy",
       "sort_order": 9,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "person-shakib",
@@ -829,7 +829,7 @@
       "url": "https://github.com/shakib5551",
       "handle": "shakib5551",
       "sort_order": 10,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     },
     {
       "id": "person-syed",
@@ -839,7 +839,7 @@
       "url": "https://github.com/Syed-Eftasum-Alam",
       "handle": "Syed-Eftasum-Alam",
       "sort_order": 11,
-      "updated_at": "2026-11-01T13:19:36.670384+00:00"
+      "updated_at": "2026-11-01T13:37:53.028+00:00"
     }
   ],
   "worksSettings": {
@@ -861,10 +861,7 @@
     "timeString": "8:29 PM"
   },
   "githubSettings": {
-    "username": "0xZahidp",
-    "totalRepos": 92,
-    "followersCount": 6,
-    "totalContributions": 1378
+    "username": "0xZahidp"
   },
-  "updatedAt": "2026-11-01T13:37:53.024Z"
+  "updatedAt": "2026-11-01T13:45:34.099Z"
 }
