@@ -21,10 +21,15 @@ import { FactsTab } from '@/components/admin/tabs/FactsTab';
 import { SocialsTab } from '@/components/admin/tabs/SocialsTab';
 import { PeopleTab } from '@/components/admin/tabs/PeopleTab';
 import { SupabaseTab } from '@/components/admin/tabs/SupabaseTab';
-import { SecurityTab } from '@/components/admin/tabs/SecurityTab';
+import { SettingsTab } from '@/components/admin/tabs/SettingsTab';
+import { InboxTab } from '@/components/admin/tabs/InboxTab';
 import { BackupsTab } from '@/components/admin/tabs/BackupsTab';
 
 const TAB_META: Record<AdminTab, { title: string; description: string }> = {
+  inbox: {
+    title: 'Inbox & Client Communication',
+    description: 'Read incoming inquiries, star messages, and compose/dispatch emails via Resend.',
+  },
   profile: {
     title: 'Personal Identity & Hero Roles',
     description: 'Full name, avatar, headline, availability beacon, and company affiliations.',
@@ -64,6 +69,10 @@ const TAB_META: Record<AdminTab, { title: string; description: string }> = {
   supabase: {
     title: 'Supabase Cloud Integration',
     description: 'Real-time database connection diagnostics, schema migration, and tables.',
+  },
+  settings: {
+    title: 'Settings, Security & Passkeys',
+    description: 'Change your password, register Apple Touch ID / YubiKey passkeys, and manage account preferences.',
   },
   security: {
     title: 'Security, Passkeys & Session',
@@ -147,6 +156,8 @@ function AdminDashboardInner() {
 
   const renderActiveTabContent = () => {
     switch (activeTab) {
+      case 'inbox':
+        return <InboxTab />;
       case 'profile':
         return <ProfileTab />;
       case 'bio':
@@ -167,8 +178,9 @@ function AdminDashboardInner() {
         return <PeopleTab />;
       case 'supabase':
         return <SupabaseTab />;
+      case 'settings':
       case 'security':
-        return <SecurityTab />;
+        return <SettingsTab />;
       case 'backups':
         return <BackupsTab />;
       default:

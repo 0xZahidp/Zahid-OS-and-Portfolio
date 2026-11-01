@@ -31,7 +31,10 @@ interface AdminAuthContextType {
   registerPasskey: (name?: string) => Promise<{ success: boolean; error?: string }>;
   listPasskeys: () => Promise<PasskeyItem[]>;
   deletePasskey: (id: string) => Promise<{ success: boolean; error?: string }>;
+  updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  sendPasswordResetEmail: (email?: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
+  signOutAllDevices: () => Promise<{ success: boolean; error?: string }>;
   bypassLocalAuth: () => void;
   clearError: () => void;
 }
@@ -59,10 +62,18 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     }
 
+    // Safety timeout so slow network / paused DB never hangs UI
+    const safetyTimer = setTimeout(() => {
+      if (mounted) {
+        setIsLoading(false);
+      }
+    }, 1500);
+
     // Get current session
     supabase.auth
       .getSession()
       .then(({ data, error: sessionErr }) => {
+        clearTimeout(safetyTimer);
         if (!mounted) return;
         if (sessionErr) {
           console.warn('Supabase getSession error:', sessionErr);
@@ -75,9 +86,9 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setIsLoading(false);
       })
       .catch((err) => {
-        if (!mounted) return;
-        console.warn('Failed to retrieve Supabase session:', err);
-        setIsLoading(false);
+        clearTimeout(safetyTimer);
+        console.warn('Supabase getSession failed:', err);
+        if (mounted) setIsLoading(false);
       });
 
     // Subscribe to auth state updates (e.g. login, logout, token refresh, OAuth redirect)
@@ -98,6 +109,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
@@ -311,7 +323,51 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  // 8. Sign Out
+  // 8. Update Password
+  const updatePassword = useCallback(async (newPassword: string) => {
+    try {
+      const { data, error: updateErr } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      if (updateErr) {
+        return { success: false, error: updateErr.message };
+      }
+      if (data?.user) {
+        setUser(data.user);
+      }
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to update password';
+      return { success: false, error: msg };
+    }
+  }, []);
+
+  // 9. Send Password Reset Email
+  const sendPasswordResetEmail = useCallback(async (targetEmail?: string) => {
+    try {
+      const emailToSend = targetEmail || user?.email;
+      if (!emailToSend) {
+        return { success: false, error: 'No email address available to send reset link.' };
+      }
+      const redirectUrl =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}/admin`
+          : undefined;
+
+      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(emailToSend, {
+        redirectTo: redirectUrl,
+      });
+      if (resetErr) {
+        return { success: false, error: resetErr.message };
+      }
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to send reset email';
+      return { success: false, error: msg };
+    }
+  }, [user]);
+
+  // 10. Sign Out
   const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
@@ -326,7 +382,27 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  // 9. Local Dev Bypass (for offline preview or testing without remote setup)
+  // 11. Sign Out Everywhere
+  const signOutAllDevices = useCallback(async () => {
+    try {
+      const { error: signErr } = await supabase.auth.signOut({ scope: 'global' });
+      if (signErr) {
+        return { success: false, error: signErr.message };
+      }
+      setSession(null);
+      setUser(null);
+      setIsLocalBypass(false);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(LOCAL_BYPASS_KEY);
+      }
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to sign out all devices';
+      return { success: false, error: msg };
+    }
+  }, []);
+
+  // 12. Local Dev Bypass (for offline preview or testing without remote setup)
   const bypassLocalAuth = useCallback(() => {
     setIsLocalBypass(true);
     if (typeof window !== 'undefined') {
@@ -348,7 +424,10 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       registerPasskey,
       listPasskeys,
       deletePasskey,
+      updatePassword,
+      sendPasswordResetEmail,
       signOut,
+      signOutAllDevices,
       bypassLocalAuth,
       clearError,
     }),
@@ -365,7 +444,10 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       registerPasskey,
       listPasskeys,
       deletePasskey,
+      updatePassword,
+      sendPasswordResetEmail,
       signOut,
+      signOutAllDevices,
       bypassLocalAuth,
       clearError,
     ]

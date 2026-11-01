@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -17,8 +17,9 @@ import {
   Archive,
   ExternalLink,
   Save,
-  Key,
   LogOut,
+  Mail,
+  Settings,
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAdminAuth } from '@/context/AdminAuthContext';
@@ -33,7 +34,9 @@ export type AdminTab =
   | 'facts'
   | 'socials'
   | 'people'
+  | 'inbox'
   | 'supabase'
+  | 'settings'
   | 'security'
   | 'backups';
 
@@ -52,8 +55,41 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const { content, isDirty, isSaving } = usePortfolio();
   const { user, signOut, isLocalBypass } = useAdminAuth();
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  useEffect(() => {
+    async function loadUnread() {
+      try {
+        const res = await fetch('/api/mail/status');
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadCount(data.unreadCount ?? 0);
+        }
+      } catch {
+        // ignore
+      }
+    }
+    loadUnread();
+    const interval = setInterval(loadUnread, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   const navGroups = [
+    {
+      label: 'COMMUNICATION & INBOX',
+      items: [
+        {
+          id: 'inbox' as AdminTab,
+          label: 'Inbox & Mail',
+          icon: Mail,
+          badge: unreadCount > 0 ? `${unreadCount} new` : 'Resend',
+          badgeColor:
+            unreadCount > 0
+              ? 'bg-brand-500 text-white font-bold'
+              : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+        },
+      ],
+    },
     {
       label: 'IDENTITY & STORY',
       items: [
@@ -90,7 +126,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
             : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
         },
-        { id: 'security' as AdminTab, label: 'Security & Passkeys', icon: Key, badge: 'Passkey' },
+        { id: 'settings' as AdminTab, label: 'Settings & Security', icon: Settings, badge: 'Passkey' },
         { id: 'backups' as AdminTab, label: 'Backup & Snapshots', icon: Archive, badge: 'JSON' },
       ],
     },

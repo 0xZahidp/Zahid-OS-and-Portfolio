@@ -10,6 +10,11 @@ import {
   ArrowUpRight,
   ArrowRight,
   MapPin,
+  Send,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  X,
 } from 'lucide-react';
 import {
   servicesData,
@@ -30,6 +35,61 @@ import {
 
 export const ContactSection: React.FC = () => {
   const [currentTime, setCurrentTime] = useState<string>('7:17 PM');
+
+  // Direct message modal state
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [visitorName, setVisitorName] = useState('');
+  const [visitorEmail, setVisitorEmail] = useState('');
+  const [visitorSubject, setVisitorSubject] = useState('');
+  const [visitorMessage, setVisitorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitFeedback, setSubmitFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const handleSubmitContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!visitorName || !visitorEmail || !visitorMessage) return;
+    setIsSubmitting(true);
+    setSubmitFeedback(null);
+    try {
+      const res = await fetch('/api/mail/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: visitorName,
+          email: visitorEmail,
+          subject: visitorSubject || 'New Project Collaboration',
+          message: visitorMessage,
+        }),
+      });
+      const data = await res.json();
+      setIsSubmitting(false);
+      if (data.success) {
+        setSubmitFeedback({
+          type: 'success',
+          message: 'Thank you! Your message has been sent directly to Zahid.',
+        });
+        setVisitorName('');
+        setVisitorEmail('');
+        setVisitorSubject('');
+        setVisitorMessage('');
+        setTimeout(() => {
+          setIsMessageModalOpen(false);
+          setSubmitFeedback(null);
+        }, 2200);
+      } else {
+        setSubmitFeedback({
+          type: 'error',
+          message: data.error || 'Failed to deliver message. Please try again.',
+        });
+      }
+    } catch {
+      setIsSubmitting(false);
+      setSubmitFeedback({
+        type: 'error',
+        message: 'Network error. Please try sending via email client.',
+      });
+    }
+  };
 
   useEffect(() => {
     const updateTime = () => {
@@ -149,16 +209,24 @@ export const ContactSection: React.FC = () => {
             Founders and teams building ambitious products: I take features from idea to production with agentic engineering, from database design to polished UI, real-time systems and AI included.
           </p>
 
-          <div className="mt-5">
+          <div className="mt-5 flex flex-wrap items-center gap-3">
             <div className="tactile-button-wrap">
-              <a
-                href="mailto:mdzahidhasanpatwary@gmail.com?subject=Build%20Something%20Together"
-                className="tactile-button"
+              <button
+                type="button"
+                onClick={() => setIsMessageModalOpen(true)}
+                className="tactile-button cursor-pointer"
               >
-                <span>Let&apos;s talk</span>
-                <ArrowRight className="size-4" />
-              </a>
+                <span>Send direct message</span>
+                <Send className="size-4" />
+              </button>
             </div>
+            <a
+              href="mailto:mdzahidhasanpatwary@gmail.com?subject=Build%20Something%20Together"
+              className="btn btn-secondary h-10 px-4 rounded-[14px] text-xs font-semibold inline-flex items-center gap-1.5"
+            >
+              <span>Email Client</span>
+              <ArrowUpRight className="size-3.5" />
+            </a>
           </div>
         </div>
 
@@ -268,6 +336,123 @@ export const ContactSection: React.FC = () => {
           ))}
         </div>
       </section>
+
+      {/* Direct Message Modal */}
+      {isMessageModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="card-raised rounded-3xl border border-line bg-surface max-w-lg w-full p-6 shadow-2xl relative overflow-hidden">
+            <div className="flex items-center justify-between pb-4 border-b border-line">
+              <div className="flex items-center gap-2.5">
+                <span className="grid size-8 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  <Send className="size-4" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-bold text-ink">Send Direct Message</h3>
+                  <p className="text-[11px] text-ink-3">Lands directly in Zahid&apos;s verified inbox.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMessageModalOpen(false)}
+                className="p-1.5 rounded-lg text-ink-3 hover:text-ink hover:bg-surface-2 transition-colors cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {submitFeedback && (
+              <div
+                className={`mt-4 p-3 rounded-xl border text-xs flex items-center gap-2 ${
+                  submitFeedback.type === 'success'
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold'
+                    : 'bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-400 font-semibold'
+                }`}
+              >
+                {submitFeedback.type === 'success' ? (
+                  <CheckCircle2 className="size-4 shrink-0" />
+                ) : (
+                  <AlertCircle className="size-4 shrink-0" />
+                )}
+                <span>{submitFeedback.message}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmitContact} className="mt-4 space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-ink-2 mb-1">Your Name</label>
+                <input
+                  type="text"
+                  value={visitorName}
+                  onChange={(e) => setVisitorName(e.target.value)}
+                  placeholder="Alex Morgan"
+                  required
+                  className="w-full h-9 px-3 rounded-xl bg-surface-2 border border-line text-xs font-medium text-ink placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink-2 mb-1">Your Email</label>
+                <input
+                  type="email"
+                  value={visitorEmail}
+                  onChange={(e) => setVisitorEmail(e.target.value)}
+                  placeholder="alex@company.com"
+                  required
+                  className="w-full h-9 px-3 rounded-xl bg-surface-2 border border-line text-xs font-medium text-ink placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink-2 mb-1">Topic / Subject (Optional)</label>
+                <input
+                  type="text"
+                  value={visitorSubject}
+                  onChange={(e) => setVisitorSubject(e.target.value)}
+                  placeholder="Project inquiry, consultation, advisory..."
+                  className="w-full h-9 px-3 rounded-xl bg-surface-2 border border-line text-xs font-medium text-ink placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink-2 mb-1">Message</label>
+                <textarea
+                  value={visitorMessage}
+                  onChange={(e) => setVisitorMessage(e.target.value)}
+                  placeholder="Tell me a bit about what you are looking to build..."
+                  rows={4}
+                  required
+                  className="w-full p-3 rounded-xl bg-surface-2 border border-line text-xs font-medium text-ink placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none font-sans"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-between border-t border-line">
+                <span className="text-[11px] text-ink-3">Delivered via Resend</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsMessageModalOpen(false)}
+                    className="btn btn-secondary h-9 px-4 rounded-xl text-xs font-semibold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !visitorName || !visitorEmail || !visitorMessage}
+                    className="btn btn-primary h-9 px-5 rounded-xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Send className="size-3.5" />
+                    )}
+                    <span>{isSubmitting ? 'Sending...' : 'Send Message'}</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
