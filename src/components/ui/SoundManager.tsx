@@ -11,3 +11,4 @@ export const SoundManager: React.FC = () => {
 
   return null;
 };
+

@@ -295,3 +295,4 @@ export function initGlobalSoundListener(): () => void {
     document.removeEventListener('click', handleClick, { capture: true });
   };
 }
+

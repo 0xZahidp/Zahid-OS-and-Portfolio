@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { ContextMenu } from '@/components/ui/ContextMenu';
 import { ThemeManager } from '@/components/ui/ThemeManager';
 import { SoundManager } from '@/components/ui/SoundManager';
+import { AuthRecoveryListener } from '@/components/auth/AuthRecoveryListener';
 import { PortfolioProvider } from '@/context/PortfolioContext';
 import './globals.css';
 
@@ -85,6 +86,7 @@ export default function RootLayout({
     <html lang="en" className={`scroll-smooth ${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <body className="min-h-dvh antialiased font-sans [scrollbar-gutter:stable]" suppressHydrationWarning>
         <PortfolioProvider>
+          <AuthRecoveryListener />
           <ThemeManager />
           <SoundManager />
           {children}

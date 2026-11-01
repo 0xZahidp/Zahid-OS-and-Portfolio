@@ -16,7 +16,11 @@ function CallbackContent() {
 
     async function handleAuth() {
       try {
-        const next = searchParams.get('next') || '/admin';
+        const type = searchParams.get('type');
+        const hash = typeof window !== 'undefined' ? window.location.hash : '';
+        const isRecovery = type === 'recovery' || hash.includes('type=recovery');
+        const defaultNext = isRecovery ? '/admin/reset-password' : '/admin';
+        const next = searchParams.get('next') || defaultNext;
         const code = searchParams.get('code');
 
         if (code) {
@@ -39,7 +43,8 @@ function CallbackContent() {
         if (isSubscribed) {
           setStatus('success');
           setTimeout(() => {
-            router.replace(next);
+            const finalDestination = isRecovery && hash ? `/admin/reset-password${hash}` : next;
+            router.replace(finalDestination);
           }, 400);
         }
       } catch (err: unknown) {

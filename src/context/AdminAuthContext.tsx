@@ -501,7 +501,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
       const redirectUrl =
         typeof window !== 'undefined'
-          ? `${window.location.origin}/admin`
+          ? `${window.location.origin}/admin/reset-password`
           : undefined;
 
       const { error: resetErr } = await supabase.auth.resetPasswordForEmail(emailToSend, {

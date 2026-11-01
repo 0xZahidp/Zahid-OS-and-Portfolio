@@ -200,6 +200,14 @@ export const AdminLogin: React.FC = () => {
               <label className="block text-[11px] font-semibold text-ink-2">
                 Password
               </label>
+              {mode === 'signin' && (
+                <Link
+                  href="/admin/reset-password"
+                  className="text-[11px] font-medium text-brand-600 dark:text-brand-400 hover:underline cursor-pointer"
+                >
+                  Forgot password?
+                </Link>
+              )}
             </div>
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-ink-3" />
