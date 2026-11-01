@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase/server';
 import portfolioContent from '@/data/portfolio-content.json';
 import { FollowerRecommendation } from '@/types/profile';
 
@@ -107,20 +106,11 @@ const FALLBACK_FOLLOWING: FollowerRecommendation[] = [
   },
 ];
 
+import { getAppSecret } from '@/lib/env-vault';
+
 async function getGitHubToken(): Promise<string | null> {
-  if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
-  try {
-    const supabase = supabaseServer();
-    const { data: setting } = await supabase
-      .from('app_settings')
-      .select('value')
-      .eq('key', 'GITHUB_TOKEN')
-      .single();
-    if (setting?.value) return setting.value as string;
-  } catch {
-    // Supabase query failed or not configured
-  }
-  return null;
+  const token = await getAppSecret('GITHUB_TOKEN');
+  return token || null;
 }
 
 export async function GET(request: Request) {

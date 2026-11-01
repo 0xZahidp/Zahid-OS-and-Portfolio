@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase/server';
 
 export const revalidate = 3600; // Cache for 1 hour
 
@@ -120,38 +119,11 @@ const DEFAULT_REPOS: PinnedRepo[] = [
   },
 ];
 
+import { getAppSecret } from '@/lib/env-vault';
+
 async function getGitHubToken(): Promise<string | null> {
-  // 1. Direct process.env
-  if (process.env.GITHUB_TOKEN) {
-    return process.env.GITHUB_TOKEN;
-  }
-
-  // 2. Check Supabase (if configured)
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
-    try {
-      const supabase = supabaseServer();
-      // Try 'app_settings' table
-      const { data: setting } = await supabase
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'GITHUB_TOKEN')
-        .single();
-      if (setting?.value) return setting.value as string;
-
-      // Try 'secrets' table
-      const { data: secret } = await supabase
-        .from('secrets')
-        .select('value')
-        .eq('name', 'GITHUB_TOKEN')
-        .single();
-      if (secret?.value) return secret.value as string;
-    } catch {
-      // Supabase table not created or query failed - fall through safely
-    }
-  }
-
-  return null;
+  const token = await getAppSecret('GITHUB_TOKEN');
+  return token || null;
 }
 
 export async function GET() {

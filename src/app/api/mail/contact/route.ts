@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { addMailMessage } from '@/lib/mail/store';
 import { MailMessage } from '@/types/mail';
+import { getAppSecret } from '@/lib/env-vault';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
     await addMailMessage(inboxItem);
 
     // 2. If Resend configured, attempt to send owner alert
-    const apiKey = process.env.RESEND_API_KEY;
+    const apiKey = await getAppSecret('RESEND_API_KEY');
     if (apiKey) {
       try {
         const resend = new Resend(apiKey);

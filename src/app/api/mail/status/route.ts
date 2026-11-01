@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getUnreadCount } from '@/lib/mail/store';
+import { getAppSecret } from '@/lib/env-vault';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const apiKey = process.env.RESEND_API_KEY;
+    const apiKey = await getAppSecret('RESEND_API_KEY');
     const isConfigured = Boolean(apiKey && apiKey.startsWith('re_'));
     const unreadCount = await getUnreadCount();
 

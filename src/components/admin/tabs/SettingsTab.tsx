@@ -19,9 +19,16 @@ import {
   RefreshCw,
   ExternalLink,
   Sliders,
+  FileCode,
+  Plus,
+  Copy,
+  Check,
+  Database,
+  Sparkles,
 } from 'lucide-react';
 import { useAdminAuth, PasskeyItem } from '@/context/AdminAuthContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { EnvVaultItem } from '@/lib/env-vault';
 
 export const SettingsTab: React.FC = () => {
   const {
@@ -37,7 +44,7 @@ export const SettingsTab: React.FC = () => {
   } = useAdminAuth();
 
   // Active sub-tab
-  const [activeSubTab, setActiveSubTab] = useState<'security' | 'passkeys' | 'mail' | 'preferences'>('security');
+  const [activeSubTab, setActiveSubTab] = useState<'security' | 'passkeys' | 'env_vault' | 'mail' | 'preferences'>('security');
 
   // Password state
   const [newPassword, setNewPassword] = useState('');
@@ -63,6 +70,36 @@ export const SettingsTab: React.FC = () => {
     unreadCount?: number;
   } | null>(null);
   const [isLoadingMailStatus, setIsLoadingMailStatus] = useState(false);
+
+  // Env Vault State
+  const [envItems, setEnvItems] = useState<EnvVaultItem[]>([]);
+  const [isLoadingEnv, setIsLoadingEnv] = useState(false);
+  const [envKey, setEnvKey] = useState('');
+  const [envValue, setEnvValue] = useState('');
+  const [envIsSecret, setEnvIsSecret] = useState(true);
+  const [envDesc, setEnvDesc] = useState('');
+  const [showEnvValueInput, setShowEnvValueInput] = useState(false);
+  const [isSavingEnv, setIsSavingEnv] = useState(false);
+  const [envFeedback, setEnvFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Load Env Vault items
+  const loadEnvVault = useCallback(async () => {
+    setIsLoadingEnv(true);
+    try {
+      const res = await fetch('/api/env-vault');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.items) {
+          setEnvItems(data.items);
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsLoadingEnv(false);
+    }
+  }, []);
 
   // Load passkeys
   const loadPasskeys = useCallback(async () => {
@@ -96,7 +133,91 @@ export const SettingsTab: React.FC = () => {
   useEffect(() => {
     loadPasskeys();
     loadMailStatus();
-  }, [loadPasskeys, loadMailStatus]);
+    loadEnvVault();
+  }, [loadPasskeys, loadMailStatus, loadEnvVault]);
+
+  // Handle Save Env Secret
+  const handleSaveEnv = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEnvFeedback(null);
+
+    const cleanKey = envKey.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+    if (!cleanKey) {
+      setEnvFeedback({ type: 'error', message: 'Variable key is required.' });
+      return;
+    }
+    if (!envValue.trim()) {
+      setEnvFeedback({ type: 'error', message: 'Variable value cannot be empty.' });
+      return;
+    }
+
+    setIsSavingEnv(true);
+    try {
+      const res = await fetch('/api/env-vault', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: cleanKey,
+          value: envValue.trim(),
+          isSecret: envIsSecret,
+          description: envDesc.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setEnvFeedback({
+          type: 'success',
+          message: `✓ Variable "${cleanKey}" saved directly to Supabase cloud! Active immediately without Vercel deploy.`,
+        });
+        setEnvKey('');
+        setEnvValue('');
+        setEnvDesc('');
+        await loadEnvVault();
+      } else {
+        setEnvFeedback({ type: 'error', message: data.error || 'Failed to save variable.' });
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Save failed';
+      setEnvFeedback({ type: 'error', message: msg });
+    } finally {
+      setIsSavingEnv(false);
+    }
+  };
+
+  // Handle Delete Env Secret
+  const handleDeleteEnv = async (key: string) => {
+    if (!window.confirm(`Delete variable "${key}" from Supabase?`)) return;
+
+    try {
+      const res = await fetch(`/api/env-vault?key=${encodeURIComponent(key)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEnvFeedback({ type: 'success', message: `✓ Variable "${key}" removed from Supabase.` });
+        await loadEnvVault();
+      } else {
+        setEnvFeedback({ type: 'error', message: data.error || 'Failed to delete variable.' });
+      }
+    } catch {
+      setEnvFeedback({ type: 'error', message: 'Failed to delete variable.' });
+    }
+  };
+
+  const handleQuickFill = (key: string, desc: string, isSecret = true) => {
+    setEnvKey(key);
+    setEnvDesc(desc);
+    setEnvIsSecret(isSecret);
+    setEnvValue('');
+  };
+
+  const handleCopyKey = async (key: string, textToCopy?: string) => {
+    if (!textToCopy) return;
+    await navigator.clipboard.writeText(textToCopy);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2500);
+  };
 
   // Handle password change
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -260,6 +381,22 @@ export const SettingsTab: React.FC = () => {
               {passkeys.length}
             </span>
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('env_vault')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 cursor-pointer ${
+            activeSubTab === 'env_vault'
+              ? 'border-brand-500 text-brand-600 dark:text-brand-400 bg-brand-500/5'
+              : 'border-transparent text-ink-3 hover:text-ink hover:bg-surface-2/40'
+          }`}
+        >
+          <FileCode className="size-3.5" />
+          <span>Secrets & .env Vault</span>
+          <span className="px-1.5 py-0.2 rounded-md text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            No Vercel Required
+          </span>
         </button>
 
         <button
@@ -593,6 +730,338 @@ export const SettingsTab: React.FC = () => {
                 <br />
                 • <strong>Windows & Android</strong>: Windows Hello PIN / fingerprint, or Google Password Manager.
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB: SECRETS & .ENV VAULT */}
+      {activeSubTab === 'env_vault' && (
+        <div className="space-y-6">
+          {/* Main Info Card */}
+          <div className="card-raised rounded-2xl border border-line bg-surface p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-600 dark:text-violet-400 grid place-items-center">
+                  <FileCode className="size-4.5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-ink">Secrets & .env Vault (Supabase Cloud)</h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      No Vercel Deploy Required
+                    </span>
+                  </div>
+                  <p className="text-xs text-ink-3">
+                    Store environment variables and operational secrets in Supabase. Values resolve dynamically with zero frontend rebuilding.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={loadEnvVault}
+                className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                title="Refresh variables from Supabase"
+              >
+                <RefreshCw className={`size-3.5 ${isLoadingEnv ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            {/* Architecture Explanation Banner */}
+            <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 text-xs space-y-2">
+              <h4 className="font-bold text-violet-800 dark:text-violet-300 flex items-center gap-1.5">
+                <Sparkles className="size-3.5" />
+                How the Dynamic Vault Works
+              </h4>
+              <p className="text-ink-2 leading-relaxed text-[11px]">
+                • <strong>Zero Vercel Re-deploys</strong>: Traditional environment variables stored in Vercel require a complete project rebuild and deployment every time a key is rotated. Values stored here are fetched live at runtime by server routes (cached for 30s in-memory for lightning speed).
+                <br />
+                • <strong>Supabase Security</strong>: Saved to the <code className="px-1 py-0.5 rounded bg-surface-2 font-mono text-[10px] text-brand-600 dark:text-brand-400">public.app_settings</code> table. Only server-side route handlers using the service role can access plaintext secrets; raw secret values are masked before reaching the browser.
+                <br />
+                • <strong>Automatic Fallback</strong>: If a variable hasn&apos;t been added to Supabase yet, the server gracefully falls back to your local <code className="px-1 py-0.5 rounded bg-surface-2 font-mono text-[10px] text-ink-3">.env.local</code>.
+              </p>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="space-y-2 pt-2 border-t border-line">
+              <p className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider">Quick Fill Presets</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { key: 'RESEND_API_KEY', desc: 'Resend API key for inbox dispatches and contact form', secret: true },
+                  { key: 'GITHUB_TOKEN', desc: 'GitHub Personal Access Token for private stats and rate limits', secret: true },
+                  { key: 'CONTACT_TO_EMAIL', desc: 'Destination inbox for portfolio contact messages', secret: false },
+                  { key: 'CONTACT_FROM_EMAIL', desc: 'Verified sender email (e.g. Md Zahid <hello@zahidp.com>)', secret: false },
+                  { key: 'NEXT_PUBLIC_SITE_URL', desc: 'Canonical live domain URL (e.g. https://zahidp.com)', secret: false },
+                  { key: 'CONTACT_RATE_LIMIT_SECRET', desc: 'HMAC secret key used for contact form rate-limiting', secret: true },
+                ].map((preset) => (
+                  <button
+                    key={preset.key}
+                    type="button"
+                    onClick={() => handleQuickFill(preset.key, preset.desc, preset.secret)}
+                    className="px-2.5 py-1.5 rounded-lg border border-line bg-surface-2/60 hover:bg-surface-2 text-ink-2 hover:text-ink text-[11px] font-mono transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus className="size-3 text-brand-600 dark:text-brand-400" />
+                    <span>{preset.key}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Feedback notification */}
+            {envFeedback && (
+              <div
+                className={`p-3.5 rounded-xl border text-xs flex items-center gap-2.5 ${
+                  envFeedback.type === 'success'
+                    ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                    : 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400'
+                }`}
+              >
+                {envFeedback.type === 'success' ? (
+                  <CheckCircle2 className="size-4 shrink-0 text-emerald-500" />
+                ) : (
+                  <AlertCircle className="size-4 shrink-0 text-rose-500" />
+                )}
+                <span className="font-medium">{envFeedback.message}</span>
+              </div>
+            )}
+
+            {/* Add / Edit Variable Form */}
+            <form onSubmit={handleSaveEnv} className="space-y-4 p-4 rounded-xl border border-line bg-surface-2/30">
+              <h4 className="text-xs font-bold text-ink uppercase tracking-wider">
+                {envKey ? `Add or Overwrite "${envKey}"` : 'Add or Update Secret / Variable'}
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Key Name */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-ink-2">
+                    Variable Key <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={envKey}
+                    onChange={(e) => setEnvKey(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_'))}
+                    placeholder="e.g. RESEND_API_KEY"
+                    className="w-full h-9 px-3 text-xs font-mono rounded-xl bg-surface border border-line focus:border-brand-500 focus:outline-none transition-colors"
+                  />
+                  <p className="text-[10px] text-ink-3">Standard UPPERCASE_WITH_UNDERSCORES convention</p>
+                </div>
+
+                {/* Secret Value */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-ink-2">
+                    Secret / Variable Value <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showEnvValueInput ? 'text' : 'password'}
+                      required
+                      value={envValue}
+                      onChange={(e) => setEnvValue(e.target.value)}
+                      placeholder="Enter raw secret or config value..."
+                      className="w-full h-9 pl-3 pr-10 text-xs font-mono rounded-xl bg-surface border border-line focus:border-brand-500 focus:outline-none transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowEnvValueInput(!showEnvValueInput)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink cursor-pointer"
+                      title={showEnvValueInput ? 'Hide value' : 'Show value'}
+                    >
+                      {showEnvValueInput ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-ink-3">Saved securely into Supabase app_settings</p>
+                </div>
+              </div>
+
+              {/* Description & Options */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-ink-2">Description (Optional)</label>
+                  <input
+                    type="text"
+                    value={envDesc}
+                    onChange={(e) => setEnvDesc(e.target.value)}
+                    placeholder="e.g. Transactional email sending token"
+                    className="w-full h-9 px-3 text-xs rounded-xl bg-surface border border-line focus:border-brand-500 focus:outline-none transition-colors"
+                  />
+                </div>
+
+                <div className="pt-4 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="is_secret_toggle"
+                    checked={envIsSecret}
+                    onChange={(e) => setEnvIsSecret(e.target.checked)}
+                    className="size-4 rounded border-line text-brand-500 focus:ring-brand-500"
+                  />
+                  <label htmlFor="is_secret_toggle" className="text-xs text-ink-2 font-medium cursor-pointer">
+                    Mask as sensitive secret (hide raw value in table & API responses)
+                  </label>
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                {envKey && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEnvKey('');
+                      setEnvValue('');
+                      setEnvDesc('');
+                    }}
+                    className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={isSavingEnv || !envKey.trim() || !envValue.trim()}
+                  className="btn btn-primary h-8 px-4 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {isSavingEnv ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
+                  <span>{isSavingEnv ? 'Saving to Supabase...' : 'Save Secret to Supabase'}</span>
+                </button>
+              </div>
+            </form>
+
+            {/* List of active variables */}
+            <div className="space-y-3 pt-4 border-t border-line">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
+                  <span>Configured Variables & Secrets</span>
+                  <span className="px-2 py-0.2 rounded-full text-[10px] bg-surface-2 border border-line text-ink-2">
+                    {envItems.length} total
+                  </span>
+                </h4>
+                <div className="flex items-center gap-3 text-[11px] text-ink-3">
+                  <span className="flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-emerald-500" />
+                    <span>Supabase Cloud: {envItems.filter((i) => i.source === 'supabase').length}</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-amber-500" />
+                    <span>Local .env: {envItems.filter((i) => i.source === 'env_file').length}</span>
+                  </span>
+                </div>
+              </div>
+
+              {isLoadingEnv && envItems.length === 0 ? (
+                <div className="p-8 text-center text-ink-3">
+                  <Loader2 className="size-5 animate-spin mx-auto mb-2 text-brand-500" />
+                  <p className="text-xs">Loading secrets from Supabase...</p>
+                </div>
+              ) : envItems.length === 0 ? (
+                <div className="p-6 text-center text-ink-3 rounded-xl border border-dashed border-line">
+                  <FileCode className="size-6 mx-auto mb-1.5 opacity-40" />
+                  <p className="text-xs font-medium">No custom variables configured yet</p>
+                  <p className="text-[11px] mt-0.5">Use the presets above to add your first secret directly to Supabase.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {envItems.map((item) => {
+                    const isFromDb = item.source === 'supabase';
+                    const isFromLocal = item.source === 'env_file';
+
+                    return (
+                      <div
+                        key={item.key}
+                        className="p-3.5 rounded-xl border border-line bg-surface hover:border-line-strong transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      >
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-mono font-bold text-ink">{item.key}</span>
+
+                            {/* Source badge */}
+                            {isFromDb ? (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                                <Database className="size-2.5" />
+                                Supabase Cloud
+                              </span>
+                            ) : isFromLocal ? (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
+                                <FileCode className="size-2.5" />
+                                .env.local
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-2 text-ink-3 border border-line">
+                                Not set
+                              </span>
+                            )}
+
+                            {/* Secret badge */}
+                            {item.isSecret ? (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                                Secret
+                              </span>
+                            ) : (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                                Config
+                              </span>
+                            )}
+                          </div>
+
+                          {item.description && (
+                            <p className="text-[11px] text-ink-3 truncate">{item.description}</p>
+                          )}
+
+                          {/* Value display */}
+                          <div className="flex items-center gap-2 pt-0.5">
+                            <code className="text-[11px] font-mono px-2 py-0.5 rounded bg-surface-2 text-ink-2 max-w-full truncate border border-line/60">
+                              {item.maskedValue || (item.hasValue ? '••••••••' : '(empty)')}
+                            </code>
+                            {item.updatedAt && (
+                              <span className="text-[10px] text-ink-4">
+                                Updated {new Date(item.updatedAt).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyKey(item.key, item.value || item.key)}
+                            className="p-1.5 text-ink-3 hover:text-ink rounded-lg hover:bg-surface-2 transition-colors cursor-pointer"
+                            title="Copy key or value"
+                          >
+                            {copiedKey === item.key ? (
+                              <Check className="size-3.5 text-emerald-500" />
+                            ) : (
+                              <Copy className="size-3.5" />
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleQuickFill(item.key, item.description || '', item.isSecret)}
+                            className="px-2 py-1 text-[11px] font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-500/10 rounded-lg transition-colors cursor-pointer"
+                            title="Edit or override this variable"
+                          >
+                            Edit
+                          </button>
+
+                          {isFromDb && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteEnv(item.key)}
+                              className="p-1.5 text-ink-3 hover:text-rose-600 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer"
+                              title="Delete from Supabase"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>

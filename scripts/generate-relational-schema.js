@@ -134,7 +134,17 @@ CREATE TABLE IF NOT EXISTS public.inbox_messages (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 11. GRANT PERMISSIONS (Essential for Supabase anon & service_role access)
+-- 11. APP SETTINGS & ENV SECRETS VAULT TABLE
+CREATE TABLE IF NOT EXISTS public.app_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL DEFAULT '',
+  is_secret BOOLEAN NOT NULL DEFAULT FALSE,
+  description TEXT DEFAULT '',
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE IF EXISTS public.app_settings ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+
+-- 12. GRANT PERMISSIONS (Essential for Supabase anon & service_role access)
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
@@ -347,6 +357,22 @@ if (content.githubSettings) {
   sql += `INSERT INTO public.site_settings (key, value) VALUES ('github_settings', ${escapeSql(JSON.stringify(content.githubSettings))}::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();\n`;
 }
 
+// Seed app_settings (Env & Secrets Vault)
+sql += `
+INSERT INTO public.app_settings (key, value, is_secret, description)
+VALUES 
+  ('RESEND_API_KEY', 're_ZDpWhajB_JZ6cCMrkca3p9EbFDcJCwq2E', TRUE, 'Resend API key for inbox communications and contact form dispatches'),
+  ('CONTACT_RATE_LIMIT_SECRET', 'd14e27bfeffe65f7544ebf67803b71b0984288fb9fb010d0b5ebd3b8db54235c', TRUE, 'HMAC secret token used for public rate limiting'),
+  ('CONTACT_TO_EMAIL', 'mdzahidhasanpatwary@gmail.com', FALSE, 'Destination email for portfolio contact form inquiries'),
+  ('CONTACT_FROM_EMAIL', 'Md Zahid Hasan <hello@zahidp.com>', FALSE, 'Default sender identity for outbound emails'),
+  ('NEXT_PUBLIC_SITE_URL', 'https://zahidp.com', FALSE, 'Canonical domain for OpenGraph meta tags and SEO')
+ON CONFLICT (key) DO UPDATE SET
+  value = EXCLUDED.value,
+  is_secret = EXCLUDED.is_secret,
+  description = EXCLUDED.description,
+  updated_at = NOW();
+`;
+
 const outDir = path.join(__dirname, '../supabase');
 if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });
@@ -354,3 +380,4 @@ if (!fs.existsSync(outDir)) {
 const outPath = path.join(outDir, 'schema_relational.sql');
 fs.writeFileSync(outPath, sql, 'utf8');
 console.log('Successfully wrote:', outPath, 'Bytes:', sql.length);
+
