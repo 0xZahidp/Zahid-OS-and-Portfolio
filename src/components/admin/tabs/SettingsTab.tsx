@@ -26,15 +26,24 @@ import {
   Database,
   Sparkles,
   Save,
+  ShieldCheck,
+  QrCode,
+  AlertTriangle,
+  X,
 } from 'lucide-react';
 import { useAdminAuth, PasskeyItem } from '@/context/AdminAuthContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { EnvVaultItem } from '@/lib/env-vault';
+import { supabase } from '@/lib/supabase/client';
 
 export const SettingsTab: React.FC = () => {
   const {
     user,
     isLocalBypass,
+    mfaLevel,
+    checkMfaLevel,
+    verifyMfaCode,
+    unenrollMfaFactor,
     listPasskeys,
     registerPasskey,
     deletePasskey,
@@ -61,6 +70,35 @@ export const SettingsTab: React.FC = () => {
   const [passkeyLabel, setPasskeyLabel] = useState('');
   const [isRegisteringPasskey, setIsRegisteringPasskey] = useState(false);
   const [passkeyFeedback, setPasskeyFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Passkey inline step-up state
+  const [showPasskeyStepUp, setShowPasskeyStepUp] = useState(false);
+  const [stepUpCode, setStepUpCode] = useState('');
+  const [isVerifyingStepUp, setIsVerifyingStepUp] = useState(false);
+  const [stepUpError, setStepUpError] = useState<string | null>(null);
+  const [pendingPasskeyName, setPendingPasskeyName] = useState<string | undefined>(undefined);
+
+  // MFA Factors State
+  const [mfaFactors, setMfaFactors] = useState<
+    Array<{
+      id: string;
+      friendly_name?: string;
+      factor_type: string;
+      status: 'verified' | 'unverified';
+      created_at: string;
+    }>
+  >([]);
+  const [isLoadingMfa, setIsLoadingMfa] = useState(false);
+  const [mfaFeedback, setMfaFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // MFA Enrollment State
+  const [isEnrollingMfa, setIsEnrollingMfa] = useState(false);
+  const [enrollFriendlyName, setEnrollFriendlyName] = useState('');
+  const [enrollData, setEnrollData] = useState<{ factorId: string; qrCode: string; secret: string } | null>(null);
+  const [enrollCode, setEnrollCode] = useState('');
+  const [isVerifyingEnroll, setIsVerifyingEnroll] = useState(false);
+  const [isEnrollingLoading, setIsEnrollingLoading] = useState(false);
+  const [copiedSecret, setCopiedSecret] = useState(false);
 
   // Mail status state
   const [mailStatus, setMailStatus] = useState<{
@@ -174,11 +212,36 @@ export const SettingsTab: React.FC = () => {
     }
   };
 
+  // Load MFA Factors & Level
+  const loadMfaState = useCallback(async () => {
+    setIsLoadingMfa(true);
+    try {
+      const { data, error } = await supabase.auth.mfa.listFactors();
+      if (!error && data) {
+        setMfaFactors(
+          data.all.map((f) => ({
+            id: f.id,
+            friendly_name: f.friendly_name,
+            factor_type: f.factor_type,
+            status: f.status as 'verified' | 'unverified',
+            created_at: f.created_at,
+          }))
+        );
+      }
+      await checkMfaLevel();
+    } catch (e) {
+      console.warn('Failed to load MFA factors:', e);
+    } finally {
+      setIsLoadingMfa(false);
+    }
+  }, [checkMfaLevel]);
+
   useEffect(() => {
     loadPasskeys();
     loadMailStatus();
     loadEnvVault();
-  }, [loadPasskeys, loadMailStatus, loadEnvVault]);
+    loadMfaState();
+  }, [loadPasskeys, loadMailStatus, loadEnvVault, loadMfaState]);
 
   // Handle Save Env Secret
   const handleSaveEnv = async (e: React.FormEvent) => {
@@ -319,7 +382,7 @@ export const SettingsTab: React.FC = () => {
     }
   };
 
-  // Handle passkey registration
+  // Handle passkey registration (triggers inline step-up modal if MFA factor exists & session is AAL1)
   const handleRegisterPasskey = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasskeyFeedback(null);
@@ -327,21 +390,210 @@ export const SettingsTab: React.FC = () => {
 
     const name = passkeyLabel.trim() || undefined;
     const res = await registerPasskey(name);
-    setIsRegisteringPasskey(false);
 
     if (res.success) {
+      setIsRegisteringPasskey(false);
       setPasskeyFeedback({
         type: 'success',
         message: `Passkey "${name || 'My Authenticator'}" enrolled successfully!`,
       });
       setPasskeyLabel('');
       await loadPasskeys();
+    } else if (res.requiresAal2StepUp) {
+      setIsRegisteringPasskey(false);
+      setPendingPasskeyName(name);
+      setStepUpCode('');
+      setStepUpError(null);
+      setShowPasskeyStepUp(true);
     } else {
+      setIsRegisteringPasskey(false);
       setPasskeyFeedback({
         type: 'error',
         message: res.error || 'Passkey ceremony was cancelled or failed.',
       });
     }
+  };
+
+  // Handle inline TOTP Step-Up for Passkey Enrollment
+  const handleStepUpAndEnrollPasskey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanCode = stepUpCode.replace(/\s+/g, '');
+    if (cleanCode.length !== 6) {
+      setStepUpError('Please enter a complete 6-digit authentication code.');
+      return;
+    }
+
+    setIsVerifyingStepUp(true);
+    setStepUpError(null);
+
+    const verifyRes = await verifyMfaCode(cleanCode);
+    setIsVerifyingStepUp(false);
+
+    if (!verifyRes.success) {
+      setStepUpError(verifyRes.error || 'Invalid 6-digit authentication code. Please check your authenticator app.');
+      return;
+    }
+
+    // Step-up succeeded -> close modal and automatically trigger passkey registration
+    setShowPasskeyStepUp(false);
+    setStepUpCode('');
+    setIsRegisteringPasskey(true);
+
+    const passkeyRes = await registerPasskey(pendingPasskeyName);
+    setIsRegisteringPasskey(false);
+
+    if (passkeyRes.success) {
+      setPasskeyFeedback({
+        type: 'success',
+        message: `Passkey "${pendingPasskeyName || 'My Authenticator'}" enrolled successfully!`,
+      });
+      setPasskeyLabel('');
+      setPendingPasskeyName(undefined);
+      await loadPasskeys();
+    } else {
+      setPasskeyFeedback({
+        type: 'error',
+        message: passkeyRes.error || 'Passkey registration ceremony was cancelled or failed.',
+      });
+    }
+  };
+
+  // Handle Starting TOTP 2FA Enrollment (cleans up any stale unverified factors first)
+  const handleStartEnroll = async (friendlyName?: string) => {
+    setIsEnrollingLoading(true);
+    setMfaFeedback(null);
+
+    try {
+      // 1. Clean up unverified factors before starting a new enrollment, so stale ones never pile up
+      const { data: currentFactors } = await supabase.auth.mfa.listFactors();
+      if (currentFactors?.all) {
+        const unverified = currentFactors.all.filter((f) => f.status === 'unverified');
+        for (const uf of unverified) {
+          try {
+            await supabase.auth.mfa.unenroll({ factorId: uf.id });
+          } catch {
+            // Silently ignore cleanup errors
+          }
+        }
+      }
+
+      // 2. Start new TOTP enrollment
+      const factorName = friendlyName?.trim() || enrollFriendlyName.trim() || 'FolioFrame Authenticator';
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: 'totp',
+        friendlyName: factorName,
+      });
+
+      if (error || !data) {
+        setMfaFeedback({
+          type: 'error',
+          message: error?.message || 'Failed to initialize two-factor enrollment.',
+        });
+        return;
+      }
+
+      setEnrollData({
+        factorId: data.id,
+        qrCode: data.totp.qr_code,
+        secret: data.totp.secret,
+      });
+      setIsEnrollingMfa(true);
+      setEnrollCode('');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Enrollment failed';
+      setMfaFeedback({ type: 'error', message: msg });
+    } finally {
+      setIsEnrollingLoading(false);
+    }
+  };
+
+  // Handle Verifying Code & Finalizing 2FA Activation
+  const handleVerifyEnroll = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!enrollData || enrollCode.trim().length !== 6) return;
+
+    setIsVerifyingEnroll(true);
+    setMfaFeedback(null);
+
+    try {
+      const { data, error } = await supabase.auth.mfa.challengeAndVerify({
+        factorId: enrollData.factorId,
+        code: enrollCode.trim(),
+      });
+
+      if (error || !data) {
+        setMfaFeedback({
+          type: 'error',
+          message:
+            error?.message ||
+            'Invalid 6-digit code. Please verify the code in your authenticator app and try again.',
+        });
+        return;
+      }
+
+      // Enrollment verified!
+      setIsEnrollingMfa(false);
+      setEnrollData(null);
+      setEnrollCode('');
+      setEnrollFriendlyName('');
+      setMfaFeedback({
+        type: 'success',
+        message: '✓ Two-Factor Authentication (TOTP) successfully activated! Your session has been stepped up to AAL2.',
+      });
+      await loadMfaState();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Verification failed';
+      setMfaFeedback({ type: 'error', message: msg });
+    } finally {
+      setIsVerifyingEnroll(false);
+    }
+  };
+
+  // Handle Removing an MFA Factor (with AAL1 server fallback)
+  const handleRemoveFactor = async (factorId: string, friendlyName?: string) => {
+    if (
+      !window.confirm(
+        `Remove authentication factor "${friendlyName || factorId}"? If this is your only 2FA device, two-factor authentication will be disabled.`
+      )
+    ) {
+      return;
+    }
+
+    setMfaFeedback(null);
+    const res = await unenrollMfaFactor(factorId);
+
+    if (res.success) {
+      setMfaFeedback({
+        type: 'success',
+        message: `✓ Factor "${friendlyName || factorId}" successfully removed.`,
+      });
+      await loadMfaState();
+    } else {
+      setMfaFeedback({
+        type: 'error',
+        message:
+          res.error ||
+          'Failed to remove factor. Fallback: Go to Supabase Dashboard -> Authentication -> Users -> Factors -> Delete.',
+      });
+    }
+  };
+
+  // Render QR Code (SVG or Data URI)
+  const renderQrCode = (qr: string) => {
+    if (qr.startsWith('data:image/')) {
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img src={qr} alt="TOTP QR Code" className="size-48 rounded-xl bg-white p-2 mx-auto border border-line" />;
+    }
+    if (qr.trim().startsWith('<svg')) {
+      return (
+        <div
+          className="size-48 rounded-xl bg-white p-2 mx-auto border border-line flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
+          dangerouslySetInnerHTML={{ __html: qr }}
+        />
+      );
+    }
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={qr} alt="TOTP QR Code" className="size-48 rounded-xl bg-white p-2 mx-auto border border-line" />;
   };
 
   // Handle passkey deletion
@@ -596,6 +848,277 @@ export const SettingsTab: React.FC = () => {
             </form>
           </div>
 
+          {/* Two-Factor Authentication Card */}
+          <div className="card-raised rounded-2xl border border-line bg-surface p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 grid place-items-center">
+                  <ShieldCheck className="size-4.5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-ink">Two-Factor Authentication (TOTP)</h3>
+                    {mfaFactors.some((f) => f.status === 'verified') ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                        2FA Enabled
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border border-zinc-500/20">
+                        2FA Disabled
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-ink-3">
+                    Protect your CMS with time-based one-time passwords (TOTP) from Google Authenticator, 1Password, or Apple Keychain.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={loadMfaState}
+                className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                title="Refresh MFA status"
+              >
+                <RefreshCw className={`size-3.5 ${isLoadingMfa ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            {/* Diagnostic Alert: detects leftover factors with AAL1 session */}
+            {mfaFactors.some((f) => f.status === 'verified') && mfaLevel?.currentLevel === 'aal1' && (
+              <div className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 text-xs text-amber-800 dark:text-amber-300 space-y-1.5">
+                <div className="flex items-center gap-2 font-bold">
+                  <AlertTriangle className="size-4 text-amber-500 shrink-0" />
+                  <span>Diagnostic Detected: Leftover MFA Factor with AAL1 Session</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-ink-2">
+                  Your Supabase user has a verified factor (<strong>{mfaFactors.find((f) => f.status === 'verified')?.friendly_name || 'Enrolled Factor'}</strong>), but your current session is at <strong>AAL1</strong>. This is why &quot;Add Passkey&quot; was blocked with an AAL2 error. You can remove this leftover factor below or verify with your authenticator code.
+                </p>
+              </div>
+            )}
+
+            {/* Feedback notification */}
+            {mfaFeedback && (
+              <div
+                className={`p-3.5 rounded-xl border text-xs flex items-start gap-2.5 ${
+                  mfaFeedback.type === 'success'
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-400'
+                }`}
+              >
+                {mfaFeedback.type === 'success' ? (
+                  <CheckCircle2 className="size-4 shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="size-4 shrink-0 mt-0.5" />
+                )}
+                <span>{mfaFeedback.message}</span>
+              </div>
+            )}
+
+            {/* Enrolled factors list */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs font-bold text-ink">
+                <span>Configured Authentication Factors</span>
+                <span className="text-ink-3 font-normal font-mono text-[11px]">
+                  Assurance: {mfaLevel?.currentLevel || 'aal1'} / {mfaLevel?.nextLevel || 'aal1'}
+                </span>
+              </div>
+
+              {mfaFactors.length === 0 ? (
+                <div className="p-4 rounded-xl border border-dashed border-line text-center text-xs text-ink-3">
+                  No two-factor authentication factors enrolled.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {mfaFactors.map((factor) => (
+                    <div
+                      key={factor.id}
+                      className="p-3.5 rounded-xl bg-surface-2 border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="size-8 rounded-lg bg-surface border border-line text-ink-2 grid place-items-center shrink-0">
+                          <Smartphone className="size-4 text-brand-500" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-ink">
+                              {factor.friendly_name || 'Authenticator App'}
+                            </span>
+                            <span
+                              className={`px-1.5 py-0.2 rounded text-[9px] font-semibold uppercase ${
+                                factor.status === 'verified'
+                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                              }`}
+                            >
+                              {factor.status}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-ink-3 font-mono mt-0.5">
+                            ID: {factor.id} · Added {new Date(factor.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFactor(factor.id, factor.friendly_name)}
+                        className="px-2.5 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer self-end sm:self-auto"
+                        title="Remove this factor"
+                      >
+                        <Trash2 className="size-3" />
+                        <span>Remove factor</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Actions: Enable 2FA or Add Backup Authenticator */}
+            {!isEnrollingMfa && (
+              <div className="pt-2 flex flex-wrap items-center gap-3">
+                {!mfaFactors.some((f) => f.status === 'verified') ? (
+                  <button
+                    type="button"
+                    onClick={() => handleStartEnroll()}
+                    disabled={isEnrollingLoading}
+                    className="btn btn-primary h-9 px-4 rounded-xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isEnrollingLoading ? <Loader2 className="size-3.5 animate-spin" /> : <ShieldCheck className="size-3.5" />}
+                    <span>Enable Two-Factor Authentication</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleStartEnroll('Backup Authenticator')}
+                    disabled={isEnrollingLoading}
+                    className="btn btn-secondary h-9 px-4 rounded-xl text-xs font-semibold inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isEnrollingLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
+                    <span>+ Add Backup Authenticator App</span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Active Enrollment Panel */}
+            {isEnrollingMfa && enrollData && (
+              <div className="p-4 sm:p-5 rounded-xl bg-surface-2 border border-brand-500/30 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
+                    <QrCode className="size-4 text-brand-500" />
+                    <span>Setup Authenticator App</span>
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEnrollingMfa(false);
+                      setEnrollData(null);
+                      setEnrollCode('');
+                    }}
+                    className="p-1 rounded-lg text-ink-3 hover:text-ink cursor-pointer"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                  {/* QR Code */}
+                  <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-surface border border-line">
+                    {renderQrCode(enrollData.qrCode)}
+                    <p className="text-[10px] text-ink-3 text-center mt-2">
+                      Scan with Google Authenticator, 1Password, or Apple Passwords
+                    </p>
+                  </div>
+
+                  {/* Manual Secret and 6-digit verification */}
+                  <div className="space-y-3.5">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-ink-3 mb-1">
+                        Manual Secret Key:
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 px-3 py-1.5 rounded-lg bg-surface border border-line text-xs font-mono text-ink tracking-wider truncate">
+                          {enrollData.secret}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(enrollData.secret);
+                            setCopiedSecret(true);
+                            setTimeout(() => setCopiedSecret(false), 2000);
+                          }}
+                          className="p-2 rounded-lg bg-surface border border-line text-ink-3 hover:text-ink cursor-pointer"
+                          title="Copy Secret"
+                        >
+                          {copiedSecret ? <Check className="size-3.5 text-emerald-500" /> : <Copy className="size-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <form onSubmit={handleVerifyEnroll} className="space-y-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-ink-2 mb-1">
+                          Enter 6-Digit Code from App:
+                        </label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={6}
+                          value={enrollCode}
+                          onChange={(e) => setEnrollCode(e.target.value.replace(/[^0-9]/g, ''))}
+                          placeholder="000 000"
+                          required
+                          autoFocus
+                          className="w-full h-10 px-3 text-center text-lg font-mono tracking-widest font-bold rounded-xl bg-surface border border-line focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-ink"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEnrollingMfa(false);
+                            setEnrollData(null);
+                            setEnrollCode('');
+                          }}
+                          className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isVerifyingEnroll || enrollCode.length !== 6}
+                          className="btn btn-primary h-8 px-4 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        >
+                          {isVerifyingEnroll ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
+                          <span>{isVerifyingEnroll ? 'Activating...' : 'Verify & Activate 2FA'}</span>
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Recovery Notice Alert */}
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs space-y-2 text-ink-2">
+              <h4 className="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <AlertTriangle className="size-3.5 text-amber-500" />
+                <span>Account Recovery Notice</span>
+              </h4>
+              <p className="text-[11px] leading-relaxed">
+                • <strong>No built-in recovery codes</strong>: Supabase Auth does not generate static recovery codes. Enroll a backup authenticator above to ensure continuous access.
+                <br />
+                • <strong>Lost Device Fallback</strong>: If you lose all your authenticator devices, an administrator must remove the factor in the Supabase Dashboard under <strong>Authentication → Users → Factors → Delete Factor</strong>.
+              </p>
+            </div>
+          </div>
+
           {/* Session Invalidation Card */}
           <div className="card-raised rounded-2xl border border-line bg-surface p-6 space-y-4">
             <div className="flex items-center gap-3">
@@ -780,6 +1303,81 @@ export const SettingsTab: React.FC = () => {
                 • <strong>Windows & Android</strong>: Windows Hello PIN / fingerprint, or Google Password Manager.
               </p>
             </div>
+
+            {/* Inline TOTP Step-Up Modal for Passkey Enrollment */}
+            {showPasskeyStepUp && (
+              <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+                <div className="card-raised rounded-2xl border border-line bg-surface max-w-md w-full shadow-2xl overflow-hidden p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="size-9 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 grid place-items-center">
+                        <ShieldCheck className="size-4.5" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-ink">Two-Factor Step-Up Required</h3>
+                        <p className="text-[11px] text-ink-3">AAL2 session required to enroll passkeys.</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowPasskeyStepUp(false)}
+                      className="p-1 rounded-lg text-ink-3 hover:text-ink cursor-pointer"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-ink-2 leading-relaxed">
+                    Because two-factor authentication is active on your account, Supabase requires verifying a TOTP code before registering a new biometric or hardware passkey.
+                  </p>
+
+                  {stepUpError && (
+                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2">
+                      <AlertCircle className="size-4 shrink-0 mt-0.5" />
+                      <span>{stepUpError}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleStepUpAndEnrollPasskey} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-ink-2 mb-1.5 text-center">
+                        6-Digit Authenticator Code
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={6}
+                        value={stepUpCode}
+                        onChange={(e) => setStepUpCode(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="000 000"
+                        autoFocus
+                        required
+                        className="w-full h-11 text-center text-xl font-mono tracking-widest font-bold rounded-xl bg-surface-2 border border-line text-ink focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowPasskeyStepUp(false)}
+                        className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isVerifyingStepUp || stepUpCode.length !== 6}
+                        className="btn btn-primary h-8 px-4 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        {isVerifyingStepUp ? <Loader2 className="size-3.5 animate-spin" /> : <ShieldCheck className="size-3.5" />}
+                        <span>{isVerifyingStepUp ? 'Verifying...' : 'Verify & Add Passkey'}</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

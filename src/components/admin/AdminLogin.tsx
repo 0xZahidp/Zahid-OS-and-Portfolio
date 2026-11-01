@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import { GoogleIcon } from '@/components/ui/Icons';
+import { supabase } from '@/lib/supabase/client';
 
 export const AdminLogin: React.FC = () => {
   const {
@@ -50,7 +51,12 @@ export const AdminLogin: React.FC = () => {
     try {
       if (mode === 'signin') {
         const res = await signInWithEmail(email, password);
-        if (!res.success) {
+        if (res.success) {
+          if (res.requiresMfa) {
+            window.location.href = '/admin/mfa';
+            return;
+          }
+        } else {
           setIsSubmitting(false);
         }
       } else {
@@ -79,8 +85,14 @@ export const AdminLogin: React.FC = () => {
     clearError();
     setSuccessMessage(null);
     setIsPasskeyLoading(true);
-    await signInWithPasskey();
+    const res = await signInWithPasskey();
     setIsPasskeyLoading(false);
+    if (res?.success) {
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal?.currentLevel === 'aal1' && aal?.nextLevel === 'aal2') {
+        window.location.href = '/admin/mfa';
+      }
+    }
   };
 
   const isLocalhost =

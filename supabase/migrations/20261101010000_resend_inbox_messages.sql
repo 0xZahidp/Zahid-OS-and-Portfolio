@@ -102,3 +102,4 @@ CREATE POLICY "Admin delete inbox_messages"
   FOR DELETE
   TO authenticated
   USING (true);
+

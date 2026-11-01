@@ -18,17 +18,26 @@ export interface PasskeyItem {
   credential_id?: string;
 }
 
+export interface MfaAssuranceLevel {
+  currentLevel: 'aal1' | 'aal2' | null;
+  nextLevel: 'aal1' | 'aal2' | null;
+}
+
 interface AdminAuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
   isLocalBypass: boolean;
   error: string | null;
-  signInWithEmail: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  mfaLevel: MfaAssuranceLevel | null;
+  checkMfaLevel: () => Promise<MfaAssuranceLevel>;
+  signInWithEmail: (email: string, password: string) => Promise<{ success: boolean; requiresMfa?: boolean; error?: string }>;
   signUpWithEmail: (email: string, password: string) => Promise<{ success: boolean; error?: string; message?: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   signInWithPasskey: () => Promise<{ success: boolean; error?: string }>;
-  registerPasskey: (name?: string) => Promise<{ success: boolean; error?: string }>;
+  verifyMfaCode: (code: string, factorId?: string) => Promise<{ success: boolean; error?: string }>;
+  unenrollMfaFactor: (factorId: string) => Promise<{ success: boolean; error?: string }>;
+  registerPasskey: (name?: string) => Promise<{ success: boolean; requiresAal2StepUp?: boolean; error?: string }>;
   listPasskeys: () => Promise<PasskeyItem[]>;
   deletePasskey: (id: string) => Promise<{ success: boolean; error?: string }>;
   updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -49,6 +58,27 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isLocalBypass, setIsLocalBypass] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [mfaLevel, setMfaLevel] = useState<MfaAssuranceLevel | null>(null);
+
+  // Helper to query current Authenticator Assurance Level (AAL)
+  const checkMfaLevel = useCallback(async (): Promise<MfaAssuranceLevel> => {
+    try {
+      const { data, error: aalErr } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (!aalErr && data) {
+        const lvl: MfaAssuranceLevel = {
+          currentLevel: (data.currentLevel as 'aal1' | 'aal2' | null) ?? 'aal1',
+          nextLevel: (data.nextLevel as 'aal1' | 'aal2' | null) ?? 'aal1',
+        };
+        setMfaLevel(lvl);
+        return lvl;
+      }
+    } catch (e) {
+      console.warn('Failed to query MFA assurance level:', e);
+    }
+    const fallback: MfaAssuranceLevel = { currentLevel: 'aal1', nextLevel: 'aal1' };
+    setMfaLevel(fallback);
+    return fallback;
+  }, []);
 
   // Check initial session & subscribe to auth state changes
   useEffect(() => {
@@ -72,7 +102,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Get current session
     supabase.auth
       .getSession()
-      .then(({ data, error: sessionErr }) => {
+      .then(async ({ data, error: sessionErr }) => {
         clearTimeout(safetyTimer);
         if (!mounted) return;
         if (sessionErr) {
@@ -82,6 +112,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setSession(data.session);
           setUser(data.session.user);
           setIsLocalBypass(false);
+          await checkMfaLevel();
         }
         setIsLoading(false);
       })
@@ -94,7 +125,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Subscribe to auth state updates (e.g. login, logout, token refresh, OAuth redirect)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+    } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
       if (!mounted) return;
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
@@ -103,6 +134,9 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (typeof window !== 'undefined') {
           localStorage.removeItem(LOCAL_BYPASS_KEY);
         }
+        await checkMfaLevel();
+      } else {
+        setMfaLevel(null);
       }
       setIsLoading(false);
     });
@@ -112,11 +146,11 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [checkMfaLevel]);
 
   const clearError = useCallback(() => setError(null), []);
 
-  // 1. Email + Password Sign In
+  // 1. Email + Password Sign In with MFA Step-up detection
   const signInWithEmail = useCallback(async (email: string, password: string) => {
     setError(null);
     try {
@@ -133,7 +167,17 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setSession(data.session);
       setUser(data.user);
       setIsLocalBypass(false);
-      return { success: true };
+
+      // Evaluate MFA requirement
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      const currentLevel = (aal?.currentLevel as 'aal1' | 'aal2' | null) ?? 'aal1';
+      const nextLevel = (aal?.nextLevel as 'aal1' | 'aal2' | null) ?? 'aal1';
+      const lvl: MfaAssuranceLevel = { currentLevel, nextLevel };
+      setMfaLevel(lvl);
+
+      const requiresMfa = currentLevel === 'aal1' && nextLevel === 'aal2';
+
+      return { success: true, requiresMfa };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Sign in failed';
       setError(msg);
@@ -162,6 +206,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setSession(data.session);
         setUser(data.user);
         setIsLocalBypass(false);
+        await checkMfaLevel();
         return { success: true, message: 'Account created and signed in!' };
       }
 
@@ -170,33 +215,26 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         message: 'Account created! Please check your email inbox to confirm your registration.',
       };
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Registration failed';
+      const msg = err instanceof Error ? err.message : 'Sign up failed';
       setError(msg);
       return { success: false, error: msg };
     }
-  }, []);
+  }, [checkMfaLevel]);
 
-  // 3. Google OAuth Sign In
+  // 3. OAuth Sign In (Google)
   const signInWithGoogle = useCallback(async () => {
     setError(null);
     try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const redirectTo = `${origin}/auth/callback?next=/admin`;
-
-      const { error: oAuthErr } = await supabase.auth.signInWithOAuth({
+      const { error: oauthErr } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account',
-          },
+          redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
         },
       });
 
-      if (oAuthErr) {
-        setError(oAuthErr.message);
-        return { success: false, error: oAuthErr.message };
+      if (oauthErr) {
+        setError(oauthErr.message);
+        return { success: false, error: oauthErr.message };
       }
 
       return { success: true };
@@ -207,18 +245,18 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  // 4. Passkey (WebAuthn / FIDO2) Sign In
+  // 4. Passkey Sign In (WebAuthn)
   const signInWithPasskey = useCallback(async () => {
     setError(null);
     try {
       if (typeof window === 'undefined' || !window.PublicKeyCredential) {
-        const msg = 'Your browser or device does not support WebAuthn / Passkeys.';
+        const msg = 'WebAuthn passkeys are not supported on this platform/browser.';
         setError(msg);
         return { success: false, error: msg };
       }
 
       if (typeof supabase.auth.signInWithPasskey !== 'function') {
-        const msg = 'Passkey authentication is not available in current Supabase client.';
+        const msg = 'Passkey authentication function is not supported in this client build.';
         setError(msg);
         return { success: false, error: msg };
       }
@@ -234,6 +272,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setSession(data.session);
         setUser(data.user);
         setIsLocalBypass(false);
+        await checkMfaLevel();
       }
 
       return { success: true };
@@ -242,9 +281,100 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setError(msg);
       return { success: false, error: msg };
     }
+  }, [checkMfaLevel]);
+
+  // 5. Verify 6-digit TOTP MFA Code (Step-up to AAL2)
+  const verifyMfaCode = useCallback(async (code: string, factorId?: string) => {
+    setError(null);
+    try {
+      let targetFactorId = factorId;
+      if (!targetFactorId) {
+        const { data: factors, error: listErr } = await supabase.auth.mfa.listFactors();
+        if (listErr || !factors) {
+          const msg = listErr?.message || 'Failed to list authentication factors.';
+          setError(msg);
+          return { success: false, error: msg };
+        }
+        const verifiedFactor =
+          factors.totp.find((f) => f.status === 'verified') ||
+          factors.all.find((f) => f.status === 'verified');
+        if (!verifiedFactor) {
+          const msg = 'No active two-factor authentication factor found.';
+          setError(msg);
+          return { success: false, error: msg };
+        }
+        targetFactorId = verifiedFactor.id;
+      }
+
+      const { data, error: verifyErr } = await supabase.auth.mfa.challengeAndVerify({
+        factorId: targetFactorId,
+        code: code.trim(),
+      });
+
+      if (verifyErr) {
+        setError(verifyErr.message);
+        return { success: false, error: verifyErr.message };
+      }
+
+      // Upgrade session & mfaLevel to AAL2
+      if (data?.user) {
+        setUser(data.user);
+      }
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session) {
+        setSession(sessionData.session);
+      }
+      setMfaLevel({ currentLevel: 'aal2', nextLevel: 'aal2' });
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'MFA verification failed';
+      setError(msg);
+      return { success: false, error: msg };
+    }
   }, []);
 
-  // 5. Register a new Passkey (Apple Touch ID, YubiKey, Windows Hello, etc.)
+  // 6. Unenroll an MFA factor (with AAL1 server fallback)
+  const unenrollMfaFactor = useCallback(async (factorId: string) => {
+    setError(null);
+    try {
+      // 1. Attempt standard client unenroll (succeeds if session is AAL2)
+      const { error: unenrollErr } = await supabase.auth.mfa.unenroll({ factorId });
+      if (!unenrollErr) {
+        await checkMfaLevel();
+        return { success: true };
+      }
+
+      // 2. If client-side failed (e.g. AAL2 required error), attempt via server admin API
+      const currentToken = session?.access_token;
+      if (currentToken) {
+        const res = await fetch('/api/auth/mfa/remove-factor', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${currentToken}`,
+          },
+          body: JSON.stringify({ factorId }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          await checkMfaLevel();
+          return { success: true };
+        }
+      }
+
+      return {
+        success: false,
+        error:
+          unenrollErr.message ||
+          'Failed to remove factor. Fallback: delete factor in Supabase Dashboard (Authentication -> Users -> Factors).',
+      };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to unenroll factor';
+      return { success: false, error: msg };
+    }
+  }, [checkMfaLevel, session?.access_token]);
+
+  // 7. Register Passkey (Handles AAL2 requirement when MFA factor exists)
   const registerPasskey = useCallback(async (name?: string) => {
     setError(null);
     try {
@@ -260,9 +390,22 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return { success: false, error: msg };
       }
 
+      // Check AAL requirement: only demand step-up if user has a verified factor
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal?.nextLevel === 'aal2' && aal?.currentLevel !== 'aal2') {
+        return {
+          success: false,
+          requiresAal2StepUp: true,
+          error: 'AAL2 session is required to manage passkeys when MFA is enabled.',
+        };
+      }
+
       const { data, error: regErr } = await supabase.auth.registerPasskey();
 
       if (regErr) {
+        if (regErr.message?.includes('AAL2') || regErr.message?.includes('aal2')) {
+          return { success: false, requiresAal2StepUp: true, error: regErr.message };
+        }
         setError(regErr.message);
         return { success: false, error: regErr.message };
       }
@@ -286,7 +429,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  // 6. List Registered Passkeys
+  // 8. List Registered Passkeys
   const listPasskeys = useCallback(async (): Promise<PasskeyItem[]> => {
     try {
       const passkeyApi = (supabase.auth as unknown as { passkey?: PasskeyApi }).passkey;
@@ -305,7 +448,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  // 7. Delete a Passkey
+  // 9. Delete a Passkey
   const deletePasskey = useCallback(async (id: string) => {
     try {
       const passkeyApi = (supabase.auth as unknown as { passkey?: PasskeyApi }).passkey;
@@ -323,7 +466,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  // 8. Update Password
+  // 10. Update Password
   const updatePassword = useCallback(async (newPassword: string) => {
     try {
       const { data, error: updateErr } = await supabase.auth.updateUser({
@@ -342,7 +485,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  // 9. Send Password Reset Email
+  // 11. Send Password Reset Email
   const sendPasswordResetEmail = useCallback(async (targetEmail?: string) => {
     try {
       const emailToSend = targetEmail || user?.email;
@@ -367,7 +510,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [user]);
 
-  // 10. Sign Out
+  // 12. Sign Out
   const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
@@ -377,12 +520,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setSession(null);
     setUser(null);
     setIsLocalBypass(false);
+    setMfaLevel(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem(LOCAL_BYPASS_KEY);
     }
   }, []);
 
-  // 11. Sign Out Everywhere
+  // 13. Sign Out Everywhere
   const signOutAllDevices = useCallback(async () => {
     try {
       const { error: signErr } = await supabase.auth.signOut({ scope: 'global' });
@@ -392,6 +536,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setSession(null);
       setUser(null);
       setIsLocalBypass(false);
+      setMfaLevel(null);
       if (typeof window !== 'undefined') {
         localStorage.removeItem(LOCAL_BYPASS_KEY);
       }
@@ -402,12 +547,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  // 12. Local Dev Bypass (for offline preview or testing without remote setup)
+  // 14. Bypass local dev auth
   const bypassLocalAuth = useCallback(() => {
-    setIsLocalBypass(true);
     if (typeof window !== 'undefined') {
       localStorage.setItem(LOCAL_BYPASS_KEY, 'true');
     }
+    setIsLocalBypass(true);
+    setIsLoading(false);
   }, []);
 
   const value = useMemo(
@@ -417,10 +563,14 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       isLoading,
       isLocalBypass,
       error,
+      mfaLevel,
+      checkMfaLevel,
       signInWithEmail,
       signUpWithEmail,
       signInWithGoogle,
       signInWithPasskey,
+      verifyMfaCode,
+      unenrollMfaFactor,
       registerPasskey,
       listPasskeys,
       deletePasskey,
@@ -437,10 +587,14 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       isLoading,
       isLocalBypass,
       error,
+      mfaLevel,
+      checkMfaLevel,
       signInWithEmail,
       signUpWithEmail,
       signInWithGoogle,
       signInWithPasskey,
+      verifyMfaCode,
+      unenrollMfaFactor,
       registerPasskey,
       listPasskeys,
       deletePasskey,

@@ -6,7 +6,7 @@ import { usePortfolio } from '@/context/PortfolioContext';
 import { AdminSidebar, AdminTab } from '@/components/admin/AdminSidebar';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { LivePreviewPane } from '@/components/admin/LivePreviewPane';
-import { AdminAuthProvider, useAdminAuth } from '@/context/AdminAuthContext';
+import { useAdminAuth } from '@/context/AdminAuthContext';
 import { AdminLogin } from '@/components/admin/AdminLogin';
 import { Loader2 } from 'lucide-react';
 
@@ -85,7 +85,7 @@ const TAB_META: Record<AdminTab, { title: string; description: string }> = {
 };
 
 function AdminDashboardInner() {
-  const { user, isLocalBypass, isLoading } = useAdminAuth();
+  const { user, isLocalBypass, isLoading, mfaLevel } = useAdminAuth();
   const {
     isDirty,
     isSaving,
@@ -212,6 +212,21 @@ function AdminDashboardInner() {
     return <AdminLogin />;
   }
 
+  // Route protection: If MFA is enabled (nextLevel === 'aal2'), require AAL2 before allowing access to admin pages
+  if (user && !isLocalBypass && mfaLevel?.nextLevel === 'aal2' && mfaLevel?.currentLevel !== 'aal2') {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/admin/mfa';
+    }
+    return (
+      <div className="min-h-screen bg-surface flex flex-col items-center justify-center gap-3 select-none">
+        <div className="size-11 rounded-2xl bg-brand-500/10 border border-brand-500/20 text-brand-600 dark:text-brand-400 grid place-items-center">
+          <Loader2 className="size-5.5 animate-spin" />
+        </div>
+        <p className="text-xs font-semibold text-ink-3">Two-factor authentication required. Redirecting...</p>
+      </div>
+    );
+  }
+
   return (
     <div suppressHydrationWarning className="min-h-screen bg-surface flex flex-col font-sans">
       {/* 2-Column Layout: Sidebar + Main Workspace */}
@@ -290,9 +305,5 @@ function AdminDashboardInner() {
 }
 
 export default function AdminDashboard() {
-  return (
-    <AdminAuthProvider>
-      <AdminDashboardInner />
-    </AdminAuthProvider>
-  );
+  return <AdminDashboardInner />;
 }
