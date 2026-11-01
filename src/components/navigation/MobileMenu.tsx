@@ -69,7 +69,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               </span>
             </span>
             <span className="text-title font-bold tracking-tight text-ink">
-              zahid<span className="text-ink-3">.dev</span>
+              0xZahidP
             </span>
           </Link>
 

@@ -50,7 +50,7 @@ export default async function Image() {
             Z
           </div>
           <span style={{ fontSize: '36px', fontWeight: 800, color: '#f5f5f5' }}>
-            0xZahidp
+            0xZahidP
           </span>
         </div>
 

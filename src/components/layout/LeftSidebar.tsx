@@ -50,7 +50,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
           {!isCollapsed && (
             <span className="hidden text-xl font-bold tracking-tight text-ink xl:inline-flex">
-              zahid<span className="text-ink-3 transition-colors group-hover:text-link">.dev</span>
+              0xZahidP
             </span>
           )}
         </Link>

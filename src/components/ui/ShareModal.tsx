@@ -31,8 +31,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   url,
 }) => {
   const [copied, setCopied] = useState(false);
-  const [shareUrl, setShareUrl] = useState('https://zahid.dev');
-  const [displayUrl, setDisplayUrl] = useState('zahid.dev');
+  const [shareUrl, setShareUrl] = useState('https://zahidp.com');
+  const [displayUrl, setDisplayUrl] = useState('0xZahidP');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -40,9 +40,9 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       setShareUrl(currentUrl);
       try {
         const parsed = new URL(currentUrl);
-        setDisplayUrl(parsed.host || 'zahid.dev');
+        setDisplayUrl(parsed.host || '0xZahidP');
       } catch {
-        setDisplayUrl('zahid.dev');
+        setDisplayUrl('0xZahidP');
       }
     }
   }, [url]);
