@@ -41,3 +41,4 @@ export interface MailStoreData {
   messages: MailMessage[];
   updatedAt: string;
 }
+

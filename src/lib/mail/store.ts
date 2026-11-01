@@ -115,3 +115,4 @@ export async function emptyTrash(): Promise<number> {
   await writeMailStore(store);
   return originalLength - store.messages.length;
 }
+
