@@ -1,93 +1,74 @@
-{
-  "updatedAt": "2026-11-01T17:40:00.000Z",
-  "messages": [
-    {
-      "id": "msg_inbox_1",
-      "folder": "inbox",
-      "from": {
-        "name": "Sarah Lin",
-        "email": "sarah.lin@apexstudio.io"
-      },
-      "to": [
-        {
-          "name": "Md Zahid Hasan",
-          "email": "hello@zahidp.com"
-        }
-      ],
-      "replyTo": "sarah.lin@apexstudio.io",
-      "subject": "Project Collaboration: AI-Driven Design System & Web App",
-      "body": "Hi Zahid,\n\nI came across your portfolio and was blown away by the craftsmanship of your tactile UI components and full-stack architecture. We are currently architecting an AI agent workflow platform at Apex Studio and need a lead frontend / full-stack engineer who understands design systems, real-time sync, and Supabase integration.\n\nCould we schedule a 20-minute intro call this week to discuss scope, timeline, and rates?\n\nBest regards,\nSarah Lin\nHead of Engineering @ Apex Studio",
-      "snippet": "I came across your portfolio and was blown away by the craftsmanship of your tactile UI components...",
-      "createdAt": "2026-11-01T15:30:00.000Z",
-      "isRead": false,
-      "isStarred": true,
-      "tags": ["Inquiry", "Freelance", "High Priority"]
-    },
-    {
-      "id": "msg_inbox_2",
-      "folder": "inbox",
-      "from": {
-        "name": "David Miller",
-        "email": "david@techventures.co"
-      },
-      "to": [
-        {
-          "name": "Md Zahid Hasan",
-          "email": "hello@zahidp.com"
-        }
-      ],
-      "replyTo": "david@techventures.co",
-      "subject": "Tech Advisory & Full-Stack Consultation",
-      "body": "Hey Zahid,\n\nHope you're doing well! We are reviewing several early-stage dev-tools startups in our portfolio that are looking for advisory on Next.js 15 App Router architecture, edge caching, and scalable authentication patterns.\n\nYour profile stood out given your track record with modern web infrastructure and agentic tooling. Let me know if you have bandwidth for a consulting engagement this quarter.\n\nCheers,\nDavid Miller\nPartner, TechVentures",
-      "snippet": "We are reviewing several early-stage dev-tools startups looking for advisory on Next.js 15 App Router...",
-      "createdAt": "2026-10-31T20:15:00.000Z",
-      "isRead": false,
-      "isStarred": false,
-      "tags": ["Consultation", "Advisory"]
-    },
-    {
-      "id": "msg_inbox_3",
-      "folder": "inbox",
-      "from": {
-        "name": "Alexandre Dumas",
-        "email": "alex@devsummit.global"
-      },
-      "to": [
-        {
-          "name": "Md Zahid Hasan",
-          "email": "hello@zahidp.com"
-        }
-      ],
-      "replyTo": "alex@devsummit.global",
-      "subject": "Speaking Invitation: Global Developer Summit 2027",
-      "body": "Dear Zahid,\n\nWe would love to invite you as a keynote speaker for the Full-Stack Systems track at DevSummit 2027. We noticed your public engineering work on GitHub and thought your experience building tactile UI frameworks and real-time portfolio architecture would be immensely valuable to our 4,000+ attendees.\n\nPlease let us know if you'd be interested and we'll send over the speaker deck.\n\nWarm regards,\nAlexandre Dumas",
-      "snippet": "We would love to invite you as a keynote speaker for the Full-Stack Systems track at DevSummit...",
-      "createdAt": "2026-10-30T11:00:00.000Z",
-      "isRead": true,
-      "isStarred": true,
-      "tags": ["Conference", "Speaking"]
-    },
-    {
-      "id": "msg_sent_1",
-      "folder": "sent",
-      "from": {
-        "name": "Md Zahid Hasan",
-        "email": "hello@zahidp.com"
-      },
-      "to": [
-        {
-          "name": "Marcus Vance",
-          "email": "marcus@cloudscale.io"
-        }
-      ],
-      "subject": "Re: Architecture Review for Micro-frontends on Vercel",
-      "body": "Hi Marcus,\n\nThanks for reaching out! I reviewed the RFC you shared. The separation of concerns between your auth service and dashboard microfrontends looks solid. I added inline annotations on the edge routing middleware and cache headers.\n\nLooking forward to sync on Thursday.\n\nBest,\nZahid",
-      "snippet": "Thanks for reaching out! I reviewed the RFC you shared. The separation of concerns looks solid...",
-      "createdAt": "2026-10-29T14:22:00.000Z",
-      "isRead": true,
-      "isStarred": false,
-      "tags": ["Sent", "Resend"]
-    }
-  ]
-}
-
+[
+  {
+    "id": "msg_sent_1793536860630",
+    "name": "Md Zahid Hasan",
+    "email": "hello@zahidp.com",
+    "subject": "Re: Speaking Invitation: Global Developer Summit 2027",
+    "body": "Dear Alexandre,\n\nThank you for considering me for the keynote speaker opportunity at DevSummit 2027.\n\nI'm honored by the invitation and interested in learning more about the event and the Full-Stack Systems track.\n\nCould you please share the official event website, proposed dates and location, speaker deck, and more details about the keynote expectations?\n\nI'd also appreciate information about speaker arrangements, including compensation, travel, and accommodation support.\n\nLooking forward to learning more about this opportunity.\n\nBest regards,\nZahid",
+    "status": "read",
+    "is_starred": false,
+    "is_sent": true,
+    "recipient": "alex@devsummit.global",
+    "created_at": "2026-11-01T12:41:00.630Z"
+  },
+  {
+    "id": "msg_sent_1793536830769",
+    "name": "Md Zahid Hasan",
+    "email": "hello@zahidp.com",
+    "subject": "Re: Tech Advisory & Full-Stack Consultation",
+    "body": "Hi David,\n\nThanks for reaching out and considering me for the consulting opportunity.\n\nThe areas you mentioned, particularly Next.js architecture, scalable authentication, edge caching, and modern development infrastructure, sound interesting.\n\nI'd be open to exploring a potential engagement. Could you share more details about TechVentures, the startups you're working with, the expected scope of consulting, and the anticipated time commitment and budget?\n\nI'd be happy to review the details and see if there's a good fit.\n\nLooking forward to hearing from you.\n\nBest regards,\nZahid",
+    "status": "read",
+    "is_starred": false,
+    "is_sent": true,
+    "recipient": "david@techventures.co",
+    "created_at": "2026-11-01T12:40:30.769Z"
+  },
+  {
+    "id": "msg_inbox_1",
+    "name": "Sarah Lin",
+    "email": "sarah.lin@apexstudio.io",
+    "subject": "Project Collaboration: AI-Driven Design System & Web App",
+    "body": "Hi Zahid,\n\nI came across your portfolio and was blown away by the craftsmanship of your tactile UI components and full-stack architecture. We are currently architecting an AI agent workflow platform at Apex Studio and need a lead frontend / full-stack engineer who understands design systems, real-time sync, and Supabase integration.\n\nCould we schedule a 20-minute intro call this week to discuss scope, timeline, and rates?\n\nBest regards,\nSarah Lin\nHead of Engineering @ Apex Studio",
+    "status": "read",
+    "is_starred": false,
+    "is_sent": false,
+    "recipient": "hello@zahidp.com",
+    "created_at": "2026-11-01T15:30:00.000Z"
+  },
+  {
+    "id": "msg_inbox_2",
+    "name": "David Miller",
+    "email": "david@techventures.co",
+    "subject": "Tech Advisory & Full-Stack Consultation",
+    "body": "Hey Zahid,\n\nHope you're doing well! We are reviewing several early-stage dev-tools startups in our portfolio that are looking for advisory on Next.js 15 App Router architecture, edge caching, and scalable authentication patterns.\n\nYour profile stood out given your track record with modern web infrastructure and agentic tooling. Let me know if you have bandwidth for a consulting engagement this quarter.\n\nCheers,\nDavid Miller\nPartner, TechVentures",
+    "status": "read",
+    "is_starred": false,
+    "is_sent": false,
+    "recipient": "hello@zahidp.com",
+    "created_at": "2026-10-31T20:15:00.000Z"
+  },
+  {
+    "id": "msg_inbox_3",
+    "name": "Alexandre Dumas",
+    "email": "alex@devsummit.global",
+    "subject": "Speaking Invitation: Global Developer Summit 2027",
+    "body": "Dear Zahid,\n\nWe would love to invite you as a keynote speaker for the Full-Stack Systems track at DevSummit 2027. We noticed your public engineering work on GitHub and thought your experience building tactile UI frameworks and real-time portfolio architecture would be immensely valuable to our 4,000+ attendees.\n\nPlease let us know if you'd be interested and we'll send over the speaker deck.\n\nWarm regards,\nAlexandre Dumas",
+    "status": "read",
+    "is_starred": false,
+    "is_sent": false,
+    "recipient": "hello@zahidp.com",
+    "created_at": "2026-10-30T11:00:00.000Z"
+  },
+  {
+    "id": "msg_sent_1",
+    "name": "Md Zahid Hasan",
+    "email": "hello@zahidp.com",
+    "subject": "Re: Architecture Review for Micro-frontends on Vercel",
+    "body": "Hi Marcus,\n\nThanks for reaching out! I reviewed the RFC you shared. The separation of concerns between your auth service and dashboard microfrontends looks solid. I added inline annotations on the edge routing middleware and cache headers.\n\nLooking forward to sync on Thursday.\n\nBest,\nZahid",
+    "status": "read",
+    "is_starred": false,
+    "is_sent": true,
+    "recipient": "marcus@cloudscale.io",
+    "created_at": "2026-10-29T14:22:00.000Z"
+  }
+]

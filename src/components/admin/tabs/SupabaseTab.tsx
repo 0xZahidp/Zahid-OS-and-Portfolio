@@ -370,6 +370,18 @@ export const SupabaseTab: React.FC = () => {
     setTimeout(() => setCopiedGrant(false), 3000);
   };
 
+  const copyFullSchemaSql = async () => {
+    try {
+      const res = await fetch('/api/supabase/schema-sql');
+      const text = await res.text();
+      await navigator.clipboard.writeText(text);
+      setFeedback({ type: 'success', message: '✓ Full Relational Schema SQL (10 Tables + Seeds) copied to clipboard!' });
+      setTimeout(() => setFeedback(null), 4000);
+    } catch {
+      copyGrantSql();
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-6xl pb-16">
       {/* Toast Notification */}
@@ -814,11 +826,20 @@ export const SupabaseTab: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={copyGrantSql}
+                  onClick={copyFullSchemaSql}
                   className="btn btn-primary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
+                  title="Copy full 10-table schema SQL with seed data"
+                >
+                  <Sparkles className="size-3.5" />
+                  <span>Copy 10-Table Schema SQL</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={copyGrantSql}
+                  className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
                 >
                   {copiedGrant ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-                  <span>{copiedGrant ? 'Copied SQL!' : 'Copy Grant SQL'}</span>
+                  <span>{copiedGrant ? 'Copied!' : 'Copy Grant SQL'}</span>
                 </button>
               </div>
             </div>

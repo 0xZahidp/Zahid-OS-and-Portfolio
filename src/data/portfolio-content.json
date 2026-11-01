@@ -33,25 +33,31 @@
   ],
   "languages": [
     {
+      "id": "lang-english",
       "name": "English",
       "proficiency": "Near-native",
       "rating": 5,
       "note": "Professional & technical communication",
-      "hasVoice": true
+      "hasVoice": true,
+      "sort_order": 0
     },
     {
+      "id": "lang-bangla",
       "name": "Bangla",
       "proficiency": "Native",
       "rating": 5,
       "note": "Native tongue",
-      "hasVoice": true
+      "hasVoice": true,
+      "sort_order": 1
     },
     {
+      "id": "lang-arabic",
       "name": "Arabic",
       "proficiency": "Reading and small talk",
       "rating": 3,
       "note": "Conversational & liturgical reading",
-      "hasVoice": true
+      "hasVoice": true,
+      "sort_order": 2
     }
   ],
   "skills": [
@@ -59,132 +65,176 @@
       "id": "claude",
       "name": "Claude",
       "category": "ai",
-      "color": "#d97757"
+      "color": "#d97757",
+      "sort_order": 0
     },
     {
       "id": "openai",
       "name": "OpenAI",
       "category": "ai",
-      "color": "#10a37f"
+      "color": "#10a37f",
+      "sort_order": 1
     },
     {
       "id": "antigravity",
       "name": "Antigravity",
       "category": "ai",
-      "color": "#6366f1"
+      "color": "#6366f1",
+      "sort_order": 2
     },
     {
       "id": "opencode",
       "name": "OpenCode",
       "category": "ai",
-      "color": "#0ea5e9"
+      "color": "#0ea5e9",
+      "sort_order": 3
     },
     {
       "id": "telegram-bot",
       "name": "Telegram Bot API",
       "category": "ai",
-      "color": "#24A1DE"
+      "color": "#24A1DE",
+      "sort_order": 4
     },
     {
       "id": "python",
       "name": "Python",
       "category": "ai",
-      "color": "#3776AB"
+      "color": "#3776AB",
+      "sort_order": 5
     },
     {
       "id": "react",
       "name": "React 19",
-      "category": "tech"
+      "category": "tech",
+      "color": null,
+      "sort_order": 6
     },
     {
       "id": "nextjs",
       "name": "Next.js",
-      "category": "tech"
+      "category": "tech",
+      "color": null,
+      "sort_order": 7
     },
     {
       "id": "typescript",
       "name": "TypeScript",
-      "category": "tech"
+      "category": "tech",
+      "color": null,
+      "sort_order": 8
     },
     {
       "id": "javascript",
       "name": "JavaScript",
-      "category": "tech"
+      "category": "tech",
+      "color": null,
+      "sort_order": 9
     },
     {
       "id": "supabase",
       "name": "Supabase",
-      "category": "tech"
+      "category": "tech",
+      "color": null,
+      "sort_order": 10
     },
     {
       "id": "tailwind",
       "name": "Tailwind CSS",
-      "category": "tech"
+      "category": "tech",
+      "color": null,
+      "sort_order": 11
     },
     {
       "id": "tanstack",
       "name": "TanStack Query",
-      "category": "tech"
+      "category": "tech",
+      "color": null,
+      "sort_order": 12
     },
     {
       "id": "indexeddb",
       "name": "IndexedDB / Dexie",
-      "category": "tech"
+      "category": "tech",
+      "color": null,
+      "sort_order": 13
     },
     {
       "id": "laravel",
       "name": "Laravel",
-      "category": "tech"
+      "category": "tech",
+      "color": null,
+      "sort_order": 14
     },
     {
       "id": "php",
       "name": "PHP",
-      "category": "tech"
+      "category": "tech",
+      "color": null,
+      "sort_order": 15
     },
     {
       "id": "livewire",
       "name": "Livewire",
-      "category": "tech"
+      "category": "tech",
+      "color": null,
+      "sort_order": 16
     },
     {
       "id": "alpine",
       "name": "Alpine.js",
-      "category": "tech"
+      "category": "tech",
+      "color": null,
+      "sort_order": 17
     },
     {
       "id": "vue",
       "name": "Vue.js",
-      "category": "tech"
+      "category": "tech",
+      "color": null,
+      "sort_order": 18
     },
     {
       "id": "vscode",
       "name": "VS Code",
-      "category": "tool"
+      "category": "tool",
+      "color": null,
+      "sort_order": 19
     },
     {
       "id": "git",
       "name": "Git",
-      "category": "tool"
+      "category": "tool",
+      "color": null,
+      "sort_order": 20
     },
     {
       "id": "github",
       "name": "GitHub",
-      "category": "tool"
+      "category": "tool",
+      "color": null,
+      "sort_order": 21
     },
     {
       "id": "vercel",
       "name": "Vercel",
-      "category": "tool"
+      "category": "tool",
+      "color": null,
+      "sort_order": 22
     },
     {
       "id": "vite",
       "name": "Vite",
-      "category": "tool"
+      "category": "tool",
+      "color": null,
+      "sort_order": 23
     },
     {
       "id": "figma",
       "name": "Figma",
-      "category": "tool"
+      "category": "tool",
+      "color": null,
+      "sort_order": 24
     }
   ],
   "experience": [
@@ -226,7 +276,8 @@
         "Supabase",
         "Tailwind CSS"
       ],
-      "is_current": true
+      "is_current": true,
+      "sort_order": 0
     },
     {
       "id": "exp-db",
@@ -267,7 +318,8 @@
         "Dexie",
         "Supabase"
       ],
-      "is_current": true
+      "is_current": true,
+      "sort_order": 1
     },
     {
       "id": "exp-ipb",
@@ -308,7 +360,8 @@
         "Supabase",
         "Tailwind CSS"
       ],
-      "is_current": true
+      "is_current": true,
+      "sort_order": 2
     },
     {
       "id": "exp-zf",
@@ -320,6 +373,7 @@
       "type": "Full-time",
       "workplace_type": "Remote",
       "description": "Created a personal finance and trust-money ledger to track income, expenses, lending, borrowing, held funds, reminders, recurring transactions, approvals, reports, and email-based records.",
+      "highlights": null,
       "bullet_points": [
         "Relationship-based ledger: separates personal income/expenses from funds held in trust for others or lent out.",
         "Automated financial health overview with net worth calculation, settlement tracking, and payment reminders.",
@@ -331,7 +385,8 @@
         "Supabase",
         "PWA"
       ],
-      "is_current": true
+      "is_current": true,
+      "sort_order": 3
     },
     {
       "id": "exp-tsp",
@@ -343,6 +398,7 @@
       "type": "Full-time",
       "workplace_type": "Remote",
       "description": "Built a shared-living management system for meal tracking, grocery and bazar records, member payables, rent, settlements, absence tracking, and monthly reporting.",
+      "highlights": null,
       "bullet_points": [
         "Shared household ledger: tracks daily meal counts, grocery contributions, utility bills, and individual net balances.",
         "Automated end-of-month settlement reports eliminating manual disputes and ledger calculation errors.",
@@ -354,7 +410,8 @@
         "Supabase",
         "Tailwind CSS"
       ],
-      "is_current": true
+      "is_current": true,
+      "sort_order": 4
     },
     {
       "id": "exp-madrasah",
@@ -366,6 +423,7 @@
       "type": "Freelance",
       "workplace_type": "Remote",
       "description": "Developing lightweight administrative tools and Telegram bots that simplify recurring tasks through structured data capture, reminders, confirmations, reporting, and clear audit-friendly records.",
+      "highlights": null,
       "bullet_points": [
         "Built Telegram bot workflows automating administrative student attendance and monthly fee collection reminders.",
         "Engineered Google Sheets API sync pipeline for auto-generating weekly financial audit sheets.",
@@ -377,7 +435,8 @@
         "Google Sheets API",
         "Automation"
       ],
-      "is_current": true
+      "is_current": true,
+      "sort_order": 5
     },
     {
       "id": "exp-bidvers",
@@ -417,7 +476,8 @@
         "Alpine.js",
         "Tailwind CSS"
       ],
-      "is_current": true
+      "is_current": true,
+      "sort_order": 6
     }
   ],
   "projects": [
@@ -435,7 +495,9 @@
       "project_url": "https://sq.zahidp.com",
       "highlightBadge": "EdTech Command Center",
       "stars": 42,
-      "logoType": "prompt"
+      "logoType": "prompt",
+      "sort_order": 0,
+      "repository_url": null
     },
     {
       "id": "proj-zf",
@@ -449,10 +511,11 @@
         "PWA"
       ],
       "project_url": "https://finance.zahidp.com",
-      "repository_url": "https://github.com/0xzahidp/zahid-finance",
       "highlightBadge": "Personal Finance & Trust",
       "stars": 38,
-      "logoType": "invo"
+      "logoType": "invo",
+      "sort_order": 1,
+      "repository_url": "https://github.com/0xzahidp/zahid-finance"
     },
     {
       "id": "proj-db",
@@ -468,7 +531,9 @@
       "project_url": "https://db.zahidp.com",
       "highlightBadge": "Offline-First POS",
       "stars": 24,
-      "logoType": "bidvers"
+      "logoType": "bidvers",
+      "sort_order": 2,
+      "repository_url": null
     },
     {
       "id": "proj-tsp",
@@ -483,7 +548,9 @@
       "project_url": "https://www.zahidp.com",
       "highlightBadge": "Shared Living System",
       "stars": 19,
-      "logoType": "mytapcard"
+      "logoType": "mytapcard",
+      "sort_order": 3,
+      "repository_url": null
     },
     {
       "id": "proj-booknagar",
@@ -497,10 +564,11 @@
         "Tailwind CSS"
       ],
       "project_url": "https://www.zahidp.com/en/projects/book-nagar",
-      "repository_url": "https://github.com/0xzahidp/book-nagar",
       "highlightBadge": "Web Application",
       "stars": 15,
-      "logoType": "laravel"
+      "logoType": "laravel",
+      "sort_order": 4,
+      "repository_url": "https://github.com/0xzahidp/book-nagar"
     },
     {
       "id": "proj-madrasah",
@@ -515,7 +583,9 @@
       "project_url": "https://www.zahidp.com",
       "highlightBadge": "Telegram Bot & Automation",
       "stars": 29,
-      "logoType": "prompt"
+      "logoType": "prompt",
+      "sort_order": 5,
+      "repository_url": null
     },
     {
       "id": "proj-bidvers",
@@ -530,7 +600,9 @@
       "project_url": "https://bidvers.com",
       "highlightBadge": "$120K+ raised",
       "stars": 54,
-      "logoType": "bidvers"
+      "logoType": "bidvers",
+      "sort_order": 6,
+      "repository_url": null
     },
     {
       "id": "proj-learn-laravel",
@@ -542,10 +614,12 @@
         "Learning",
         "PHP"
       ],
-      "repository_url": "https://github.com/0xzahidp/learn-laravel",
+      "project_url": null,
       "highlightBadge": "Open source",
       "stars": 186,
-      "logoType": "laravel"
+      "logoType": "laravel",
+      "sort_order": 7,
+      "repository_url": "https://github.com/0xzahidp/learn-laravel"
     }
   ],
   "socialLinks": [
@@ -554,35 +628,40 @@
       "platform": "peerlist",
       "label": "Telegram",
       "handle": "@OxZahidP",
-      "url": "https://t.me/0xzahidp"
+      "url": "https://t.me/0xzahidp",
+      "sort_order": 0
     },
     {
       "id": "soc-github",
       "platform": "github",
       "label": "GitHub",
       "handle": "@0xzahidp",
-      "url": "https://github.com/0xzahidp"
+      "url": "https://github.com/0xzahidp",
+      "sort_order": 1
     },
     {
       "id": "soc-x",
       "platform": "x",
       "label": "X (Twitter)",
       "handle": "@0xzahidp",
-      "url": "https://x.com/0xzahidp"
+      "url": "https://x.com/0xzahidp",
+      "sort_order": 2
     },
     {
       "id": "soc-linkedin",
       "platform": "linkedin",
       "label": "LinkedIn",
       "handle": "in/oxzahidp",
-      "url": "https://www.linkedin.com/in/oxzahidp"
+      "url": "https://www.linkedin.com/in/oxzahidp",
+      "sort_order": 3
     },
     {
       "id": "soc-facebook",
       "platform": "facebook",
       "label": "Facebook",
       "handle": "0xzahidp",
-      "url": "https://facebook.com/0xzahidp"
+      "url": "https://facebook.com/0xzahidp",
+      "sort_order": 4
     }
   ],
   "suggestedPeople": [
@@ -592,7 +671,8 @@
       "role": "Product Architect & Founder of TyroLabs",
       "avatar_url": "https://avatars.githubusercontent.com/u/490779?v=4",
       "url": "https://github.com/hasinhayder",
-      "handle": "hasinhayder"
+      "handle": "hasinhayder",
+      "sort_order": 0
     },
     {
       "id": "person-zahin",
@@ -600,7 +680,8 @@
       "role": "Web Developer (React, Next.js, Go)",
       "avatar_url": "https://avatars.githubusercontent.com/u/105446082?v=4",
       "url": "https://github.com/IsHereZahin",
-      "handle": "IsHereZahin"
+      "handle": "IsHereZahin",
+      "sort_order": 1
     },
     {
       "id": "person-rezaur",
@@ -608,7 +689,8 @@
       "role": "Senior Software Engineer (Distributed Systems)",
       "avatar_url": "https://avatars.githubusercontent.com/u/68007353?v=4",
       "url": "https://github.com/RezaurOfficial",
-      "handle": "RezaurOfficial"
+      "handle": "RezaurOfficial",
+      "sort_order": 2
     },
     {
       "id": "person-aniruddha",
@@ -616,7 +698,8 @@
       "role": "Software Engineer @GovTechSG (Singapore)",
       "avatar_url": "https://avatars.githubusercontent.com/u/932949?v=4",
       "url": "https://github.com/aniruddha-adhikary",
-      "handle": "aniruddha-adhikary"
+      "handle": "aniruddha-adhikary",
+      "sort_order": 3
     },
     {
       "id": "person-tahsin",
@@ -624,7 +707,8 @@
       "role": "DevOps & Cloud Automation Engineer",
       "avatar_url": "https://avatars.githubusercontent.com/u/107357207?v=4",
       "url": "https://github.com/tahsinulhoque",
-      "handle": "tahsinulhoque"
+      "handle": "tahsinulhoque",
+      "sort_order": 4
     },
     {
       "id": "person-emran",
@@ -632,7 +716,8 @@
       "role": "Web3 & Community Relations Specialist",
       "avatar_url": "https://avatars.githubusercontent.com/u/55331321?v=4",
       "url": "https://github.com/Emranrx02",
-      "handle": "Emranrx02"
+      "handle": "Emranrx02",
+      "sort_order": 5
     },
     {
       "id": "person-sani",
@@ -640,7 +725,8 @@
       "role": "Full Stack Web Developer",
       "avatar_url": "https://avatars.githubusercontent.com/u/66258879?v=4",
       "url": "https://github.com/ssani7",
-      "handle": "ssani7"
+      "handle": "ssani7",
+      "sort_order": 6
     },
     {
       "id": "person-benaiah",
@@ -648,7 +734,8 @@
       "role": "Full Stack Builder & Software Engineer",
       "avatar_url": "https://avatars.githubusercontent.com/u/65370456?v=4",
       "url": "https://github.com/Benrobo",
-      "handle": "Benrobo"
+      "handle": "Benrobo",
+      "sort_order": 7
     },
     {
       "id": "person-roman",
@@ -656,7 +743,8 @@
       "role": "Software Developer",
       "avatar_url": "https://avatars.githubusercontent.com/u/21079607?v=4",
       "url": "https://github.com/reacheight",
-      "handle": "reacheight"
+      "handle": "reacheight",
+      "sort_order": 8
     },
     {
       "id": "person-prottoy",
@@ -664,7 +752,8 @@
       "role": "Software Developer (Dhaka)",
       "avatar_url": "https://avatars.githubusercontent.com/u/115341293?v=4",
       "url": "https://github.com/abmprottoy",
-      "handle": "abmprottoy"
+      "handle": "abmprottoy",
+      "sort_order": 9
     },
     {
       "id": "person-shakib",
@@ -672,7 +761,8 @@
       "role": "Web Developer (Dhaka)",
       "avatar_url": "https://avatars.githubusercontent.com/u/206897066?v=4",
       "url": "https://github.com/shakib5551",
-      "handle": "shakib5551"
+      "handle": "shakib5551",
+      "sort_order": 10
     },
     {
       "id": "person-syed",
@@ -680,7 +770,8 @@
       "role": "Computer Science & Engineering Graduate",
       "avatar_url": "https://avatars.githubusercontent.com/u/62606974?v=4",
       "url": "https://github.com/Syed-Eftasum-Alam",
-      "handle": "Syed-Eftasum-Alam"
+      "handle": "Syed-Eftasum-Alam",
+      "sort_order": 11
     }
   ],
   "worksSettings": {
@@ -707,5 +798,5 @@
     "totalContributions": 1378,
     "totalRepos": 92
   },
-  "updatedAt": "2026-11-01T12:38:33.412Z"
+  "updatedAt": "2026-11-01T13:15:12.037Z"
 }
