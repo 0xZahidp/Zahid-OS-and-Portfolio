@@ -8,6 +8,9 @@ import {
   Tag,
   Calendar,
   Smile,
+  Users,
+  BookMarked,
+  Activity,
 } from 'lucide-react';
 import { GitHubIcon } from '@/components/ui/Icons';
 import { usePortfolio } from '@/context/PortfolioContext';
@@ -92,6 +95,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
   const projectsData = content.projects;
   const [totalContributions, setTotalContributions] = useState<number>(102);
   const [totalRepos, setTotalRepos] = useState<number>(26);
+  const [followersCount, setFollowersCount] = useState<number>(6);
   const [pinnedRepos, setPinnedRepos] = useState<PinnedRepo[]>(DEFAULT_PINNED_REPOS);
   const [liveWeeks, setLiveWeeks] = useState<ContributionDay[][] | null>(null);
   const [hoveredCell, setHoveredCell] = useState<{
@@ -117,6 +121,9 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
         }
         if (data.user?.public_repos !== undefined) {
           setTotalRepos(data.user.public_repos);
+        }
+        if (data.user?.followers !== undefined) {
+          setFollowersCount(data.user.followers);
         }
         if (Array.isArray(data.repositories) && data.repositories.length > 0) {
           setPinnedRepos(data.repositories);
@@ -247,6 +254,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
 
   const effectiveContributions = content.githubSettings?.totalContributions ?? totalContributions;
   const effectiveRepos = content.githubSettings?.totalRepos ?? totalRepos;
+  const effectiveFollowers = content.githubSettings?.followersCount ?? followersCount;
   const githubUsername = content.githubSettings?.username || '0xZahidp';
   const effectivePinnedRepos = useMemo(() => {
     if (content.githubSettings?.pinnedRepos && content.githubSettings.pinnedRepos.length > 0) {
@@ -334,15 +342,56 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
     <div className="space-y-12">
       {/* 1. GitHub Contributions Heatmap & Pinned Repos */}
       <section aria-labelledby="github-section-heading">
-        {/* Header */}
-        <div className="flex items-center gap-2.5">
-          <GitHubIcon className="size-5 text-ink shrink-0" />
-          <h2
-            id="github-section-heading"
-            className="text-lg font-semibold tracking-tight text-ink"
-          >
-            GitHub
-          </h2>
+        {/* Header & Quick Profile Stats */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <GitHubIcon className="size-5 text-ink shrink-0" />
+            <h2
+              id="github-section-heading"
+              className="text-lg font-semibold tracking-tight text-ink"
+            >
+              GitHub
+            </h2>
+            <a
+              href={`https://github.com/${githubUsername}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-mono text-ink-3 hover:text-ink transition-colors inline-flex items-center gap-1"
+            >
+              <span>@{githubUsername}</span>
+              <ArrowUpRight className="size-3" />
+            </a>
+          </div>
+
+          {/* Quick Metrics Badges: Followers, Repos, Contributions */}
+          <div className="flex items-center gap-2 flex-wrap text-xs">
+            <a
+              href={`https://github.com/${githubUsername}?tab=followers`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface-2 border border-line hover:border-line-strong text-ink hover:text-brand-500 transition-all font-medium"
+              title="View GitHub Followers"
+            >
+              <Users className="size-3.5 text-ink-3" />
+              <span><strong>{effectiveFollowers}</strong> followers</span>
+            </a>
+
+            <a
+              href={`https://github.com/${githubUsername}?tab=repositories`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface-2 border border-line hover:border-line-strong text-ink hover:text-brand-500 transition-all font-medium"
+              title="View Public Repositories"
+            >
+              <BookMarked className="size-3.5 text-ink-3" />
+              <span><strong>{effectiveRepos}</strong> repos</span>
+            </a>
+
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
+              <Activity className="size-3.5" />
+              <span><strong>{effectiveContributions.toLocaleString()}</strong> contributions</span>
+            </span>
+          </div>
         </div>
 
         {/* Summary text - Muted gray with uniform weight */}
