@@ -35,11 +35,12 @@ export const ExperienceSection: React.FC = () => {
               {/* Logo with current role badge */}
               <div className="relative size-12 shrink-0">
                 <Image
-                  src={exp.company_logo}
+                  src={exp.company_logo || '/images/bidvers.webp'}
                   alt={`${exp.company} logo`}
                   width={48}
                   height={48}
                   className="size-12 rounded-xl object-cover ring-1 ring-line"
+                  unoptimized
                 />
                 {exp.is_current && (
                   <span

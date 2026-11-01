@@ -2,9 +2,10 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Plus, Trash2, ChevronUp, ChevronDown, Briefcase } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, Briefcase, Sparkles } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { Experience } from '@/types/profile';
+import { CompanyLogoUploader } from '@/components/admin/CompanyLogoUploader';
 
 export const ExperienceTab: React.FC = () => {
   const { content, updateExperience } = usePortfolio();
@@ -97,6 +98,21 @@ export const ExperienceTab: React.FC = () => {
           </button>
         </div>
 
+        {/* Clear Image & Icon Sizing Guideline Banner */}
+        <div className="p-3.5 rounded-xl border border-brand-500/20 bg-brand-500/5 text-xs text-ink-2 space-y-1">
+          <div className="flex items-center gap-1.5 font-bold text-brand-700 dark:text-brand-300">
+            <Sparkles className="size-3.5" />
+            <span>Company Logo & Icon Upload Instructions</span>
+          </div>
+          <p className="text-[11px] leading-relaxed text-ink-3">
+            • <strong>Target Dimensions</strong>: Exactly <strong>64 × 64 px</strong> (1:1 square ratio) for high-DPI retina sharpness.
+            <br />
+            • <strong>Automatic Optimization</strong>: Upload any image of any size (e.g. 500×500, 1080p, or 4K photo). It is automatically center-cropped and optimized to <strong>exact 64×64 px</strong> without distortion or file bloat.
+            <br />
+            • <strong>Recommended Formats</strong>: Transparent PNG, SVG, or WebP for optimal contrast in dark and light modes.
+          </p>
+        </div>
+
         <div className="space-y-4">
           {experiences.map((exp, idx) => (
             <div
@@ -154,6 +170,16 @@ export const ExperienceTab: React.FC = () => {
                     <Trash2 className="size-3.5" />
                   </button>
                 </div>
+              </div>
+
+              {/* Company Logo / Icon Uploader with Auto-Optimization */}
+              <div className="pt-2 border-t border-line/60">
+                <CompanyLogoUploader
+                  currentLogo={exp.company_logo || ''}
+                  companyName={exp.company}
+                  label="Company Logo / Icon"
+                  onLogoChange={(newLogoUrl) => handleUpdate(idx, { company_logo: newLogoUrl })}
+                />
               </div>
 
               {/* Fields Grid */}
