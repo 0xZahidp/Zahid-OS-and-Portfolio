@@ -21,6 +21,7 @@ import {
   Home,
   ShieldCheck,
   Terminal,
+  Flame,
 } from 'lucide-react';
 import { ShortLink, ZahidOsSettings, ZahidOsAppId } from '@/types/os';
 
@@ -136,7 +137,7 @@ export default function PublicZahidOsPage() {
             </h1>
 
             <p className="mt-2 text-xs text-ink-3 max-w-xs mx-auto leading-relaxed">
-              Public access to Zahid OS has not been enabled yet. If you are the owner, sign in to the CMS to configure OS permissions.
+              Public access to Zahid OS is currently in private mode. Sign in to the CMS studio to enable public access and configure permissions.
             </p>
           </div>
 
@@ -166,6 +167,7 @@ export default function PublicZahidOsPage() {
     {
       id: 'shortener' as ZahidOsAppId,
       name: 'Shortener',
+      subtitle: 'URL Engine',
       gradient: 'from-cyan-500 via-blue-600 to-indigo-600',
       icon: Link2,
       enabled: settings.app_permissions?.shortener?.is_public !== false,
@@ -174,6 +176,7 @@ export default function PublicZahidOsPage() {
     {
       id: 'qr' as ZahidOsAppId,
       name: 'QR Studio',
+      subtitle: 'Matrix Generator',
       gradient: 'from-fuchsia-500 via-purple-600 to-indigo-700',
       icon: QrCode,
       enabled: settings.app_permissions?.qr?.is_public !== false,
@@ -181,6 +184,7 @@ export default function PublicZahidOsPage() {
     {
       id: 'snippets' as ZahidOsAppId,
       name: 'Snippets',
+      subtitle: 'Code Cheat Sheet',
       gradient: 'from-emerald-400 via-teal-500 to-emerald-700',
       icon: Code2,
       enabled: settings.app_permissions?.snippets?.is_public !== false,
@@ -188,6 +192,7 @@ export default function PublicZahidOsPage() {
     {
       id: 'focus' as ZahidOsAppId,
       name: 'Focus',
+      subtitle: 'Pomodoro Timer',
       gradient: 'from-orange-500 via-rose-600 to-red-600',
       icon: Clock,
       enabled: settings.app_permissions?.focus?.is_public !== false,
@@ -199,41 +204,50 @@ export default function PublicZahidOsPage() {
     switch (openApp) {
       case 'shortener':
         return (
-          <div className="p-4 sm:p-6 space-y-4">
-            <div className="text-center pb-3 border-b border-white/10">
-              <h3 className="font-bold text-sm text-white">Public Links Directory</h3>
-              <p className="text-[11px] text-white/60">Short shortcuts curated by 0xZahidP.</p>
+          <div className="p-4 sm:p-7 space-y-4 max-w-3xl mx-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div>
+                <h3 className="font-bold text-base text-white">Public Links Directory</h3>
+                <p className="text-xs text-white/60">Short shortcuts curated by 0xZahidP.</p>
+              </div>
             </div>
 
-            <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
               {links
                 .filter((l) => l.is_active !== false)
                 .map((link) => (
                   <div
                     key={link.id}
-                    className="p-3 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500/30 transition-all flex items-center justify-between gap-3"
+                    className="p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/30 transition-all flex items-center justify-between gap-3"
                   >
                     <div className="min-w-0">
-                      <span className="text-xs font-bold text-white truncate block">
+                      <span className="text-xs sm:text-sm font-bold text-white truncate block">
                         {link.title}
                       </span>
-                      <span className="text-[11px] font-mono text-cyan-400">/s/{link.slug}</span>
+                      <div className="flex items-center gap-2 mt-0.5 text-xs font-mono text-cyan-400">
+                        <span>/s/{link.slug}</span>
+                        <span className="text-white/40">•</span>
+                        <span className="text-white/60 flex items-center gap-1">
+                          <Flame className="size-3 text-amber-400 fill-amber-400" />
+                          <span>{link.clicks || 0}</span>
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
                         onClick={() => handleCopy(link.slug)}
-                        className="h-7 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
+                        className="h-8 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                       >
                         {copiedSlug === link.slug ? (
                           <>
-                            <Check className="size-3 text-emerald-400" />
-                            <span>Copied</span>
+                            <Check className="size-3.5 text-emerald-400" />
+                            <span className="text-emerald-300">Copied</span>
                           </>
                         ) : (
                           <>
-                            <Copy className="size-3" />
+                            <Copy className="size-3.5" />
                             <span>Copy</span>
                           </>
                         )}
@@ -243,9 +257,10 @@ export default function PublicZahidOsPage() {
                         href={`/s/${link.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="size-7 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white grid place-items-center cursor-pointer"
+                        className="size-8 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white grid place-items-center cursor-pointer transition-colors"
+                        title="Visit Link"
                       >
-                        <ExternalLink className="size-3.5" />
+                        <ExternalLink className="size-4" />
                       </a>
                     </div>
                   </div>
@@ -256,24 +271,43 @@ export default function PublicZahidOsPage() {
 
       case 'qr':
         return (
-          <div className="p-6 text-center space-y-4">
-            <h3 className="font-bold text-sm text-white">Instant QR Code Generator</h3>
+          <div className="p-4 sm:p-7 text-center space-y-5 max-w-lg mx-auto">
+            <div>
+              <h3 className="font-bold text-base text-white">Instant QR Code Generator</h3>
+              <p className="text-xs text-white/60">Generate and download scannable codes.</p>
+            </div>
+
             <input
               type="text"
               value={customQrUrl}
               onChange={(e) => setCustomQrUrl(e.target.value)}
               placeholder="Enter web link to generate QR..."
-              className="w-full h-8 px-3 rounded-lg border border-white/10 bg-white/5 text-xs text-white outline-hidden font-mono"
+              className="w-full h-10 px-3.5 rounded-xl border border-white/10 bg-white/5 text-xs text-white outline-hidden font-mono"
             />
+
             <div className="p-4 bg-white rounded-2xl shadow-xl inline-block mx-auto border border-white/20">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
                   customQrUrl || origin
                 )}`}
                 alt="QR Code"
-                className="size-40 object-contain rounded-lg"
+                className="size-48 object-contain rounded-lg"
               />
+            </div>
+
+            <div>
+              <a
+                href={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(
+                  customQrUrl || origin
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 h-9 px-5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-md cursor-pointer transition-all"
+              >
+                <ExternalLink className="size-4" />
+                <span>Open High-Res Vector</span>
+              </a>
             </div>
           </div>
         );
@@ -282,20 +316,25 @@ export default function PublicZahidOsPage() {
         const mins = Math.floor(focusSeconds / 60);
         const secs = focusSeconds % 60;
         return (
-          <div className="p-6 text-center space-y-6">
-            <h3 className="font-bold text-sm text-white">Pomodoro Focus</h3>
-            <div className="size-40 rounded-full border-4 border-rose-500/30 mx-auto grid place-items-center bg-white/5">
-              <span className="text-3xl font-black font-mono text-white">
+          <div className="p-6 sm:p-8 text-center space-y-6 max-w-md mx-auto">
+            <div>
+              <h3 className="font-bold text-base text-white">Pomodoro Focus Timer</h3>
+              <p className="text-xs text-white/60">Timed interval work session.</p>
+            </div>
+
+            <div className="size-48 sm:size-52 rounded-full border-4 border-rose-500/30 mx-auto grid place-items-center bg-white/5 shadow-2xl">
+              <span className="text-4xl sm:text-5xl font-black font-mono text-white tracking-wider">
                 {mins.toString().padStart(2, '0')}:{secs.toString().padStart(2, '0')}
               </span>
             </div>
+
             <button
               type="button"
               onClick={() => setIsFocusRunning(!isFocusRunning)}
-              className="h-10 px-6 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-2 mx-auto cursor-pointer"
+              className="h-11 px-7 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-2 mx-auto cursor-pointer shadow-md transition-all"
             >
               {isFocusRunning ? <Pause className="size-4" /> : <Play className="size-4" />}
-              <span>{isFocusRunning ? 'Pause' : 'Start Session'}</span>
+              <span>{isFocusRunning ? 'Pause Session' : 'Start Focus'}</span>
             </button>
           </div>
         );
@@ -306,9 +345,9 @@ export default function PublicZahidOsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
+    <div className="min-h-screen bg-black flex flex-col justify-center items-center p-3 sm:p-6 relative select-none">
       {/* Top Navigation */}
-      <div className="w-full max-w-sm mb-3 flex items-center justify-between">
+      <div className="w-full max-w-4xl mb-3 flex items-center justify-between px-2">
         <Link
           href="/"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/70 hover:text-white transition-colors"
@@ -316,45 +355,45 @@ export default function PublicZahidOsPage() {
           <ArrowLeft className="size-3.5" />
           <span>Back to Portfolio</span>
         </Link>
-        <span className="text-[11px] font-mono text-white/50">0xZahidP OS</span>
+        <span className="text-xs font-mono text-white/50">0xZahidP OS • Public Suite</span>
       </div>
 
-      {/* iPhone Mockup Frame */}
-      <div className="w-full max-w-[390px] h-[780px] rounded-[50px] border-[7px] border-[#222326] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_0_1px_rgba(255,255,255,0.12)] overflow-hidden bg-black relative">
+      {/* Main Responsive Launchpad Container (wide on desktop, mobile-fluid on phone) */}
+      <div className="w-full max-w-4xl min-h-[640px] rounded-3xl border border-white/10 shadow-2xl overflow-hidden bg-black relative flex flex-col justify-between">
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-950 via-teal-950 to-black -z-10" />
 
-        {/* Dynamic Island & Status Bar */}
-        <div className="relative pt-2.5 px-6 pb-2 flex items-center justify-between text-white text-xs z-30">
-          <span className="font-semibold text-xs tracking-tight font-sans pl-1">
+        {/* Top Status Bar */}
+        <div className="relative pt-3 px-6 pb-2.5 flex items-center justify-between text-white text-xs z-30 border-b border-white/5 bg-black/20 shrink-0">
+          <span className="font-semibold text-xs tracking-tight font-sans">
             {currentTime}
           </span>
-          <div className="w-28 h-6.5 bg-black rounded-full flex items-center justify-between px-3 shadow-inner">
+          <div className="flex items-center gap-1.5">
             <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="size-2.5 rounded-full bg-neutral-900 border border-neutral-700" />
+            <span className="text-[11px] font-mono text-white/70">Zahid OS 18</span>
           </div>
-          <div className="flex items-center gap-1.5 pr-1">
-            <span className="text-[10px] font-semibold text-white/80">5G</span>
-            <Wifi className="size-3 text-white" />
-            <Battery className="size-3.5 text-white" />
+          <div className="flex items-center gap-2">
+            <Wifi className="size-3.5 text-white" />
+            <Battery className="size-4 text-white" />
           </div>
         </div>
 
+        {/* Open App View */}
         {openApp ? (
-          <div className="h-[calc(100%-40px)] flex flex-col justify-between overflow-hidden bg-black/40 backdrop-blur-2xl">
-            <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between bg-black/30">
+          <div className="flex-1 flex flex-col justify-between overflow-hidden bg-black/40 backdrop-blur-2xl">
+            <div className="px-5 py-3 border-b border-white/10 flex items-center justify-between bg-black/30 shrink-0">
               <button
                 type="button"
                 onClick={() => setOpenApp(null)}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-white cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-white hover:text-white/80 cursor-pointer"
               >
                 <ChevronLeft className="size-4" />
-                <span>Home</span>
+                <span>Back to Apps</span>
               </button>
               <h3 className="font-bold text-xs text-white capitalize">{openApp}</h3>
               <button
                 type="button"
                 onClick={() => setOpenApp(null)}
-                className="size-6 rounded-full bg-white/10 text-white/80 grid place-items-center cursor-pointer text-xs"
+                className="size-7 rounded-xl bg-white/10 text-white/80 grid place-items-center cursor-pointer text-xs"
               >
                 <X className="size-3.5" />
               </button>
@@ -364,21 +403,25 @@ export default function PublicZahidOsPage() {
 
             <div
               onClick={() => setOpenApp(null)}
-              className="py-2.5 grid place-items-center cursor-pointer"
+              className="py-3 grid place-items-center cursor-pointer hover:bg-white/5 transition-colors shrink-0"
             >
               <div className="w-32 h-1 bg-white/40 rounded-full" />
             </div>
           </div>
         ) : (
-          <div className="h-[calc(100%-40px)] flex flex-col justify-between p-6">
+          /* Springboard App Launcher */
+          <div className="flex-1 flex flex-col justify-between p-6 sm:p-10">
             <div className="text-center pt-2">
-              <h1 className="text-5xl font-black text-white tracking-tight drop-shadow-md">
+              <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight drop-shadow-md">
                 {currentTime}
               </h1>
-              <p className="text-xs font-medium text-white/80 mt-1">Zahid OS • Public Beta</p>
+              <p className="text-xs sm:text-sm font-medium text-white/80 mt-1">
+                Zahid OS • Public Cloud Utilities
+              </p>
             </div>
 
-            <div className="grid grid-cols-3 gap-y-7 gap-x-4 my-auto px-2">
+            {/* Responsive Apps Grid (3 cols on mobile, 4-6 cols on desktop) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 my-auto max-w-xl mx-auto w-full px-2 py-6">
               {publicApps.map((app) => {
                 const Icon = app.icon;
                 return (
@@ -386,30 +429,36 @@ export default function PublicZahidOsPage() {
                     key={app.id}
                     type="button"
                     onClick={() => setOpenApp(app.id)}
-                    className="group flex flex-col items-center gap-1.5 cursor-pointer"
+                    className="group flex flex-col items-center gap-2 cursor-pointer text-center"
                   >
                     <div
-                      className={`size-16 rounded-[22%] bg-gradient-to-br ${app.gradient} shadow-lg shadow-black/40 border border-white/20 flex items-center justify-center text-white transition-all transform duration-200 group-hover:scale-105 group-active:scale-95 relative overflow-hidden`}
+                      className={`size-20 sm:size-24 rounded-[24%] bg-gradient-to-br ${app.gradient} shadow-xl shadow-black/40 border border-white/20 flex items-center justify-center text-white transition-all transform duration-200 group-hover:scale-105 group-hover:-translate-y-1 group-active:scale-95 relative overflow-hidden`}
                     >
                       <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/30 to-transparent" />
-                      <Icon className="size-8 drop-shadow-md" />
+                      <Icon className="size-9 sm:size-10 drop-shadow-md" />
                       {app.badge && (
-                        <span className="absolute top-1 right-1 px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-mono text-[9px] font-bold">
+                        <span className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full bg-rose-500 text-white font-mono text-[10px] font-bold">
                           {app.badge}
                         </span>
                       )}
                     </div>
-                    <span className="text-[11px] font-medium text-white drop-shadow-sm">
-                      {app.name}
-                    </span>
+                    <div>
+                      <span className="text-xs font-bold text-white block">
+                        {app.name}
+                      </span>
+                      <span className="text-[10px] text-white/60 block">
+                        {app.subtitle}
+                      </span>
+                    </div>
                   </button>
                 );
               })}
             </div>
 
-            <div className="mt-auto">
+            {/* Bottom Dock */}
+            <div className="mt-auto shrink-0">
               <div className="p-2.5 rounded-[30px] bg-white/10 backdrop-blur-2xl border border-white/15 shadow-2xl flex items-center justify-around max-w-xs mx-auto">
-                {publicApps.slice(0, 4).map((dockApp) => {
+                {publicApps.map((dockApp) => {
                   const DockIcon = dockApp.icon;
                   return (
                     <button
@@ -417,6 +466,7 @@ export default function PublicZahidOsPage() {
                       type="button"
                       onClick={() => setOpenApp(dockApp.id)}
                       className={`size-12 rounded-[22%] bg-gradient-to-br ${dockApp.gradient} shadow-md border border-white/20 flex items-center justify-center text-white transition-all transform hover:scale-110 active:scale-95 cursor-pointer`}
+                      title={dockApp.name}
                     >
                       <DockIcon className="size-6 text-white" />
                     </button>

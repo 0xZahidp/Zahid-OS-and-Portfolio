@@ -94,3 +94,4 @@ export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promis
 
   return merged;
 }
+
