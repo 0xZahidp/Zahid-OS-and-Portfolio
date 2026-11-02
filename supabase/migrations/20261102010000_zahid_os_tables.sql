@@ -133,3 +133,4 @@ BEGIN
       updated_at = EXCLUDED.updated_at;
   END IF;
 END $$;
+
