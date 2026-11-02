@@ -41,12 +41,24 @@ export interface ZahidOsAppMeta {
   category: 'utilities' | 'productivity' | 'developer' | 'system';
 }
 
+export type ZahidOsWallpaper =
+  | 'zos-emerald'
+  | 'zos-cyber'
+  | 'zos-midnight'
+  | 'zos-sunset'
+  | 'zos-glacier'
+  | 'zos-obsidian'
+  | 'emerald-mesh'
+  | 'cyber-dark'
+  | 'ios-midnight'
+  | 'cupertino-blue';
+
 export interface ZahidOsSettings {
   is_public_enabled: boolean;
   allow_public_link_creation?: boolean;
   public_hero_title: string;
   public_hero_subtitle: string;
-  wallpaper: 'emerald-mesh' | 'ios-midnight' | 'cyber-dark' | 'cupertino-blue';
+  wallpaper: ZahidOsWallpaper;
   sound_effects: boolean;
   app_permissions: Record<string, { is_public: boolean; name?: string }>;
   updated_at?: string;

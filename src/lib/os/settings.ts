@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { supabaseServer } from '@/lib/supabase/server';
 import { ZahidOsSettings } from '@/types/os';
+import { normalizeWallpaperId } from './wallpapers';
 
 const SETTINGS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'os-settings.json');
 
@@ -34,6 +35,7 @@ function normalizeOsSettings(raw: Partial<ZahidOsSettings> | null | undefined): 
     ...raw,
     is_public_enabled: Boolean(raw.is_public_enabled),
     allow_public_link_creation: Boolean(raw.allow_public_link_creation),
+    wallpaper: normalizeWallpaperId(raw.wallpaper || defaultOsSettings.wallpaper),
     app_permissions: {
       ...defaultOsSettings.app_permissions,
       ...(raw.app_permissions && typeof raw.app_permissions === 'object' ? raw.app_permissions : {}),

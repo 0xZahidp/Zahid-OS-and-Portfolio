@@ -3,7 +3,7 @@
   "allow_public_link_creation": true,
   "public_hero_title": "Zahid OS",
   "public_hero_subtitle": "Cloud tools, web utilities & micro-apps designed by 0xZahidP",
-  "wallpaper": "cyber-dark",
+  "wallpaper": "zos-emerald",
   "sound_effects": true,
   "app_permissions": {
     "shortener": {
@@ -44,5 +44,5 @@
     }
   },
   "id": "default",
-  "updated_at": "2026-11-02T20:12:03.765Z"
+  "updated_at": "2026-11-02T20:39:02.199Z"
 }

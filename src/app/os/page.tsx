@@ -27,6 +27,7 @@ import {
   Mail,
 } from 'lucide-react';
 import { ShortLink, ZahidOsSettings, ZahidOsAppId } from '@/types/os';
+import { ZosWallpaper } from '@/components/os/ZosWallpaper';
 
 // Code-split heavy micro-apps so Zahid OS Desktop boots in sub-100ms with a lightweight bundle
 const TravelWorkspace = dynamic(
@@ -79,7 +80,7 @@ const DEFAULT_OS_SETTINGS: ZahidOsSettings = {
   allow_public_link_creation: true,
   public_hero_title: 'Zahid OS',
   public_hero_subtitle: 'Cloud tools, web utilities & micro-apps designed by 0xZahidP',
-  wallpaper: 'cyber-dark',
+  wallpaper: 'zos-emerald',
   sound_effects: true,
   app_permissions: {
     shortener: { is_public: true, name: 'Shortener' },
@@ -578,10 +579,13 @@ export default function PublicZahidOsPage() {
   return (
     <div
       suppressHydrationWarning
-      className="min-h-screen bg-black flex flex-col justify-center items-center p-3 sm:p-6 relative select-none"
+      className="min-h-screen relative flex flex-col justify-center items-center p-3 sm:p-6 select-none overflow-hidden"
     >
+      {/* Full-bleed Dynamic ZOS Desktop Wallpaper */}
+      <ZosWallpaper wallpaperId={settings?.wallpaper} />
+
       {/* Top Navigation */}
-      <div className="w-full max-w-4xl mb-3 flex items-center justify-between px-2">
+      <div className="w-full max-w-4xl mb-3 flex items-center justify-between px-2 z-10">
         <Link
           href="/"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/70 hover:text-white transition-colors"
@@ -593,8 +597,9 @@ export default function PublicZahidOsPage() {
       </div>
 
       {/* Main Responsive Launchpad Container (wide on desktop, mobile-fluid on phone) */}
-      <div className="w-full max-w-4xl min-h-[640px] rounded-3xl border border-white/10 shadow-2xl overflow-hidden bg-black relative flex flex-col justify-between">
-        <div className="absolute inset-0 bg-gradient-to-b from-emerald-950 via-teal-950 to-black -z-10" />
+      <div className="w-full max-w-4xl min-h-[640px] rounded-3xl border border-white/15 shadow-2xl overflow-hidden bg-black/40 backdrop-blur-2xl relative flex flex-col justify-between z-10">
+        {/* Inner ambient light overlay matching current ZOS wallpaper */}
+        <ZosWallpaper wallpaperId={settings?.wallpaper} isContainer className="rounded-3xl opacity-80" />
 
         {/* Top Status Bar */}
         <div className="relative pt-3 px-6 pb-2.5 flex items-center justify-between text-white text-xs z-30 border-b border-white/5 bg-black/20 shrink-0">

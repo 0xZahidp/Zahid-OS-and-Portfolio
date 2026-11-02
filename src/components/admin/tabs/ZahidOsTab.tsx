@@ -41,6 +41,8 @@ import { ShortLink, ZahidOsAppId, ZahidOsSettings } from '@/types/os';
 import { TravelWorkspace } from '@/components/os/travel/TravelWorkspace';
 import { ApiPlaygroundApp } from '@/components/os/api-playground';
 import { TempMailApp } from '@/components/os/temp-mail';
+import { ZOS_WALLPAPERS, normalizeWallpaperId } from '@/lib/os/wallpapers';
+import { ZosWallpaper } from '@/components/os/ZosWallpaper';
 
 interface SnippetItem {
   id: string;
@@ -414,20 +416,6 @@ export const ZahidOsTab: React.FC = () => {
       setIsSavingSettings(false);
     }
   };
-
-  const wallpaperClass = useMemo(() => {
-    switch (osSettings.wallpaper) {
-      case 'ios-midnight':
-        return 'from-slate-950 via-indigo-950 to-neutral-950';
-      case 'cupertino-blue':
-        return 'from-blue-950 via-sky-950 to-slate-950';
-      case 'cyber-dark':
-        return 'from-zinc-950 via-neutral-900 to-black';
-      case 'emerald-mesh':
-      default:
-        return 'from-emerald-950 via-teal-950 to-slate-950';
-    }
-  }, [osSettings.wallpaper]);
 
   const apps = [
     {
@@ -1196,34 +1184,110 @@ export const ZahidOsTab: React.FC = () => {
               </div>
             </div>
 
-            {/* Wallpaper themes */}
-            <div className="space-y-2.5">
-              <label className="text-xs font-bold text-white block">iOS Wallpaper Style</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {[
-                  { id: 'emerald-mesh', label: 'Emerald Mesh' },
-                  { id: 'ios-midnight', label: 'Midnight Velvet' },
-                  { id: 'cupertino-blue', label: 'Cupertino Blue' },
-                  { id: 'cyber-dark', label: 'Cyber Dark' },
-                ].map((wp) => (
-                  <button
-                    key={wp.id}
-                    type="button"
-                    onClick={() =>
-                      setOsSettings((prev) => ({
-                        ...prev,
-                        wallpaper: wp.id as ZahidOsSettings['wallpaper'],
-                      }))
-                    }
-                    className={`p-3 rounded-xl border text-xs font-medium text-center transition-all cursor-pointer ${
-                      osSettings.wallpaper === wp.id
-                        ? 'border-emerald-400 bg-emerald-500/20 text-white font-bold'
-                        : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
-                    }`}
-                  >
-                    {wp.label}
-                  </button>
-                ))}
+            {/* ZOS Desktop Wallpaper System */}
+            <div className="space-y-3 pt-3 border-t border-white/5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <label className="text-xs font-bold text-white flex items-center gap-2">
+                    <span>ZOS Desktop Wallpaper</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono border border-emerald-500/30">
+                      ZOS Engine
+                    </span>
+                  </label>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    Select the visual atmosphere and dynamic ambient lighting for Zahid OS desktop.
+                  </p>
+                </div>
+                <a
+                  href="/os"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs text-white font-medium transition-colors"
+                >
+                  <span>Preview /os</span>
+                  <ExternalLink className="size-3 text-emerald-400" />
+                </a>
+              </div>
+
+              {/* Visual Wallpaper Swatches Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {ZOS_WALLPAPERS.map((wp) => {
+                  const isActive = normalizeWallpaperId(osSettings.wallpaper) === wp.id;
+
+                  return (
+                    <button
+                      key={wp.id}
+                      type="button"
+                      onClick={() => {
+                        setOsSettings((prev) => ({
+                          ...prev,
+                          wallpaper: wp.id,
+                        }));
+                      }}
+                      className={`group relative p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col gap-2 ${
+                        isActive
+                          ? 'border-emerald-400 bg-emerald-500/15 shadow-lg shadow-emerald-500/20 ring-2 ring-emerald-500/40 scale-[1.02]'
+                          : 'border-white/10 bg-zinc-900/60 hover:border-white/25 hover:bg-zinc-800/80 hover:-translate-y-0.5'
+                      }`}
+                    >
+                      {/* Miniature Wallpaper Canvas Preview Swatch */}
+                      <div
+                        className="w-full h-20 rounded-xl overflow-hidden relative shadow-inner border border-white/15 flex flex-col justify-between p-2"
+                        style={{ background: wp.previewBg }}
+                      >
+                        {/* Ambient glowing radial orb in thumbnail */}
+                        <div
+                          className="absolute -top-4 -left-4 size-16 rounded-full blur-xl opacity-80 pointer-events-none"
+                          style={{ backgroundColor: wp.accentColor }}
+                        />
+                        {/* Dot grid texture in thumbnail */}
+                        <div
+                          className="absolute inset-0 opacity-40 pointer-events-none"
+                          style={{
+                            backgroundImage: `radial-gradient(circle at center, ${wp.gridColor} 1px, transparent 1px)`,
+                            backgroundSize: '12px 12px',
+                          }}
+                        />
+
+                        {/* Mini Desktop Elements (Clock + Mini Dock) */}
+                        <div className="relative z-10 flex items-center justify-between text-[8px] text-white/70 font-mono">
+                          <span>00:50</span>
+                          <span className="size-1 rounded-full bg-emerald-400" />
+                        </div>
+
+                        {/* Mini Dock */}
+                        <div className="relative z-10 mx-auto px-2 py-0.5 rounded-full bg-black/40 border border-white/20 backdrop-blur-xs flex items-center gap-1">
+                          <span className="size-2 rounded-xs bg-emerald-400/80" />
+                          <span className="size-2 rounded-xs bg-cyan-400/80" />
+                          <span className="size-2 rounded-xs bg-amber-400/80" />
+                          <span className="size-2 rounded-xs bg-violet-400/80" />
+                        </div>
+
+                        {/* Active Selection Badge on preview */}
+                        {isActive && (
+                          <div className="absolute top-1.5 right-1.5 size-4 rounded-full bg-emerald-500 text-white grid place-items-center shadow-md">
+                            <Check className="size-2.5 stroke-[3]" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Title & Description */}
+                      <div className="min-w-0 px-0.5">
+                        <div className="flex items-center justify-between gap-1">
+                          <h4 className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors truncate">
+                            {wp.name}
+                          </h4>
+                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-md bg-white/10 text-white/60 shrink-0">
+                            {wp.tag}
+                          </span>
+                        </div>
+                        <p className="text-[10.5px] text-zinc-400 truncate mt-0.5">
+                          {wp.subtitle}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -1381,9 +1445,7 @@ export const ZahidOsTab: React.FC = () => {
           ) : (
             /* Open App Workspace in Desktop Mode */
             <div className="rounded-3xl border border-line bg-black shadow-2xl overflow-hidden relative">
-              <div
-                className={`absolute inset-0 bg-gradient-to-b ${wallpaperClass} transition-colors duration-500 -z-10`}
-              />
+              <ZosWallpaper wallpaperId={osSettings.wallpaper} isContainer className="rounded-3xl" />
 
               {/* Top Navigation Ribbon for Desktop App Window */}
               <div className="px-5 py-3.5 border-b border-white/10 bg-black/40 backdrop-blur-xl flex items-center justify-between">
@@ -1434,9 +1496,7 @@ export const ZahidOsTab: React.FC = () => {
       {viewMode === 'iphone' && (
         <div className="flex justify-center items-center py-2 px-2">
           <div className="w-full max-w-[390px] min-h-[660px] max-h-[85vh] rounded-[48px] border-[6px] border-[#222326] shadow-2xl overflow-hidden bg-black relative flex flex-col justify-between select-none">
-            <div
-              className={`absolute inset-0 bg-gradient-to-b ${wallpaperClass} transition-colors duration-500 -z-10`}
-            />
+            <ZosWallpaper wallpaperId={osSettings.wallpaper} isContainer className="rounded-[42px]" />
 
             {/* iOS Dynamic Island & Status Bar */}
             <div className="relative pt-2.5 px-6 pb-2 flex items-center justify-between text-white text-xs z-30 shrink-0">
