@@ -102,6 +102,8 @@ export const TempMailApp: React.FC = () => {
         const res = await fetch(
           `/api/os/temp-mail?inbox=${encodeURIComponent(address)}&token=${encodeURIComponent(token)}`
         );
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) return;
         const data = await res.json();
 
         if (res.ok && data.success) {
@@ -190,9 +192,15 @@ export const TempMailApp: React.FC = () => {
         body: JSON.stringify({
           username: customSlug || undefined,
           ttlSeconds: ttlSec,
+          previousAddress: inboxAddress || undefined,
+          previousToken: inboxToken || undefined,
         }),
       });
 
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error(`Server returned status ${res.status}. Please try again.`);
+      }
       const data = await res.json();
       if (!res.ok || !data.success) {
         setErrorMessage(data.error || 'Failed to create temp mail');
@@ -544,8 +552,24 @@ export const TempMailApp: React.FC = () => {
         </div>
 
         {errorMessage && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
-            {errorMessage}
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center justify-between gap-3">
+            <span>{errorMessage}</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => handleCreateInbox()}
+                className="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-semibold text-[11px] cursor-pointer"
+              >
+                Retry
+              </button>
+              <button
+                type="button"
+                onClick={() => setErrorMessage(null)}
+                className="text-rose-400 hover:text-rose-200 cursor-pointer p-0.5"
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
           </div>
         )}
       </div>

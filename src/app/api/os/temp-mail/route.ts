@@ -123,6 +123,8 @@ export async function POST(req: NextRequest) {
       domain,
       ttlSeconds: body.ttlSeconds,
       ipHash,
+      previousAddress: body.previousAddress,
+      previousToken: body.previousToken,
     });
 
     return NextResponse.json({

@@ -41,20 +41,32 @@ interface LocalTempStore {
   messages: TempMessageRecord[];
 }
 
+let memoryTempStore: LocalTempStore | null = null;
+
 async function readLocalStore(): Promise<LocalTempStore> {
+  if (memoryTempStore) {
+    return memoryTempStore;
+  }
   try {
     const raw = await fs.readFile(LOCAL_STORE_FILE, 'utf-8');
+    if (!raw || !raw.trim()) {
+      memoryTempStore = { inboxes: [], messages: [] };
+      return memoryTempStore;
+    }
     const parsed = JSON.parse(raw);
-    return {
+    memoryTempStore = {
       inboxes: Array.isArray(parsed?.inboxes) ? parsed.inboxes : [],
       messages: Array.isArray(parsed?.messages) ? parsed.messages : [],
     };
+    return memoryTempStore;
   } catch {
-    return { inboxes: [], messages: [] };
+    memoryTempStore = { inboxes: [], messages: [] };
+    return memoryTempStore;
   }
 }
 
 async function writeLocalStore(store: LocalTempStore): Promise<void> {
+  memoryTempStore = store;
   try {
     // Purge expired records before saving
     const now = new Date().toISOString();
@@ -171,9 +183,20 @@ export async function createTempInbox(params: {
   domain: string;
   ttlSeconds?: number;
   ipHash?: string;
+  previousAddress?: string;
+  previousToken?: string;
 }): Promise<TempInboxRecord> {
   const { domain, ipHash } = params;
   const ttl = Math.min(86400, Math.max(600, params.ttlSeconds || 3600)); // 10m to 24h
+
+  // Clean previous inbox if replacing with a fresh address
+  if (params.previousAddress) {
+    try {
+      await deleteTempInbox(params.previousAddress, params.previousToken);
+    } catch {
+      // non-blocking
+    }
+  }
 
   // Clean custom username or generate random 6-character alphanumeric slug
   let userSlug = (params.username || '')
@@ -210,16 +233,27 @@ export async function createTempInbox(params: {
     try {
       const supabase = supabaseServer();
 
-      // Rate limit check: max 10 active inboxes per IP
-      if (ipHash) {
-        const { count } = await supabase
-          .from('os_temp_inboxes')
-          .select('*', { count: 'exact', head: true })
-          .eq('ip_hash', ipHash)
-          .gt('expires_at', now.toISOString());
+      // Local development IPs are NEVER rate-limited
+      const isLocalDev =
+        !ipHash ||
+        ipHash === '127.0.0.1' ||
+        ipHash === '::1' ||
+        ipHash === 'localhost' ||
+        ipHash.startsWith('192.168.') ||
+        ipHash.startsWith('10.');
 
-        if (count && count >= 10) {
-          throw new Error('Rate limit reached: Maximum 10 active temporary inboxes per client IP.');
+      // Auto-prune oldest active inboxes if IP has >= 10 active (instead of blocking user)
+      if (ipHash && !isLocalDev) {
+        const { data: activeList } = await supabase
+          .from('os_temp_inboxes')
+          .select('id, expires_at')
+          .eq('ip_hash', ipHash)
+          .gt('expires_at', now.toISOString())
+          .order('created_at', { ascending: true });
+
+        if (activeList && activeList.length >= 10) {
+          const toDelete = activeList.slice(0, activeList.length - 9).map((i) => i.id);
+          await supabase.from('os_temp_inboxes').delete().in('id', toDelete);
         }
       }
 
@@ -244,17 +278,24 @@ export async function createTempInbox(params: {
         return inboxRecord;
       }
     } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes('Rate limit')) {
-        throw err;
-      }
       console.warn('Supabase createTempInbox fallback to local file:', err);
     }
   }
 
   // 2. Local fallback
   const store = await readLocalStore();
-  // Filter out any existing inbox with exact same address
-  store.inboxes = store.inboxes.filter((i) => i.address.toLowerCase() !== address);
+  const nowIso = now.toISOString();
+
+  // Prune expired inboxes and deduplicate
+  store.inboxes = store.inboxes.filter(
+    (i) => i.expires_at > nowIso && i.address.toLowerCase() !== address
+  );
+
+  // If local store has accumulated >= 15 inboxes, keep only the latest 14
+  if (store.inboxes.length >= 15) {
+    store.inboxes = store.inboxes.slice(0, 14);
+  }
+
   store.inboxes.unshift(inboxRecord);
   await writeLocalStore(store);
 
