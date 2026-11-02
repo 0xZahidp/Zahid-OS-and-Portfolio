@@ -21,6 +21,7 @@ import { FactsTab } from '@/components/admin/tabs/FactsTab';
 import { SocialsTab } from '@/components/admin/tabs/SocialsTab';
 import { PeopleTab } from '@/components/admin/tabs/PeopleTab';
 import { LibraryTab } from '@/components/admin/tabs/LibraryTab';
+import { ZahidOsTab } from '@/components/admin/tabs/ZahidOsTab';
 import { SupabaseTab } from '@/components/admin/tabs/SupabaseTab';
 import { SettingsTab } from '@/components/admin/tabs/SettingsTab';
 import { InboxTab } from '@/components/admin/tabs/InboxTab';
@@ -70,6 +71,10 @@ const TAB_META: Record<AdminTab, { title: string; description: string }> = {
   library: {
     title: 'Library & Curations',
     description: 'Manage curated agent skills, developer bookmarks, focus audio, and voiceovers.',
+  },
+  os: {
+    title: 'Zahid OS • Tools & Cloud Utilities',
+    description: 'Modular productivity micro-apps, URL shortener engine, and personal cloud tools.',
   },
   supabase: {
     title: 'Supabase Cloud Integration',
@@ -184,6 +189,8 @@ function AdminDashboardInner() {
         return <PeopleTab />;
       case 'library':
         return <LibraryTab />;
+      case 'os':
+        return <ZahidOsTab />;
       case 'supabase':
         return <SupabaseTab />;
       case 'settings':

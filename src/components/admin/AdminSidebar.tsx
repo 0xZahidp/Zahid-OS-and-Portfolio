@@ -23,6 +23,7 @@ import {
   Settings,
   X,
   Bookmark,
+  Terminal,
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAdminAuth } from '@/context/AdminAuthContext';
@@ -38,6 +39,7 @@ export type AdminTab =
   | 'socials'
   | 'people'
   | 'library'
+  | 'os'
   | 'inbox'
   | 'supabase'
   | 'settings'
@@ -191,6 +193,18 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           label: 'Library & Curations',
           icon: Bookmark,
           badge: `${(content.libraryData?.aiSkills?.length ?? 5) + (content.libraryData?.bookmarks?.length ?? 5)}`,
+        },
+      ],
+    },
+    {
+      label: 'ZAHID OS & TOOLS',
+      items: [
+        {
+          id: 'os' as AdminTab,
+          label: 'OS / Tools',
+          icon: Terminal,
+          badge: 'Shortener',
+          badgeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 font-bold',
         },
       ],
     },
