@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DOMPurify from 'dompurify';
 import { supabase } from '@/lib/supabase/client';
 import {
-  Inbox,
   Send,
   Star,
   Trash2,
@@ -24,8 +23,10 @@ import {
   Archive,
   ArchiveRestore,
   AtSign,
-  Filter,
   Check,
+  Lock,
+  ShieldCheck,
+  Zap,
 } from 'lucide-react';
 import { MailMessage, MailFolder } from '@/types/mail';
 
@@ -36,7 +37,19 @@ interface FolderCounts {
   starred: number;
   archive: number;
   trash: number;
+  official?: number;
+  temp?: number;
 }
+
+const LOCKED_OFFICIAL_ALIASES = [
+  { id: 'all', label: 'All Official (Locked)', alias: 'all' },
+  { id: 'hello', label: 'hello@zahidp.com', alias: 'hello@zahidp.com' },
+  { id: 'test', label: 'test@zahidp.com', alias: 'test@zahidp.com' },
+  { id: 'contact', label: 'contact@zahidp.com', alias: 'contact@zahidp.com' },
+  { id: 'support', label: 'support@zahidp.com', alias: 'support@zahidp.com' },
+  { id: 'reply', label: 'reply@zahidp.com', alias: 'reply@zahidp.com' },
+  { id: 'noreply', label: 'noreply@zahidp.com', alias: 'noreply@zahidp.com' },
+] as const;
 
 export const InboxTab: React.FC = () => {
   const [folder, setFolder] = useState<MailFolder>('inbox');
@@ -45,6 +58,7 @@ export const InboxTab: React.FC = () => {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAlias, setSelectedAlias] = useState<string>('all');
+  const [mailCategory, setMailCategory] = useState<'official' | 'temp' | 'all'>('official');
   const [counts, setCounts] = useState<FolderCounts>({
     inbox: 0,
     unread: 0,
@@ -87,13 +101,21 @@ export const InboxTab: React.FC = () => {
 
   // Fetch messages from API
   const fetchMessages = useCallback(
-    async (currentFolder = folder, query = searchQuery, alias = selectedAlias) => {
+    async (
+      currentFolder = folder,
+      query = searchQuery,
+      alias = selectedAlias,
+      category = mailCategory,
+      forceSync = false
+    ) => {
       setIsLoading(true);
       try {
         const params = new URLSearchParams();
         if (currentFolder) params.set('folder', currentFolder);
         if (query.trim()) params.set('search', query.trim());
         if (alias && alias !== 'all') params.set('alias', alias.trim());
+        if (category) params.set('category', category);
+        if (forceSync) params.set('forceSync', 'true');
 
         const res = await fetch(`/api/mail/messages?${params.toString()}`);
         if (res.ok) {
@@ -120,7 +142,7 @@ export const InboxTab: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [folder, searchQuery, selectedAlias, selectedMessageId]
+    [folder, searchQuery, selectedAlias, mailCategory, selectedMessageId]
   );
 
   useEffect(() => {
@@ -152,26 +174,7 @@ export const InboxTab: React.FC = () => {
     }
   }, [fetchMessages, folder, searchQuery, selectedAlias]);
 
-  // Extract distinct detected aliases across loaded messages for alias filter
-  const detectedAliases = useMemo(() => {
-    const aliasSet = new Set<string>();
-    aliasSet.add('hello@zahidp.com');
-    aliasSet.add('test@zahidp.com');
-    aliasSet.add('contact@zahidp.com');
 
-    messages.forEach((m) => {
-      m.to?.forEach((t) => {
-        if (t.email && t.email.includes('@zahidp.com')) {
-          aliasSet.add(t.email.toLowerCase().trim());
-        }
-      });
-      if (m.from?.email && m.from.email.includes('@zahidp.com')) {
-        aliasSet.add(m.from.email.toLowerCase().trim());
-      }
-    });
-
-    return Array.from(aliasSet);
-  }, [messages]);
 
   // Sync from Resend Receiving API
   const handleSyncResend = async () => {
@@ -588,21 +591,46 @@ export const InboxTab: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setFolder('inbox');
-                  fetchMessages('inbox', searchQuery, selectedAlias);
+                  setMailCategory('official');
+                  fetchMessages('inbox', searchQuery, selectedAlias, 'official');
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                  folder === 'inbox'
-                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold'
+                  folder === 'inbox' && mailCategory === 'official'
+                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30'
                     : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <Inbox className="size-4" />
-                  <span>Inbox</span>
+                  <ShieldCheck className="size-4 text-emerald-500" />
+                  <span>Official Inbox</span>
                 </div>
                 {counts.unread > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-brand-500 text-white">
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white">
                     {counts.unread}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setFolder('inbox');
+                  setMailCategory('temp');
+                  fetchMessages('inbox', searchQuery, 'all', 'temp');
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                  folder === 'inbox' && mailCategory === 'temp'
+                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/30'
+                    : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Zap className="size-4 text-amber-500" />
+                  <span>Temp Mail Vault</span>
+                </div>
+                {typeof counts.temp === 'number' && counts.temp > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-500">
+                    {counts.temp}
                   </span>
                 )}
               </button>
@@ -764,43 +792,51 @@ export const InboxTab: React.FC = () => {
               )}
             </div>
 
-            {/* Alias Switcher & Pill Filter */}
+            {/* Alias Switcher & Locked Official Pill Filter */}
             <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 text-[11px] no-scrollbar">
               <div className="flex items-center gap-1 text-ink-3 shrink-0 mr-0.5">
-                <Filter className="size-3" />
-                <span className="text-[10px] font-semibold uppercase">Alias:</span>
+                <Lock className="size-3 text-emerald-500" />
+                <span className="text-[10px] font-semibold uppercase text-emerald-600 dark:text-emerald-400">Locked:</span>
               </div>
+              {LOCKED_OFFICIAL_ALIASES.map((al) => {
+                const isActive = selectedAlias === al.alias && mailCategory === 'official';
+                return (
+                  <button
+                    key={al.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedAlias(al.alias);
+                      setMailCategory('official');
+                      fetchMessages(folder, searchQuery, al.alias, 'official');
+                    }}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-mono whitespace-nowrap transition-colors cursor-pointer shrink-0 flex items-center gap-1 ${
+                      isActive
+                        ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                        : 'bg-surface border border-line text-ink-3 hover:text-ink hover:border-emerald-500/40'
+                    }`}
+                  >
+                    {al.id !== 'all' && <Lock className="size-2.5 opacity-60" />}
+                    <span>{al.id === 'all' ? 'All Official' : al.id}</span>
+                  </button>
+                );
+              })}
+              <div className="h-3 w-px bg-line shrink-0 mx-0.5" />
               <button
                 type="button"
                 onClick={() => {
-                  setSelectedAlias('all');
-                  fetchMessages(folder, searchQuery, 'all');
+                  const nextCat = mailCategory === 'temp' ? 'official' : 'temp';
+                  setMailCategory(nextCat);
+                  fetchMessages(folder, searchQuery, 'all', nextCat);
                 }}
-                className={`px-2 py-0.5 rounded-md text-[10px] font-mono whitespace-nowrap transition-colors cursor-pointer shrink-0 ${
-                  selectedAlias === 'all'
-                    ? 'bg-brand-500 text-white font-bold'
-                    : 'bg-surface border border-line text-ink-3 hover:text-ink'
+                className={`px-2 py-0.5 rounded-md text-[10px] font-mono whitespace-nowrap transition-colors cursor-pointer shrink-0 flex items-center gap-1 ${
+                  mailCategory === 'temp'
+                    ? 'bg-amber-500 text-black font-bold shadow-xs'
+                    : 'bg-surface border border-amber-500/30 text-amber-500 hover:bg-amber-500/10'
                 }`}
               >
-                All (@zahidp.com)
+                <Zap className="size-2.5" />
+                <span>Temp Mail {typeof counts.temp === 'number' && counts.temp > 0 ? `(${counts.temp})` : ''}</span>
               </button>
-              {detectedAliases.map((al) => (
-                <button
-                  key={al}
-                  type="button"
-                  onClick={() => {
-                    setSelectedAlias(al);
-                    fetchMessages(folder, searchQuery, al);
-                  }}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-mono whitespace-nowrap transition-colors cursor-pointer shrink-0 ${
-                    selectedAlias === al
-                      ? 'bg-brand-500 text-white font-bold'
-                      : 'bg-surface border border-line text-ink-3 hover:text-ink'
-                  }`}
-                >
-                  {al.replace('@zahidp.com', '')}
-                </button>
-              ))}
             </div>
           </div>
 
@@ -865,12 +901,23 @@ export const InboxTab: React.FC = () => {
                     <div className="mt-2 flex items-center justify-between gap-2">
                       {/* Alias pill & tags */}
                       <div className="flex items-center gap-1 min-w-0 overflow-hidden">
-                        <span
-                          className="px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 truncate"
-                          title={`Delivered to: ${recipientEmail}`}
-                        >
-                          to: {recipientEmail.split('@')[0]}
-                        </span>
+                        {msg.tags?.includes('Temp Mail') || recipientEmail.toLowerCase().includes('tmp_') ? (
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 truncate"
+                            title={`Delivered to disposable address: ${recipientEmail}`}
+                          >
+                            <Zap className="size-2.5 shrink-0" />
+                            temp: {recipientEmail.split('@')[0]}
+                          </span>
+                        ) : (
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 truncate"
+                            title={`Official locked address: ${recipientEmail}`}
+                          >
+                            <Lock className="size-2.5 shrink-0" />
+                            to: {recipientEmail.split('@')[0]}
+                          </span>
+                        )}
                         {msg.folder === 'archive' && (
                           <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
                             Archived

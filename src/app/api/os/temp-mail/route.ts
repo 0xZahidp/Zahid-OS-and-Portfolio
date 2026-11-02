@@ -54,20 +54,28 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Optional on-demand check with Resend Receiving API if configured
-    if (result.messages.length === 0) {
-      try {
-        const apiKey = (await getAppSecret('RESEND_API_KEY')) || process.env.RESEND_API_KEY;
-        if (apiKey && apiKey.startsWith('re_')) {
-          const resend = new Resend(apiKey);
-          const listRes = await resend.emails.receiving.list();
-          if (!listRes.error && Array.isArray(listRes.data?.data)) {
-            const matching = listRes.data.data.filter((item) => {
-              const toArr = Array.isArray(item.to) ? item.to : [item.to];
-              return toArr.some((t) => t.toLowerCase().includes(inboxParam.toLowerCase()));
-            });
+    // On-demand real-time check with Resend Receiving API
+    try {
+      const apiKey = (await getAppSecret('RESEND_API_KEY')) || process.env.RESEND_API_KEY;
+      if (apiKey && apiKey.startsWith('re_')) {
+        const resend = new Resend(apiKey);
+        const listRes = await resend.emails.receiving.list();
+        if (!listRes.error && Array.isArray(listRes.data?.data)) {
+          const targetUsername = inboxParam.split('@')[0].toLowerCase();
+          const targetAddress = inboxParam.toLowerCase();
 
-            for (const item of matching.slice(0, 3)) {
+          const matching = listRes.data.data.filter((item) => {
+            const toArr = Array.isArray(item.to) ? item.to : [item.to];
+            return toArr.some((t) => {
+              const lowerT = t.toLowerCase();
+              return lowerT === targetAddress || lowerT.split('@')[0] === targetUsername;
+            });
+          });
+
+          let newIngested = false;
+          for (const item of matching.slice(0, 5)) {
+            const alreadyPresent = result.messages.some((m) => m.resend_id === item.id);
+            if (!alreadyPresent) {
               const full = await resend.emails.receiving.get(item.id);
               if (!full.error && full.data) {
                 await ingestInboundEmail({
@@ -78,24 +86,24 @@ export async function GET(req: NextRequest) {
                   text: full.data.text,
                   html: full.data.html,
                 });
+                newIngested = true;
               }
             }
+          }
 
-            // Refresh messages if newly ingested
-            if (matching.length > 0) {
-              const refreshed = await getTempInboxMessages(inboxParam, tokenParam);
-              return NextResponse.json({
-                success: true,
-                domain: resolvedDomain,
-                inbox: refreshed.inbox,
-                messages: refreshed.messages,
-              });
-            }
+          if (newIngested) {
+            const refreshed = await getTempInboxMessages(inboxParam, tokenParam);
+            return NextResponse.json({
+              success: true,
+              domain: resolvedDomain,
+              inbox: refreshed.inbox,
+              messages: refreshed.messages,
+            });
           }
         }
-      } catch {
-        // Non-blocking fallback
       }
+    } catch {
+      // Non-blocking fallback
     }
 
     return NextResponse.json({

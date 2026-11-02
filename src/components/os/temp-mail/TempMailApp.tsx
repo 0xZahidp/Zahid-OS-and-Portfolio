@@ -16,7 +16,22 @@ import {
   Radio,
   X,
   Code,
+  Lock,
 } from 'lucide-react';
+
+
+const RESERVED_OFFICIAL_SLUGS = [
+  'hello',
+  'test',
+  'contact',
+  'support',
+  'reply',
+  'noreply',
+  'admin',
+  'zahid',
+  'me',
+  'info',
+] as const;
 
 export type TempMailTTL = '10m' | '30m' | '1h' | '6h' | '24h';
 
@@ -857,12 +872,24 @@ export const TempMailApp: React.FC = () => {
                 <input
                   type="text"
                   value={customUsername}
-                  onChange={(e) => setCustomUsername(e.target.value.toLowerCase())}
+                  onChange={(e) => setCustomUsername(e.target.value.toLowerCase().trim())}
                   placeholder="e.g. github-test, dev-stripe, mytoken"
                   className="bg-transparent flex-1 text-xs text-white outline-hidden font-mono"
                 />
                 <span className="text-xs font-mono text-white/40">@{inboxDomain || (typeof window !== 'undefined' ? window.location.hostname : 'localhost')}</span>
               </div>
+              {customUsername.trim() &&
+                RESERVED_OFFICIAL_SLUGS.some(
+                  (s) =>
+                    customUsername.toLowerCase() === s ||
+                    customUsername.toLowerCase().startsWith(`${s}_`) ||
+                    customUsername.toLowerCase().startsWith(`${s}-`)
+                ) && (
+                  <p className="text-[11px] text-rose-400 flex items-center gap-1.5 font-medium pt-1">
+                    <Lock className="size-3 shrink-0 text-rose-400" />
+                    <span>&lsquo;{customUsername}&rsquo; is an official domain address. Official business aliases (hello, test, contact, support, reply, noreply) cannot be used for temp mail.</span>
+                  </p>
+                )}
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2">
@@ -876,7 +903,16 @@ export const TempMailApp: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleCreateInbox(customUsername)}
-                disabled={!customUsername.trim() || isCreating}
+                disabled={
+                  !customUsername.trim() ||
+                  isCreating ||
+                  RESERVED_OFFICIAL_SLUGS.some(
+                    (s) =>
+                      customUsername.toLowerCase() === s ||
+                      customUsername.toLowerCase().startsWith(`${s}_`) ||
+                      customUsername.toLowerCase().startsWith(`${s}-`)
+                  )
+                }
                 className="h-9 px-5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-bold text-xs cursor-pointer transition-colors"
               >
                 {isCreating ? 'Provisioning...' : 'Create Inbox'}

@@ -36,6 +36,27 @@ export interface TempMessageRecord {
 
 const LOCAL_STORE_FILE = path.join(process.cwd(), 'src', 'data', 'temp-mail-store.json');
 
+/**
+ * Official locked business aliases for the domain.
+ * Creating disposable temporary mail with these names is strictly prohibited
+ * to ensure important business communications are never intercepted or mixed with temp mail.
+ */
+export const RESERVED_OFFICIAL_ALIASES = [
+  'hello',
+  'test',
+  'contact',
+  'support',
+  'reply',
+  'noreply',
+  'admin',
+  'zahid',
+  'me',
+  'info',
+  'billing',
+  'security',
+] as const;
+
+
 interface LocalTempStore {
   inboxes: TempInboxRecord[];
   messages: TempMessageRecord[];
@@ -205,6 +226,17 @@ export async function createTempInbox(params: {
     .replace(/[^a-z0-9._-]/g, '')
     .replace(/-+/g, '-');
 
+  if (params.username) {
+    const isReserved = RESERVED_OFFICIAL_ALIASES.some(
+      (a) => userSlug === a || userSlug.startsWith(`${a}_`) || userSlug.startsWith(`${a}-`)
+    );
+    if (isReserved) {
+      throw new Error(
+        `'${userSlug}' is an official domain address. Official aliases (hello, test, contact, support, reply, noreply) are locked and cannot be used for disposable temporary mail.`
+      );
+    }
+  }
+
   if (!userSlug || userSlug.length < 3) {
     userSlug = `tmp_${Math.random().toString(36).substring(2, 8)}`;
   }
@@ -352,6 +384,12 @@ export async function ingestInboundEmail(params: {
   // Find matching active temp inboxes
   for (const rawTo of recipientList) {
     const toClean = rawTo.toLowerCase().trim();
+    const toUser = toClean.split('@')[0];
+
+    // Official locked aliases belong to primary inbox only, never temp mail
+    if (RESERVED_OFFICIAL_ALIASES.some((a) => toUser === a || toUser.startsWith(`${a}_`))) {
+      continue;
+    }
 
     // 1. Check Supabase
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -408,7 +446,9 @@ export async function ingestInboundEmail(params: {
     // 2. Local fallback
     const store = await readLocalStore();
     const localInbox = store.inboxes.find(
-      (i) => i.address.toLowerCase() === toClean && i.expires_at > now.toISOString()
+      (i) =>
+        (i.address.toLowerCase() === toClean || i.username.toLowerCase() === toUser) &&
+        i.expires_at > now.toISOString()
     );
 
     if (localInbox) {

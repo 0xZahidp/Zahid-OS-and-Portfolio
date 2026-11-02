@@ -2,8 +2,54 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { MailMessage, MailStoreData, EmailAttachment } from '@/types/mail';
 import { supabaseServer } from '@/lib/supabase/server';
+import { Resend } from 'resend';
+import { getAppSecret } from '@/lib/env-vault';
 
 const STORE_PATH = path.join(process.cwd(), 'src', 'data', 'inbox-store.json');
+
+/**
+ * Official locked business aliases for the domain.
+ * Emails to these addresses are treated as important primary communications.
+ * Disposable temporary mail is explicitly forbidden from claiming these addresses.
+ */
+export const OFFICIAL_ALIASES = [
+  'hello',
+  'test',
+  'contact',
+  'support',
+  'reply',
+  'noreply',
+  'admin',
+  'zahid',
+  'me',
+  'info',
+] as const;
+
+export function isOfficialEmail(m: MailMessage): boolean {
+  if (m.tags?.includes('Temp Mail')) return false;
+  if (m.direction === 'outbound' || m.folder === 'sent') {
+    const user = m.from.email.split('@')[0]?.toLowerCase() || '';
+    return OFFICIAL_ALIASES.some((a) => user === a || user.startsWith(a));
+  }
+  return (
+    m.to?.some((t) => {
+      const user = t.email.split('@')[0]?.toLowerCase() || '';
+      if (!user || user.startsWith('tmp_') || user.startsWith('tmp-')) return false;
+      return OFFICIAL_ALIASES.some((a) => user === a || user.startsWith(a));
+    }) ?? false
+  );
+}
+
+export function isTempEmail(m: MailMessage): boolean {
+  if (m.tags?.includes('Temp Mail')) return true;
+  return (
+    m.to?.some((t) => {
+      const user = t.email.split('@')[0]?.toLowerCase() || '';
+      return user.startsWith('tmp_') || user.startsWith('tmp-');
+    }) ?? false
+  );
+}
+
 
 /**
  * Normalizes either a standard MailMessage or a relational Supabase/table-store row into a MailMessage.
@@ -210,6 +256,7 @@ export async function listMailMessages(filter?: {
   search?: string;
   isStarred?: boolean;
   alias?: string;
+  category?: 'official' | 'temp' | 'all';
 }): Promise<MailMessage[]> {
   const store = await readMailStore();
   let msgs = store.messages || [];
@@ -238,6 +285,15 @@ export async function listMailMessages(filter?: {
           !m.isArchived
       );
     }
+  }
+
+  // Lock to official mail vs temp mail
+  // Default for inbox is 'official' unless explicitly asked for 'all' or 'temp'
+  const cat = filter?.category || (filter?.folder === 'inbox' ? 'official' : 'all');
+  if (cat === 'official') {
+    msgs = msgs.filter((m) => !isTempEmail(m));
+  } else if (cat === 'temp') {
+    msgs = msgs.filter((m) => isTempEmail(m));
   }
 
   // Filter by alias (e.g. test@zahidp.com or hello@zahidp.com)
@@ -279,13 +335,15 @@ export async function getUnreadCount(): Promise<number> {
   ).length;
 }
 
-export async function getMailFolderCounts(): Promise<{
+export async function getMailFolderCounts(filterCategory?: 'official' | 'temp' | 'all'): Promise<{
   inbox: number;
   unread: number;
   sent: number;
   starred: number;
   archive: number;
   trash: number;
+  official: number;
+  temp: number;
 }> {
   const store = await readMailStore();
   const msgs = store.messages || [];
@@ -296,8 +354,14 @@ export async function getMailFolderCounts(): Promise<{
   let starred = 0;
   let archive = 0;
   let trash = 0;
+  let official = 0;
+  let temp = 0;
 
   for (const m of msgs) {
+    const isT = isTempEmail(m);
+    if (isT) temp++;
+    else official++;
+
     if (m.isTrashed || m.folder === 'trash') {
       trash++;
     } else if (m.isArchived || m.folder === 'archive') {
@@ -305,8 +369,20 @@ export async function getMailFolderCounts(): Promise<{
     } else if (m.direction === 'outbound' || m.folder === 'sent') {
       sent++;
     } else {
-      inbox++;
-      if (!m.isRead) unread++;
+      if (filterCategory === 'temp') {
+        if (isT) {
+          inbox++;
+          if (!m.isRead) unread++;
+        }
+      } else if (filterCategory === 'official') {
+        if (!isT) {
+          inbox++;
+          if (!m.isRead) unread++;
+        }
+      } else {
+        inbox++;
+        if (!m.isRead) unread++;
+      }
     }
 
     if (m.isStarred && !m.isTrashed && m.folder !== 'trash') {
@@ -314,7 +390,7 @@ export async function getMailFolderCounts(): Promise<{
     }
   }
 
-  return { inbox, unread, sent, starred, archive, trash };
+  return { inbox, unread, sent, starred, archive, trash, official, temp };
 }
 
 export async function addMailMessage(message: MailMessage): Promise<boolean> {
@@ -736,4 +812,90 @@ export async function emptyTrash(): Promise<number> {
 
   await writeMailStore(store);
   return originalLength - store.messages.length;
+}
+
+
+let lastResendSyncTime = 0;
+
+/**
+ * Automatically synchronize incoming emails from Resend Receiving API.
+ * Compares against already ingested email IDs, imports any newly arrived emails,
+ * and delivers temporary mails to the Zahid OS Temp Mail subsystem.
+ */
+export async function syncReceivedEmailsFromResend(force = false): Promise<{ count: number; newEmails: string[] }> {
+  const now = Date.now();
+  // Throttle to at most once every 10 seconds unless force=true
+  if (!force && now - lastResendSyncTime < 10000) {
+    return { count: 0, newEmails: [] };
+  }
+  lastResendSyncTime = now;
+
+  try {
+    const apiKey = (await getAppSecret('RESEND_API_KEY')) || process.env.RESEND_API_KEY;
+    if (!apiKey || !apiKey.startsWith('re_')) {
+      return { count: 0, newEmails: [] };
+    }
+
+    const resend = new Resend(apiKey);
+    const listRes = await resend.emails.receiving.list();
+    if (listRes.error || !listRes.data || !Array.isArray(listRes.data.data)) {
+      return { count: 0, newEmails: [] };
+    }
+
+    const emailSummaries = listRes.data.data;
+    const store = await readMailStore();
+    const existingResendIds = new Set(
+      store.messages.map((m) => m.resendId).filter(Boolean)
+    );
+
+    const newSummaries = emailSummaries.filter((s) => !existingResendIds.has(s.id));
+    if (newSummaries.length === 0) {
+      return { count: 0, newEmails: [] };
+    }
+
+    const importedIds: string[] = [];
+    for (const item of newSummaries) {
+      try {
+        const fullRes = await resend.emails.receiving.get(item.id);
+        if (fullRes.data) {
+          const full = fullRes.data;
+          await upsertReceivedEmail({
+            id: full.id,
+            from: full.from,
+            to: full.to,
+            subject: full.subject,
+            html: full.html,
+            text: full.text,
+            created_at: full.created_at,
+            headers: full.headers as Record<string, unknown> | undefined,
+            attachments: full.attachments as EmailAttachment[] | undefined,
+          });
+
+          // Also deliver to Temp Mail if recipient is a disposable address
+          try {
+            const { ingestInboundEmail } = await import('@/lib/os/temp-mail');
+            await ingestInboundEmail({
+              resendId: full.id,
+              from: full.from,
+              to: full.to,
+              subject: full.subject,
+              text: full.text,
+              html: full.html,
+            });
+          } catch {
+            // ignore non-blocking
+          }
+
+          importedIds.push(full.id);
+        }
+      } catch (e) {
+        console.warn(`[MailStore] Error fetching receiving email ${item.id}:`, e);
+      }
+    }
+
+    return { count: importedIds.length, newEmails: importedIds };
+  } catch (err) {
+    console.warn('[MailStore] syncReceivedEmailsFromResend error:', err);
+    return { count: 0, newEmails: [] };
+  }
 }

@@ -7,26 +7,43 @@ import {
   emptyTrash,
   getUnreadCount,
   getMailFolderCounts,
+  syncReceivedEmailsFromResend,
 } from '@/lib/mail/store';
 import { MailMessage } from '@/types/mail';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/mail/messages?folder=inbox&search=keyword&alias=test@zahidp.com
+// GET /api/mail/messages?folder=inbox&search=keyword&alias=test@zahidp.com&category=official&forceSync=false
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const folder = searchParams.get('folder') || 'inbox';
     const search = searchParams.get('search') || undefined;
     const alias = searchParams.get('alias') || undefined;
+    const category = (searchParams.get('category') || (folder === 'inbox' ? 'official' : 'all')) as
+      | 'official'
+      | 'temp'
+      | 'all';
+    const forceSync = searchParams.get('forceSync') === 'true';
+    const autoSync = searchParams.get('sync') !== 'false';
 
-    const messages = await listMailMessages({ folder, search, alias });
+    // 1. Auto-sync newly received emails from Resend Receiving
+    if (autoSync) {
+      try {
+        await syncReceivedEmailsFromResend(forceSync);
+      } catch (syncErr) {
+        console.warn('[Messages Route] Resend auto-sync warning:', syncErr);
+      }
+    }
+
+    const messages = await listMailMessages({ folder, search, alias, category });
     const unreadCount = await getUnreadCount();
-    const counts = await getMailFolderCounts();
+    const counts = await getMailFolderCounts(category);
 
     return NextResponse.json({
       success: true,
       folder,
+      category,
       count: messages.length,
       unreadCount,
       counts,

@@ -1,6 +1,166 @@
 {
-  "updatedAt": "2026-11-02T20:11:25.972Z",
+  "updatedAt": "2026-11-02T21:06:04.491Z",
   "messages": [
+    {
+      "id": "msg_resend_a65f5890-249b-459e-b347-89dcd0c3afb7",
+      "folder": "inbox",
+      "from": {
+        "name": "Md Zahid Hasan Patwary",
+        "email": "mdzahidhasanpatwary@gmail.com"
+      },
+      "to": [
+        {
+          "name": "Md Zahid Hasan",
+          "email": "hello@zahidp.com"
+        }
+      ],
+      "replyTo": "mdzahidhasanpatwary@gmail.com",
+      "subject": "AGi8n Test",
+      "body": "*AGi8n TestAGi8n TestAGi8n TestAGi8n TestAGi8n TestAGi8n Testsdhfuidsgf\nsuoidgfr sgouifsdhf987sdgf9sb  123122131233*\n",
+      "textBody": "*AGi8n TestAGi8n TestAGi8n TestAGi8n TestAGi8n TestAGi8n Testsdhfuidsgf\nsuoidgfr sgouifsdhf987sdgf9sb  123122131233*\n",
+      "snippet": "*AGi8n TestAGi8n TestAGi8n TestAGi8n TestAGi8n TestAGi8n Testsdhfuidsgf suoidgfr sgouifsdhf987sdgf9sb  123122131233* ",
+      "createdAt": "2026-11-02T20:54:33.748877+00:00",
+      "receivedAt": "2026-11-02T20:54:33.748877+00:00",
+      "isRead": false,
+      "isStarred": false,
+      "isTrashed": false,
+      "isArchived": false,
+      "label": "inbox",
+      "direction": "inbound",
+      "attachments": [],
+      "headers": {},
+      "tags": [
+        "Inquiry"
+      ]
+    },
+    {
+      "id": "msg_resend_5ea3ddf2-0eda-4a07-8d88-514a3d9a0c38",
+      "folder": "inbox",
+      "from": {
+        "name": "Md Zahid Hasan Patwary",
+        "email": "zahid.tforce@gmail.com"
+      },
+      "to": [
+        {
+          "name": "Md Zahid Hasan",
+          "email": "tmp_fhv2zw@zahidp.com"
+        }
+      ],
+      "replyTo": "zahid.tforce@gmail.com",
+      "subject": "Your OTP",
+      "body": "Your OTP is : 123456\n",
+      "textBody": "Your OTP is : 123456\n",
+      "snippet": "Your OTP is : 123456 ",
+      "createdAt": "2026-11-02T20:54:34.54306+00:00",
+      "receivedAt": "2026-11-02T20:54:34.54306+00:00",
+      "isRead": false,
+      "isStarred": false,
+      "isTrashed": false,
+      "isArchived": false,
+      "label": "inbox",
+      "direction": "inbound",
+      "attachments": [],
+      "headers": {},
+      "tags": [
+        "Inquiry"
+      ]
+    },
+    {
+      "id": "msg_resend_7c15e785-2596-4e83-8c01-473ccc8301ec",
+      "folder": "inbox",
+      "from": {
+        "name": "Md Zahid Hasan Patwary",
+        "email": "zahid.tforce@gmail.com"
+      },
+      "to": [
+        {
+          "name": "Md Zahid Hasan",
+          "email": "test2@zahidp.com"
+        }
+      ],
+      "replyTo": "zahid.tforce@gmail.com",
+      "subject": "Your OTP",
+      "body": "Your OTP is : 123456\n",
+      "textBody": "Your OTP is : 123456\n",
+      "snippet": "Your OTP is : 123456 ",
+      "createdAt": "2026-11-02T20:54:35.242976+00:00",
+      "receivedAt": "2026-11-02T20:54:35.242976+00:00",
+      "isRead": false,
+      "isStarred": false,
+      "isTrashed": false,
+      "isArchived": false,
+      "label": "inbox",
+      "direction": "inbound",
+      "attachments": [],
+      "headers": {},
+      "tags": [
+        "Inquiry"
+      ]
+    },
+    {
+      "id": "msg_resend_7d71455c-6089-43d8-a3d3-3e75a0fbfc0c",
+      "folder": "inbox",
+      "from": {
+        "name": "Md Zahid Hasan Patwary",
+        "email": "zahid.tforce@gmail.com"
+      },
+      "to": [
+        {
+          "name": "Md Zahid Hasan",
+          "email": "test2@zahidp.com"
+        }
+      ],
+      "replyTo": "zahid.tforce@gmail.com",
+      "subject": "test2@zahidp.com",
+      "body": "test2@zahidp.com\n",
+      "textBody": "test2@zahidp.com\n",
+      "snippet": "test2@zahidp.com ",
+      "createdAt": "2026-11-02T20:54:35.964718+00:00",
+      "receivedAt": "2026-11-02T20:54:35.964718+00:00",
+      "isRead": false,
+      "isStarred": false,
+      "isTrashed": false,
+      "isArchived": false,
+      "label": "inbox",
+      "direction": "inbound",
+      "attachments": [],
+      "headers": {},
+      "tags": [
+        "Inquiry"
+      ]
+    },
+    {
+      "id": "msg_resend_b419aead-04b0-4a5f-a125-2905486e7337",
+      "folder": "inbox",
+      "from": {
+        "name": "Md Zahid Hasan Patwary",
+        "email": "mdzahidhasanpatwary@gmail.com"
+      },
+      "to": [
+        {
+          "name": "Md Zahid Hasan",
+          "email": "test@zahidp.com"
+        }
+      ],
+      "replyTo": "mdzahidhasanpatwary@gmail.com",
+      "subject": "Test",
+      "body": "test\n",
+      "textBody": "test\n",
+      "snippet": "test ",
+      "createdAt": "2026-11-02T20:54:36.668969+00:00",
+      "receivedAt": "2026-11-02T20:54:36.668969+00:00",
+      "isRead": false,
+      "isStarred": false,
+      "isTrashed": false,
+      "isArchived": false,
+      "label": "inbox",
+      "direction": "inbound",
+      "attachments": [],
+      "headers": {},
+      "tags": [
+        "Inquiry"
+      ]
+    },
     {
       "id": "msg_sent_1793536860630",
       "folder": "sent",
@@ -99,6 +259,7 @@
     },
     {
       "id": "msg_resend_1ce0f0f7-9651-4f09-91e5-0b97946cbf73",
+      "resendId": "1ce0f0f7-9651-4f09-91e5-0b97946cbf73",
       "folder": "inbox",
       "from": {
         "name": "cvudhxh",
@@ -115,8 +276,8 @@
       "body": "\nEMAIL LISTS 2026\n100% MX TESTED EMAILS\n\n---------------------------------\nTalk to us:\n\nOn WhatsApp:\n+55 21 98684 2873\n\nOn Telegram:\n+55 21 98684 2873\n\nOn Teams:\nCorbett Software\n---------------------------------\n\nThe best email lists for your email blasting:\n\n- Choose any country, any region, any type, any categoy.\n- We deliver your lists in 4 hours after payment.\n- 100% fresh, updated, one by one MX tested emails.\n- 100% replacement policy, no questions asked.\n\n---------------------------------\nTalk to us:\n\nOn WhatsApp:\n+55 21 98684 2873\n\nOn Telegram:\n+55 21 98684 2873\n\nOn Teams:\nCorbett Software\n---------------------------------\n\nBest regards,\n\nSUPER LIST\nThe best email lists since 1998\n\n\n\nwfwoykm bwrnvdxo\n\nmail.acess.gob.ec:25:0:45.182.115.114:4153:socks4:25\n\n",
       "textBody": "\nEMAIL LISTS 2026\n100% MX TESTED EMAILS\n\n---------------------------------\nTalk to us:\n\nOn WhatsApp:\n+55 21 98684 2873\n\nOn Telegram:\n+55 21 98684 2873\n\nOn Teams:\nCorbett Software\n---------------------------------\n\nThe best email lists for your email blasting:\n\n- Choose any country, any region, any type, any categoy.\n- We deliver your lists in 4 hours after payment.\n- 100% fresh, updated, one by one MX tested emails.\n- 100% replacement policy, no questions asked.\n\n---------------------------------\nTalk to us:\n\nOn WhatsApp:\n+55 21 98684 2873\n\nOn Telegram:\n+55 21 98684 2873\n\nOn Teams:\nCorbett Software\n---------------------------------\n\nBest regards,\n\nSUPER LIST\nThe best email lists since 1998\n\n\n\nwfwoykm bwrnvdxo\n\nmail.acess.gob.ec:25:0:45.182.115.114:4153:socks4:25\n\n",
       "snippet": " EMAIL LISTS 2026 100% MX TESTED EMAILS --------------------------------- Talk to us: On WhatsApp: +55 21 98684 2873 On ",
-      "createdAt": "2026-11-01T17:19:46.389328+00:00",
-      "receivedAt": "2026-11-01T17:19:46.389328+00:00",
+      "createdAt": "2026-10-05T10:47:23.489Z",
+      "receivedAt": "2026-10-05T10:47:23.489Z",
       "isRead": true,
       "isStarred": false,
       "isTrashed": false,
@@ -124,7 +285,21 @@
       "label": "inbox",
       "direction": "inbound",
       "attachments": [],
-      "headers": {},
+      "headers": {
+        "return-path": "cvudhxh@taxinsightworld.com",
+        "received": "[\"from server.webtelconnect.com (server.webtelconnect.com [160.187.251.31]) by inbound-smtp.ap-northeast-1.amazonaws.com with SMTP id msf4494t612jb4s3ru7oi7djg9hvsugtt6uio4g1 for hello@zahidp.com; Mon, 05 Oct 2026 10:47:22 +0000 (UTC)\",\"from mail.taxinsightworld.com (57.13.102.103.fisnet.id [103.102.13.57]) by server.webtelconnect.com with SMTP; Mon, 5 Oct 2026 12:15:38 +0530\"]",
+        "x-ses-spam-verdict": "PASS",
+        "x-ses-virus-verdict": "PASS",
+        "received-spf": "pass (spfCheck: domain of taxinsightworld.com designates 160.187.251.31 as permitted sender) client-ip=160.187.251.31; envelope-from=cvudhxh@taxinsightworld.com; helo=server.webtelconnect.com;",
+        "authentication-results": "amazonses.com; spf=pass (spfCheck: domain of taxinsightworld.com designates 160.187.251.31 as permitted sender) client-ip=160.187.251.31; envelope-from=cvudhxh@taxinsightworld.com; helo=server.webtelconnect.com; dmarc=pass header.from=taxinsightworld.com;",
+        "x-ses-receipt": "AEFBQUFBQUFBQUFGT1hBM1BFZmNBdUU0a3dCVm9OK0crT0k5VHZyRU9NU1pYbnBhK1JWSWFEaUFxcWwrbisvRVVtUHc1RWdzSi9jUXcyQTZBR0xDSS94ejREaHdvTlQ4N1BDZ25EY2R2K29wSDY4eEJrZ2ZXOU9sZzRaNDFLemtlUVBFRWJidFlraHBmYWE5ZkFpWXJQTmkyUXRSUElXNmNCaC9tZkIzaDJ4eFZFRmd5WTRxWGc3U0tRR1d3T1ZrNU44bUY5QjNlZG5Icy9VRWk3cGtoY01UOHpnc2tZc042L1FwRCtxRjhhS0haN2xGekphWEZBN0NwN2IveGdxQU0yaWxCR0pKWnhNcXY0VXZvRUt6TTJPU3hsdy9jOEdYSjZCTmxhdTNJTi9RVWgyZ0xCU3dGVkE9PQ==",
+        "x-ses-dkim-signature": "a=rsa-sha256; q=dns/txt; b=hS+zFa7uNZlFC3SQeMMm0+4tWHJ6FCsuFKw+ejYlugWfduFthxPrtsBoRw23c2WFAUDUq4gFN6azdFK6B7tAriqr39EQGeC+jDMCBzxLnnRKMzkmgcICe5GM+ovS92Yaheg3M3MAo4trUSc5pPxvCHvQHN4bKnTV6Rzh7u1JZ4g=; c=relaxed/simple; s=zh4gjftm6etwoq6afzugpky45synznly; d=amazonses.com; t=1791197242; v=1; bh=f4HeBuC9p0R/UtIMRwsTnupPFgf7IUC/NA/WipmqDDk=; h=From:To:Cc:Bcc:Subject:Date:Message-ID:MIME-Version:Content-Type:X-SES-RECEIPT;",
+        "from": "cvudhxh@taxinsightworld.com",
+        "subject": "EMAIL LISTS 2026 - 100% MX TESTED EMAILS",
+        "to": "lagunaenergymedicine@gmail.com",
+        "reply-to": "boomofsales@gmailhotmail.com.br",
+        "date": "\"2026-10-05T06:45:38.000Z\""
+      },
       "tags": [
         "Inquiry"
       ]
