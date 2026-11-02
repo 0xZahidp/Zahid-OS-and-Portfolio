@@ -1,7 +1,11 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import { BANGLADESH_MAP_PATHS, BANGLADESH_MAP_VIEWBOX } from '@/lib/travel/bangladesh-map-paths';
+import React, { useMemo, useState, useCallback } from 'react';
+import {
+  BANGLADESH_MAP_PATHS,
+  BANGLADESH_MAP_VIEWBOX,
+  DistrictPathData,
+} from '@/lib/travel/bangladesh-map-paths';
 import type { DistrictCode } from '@/lib/travel/bangladesh-districts';
 import type { DistrictTravelData, DistrictTravelStatus } from '@/types/travel.types';
 import { Navigation, ZoomIn, ZoomOut, RotateCcw, Compass, MapPin } from 'lucide-react';
@@ -46,6 +50,75 @@ const STATUS_FILL: Record<
 
 const MAP_PATHS_LIST = Object.values(BANGLADESH_MAP_PATHS);
 
+// Memoized Individual District Path (skips re-rendering 62 untouched districts on hover)
+interface DistrictPathProps {
+  item: DistrictPathData;
+  status: DistrictTravelStatus;
+  isSelected: boolean;
+  isHovered: boolean;
+  district?: DistrictTravelData;
+  onSelect: (district: DistrictTravelData) => void;
+  onHoverEnter: (code: DistrictCode) => void;
+  onHoverLeave: () => void;
+}
+
+const DistrictPath = React.memo(
+  ({
+    item,
+    status,
+    isSelected,
+    isHovered,
+    district,
+    onSelect,
+    onHoverEnter,
+    onHoverLeave,
+  }: DistrictPathProps) => {
+    const style = STATUS_FILL[status];
+
+    const handleClick = useCallback(() => {
+      if (district) {
+        onSelect(district);
+      }
+    }, [district, onSelect]);
+
+    const handlePointerEnter = useCallback(() => {
+      onHoverEnter(item.code);
+    }, [item.code, onHoverEnter]);
+
+    return (
+      <path
+        id={item.mapIdentifier}
+        data-code={item.code}
+        d={item.d}
+        role="button"
+        vectorEffect="non-scaling-stroke"
+        aria-label={`${item.name}, ${item.bnName}, ${style.label}`}
+        onClick={handleClick}
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={onHoverLeave}
+        className={`transition-colors duration-100 cursor-pointer ${style.normal} ${style.hover} ${
+          isSelected
+            ? 'stroke-white stroke-[3] fill-emerald-400'
+            : isHovered
+            ? 'stroke-white stroke-[2.2] brightness-125'
+            : 'stroke-zinc-950/90 stroke-[1.2]'
+        }`}
+      />
+    );
+  },
+  (prev, next) =>
+    prev.item.code === next.item.code &&
+    prev.status === next.status &&
+    prev.isSelected === next.isSelected &&
+    prev.isHovered === next.isHovered &&
+    prev.district === next.district &&
+    prev.onSelect === next.onSelect &&
+    prev.onHoverEnter === next.onHoverEnter &&
+    prev.onHoverLeave === next.onHoverLeave
+);
+
+DistrictPath.displayName = 'DistrictPath';
+
 interface BangladeshDistrictMapProps {
   districts: DistrictTravelData[];
   selectedCode: DistrictCode | null;
@@ -73,16 +146,15 @@ export const BangladeshDistrictMap: React.FC<BangladeshDistrictMapProps> = ({
     return map;
   }, [districts]);
 
+  // Purely hover-driven HUD inspector (selected district on right panel is completely independent)
   const activeHoveredDistrict = hoveredCode ? districtMap.get(hoveredCode) : null;
-  const activeSelectedDistrict = selectedCode ? districtMap.get(selectedCode) : null;
-  const inspectorDistrict = activeHoveredDistrict || activeSelectedDistrict;
 
   // Selected district centroid for smooth zoom focus
   const selectedCentroid = useMemo(() => {
     if (selectedCode && BANGLADESH_MAP_PATHS[selectedCode]) {
       return BANGLADESH_MAP_PATHS[selectedCode].centroid;
     }
-    return [350, 440] as const; // Default center of 700x880 map
+    return [350, 440] as const;
   }, [selectedCode]);
 
   // Counts for legend
@@ -112,74 +184,121 @@ export const BangladeshDistrictMap: React.FC<BangladeshDistrictMapProps> = ({
     setZoomLevel(1);
   };
 
+  // Pointer event callbacks (stable references for memoized DistrictPath)
+  const handleHoverEnter = useCallback(
+    (code: DistrictCode) => {
+      if (setExternalHovered) {
+        setExternalHovered(code);
+      } else {
+        setInternalHoveredCode(code);
+      }
+    },
+    [setExternalHovered]
+  );
+
+  const handleHoverLeave = useCallback(() => {
+    if (setExternalHovered) {
+      setExternalHovered(null);
+    } else {
+      setInternalHoveredCode(null);
+    }
+  }, [setExternalHovered]);
+
   return (
     <div className="space-y-3.5 select-none">
-      {/* Top District HUD Inspector Bar - Never overlaps the map */}
-      <div className="p-3.5 sm:p-4 rounded-2xl bg-zinc-900/80 border border-white/10 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-h-[64px] transition-all shadow-xl">
-        {inspectorDistrict ? (
-          <div className="flex items-center gap-3 min-w-0">
+      {/* 
+        FIX 1 & 2: Fixed-height HUD Inspector Bar (Exact 68px height)
+        Never changes height or mounts/unmounts, preventing any vertical layout shift.
+        Placeholder and active hovered district both exist permanently, toggled via opacity.
+      */}
+      <div className="relative h-[68px] min-h-[68px] max-h-[68px] rounded-2xl bg-zinc-900/80 border border-white/10 backdrop-blur-xl shadow-xl overflow-hidden">
+        {/* Layer 1: Placeholder State (Visible when nothing is hovered) */}
+        <div
+          className={`absolute inset-0 px-4 flex items-center justify-between transition-opacity duration-150 pointer-events-none ${
+            activeHoveredDistrict ? 'opacity-0 invisible' : 'opacity-100 visible'
+          }`}
+        >
+          <div className="flex items-center gap-3 text-white/50 text-xs min-w-0">
+            <Compass className="size-4 text-emerald-400 shrink-0" />
+            <div className="min-w-0">
+              <p className="font-semibold text-white/80 truncate">Interactive 64 Districts Canvas</p>
+              <p className="text-[11px] text-white/40 truncate">
+                Hover a district to inspect details • Click to view records
+              </p>
+            </div>
+          </div>
+
+          <span className="text-[10px] font-mono uppercase px-2.5 py-1 rounded-lg bg-white/5 text-white/40 border border-white/5 shrink-0 hidden sm:inline">
+            Mercator BD-ADM2
+          </span>
+        </div>
+
+        {/* Layer 2: Active Hovered District State (Visible when district is hovered) */}
+        <div
+          className={`absolute inset-0 px-4 flex items-center justify-between transition-opacity duration-150 ${
+            activeHoveredDistrict ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
+          }`}
+        >
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <span
               className={`size-3.5 rounded-full shrink-0 shadow-md ${
-                inspectorDistrict.status === 'visited'
+                activeHoveredDistrict?.status === 'visited'
                   ? 'bg-emerald-400 shadow-emerald-400/80 ring-2 ring-emerald-500/30'
-                  : inspectorDistrict.status === 'planned'
+                  : activeHoveredDistrict?.status === 'planned'
                   ? 'bg-amber-400 shadow-amber-400/80 ring-2 ring-amber-500/30'
-                  : inspectorDistrict.status === 'revisit_planned'
+                  : activeHoveredDistrict?.status === 'revisit_planned'
                   ? 'bg-violet-400 shadow-violet-400/80 ring-2 ring-violet-500/30'
                   : 'bg-zinc-600'
               }`}
             />
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-black text-white text-base sm:text-lg tracking-tight">
-                  {inspectorDistrict.name}
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-nowrap truncate">
+                <span className="font-black text-white text-base sm:text-lg tracking-tight truncate">
+                  {activeHoveredDistrict?.name || ''}
                 </span>
-                <span className="font-serif text-emerald-400 font-bold text-sm sm:text-base">
-                  ({inspectorDistrict.bnName})
+                <span className="font-serif text-emerald-400 font-bold text-sm sm:text-base shrink-0">
+                  ({activeHoveredDistrict?.bnName || ''})
                 </span>
-                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-white/10 text-white/70">
-                  {inspectorDistrict.code.toUpperCase()}
+                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-white/10 text-white/70 shrink-0">
+                  {activeHoveredDistrict?.code ? activeHoveredDistrict.code.toUpperCase() : ''}
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-white/60 flex-wrap mt-0.5">
-                <span className="text-emerald-300 font-medium capitalize">
-                  {inspectorDistrict.division} Division
+
+              <div className="flex items-center gap-2 text-xs text-white/60 truncate mt-0.5">
+                <span className="text-emerald-300 font-medium capitalize shrink-0">
+                  {activeHoveredDistrict?.division || ''} Division
                 </span>
                 <span>•</span>
-                <span>{STATUS_FILL[inspectorDistrict.status].label}</span>
-                {inspectorDistrict.visitsCount > 0 && (
+                <span className="shrink-0">
+                  {activeHoveredDistrict ? STATUS_FILL[activeHoveredDistrict.status].label : ''}
+                </span>
+                {(activeHoveredDistrict?.visitsCount ?? 0) > 0 && (
                   <>
                     <span>•</span>
-                    <span className="font-mono text-white font-medium">
-                      {inspectorDistrict.visitsCount} {inspectorDistrict.visitsCount === 1 ? 'visit' : 'visits'}
+                    <span className="font-mono text-white font-medium shrink-0">
+                      {activeHoveredDistrict?.visitsCount}{' '}
+                      {activeHoveredDistrict?.visitsCount === 1 ? 'visit' : 'visits'}
                     </span>
                   </>
                 )}
-                {inspectorDistrict.rating && (
+                {activeHoveredDistrict?.rating ? (
                   <>
                     <span>•</span>
-                    <span className="text-amber-400 font-medium">★ {inspectorDistrict.rating}/5</span>
+                    <span className="text-amber-400 font-medium shrink-0">
+                      ★ {activeHoveredDistrict.rating}/5
+                    </span>
                   </>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
-        ) : (
-          <div className="flex items-center gap-3 text-white/50 text-xs">
-            <Compass className="size-4 text-emerald-400 shrink-0" />
-            <div>
-              <p className="font-semibold text-white/80">Interactive 64 Districts Canvas</p>
-              <p className="text-[11px] text-white/40">Hover or click any district to inspect records & memories</p>
-            </div>
-          </div>
-        )}
 
-        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-          {inspectorDistrict && (
+          <div className="shrink-0 pl-3 hidden sm:block">
             <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-xl">
               Click to Open Details
             </span>
-          )}
+          </div>
         </div>
       </div>
 
@@ -281,36 +400,18 @@ export const BangladeshDistrictMap: React.FC<BangladeshDistrictMapProps> = ({
                 const status = district?.status || 'not_visited';
                 const isSelected = selectedCode === item.code;
                 const isHovered = hoveredCode === item.code;
-                const style = STATUS_FILL[status];
 
                 return (
-                  <path
+                  <DistrictPath
                     key={item.code}
-                    id={item.mapIdentifier}
-                    data-code={item.code}
-                    d={item.d}
-                    tabIndex={0}
-                    role="button"
-                    vectorEffect="non-scaling-stroke"
-                    aria-label={`${item.name}, ${item.bnName}, ${style.label}`}
-                    onClick={() => {
-                      if (district) onSelectDistrict(district);
-                    }}
-                    onMouseEnter={() => {
-                      if (setExternalHovered) setExternalHovered(item.code);
-                      else setInternalHoveredCode(item.code);
-                    }}
-                    onMouseLeave={() => {
-                      if (setExternalHovered) setExternalHovered(null);
-                      else setInternalHoveredCode(null);
-                    }}
-                    className={`transition-colors duration-100 cursor-pointer ${style.normal} ${style.hover} ${
-                      isSelected
-                        ? 'stroke-white stroke-[3] fill-emerald-400'
-                        : isHovered
-                        ? 'stroke-white stroke-[2.2] brightness-125'
-                        : 'stroke-zinc-950/90 stroke-[1.2]'
-                    }`}
+                    item={item}
+                    status={status}
+                    isSelected={isSelected}
+                    isHovered={isHovered}
+                    district={district}
+                    onSelect={onSelectDistrict}
+                    onHoverEnter={handleHoverEnter}
+                    onHoverLeave={handleHoverLeave}
                   />
                 );
               })}

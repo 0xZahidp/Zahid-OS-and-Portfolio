@@ -112,3 +112,4 @@ BEGIN
   RETURN deleted_count;
 END;
 $$;
+
