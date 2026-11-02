@@ -13,3 +13,4 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const destination = new URL(`/s/${encodeURIComponent(slug)}`, req.url);
   return NextResponse.redirect(destination, 307);
 }
+

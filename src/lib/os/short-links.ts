@@ -96,3 +96,4 @@ export async function recordLinkClick(slug: string): Promise<void> {
     console.warn('Failed to record link click:', err);
   }
 }
+

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "snip-1",
+    "title": "Supabase Service Role Client",
+    "language": "typescript",
+    "description": "Safe server-side Supabase client pattern for route handlers",
+    "code": "import { createClient } from '@supabase/supabase-js';\n\nexport const supabaseAdmin = createClient(\n  process.env.NEXT_PUBLIC_SUPABASE_URL!,\n  process.env.SUPABASE_SERVICE_ROLE_KEY!,\n  { auth: { persistSession: false, autoRefreshToken: false } }\n);"
+  },
+  {
+    "id": "snip-2",
+    "title": "Next.js Dynamic Route Redirect",
+    "language": "typescript",
+    "description": "Perform 307 temporary redirect in Next.js App Router",
+    "code": "import { NextRequest, NextResponse } from 'next/server';\n\nexport async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {\n  const { slug } = await params;\n  return NextResponse.redirect(new URL(`/target/${slug}`, req.url), 307);\n}"
+  },
+  {
+    "id": "snip-3",
+    "title": "Tailwind Glassmorphic Card",
+    "language": "css",
+    "description": "Frosted glass card styling with backdrop blur",
+    "code": ".ios-glass {\n  background: rgba(255, 255, 255, 0.08);\n  backdrop-filter: blur(20px);\n  -webkit-backdrop-filter: blur(20px);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);\n}"
+  }
+]

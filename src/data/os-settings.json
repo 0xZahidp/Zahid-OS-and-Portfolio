@@ -1,0 +1,34 @@
+{
+  "is_public_enabled": false,
+  "public_hero_title": "Zahid OS",
+  "public_hero_subtitle": "Cloud tools, web utilities & micro-apps designed by 0xZahidP",
+  "wallpaper": "emerald-mesh",
+  "sound_effects": true,
+  "app_permissions": {
+    "shortener": {
+      "is_public": true,
+      "name": "Shortener"
+    },
+    "qr": {
+      "is_public": true,
+      "name": "QR Studio"
+    },
+    "notes": {
+      "is_public": false,
+      "name": "Notes"
+    },
+    "snippets": {
+      "is_public": true,
+      "name": "Snippets"
+    },
+    "focus": {
+      "is_public": true,
+      "name": "Focus Clock"
+    },
+    "settings": {
+      "is_public": false,
+      "name": "Settings"
+    }
+  },
+  "updated_at": "2026-11-02T05:43:28.209Z"
+}

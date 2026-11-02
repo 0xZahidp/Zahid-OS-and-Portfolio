@@ -52,3 +52,4 @@ export async function GET(req: NextRequest, context: RouteContext) {
     return NextResponse.redirect(new URL('/', req.url));
   }
 }
+
