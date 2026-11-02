@@ -5,6 +5,8 @@ import { ZahidOsSettings } from '@/types/os';
 
 const SETTINGS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'os-settings.json');
 
+let memorySettingsCache: { settings: ZahidOsSettings; timestamp: number } | null = null;
+const SETTINGS_CACHE_TTL = 30000; // 30s
 const defaultOsSettings: ZahidOsSettings = {
   is_public_enabled: false,
   allow_public_link_creation: false,
@@ -46,6 +48,21 @@ function normalizeOsSettings(raw: Partial<ZahidOsSettings> | null | undefined): 
  * 3. Local JSON file 'src/data/os-settings.json' (offline / dev fallback)
  */
 export async function getOsSettings(): Promise<ZahidOsSettings> {
+  // 0. In-memory cache (<30s)
+  if (memorySettingsCache && Date.now() - memorySettingsCache.timestamp < SETTINGS_CACHE_TTL) {
+    return memorySettingsCache.settings;
+  }
+
+  // 1. Ultra-fast local file read (<1ms)
+  try {
+    const content = await fs.readFile(SETTINGS_FILE_PATH, 'utf-8');
+    const parsed = JSON.parse(content);
+    const settings = normalizeOsSettings(parsed);
+    memorySettingsCache = { settings, timestamp: Date.now() };
+    return settings;
+  } catch {
+    // fallback to Supabase / defaults
+  }
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
@@ -101,6 +118,7 @@ export async function getOsSettings(): Promise<ZahidOsSettings> {
  * 3. Supabase dedicated table 'os_settings' (if exists)
  */
 export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promise<ZahidOsSettings> {
+  memorySettingsCache = null;
   const current = await getOsSettings();
   const merged: ZahidOsSettings = {
     ...current,

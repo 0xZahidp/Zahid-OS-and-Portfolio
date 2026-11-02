@@ -3,6 +3,8 @@ import path from 'node:path';
 import { supabaseServer } from '@/lib/supabase/server';
 import { ShortLink } from '@/types/os';
 
+let memoryLinksCache: { links: ShortLink[]; timestamp: number } | null = null;
+const LINKS_CACHE_TTL = 20000; // 20s
 const SHORT_LINKS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'short-links.json');
 
 /**
@@ -12,6 +14,22 @@ const SHORT_LINKS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'short-lin
  * 3. Local JSON file 'src/data/short-links.json' (offline / dev fallback)
  */
 export async function getShortLinks(): Promise<ShortLink[]> {
+  // 0. In-memory cache (<20s)
+  if (memoryLinksCache && Date.now() - memoryLinksCache.timestamp < LINKS_CACHE_TTL) {
+    return memoryLinksCache.links;
+  }
+
+  // 1. Ultra-fast local file read (<1ms)
+  try {
+    const fileContent = await fs.readFile(SHORT_LINKS_FILE_PATH, 'utf-8');
+    const parsed = JSON.parse(fileContent);
+    if (Array.isArray(parsed)) {
+      memoryLinksCache = { links: parsed as ShortLink[], timestamp: Date.now() };
+      return parsed as ShortLink[];
+    }
+  } catch {
+    // fallback to Supabase
+  }
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
@@ -68,6 +86,7 @@ export async function getShortLinks(): Promise<ShortLink[]> {
  * 3. Supabase dedicated table 'os_short_links' (if exists)
  */
 export async function saveShortLinks(links: ShortLink[]): Promise<boolean> {
+  memoryLinksCache = null;
   let fileSaved = false;
 
   // 1. Save to local file

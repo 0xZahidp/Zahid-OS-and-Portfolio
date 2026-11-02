@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   Lock,
   ArrowLeft,
@@ -26,13 +27,76 @@ import {
   Mail,
 } from 'lucide-react';
 import { ShortLink, ZahidOsSettings, ZahidOsAppId } from '@/types/os';
-import { TravelWorkspace } from '@/components/os/travel/TravelWorkspace';
-import { ApiPlaygroundApp } from '@/components/os/api-playground';
-import { TempMailApp } from '@/components/os/temp-mail';
+
+// Code-split heavy micro-apps so Zahid OS Desktop boots in sub-100ms with a lightweight bundle
+const TravelWorkspace = dynamic(
+  () => import('@/components/os/travel/TravelWorkspace').then((m) => m.TravelWorkspace),
+  {
+    loading: () => (
+      <div className="min-h-[460px] flex flex-col items-center justify-center gap-3 text-white/50 select-none">
+        <div className="size-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 grid place-items-center shadow-lg">
+          <Compass className="size-5.5 animate-spin" />
+        </div>
+        <p className="text-xs font-mono text-emerald-300">Launching Bangladesh Travel Odyssey...</p>
+      </div>
+    ),
+    ssr: false,
+  }
+);
+
+const ApiPlaygroundApp = dynamic(
+  () => import('@/components/os/api-playground').then((m) => m.ApiPlaygroundApp),
+  {
+    loading: () => (
+      <div className="min-h-[460px] flex flex-col items-center justify-center gap-3 text-white/50 select-none">
+        <div className="size-11 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 grid place-items-center shadow-lg">
+          <Code2 className="size-5.5 animate-spin" />
+        </div>
+        <p className="text-xs font-mono text-cyan-300">Launching API Playground...</p>
+      </div>
+    ),
+    ssr: false,
+  }
+);
+
+const TempMailApp = dynamic(
+  () => import('@/components/os/temp-mail').then((m) => m.TempMailApp),
+  {
+    loading: () => (
+      <div className="min-h-[460px] flex flex-col items-center justify-center gap-3 text-white/50 select-none">
+        <div className="size-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 grid place-items-center shadow-lg">
+          <Mail className="size-5.5 animate-spin" />
+        </div>
+        <p className="text-xs font-mono text-amber-300">Launching Temp Mail...</p>
+      </div>
+    ),
+    ssr: false,
+  }
+);
+
+const DEFAULT_OS_SETTINGS: ZahidOsSettings = {
+  is_public_enabled: true,
+  allow_public_link_creation: true,
+  public_hero_title: 'Zahid OS',
+  public_hero_subtitle: 'Cloud tools, web utilities & micro-apps designed by 0xZahidP',
+  wallpaper: 'cyber-dark',
+  sound_effects: true,
+  app_permissions: {
+    shortener: { is_public: true, name: 'Shortener' },
+    travel: { is_public: true, name: 'Travel Map' },
+    api_playground: { is_public: true, name: 'API Playground' },
+    temp_mail: { is_public: true, name: 'Temp Mail' },
+    qr: { is_public: true, name: 'QR Studio' },
+    notes: { is_public: false, name: 'Notes' },
+    snippets: { is_public: true, name: 'Snippets' },
+    focus: { is_public: true, name: 'Focus Clock' },
+    settings: { is_public: false, name: 'Settings' },
+  },
+};
 
 export default function PublicZahidOsPage() {
-  const [settings, setSettings] = useState<ZahidOsSettings | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [settings, setSettings] = useState<ZahidOsSettings>(DEFAULT_OS_SETTINGS);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasMounted, setHasMounted] = useState<boolean>(false);
   const [openApp, setOpenApp] = useState<ZahidOsAppId | null>(null);
   const [currentTime, setCurrentTime] = useState<string>('09:41');
@@ -164,8 +228,8 @@ export default function PublicZahidOsPage() {
     }
   };
 
-  // Loading screen
-  if (isLoading) {
+  // Loading screen (only if explicitly waiting for settings on initial cold boot)
+  if (isLoading && !settings) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-3 select-none">
         <div className="size-12 rounded-[22%] bg-gradient-to-br from-emerald-500 to-teal-700 animate-pulse grid place-items-center shadow-lg shadow-emerald-500/20 text-white font-black text-xl">

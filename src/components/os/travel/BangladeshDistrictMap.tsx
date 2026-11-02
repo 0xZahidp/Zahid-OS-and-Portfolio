@@ -139,9 +139,21 @@ export const BangladeshDistrictMap: React.FC<BangladeshDistrictMapProps> = ({
   const hoveredCode = externalHoveredCode !== undefined ? externalHoveredCode : internalHoveredCode;
 
   const districtMap = useMemo(() => {
-    const map = new Map<DistrictCode, DistrictTravelData>();
+    const map = new Map<string, DistrictTravelData>();
     for (const d of districts) {
       map.set(d.code, d);
+      // Support legacy aliases so older cached state or URLs never miss
+      if (d.code === 'bd-chn') map.set('bd-cha', d);
+      if (d.code === 'bd-brg') map.set('bd-bar2', d);
+      if (d.code === 'bd-jas') map.set('bd-jes', d);
+      if (d.code === 'bd-jha') map.set('bd-jal', d);
+      if (d.code === 'bd-nao') map.set('bd-nae', d);
+      if (d.code === 'bd-nrl') map.set('bd-nar3', d);
+      if (d.code === 'bd-nsd') map.set('bd-nar2', d);
+      if (d.code === 'bd-cwn') map.set('bd-cha2', d);
+      if (d.code === 'bd-pir') map.set('bd-pii', d);
+      if (d.code === 'bd-rjb') map.set('bd-raj2', d);
+      if (d.code === 'bd-rgp') map.set('bd-ran2', d);
     }
     return map;
   }, [districts]);

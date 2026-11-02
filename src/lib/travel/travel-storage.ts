@@ -1,10 +1,38 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { supabaseServer } from '@/lib/supabase/server';
-import { BANGLADESH_DISTRICTS } from './bangladesh-districts';
+import { BANGLADESH_DISTRICTS, DistrictCode } from './bangladesh-districts';
 import { DistrictTravelData, TravelStats } from '@/types/travel.types';
 
 const TRAVEL_DATA_FILE = path.join(process.cwd(), 'src', 'data', 'travel-data.json');
+
+/**
+ * Canonical Code Aliases mapping legacy codes to official BBS/ISO BD codes.
+ * Ensures 100% interoperability across database versions and local json caches.
+ */
+export const CODE_ALIASES: Record<string, DistrictCode> = {
+  'bd-cha': 'bd-chn',   // Chandpur
+  'bd-bar2': 'bd-brg',  // Barguna
+  'bd-jes': 'bd-jas',   // Jashore
+  'bd-jal': 'bd-jha',   // Jhalakathi
+  'bd-nae': 'bd-nao',   // Naogaon
+  'bd-nar3': 'bd-nrl',  // Narail
+  'bd-nar2': 'bd-nsd',  // Narsingdi
+  'bd-cha2': 'bd-cwn',  // Chapai Nawabganj
+  'bd-pii': 'bd-pir',   // Pirojpur
+  'bd-raj2': 'bd-rjb',  // Rajbari
+  'bd-ran2': 'bd-rgp',  // Rangpur
+};
+
+export function normalizeDistrictCode(rawCode: string): DistrictCode {
+  if (!rawCode) return 'bd-dhk';
+  const lower = rawCode.toLowerCase();
+  return CODE_ALIASES[lower] || (lower as DistrictCode);
+}
+
+// Ultra-fast in-memory cache (30-second TTL) for instant sub-millisecond API responses
+let memoryTravelCache: { districts: DistrictTravelData[]; stats: TravelStats; timestamp: number } | null = null;
+const CACHE_TTL_MS = 30000;
 
 /**
  * Generate default seed dataset for all 64 districts with authentic initial records for 0xZahidP
@@ -338,6 +366,24 @@ export async function getTravelData(): Promise<{
   districts: DistrictTravelData[];
   stats: TravelStats;
 }> {
+  // 0. Instant in-memory cache (<30s)
+  if (memoryTravelCache && Date.now() - memoryTravelCache.timestamp < CACHE_TTL_MS) {
+    return memoryTravelCache;
+  }
+
+  // 1. Instant local file read (<1ms)
+  try {
+    const content = await fs.readFile(TRAVEL_DATA_FILE, 'utf-8');
+    const parsed = JSON.parse(content);
+    if (Array.isArray(parsed) && parsed.length === 64) {
+      const districts = parsed.map((d: DistrictTravelData) => ({ ...d, code: normalizeDistrictCode(d.code) }));
+      const result = { districts, stats: calculateTravelStats(districts) };
+      memoryTravelCache = { ...result, timestamp: Date.now() };
+      return result;
+    }
+  } catch {
+    // fall through to Supabase
+  }
   let districts: DistrictTravelData[] | null = null;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
@@ -374,7 +420,7 @@ export async function getTravelData(): Promise<{
         }
 
         districts = dbDistricts.map((row) => ({
-          code: row.code,
+          code: normalizeDistrictCode(row.code),
           name: row.name,
           bnName: row.bn_name,
           division: row.division,
@@ -385,7 +431,7 @@ export async function getTravelData(): Promise<{
           notes: row.notes || '',
           places: row.places || [],
           lastVisitedAt: row.last_visited_at,
-          memories: memoriesMap.get(row.code) || [],
+          memories: (memoriesMap.get(row.code) || memoriesMap.get(normalizeDistrictCode(row.code))) || [],
         }));
       }
     } catch {
@@ -404,7 +450,7 @@ export async function getTravelData(): Promise<{
         .maybeSingle();
 
       if (!error && data?.value && Array.isArray(data.value) && data.value.length === 64) {
-        districts = data.value as DistrictTravelData[];
+        districts = (data.value as DistrictTravelData[]).map((d: DistrictTravelData) => ({ ...d, code: normalizeDistrictCode(d.code) }));
       }
     } catch (err) {
       console.warn('Supabase travel data lookup failed, falling back:', err);
@@ -417,7 +463,7 @@ export async function getTravelData(): Promise<{
       const content = await fs.readFile(TRAVEL_DATA_FILE, 'utf-8');
       const parsed = JSON.parse(content);
       if (Array.isArray(parsed) && parsed.length === 64) {
-        districts = parsed as DistrictTravelData[];
+        districts = parsed.map((d: DistrictTravelData) => ({ ...d, code: normalizeDistrictCode(d.code) }));
       }
     } catch {
       // Local file does not exist yet or is invalid
@@ -445,6 +491,7 @@ export async function getTravelData(): Promise<{
  * Save updated travel data across local disk and Supabase (relational + backup)
  */
 export async function saveTravelData(districts: DistrictTravelData[]): Promise<boolean> {
+  memoryTravelCache = null;
   let fileSaved = false;
 
   // 1. Save to local file

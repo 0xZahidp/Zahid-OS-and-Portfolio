@@ -105,7 +105,7 @@
     "memories": []
   },
   {
-    "code": "bd-nar2",
+    "code": "bd-nsd",
     "name": "Narsingdi",
     "bnName": "নরসিংদী",
     "division": "dhaka",
@@ -203,7 +203,7 @@
     "memories": []
   },
   {
-    "code": "bd-cha",
+    "code": "bd-chn",
     "name": "Chandpur",
     "bnName": "চাঁদপুর",
     "division": "chattogram",
@@ -449,7 +449,7 @@
     "memories": []
   },
   {
-    "code": "bd-raj2",
+    "code": "bd-rjb",
     "name": "Rajbari",
     "bnName": "রাজবাড়ী",
     "division": "dhaka",
@@ -602,7 +602,7 @@
     "memories": []
   },
   {
-    "code": "bd-nae",
+    "code": "bd-nao",
     "name": "Naogaon",
     "bnName": "নওগাঁ",
     "division": "rajshahi",
@@ -630,7 +630,7 @@
     "memories": []
   },
   {
-    "code": "bd-cha2",
+    "code": "bd-cwn",
     "name": "Chapai Nawabganj",
     "bnName": "চাঁপাইনবাবগঞ্জ",
     "division": "rajshahi",
@@ -718,7 +718,7 @@
     "memories": []
   },
   {
-    "code": "bd-jes",
+    "code": "bd-jas",
     "name": "Jashore",
     "bnName": "যশোর",
     "division": "khulna",
@@ -760,7 +760,7 @@
     "memories": []
   },
   {
-    "code": "bd-nar3",
+    "code": "bd-nrl",
     "name": "Narail",
     "bnName": "নড়াইল",
     "division": "khulna",
@@ -848,7 +848,7 @@
     "memories": []
   },
   {
-    "code": "bd-pii",
+    "code": "bd-pir",
     "name": "Pirojpur",
     "bnName": "পিরোজপুর",
     "division": "barishal",
@@ -862,7 +862,7 @@
     "memories": []
   },
   {
-    "code": "bd-jal",
+    "code": "bd-jha",
     "name": "Jhalakathi",
     "bnName": "ঝালকাঠি",
     "division": "barishal",
@@ -876,7 +876,7 @@
     "memories": []
   },
   {
-    "code": "bd-bar2",
+    "code": "bd-brg",
     "name": "Barguna",
     "bnName": "বরগুনা",
     "division": "barishal",
@@ -890,7 +890,7 @@
     "memories": []
   },
   {
-    "code": "bd-ran2",
+    "code": "bd-rgp",
     "name": "Rangpur",
     "bnName": "রংপুর",
     "division": "rangpur",

@@ -1,38 +1,6 @@
 {
-  "updatedAt": "2026-11-01T17:20:14.701Z",
+  "updatedAt": "2026-11-02T20:11:25.972Z",
   "messages": [
-    {
-      "id": "msg_resend_b419aead-04b0-4a5f-a125-2905486e7337",
-      "folder": "trash",
-      "from": {
-        "name": "Md Zahid Hasan Patwary",
-        "email": "mdzahidhasanpatwary@gmail.com"
-      },
-      "to": [
-        {
-          "name": "Md Zahid Hasan",
-          "email": "test@zahidp.com"
-        }
-      ],
-      "replyTo": "mdzahidhasanpatwary@gmail.com",
-      "subject": "Test",
-      "body": "test\n",
-      "textBody": "test\n",
-      "snippet": "test ",
-      "createdAt": "2026-11-01T17:19:46.389328+00:00",
-      "receivedAt": "2026-11-01T17:19:46.389328+00:00",
-      "isRead": false,
-      "isStarred": false,
-      "isTrashed": true,
-      "isArchived": false,
-      "label": "inbox",
-      "direction": "inbound",
-      "attachments": [],
-      "headers": {},
-      "tags": [
-        "Inquiry"
-      ]
-    },
     {
       "id": "msg_sent_1793536860630",
       "folder": "sent",
