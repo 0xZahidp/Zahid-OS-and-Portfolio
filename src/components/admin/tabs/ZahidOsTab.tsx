@@ -33,8 +33,10 @@ import {
   Unlock,
   Layers,
   ArrowRight,
+  Compass,
 } from 'lucide-react';
 import { ShortLink, ZahidOsAppId, ZahidOsSettings } from '@/types/os';
+import { TravelWorkspace } from '@/components/travel/TravelWorkspace';
 
 interface SnippetItem {
   id: string;
@@ -434,6 +436,15 @@ export const ZahidOsTab: React.FC = () => {
       inDock: true,
     },
     {
+      id: 'travel' as ZahidOsAppId,
+      name: 'Travel Map',
+      subtitle: 'BD 64 Districts',
+      badge: '64',
+      gradient: 'from-emerald-500 via-teal-600 to-cyan-700',
+      icon: Compass,
+      inDock: true,
+    },
+    {
       id: 'qr' as ZahidOsAppId,
       name: 'QR Studio',
       subtitle: 'Vector Matrix Code',
@@ -483,6 +494,13 @@ export const ZahidOsTab: React.FC = () => {
   // Render Inner Content of Selected App
   const renderAppContent = () => {
     switch (openApp) {
+      case 'travel':
+        return (
+          <div className="p-2 sm:p-5">
+            <TravelWorkspace mode="admin" adminHeaders={getAdminHeaders()} />
+          </div>
+        );
+
       case 'shortener':
         return (
           <div className="p-4 sm:p-7 space-y-6">
@@ -1098,7 +1116,7 @@ export const ZahidOsTab: React.FC = () => {
                 Individual App Permissions (Public vs Private)
               </label>
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2 text-xs">
-                {(['shortener', 'qr', 'snippets', 'focus', 'notes'] as ZahidOsAppId[]).map(
+                {(['shortener', 'travel', 'qr', 'snippets', 'focus', 'notes'] as ZahidOsAppId[]).map(
                   (appKey) => {
                     const isPub = osSettings.app_permissions?.[appKey]?.is_public ?? false;
 

@@ -18,6 +18,7 @@ const defaultOsSettings: ZahidOsSettings = {
     notes: { is_public: false, name: 'Notes' },
     snippets: { is_public: true, name: 'Snippets' },
     focus: { is_public: true, name: 'Focus Clock' },
+    travel: { is_public: true, name: 'Travel Map' },
     settings: { is_public: false, name: 'Settings' },
   },
 };

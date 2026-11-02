@@ -22,8 +22,10 @@ import {
   ShieldCheck,
   Terminal,
   Flame,
+  Compass,
 } from 'lucide-react';
 import { ShortLink, ZahidOsSettings, ZahidOsAppId } from '@/types/os';
+import { TravelWorkspace } from '@/components/travel/TravelWorkspace';
 
 export default function PublicZahidOsPage() {
   const [settings, setSettings] = useState<ZahidOsSettings | null>(null);
@@ -223,6 +225,15 @@ export default function PublicZahidOsPage() {
       badge: `${links.length}`,
     },
     {
+      id: 'travel' as ZahidOsAppId,
+      name: 'Travel Map',
+      subtitle: 'BD Explorer',
+      gradient: 'from-emerald-500 via-teal-600 to-cyan-700',
+      icon: Compass,
+      enabled: settings.app_permissions?.travel?.is_public !== false,
+      badge: '64',
+    },
+    {
       id: 'qr' as ZahidOsAppId,
       name: 'QR Studio',
       subtitle: 'Matrix Generator',
@@ -251,6 +262,12 @@ export default function PublicZahidOsPage() {
   // Render Public App
   const renderPublicApp = () => {
     switch (openApp) {
+      case 'travel':
+        return (
+          <div className="p-2 sm:p-5">
+            <TravelWorkspace mode="public" />
+          </div>
+        );
       case 'shortener':
         return (
           <div className="p-4 sm:p-7 space-y-4 max-w-3xl mx-auto">

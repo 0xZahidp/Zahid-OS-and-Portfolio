@@ -6,30 +6,34 @@
   "wallpaper": "emerald-mesh",
   "sound_effects": true,
   "app_permissions": {
+    "shortener": {
+      "name": "Shortener",
+      "is_public": true
+    },
     "qr": {
       "name": "QR Studio",
       "is_public": true
     },
-    "focus": {
-      "name": "Focus Clock",
+    "travel": {
+      "name": "Travel Map",
       "is_public": true
     },
     "notes": {
       "name": "Notes",
       "is_public": true
     },
-    "settings": {
-      "name": "Settings",
-      "is_public": false
-    },
     "snippets": {
       "name": "Snippets",
       "is_public": true
     },
-    "shortener": {
-      "name": "Shortener",
+    "focus": {
+      "name": "Focus Clock",
       "is_public": true
+    },
+    "settings": {
+      "name": "Settings",
+      "is_public": false
     }
   },
-  "updated_at": "2026-11-02T06:01:00.800Z"
+  "updated_at": "2026-11-03T00:40:00.000Z"
 }
