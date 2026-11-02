@@ -119,7 +119,7 @@ function AdminDashboardInner() {
     }
     const timer = setTimeout(() => {
       setShowLoadingFallback(true);
-    }, 600);
+    }, 250);
     return () => clearTimeout(timer);
   }, [isLoading]);
 

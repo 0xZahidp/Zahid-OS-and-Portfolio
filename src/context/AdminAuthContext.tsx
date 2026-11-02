@@ -100,27 +100,50 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     let mounted = true;
 
-    // Check if local dev bypass was previously enabled
+    // Check if local dev bypass was previously enabled or if no session token exists
     if (typeof window !== 'undefined') {
       const storedBypass = localStorage.getItem(LOCAL_BYPASS_KEY);
       if (storedBypass === 'true') {
         setIsLocalBypass(true);
         setIsLoading(false);
+        return;
+      }
+
+      // Check if any Supabase auth token exists in localStorage
+      let hasSupabaseSession = false;
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (
+            key &&
+            ((key.startsWith('sb-') && key.endsWith('-auth-token')) || key === 'supabase.auth.token')
+          ) {
+            hasSupabaseSession = true;
+            break;
+          }
+        }
+      } catch {
+        // localStorage might be blocked or restricted
+      }
+
+      // If no auth token is stored, don't hold the UI on a loading screen
+      if (!hasSupabaseSession) {
+        setIsLoading(false);
       }
     }
 
-    // Unconditional safety timeout (1200ms max) so slow network / paused DB NEVER hangs UI
+    // Unconditional safety timeout (450ms max) so slow network / paused DB NEVER hangs UI
     const safetyTimer = setTimeout(() => {
       if (mounted) {
         setIsLoading(false);
       }
-    }, 1200);
+    }, 450);
 
-    // Fast session fetch with 1000ms hard ceiling
+    // Fast session fetch with 400ms hard ceiling
     const fetchSession = async () => {
       try {
         const timeoutPromise = new Promise<{ data: { session: null }; error: null }>((resolve) =>
-          setTimeout(() => resolve({ data: { session: null }, error: null }), 1000)
+          setTimeout(() => resolve({ data: { session: null }, error: null }), 400)
         );
         const sessionPromise = supabase.auth.getSession();
         const { data, error: sessionErr } = await Promise.race([sessionPromise, timeoutPromise]);
@@ -133,11 +156,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setSession(data.session);
           setUser(data.session.user);
           setIsLocalBypass(false);
-          try {
-            await checkMfaLevel();
-          } catch {
-            // non-fatal
-          }
+          checkMfaLevel().catch(() => {});
         }
       } catch (err) {
         console.warn('Supabase getSession failed:', err);
@@ -154,24 +173,20 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Subscribe to auth state updates (e.g. login, logout, token refresh, OAuth redirect)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       if (!mounted) return;
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
+      setIsLoading(false);
       if (currentSession) {
         setIsLocalBypass(false);
         if (typeof window !== 'undefined') {
           localStorage.removeItem(LOCAL_BYPASS_KEY);
         }
-        try {
-          await checkMfaLevel();
-        } catch {
-          // non-fatal
-        }
+        checkMfaLevel().catch(() => {});
       } else {
         setMfaLevel(null);
       }
-      setIsLoading(false);
     });
 
     return () => {
