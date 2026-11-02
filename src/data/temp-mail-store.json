@@ -1,0 +1,17 @@
+{
+  "inboxes": [
+    {
+      "id": "inbox_1793648938241_rz3h",
+      "address": "test-otp@zahidp.com",
+      "username": "test-otp",
+      "domain": "zahidp.com",
+      "token": "tok_1793648938241_8u140bqw",
+      "ip_hash": "::1",
+      "ttl_seconds": 1800,
+      "created_at": "2026-11-02T19:48:58.241Z",
+      "expires_at": "2026-11-02T20:18:58.241Z",
+      "is_active": true
+    }
+  ],
+  "messages": []
+}

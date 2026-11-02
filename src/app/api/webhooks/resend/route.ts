@@ -125,6 +125,21 @@ export async function POST(req: NextRequest) {
       attachments: fullEmail.attachments as EmailAttachment[] | undefined,
     });
 
+    // 8b. Also check if recipient matches an active Zahid OS Temp Mail inbox with anti-flooding limits
+    try {
+      const { ingestInboundEmail } = await import('@/lib/os/temp-mail');
+      await ingestInboundEmail({
+        resendId: fullEmail.id,
+        from: fullEmail.from,
+        to: fullEmail.to,
+        subject: fullEmail.subject,
+        text: fullEmail.text,
+        html: fullEmail.html,
+      });
+    } catch (tempMailErr) {
+      console.warn('[Resend Webhook] Temp mail ingestion notice:', tempMailErr);
+    }
+
     console.log(`[Resend Webhook] Successfully ingested incoming email "${savedMessage.subject}" from ${savedMessage.from.email} (Resend ID: ${savedMessage.resendId})`);
 
     return NextResponse.json(
