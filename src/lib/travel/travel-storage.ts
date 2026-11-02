@@ -328,10 +328,11 @@ export function calculateTravelStats(districts: DistrictTravelData[]): TravelSta
 }
 
 /**
- * Retrieve travel data with 2-tier fallback:
- * 1. Supabase site_settings (key: 'zahid_os_travel_data')
- * 2. Local JSON file (src/data/travel-data.json)
- * 3. Seed dataset initialized from CANONICAL 64 districts
+ * Retrieve travel data with 3-tier fallback:
+ * 1. Supabase dedicated tables (os_travel_districts + os_travel_memories)
+ * 2. Supabase site_settings (key: 'zahid_os_travel_data')
+ * 3. Local JSON file (src/data/travel-data.json)
+ * 4. Seed dataset initialized from CANONICAL 64 districts
  */
 export async function getTravelData(): Promise<{
   districts: DistrictTravelData[];
@@ -340,8 +341,60 @@ export async function getTravelData(): Promise<{
   let districts: DistrictTravelData[] | null = null;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  // 1. Try Supabase site_settings
+  // 1. Try Supabase dedicated relational tables (os_travel_districts)
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    try {
+      const supabase = supabaseServer();
+      const { data: dbDistricts, error: distError } = await supabase
+        .from('os_travel_districts')
+        .select('*');
+
+      if (!distError && dbDistricts && Array.isArray(dbDistricts) && dbDistricts.length === 64) {
+        // Fetch memories to associate with districts
+        const { data: dbMemories } = await supabase
+          .from('os_travel_memories')
+          .select('*')
+          .order('date', { ascending: false });
+
+        const memoriesMap = new Map<string, DistrictTravelData['memories']>();
+        if (dbMemories && Array.isArray(dbMemories)) {
+          for (const m of dbMemories) {
+            const list = memoriesMap.get(m.district_code) || [];
+            list.push({
+              id: m.id,
+              title: m.title,
+              date: m.date,
+              transport: m.transport,
+              rating: m.rating,
+              notes: m.notes,
+              tags: m.tags || [],
+            });
+            memoriesMap.set(m.district_code, list);
+          }
+        }
+
+        districts = dbDistricts.map((row) => ({
+          code: row.code,
+          name: row.name,
+          bnName: row.bn_name,
+          division: row.division,
+          slug: row.slug,
+          status: row.status,
+          visitsCount: row.visits_count || 0,
+          rating: row.rating,
+          notes: row.notes || '',
+          places: row.places || [],
+          lastVisitedAt: row.last_visited_at,
+          memories: memoriesMap.get(row.code) || [],
+        }));
+      }
+    } catch {
+      // Table may not exist yet in Supabase, smoothly proceed to tier 2
+    }
+  }
+
+  // 2. Try Supabase site_settings
+  if (!districts && supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
       const { data, error } = await supabase
@@ -358,7 +411,7 @@ export async function getTravelData(): Promise<{
     }
   }
 
-  // 2. Try Local File
+  // 3. Try Local File
   if (!districts) {
     try {
       const content = await fs.readFile(TRAVEL_DATA_FILE, 'utf-8');
@@ -371,7 +424,7 @@ export async function getTravelData(): Promise<{
     }
   }
 
-  // 3. Fallback to default seed dataset
+  // 4. Fallback to default seed dataset
   if (!districts) {
     districts = getDefaultTravelData();
     // Persist default seed locally so next reads are instant
@@ -389,7 +442,7 @@ export async function getTravelData(): Promise<{
 }
 
 /**
- * Save updated travel data across local disk and Supabase
+ * Save updated travel data across local disk and Supabase (relational + backup)
  */
 export async function saveTravelData(districts: DistrictTravelData[]): Promise<boolean> {
   let fileSaved = false;
@@ -402,11 +455,68 @@ export async function saveTravelData(districts: DistrictTravelData[]): Promise<b
     console.error('Error writing travel-data.json:', err);
   }
 
-  // 2. Sync to Supabase site_settings
+  // 2. Sync to Supabase
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
+
+      // Upsert to os_travel_districts table if present
+      try {
+        const rows = districts.map((d) => ({
+          code: d.code,
+          name: d.name,
+          bn_name: d.bnName,
+          division: d.division,
+          slug: d.slug,
+          status: d.status,
+          visits_count: d.visitsCount,
+          rating: d.rating || null,
+          notes: d.notes || '',
+          places: d.places || [],
+          last_visited_at: d.lastVisitedAt || null,
+          updated_at: new Date().toISOString(),
+        }));
+
+        await supabase.from('os_travel_districts').upsert(rows, { onConflict: 'code' });
+
+        // Upsert all memories
+        const allMemories: Array<{
+          id: string;
+          district_code: string;
+          title: string;
+          date: string;
+          transport?: string;
+          rating?: number;
+          notes?: string;
+          tags?: string[];
+        }> = [];
+
+        for (const d of districts) {
+          if (d.memories && d.memories.length > 0) {
+            for (const m of d.memories) {
+              allMemories.push({
+                id: m.id,
+                district_code: d.code,
+                title: m.title,
+                date: m.date || new Date().toISOString().split('T')[0],
+                transport: m.transport,
+                rating: m.rating,
+                notes: m.notes,
+                tags: m.tags || [],
+              });
+            }
+          }
+        }
+
+        if (allMemories.length > 0) {
+          await supabase.from('os_travel_memories').upsert(allMemories, { onConflict: 'id' });
+        }
+      } catch {
+        // Table might not exist yet
+      }
+
+      // Also persist to site_settings as resilient backup
       await supabase.from('site_settings').upsert(
         {
           key: 'zahid_os_travel_data',
@@ -422,3 +532,4 @@ export async function saveTravelData(districts: DistrictTravelData[]): Promise<b
 
   return fileSaved;
 }
+

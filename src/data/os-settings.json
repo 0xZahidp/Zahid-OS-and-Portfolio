@@ -1,39 +1,47 @@
 {
   "is_public_enabled": true,
-  "allow_public_link_creation": false,
+  "allow_public_link_creation": true,
   "public_hero_title": "Zahid OS",
   "public_hero_subtitle": "Cloud tools, web utilities & micro-apps designed by 0xZahidP",
   "wallpaper": "emerald-mesh",
   "sound_effects": true,
   "app_permissions": {
-    "shortener": {
-      "name": "Shortener",
-      "is_public": true
-    },
     "qr": {
       "name": "QR Studio",
-      "is_public": true
-    },
-    "travel": {
-      "name": "Travel Map",
-      "is_public": true
-    },
-    "notes": {
-      "name": "Notes",
-      "is_public": true
-    },
-    "snippets": {
-      "name": "Snippets",
       "is_public": true
     },
     "focus": {
       "name": "Focus Clock",
       "is_public": true
     },
+    "notes": {
+      "name": "Notes",
+      "is_public": true
+    },
     "settings": {
       "name": "Settings",
       "is_public": false
+    },
+    "snippets": {
+      "name": "Snippets",
+      "is_public": true
+    },
+    "shortener": {
+      "name": "Shortener",
+      "is_public": true
+    },
+    "travel": {
+      "name": "Travel Map",
+      "is_public": true
+    },
+    "api_playground": {
+      "name": "API Playground",
+      "is_public": true
+    },
+    "temp_mail": {
+      "name": "Temp Mail",
+      "is_public": true
     }
   },
-  "updated_at": "2026-11-03T00:40:00.000Z"
+  "updated_at": "2026-11-02T19:08:12.823Z"
 }

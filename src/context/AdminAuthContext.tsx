@@ -63,10 +63,17 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Helper to query current Authenticator Assurance Level (AAL)
   const checkMfaLevel = useCallback(async (): Promise<MfaAssuranceLevel> => {
     try {
-      const [aalRes, factorsRes] = await Promise.all([
+      // 1.5s hard timeout so slow/unreachable network never blocks authentication
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('MFA check timeout')), 1500)
+      );
+
+      const mfaCheckPromise = Promise.all([
         supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
         supabase.auth.mfa.listFactors(),
       ]);
+
+      const [aalRes, factorsRes] = await Promise.race([mfaCheckPromise, timeoutPromise]);
 
       const verifiedFactors = factorsRes.data?.all?.filter((f) => f.status === 'verified') || [];
       const hasVerified = verifiedFactors.length > 0;
@@ -82,7 +89,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setMfaLevel(lvl);
       return lvl;
     } catch (e) {
-      console.warn('Failed to query MFA assurance level:', e);
+      console.warn('MFA assurance level check skipped or timed out:', e);
     }
     const fallback: MfaAssuranceLevel = { currentLevel: 'aal1', nextLevel: 'aal1' };
     setMfaLevel(fallback);
@@ -101,18 +108,17 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     }
 
-    // Safety timeout so slow network / paused DB never hangs UI
+    // Unconditional safety timeout (2000ms max) so slow network / paused DB NEVER hangs UI
     const safetyTimer = setTimeout(() => {
       if (mounted) {
         setIsLoading(false);
       }
-    }, 1500);
+    }, 2000);
 
     // Get current session
     supabase.auth
       .getSession()
       .then(async ({ data, error: sessionErr }) => {
-        clearTimeout(safetyTimer);
         if (!mounted) return;
         if (sessionErr) {
           console.warn('Supabase getSession error:', sessionErr);
@@ -121,14 +127,21 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setSession(data.session);
           setUser(data.session.user);
           setIsLocalBypass(false);
-          await checkMfaLevel();
+          try {
+            await checkMfaLevel();
+          } catch {
+            // non-fatal
+          }
         }
-        setIsLoading(false);
       })
       .catch((err) => {
-        clearTimeout(safetyTimer);
         console.warn('Supabase getSession failed:', err);
-        if (mounted) setIsLoading(false);
+      })
+      .finally(() => {
+        if (mounted) {
+          clearTimeout(safetyTimer);
+          setIsLoading(false);
+        }
       });
 
     // Subscribe to auth state updates (e.g. login, logout, token refresh, OAuth redirect)
@@ -143,7 +156,11 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (typeof window !== 'undefined') {
           localStorage.removeItem(LOCAL_BYPASS_KEY);
         }
-        await checkMfaLevel();
+        try {
+          await checkMfaLevel();
+        } catch {
+          // non-fatal
+        }
       } else {
         setMfaLevel(null);
       }

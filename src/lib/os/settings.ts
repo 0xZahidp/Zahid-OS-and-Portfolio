@@ -14,14 +14,30 @@ const defaultOsSettings: ZahidOsSettings = {
   sound_effects: true,
   app_permissions: {
     shortener: { is_public: true, name: 'Shortener' },
+    travel: { is_public: true, name: 'Travel Map' },
+    api_playground: { is_public: true, name: 'API Playground' },
+    temp_mail: { is_public: true, name: 'Temp Mail' },
     qr: { is_public: true, name: 'QR Studio' },
     notes: { is_public: false, name: 'Notes' },
     snippets: { is_public: true, name: 'Snippets' },
     focus: { is_public: true, name: 'Focus Clock' },
-    travel: { is_public: true, name: 'Travel Map' },
     settings: { is_public: false, name: 'Settings' },
   },
 };
+
+function normalizeOsSettings(raw: Partial<ZahidOsSettings> | null | undefined): ZahidOsSettings {
+  if (!raw || typeof raw !== 'object') return defaultOsSettings;
+  return {
+    ...defaultOsSettings,
+    ...raw,
+    is_public_enabled: Boolean(raw.is_public_enabled),
+    allow_public_link_creation: Boolean(raw.allow_public_link_creation),
+    app_permissions: {
+      ...defaultOsSettings.app_permissions,
+      ...(raw.app_permissions && typeof raw.app_permissions === 'object' ? raw.app_permissions : {}),
+    },
+  };
+}
 
 /**
  * Get OS Settings with 3-tier fallback:
@@ -43,10 +59,7 @@ export async function getOsSettings(): Promise<ZahidOsSettings> {
         .maybeSingle();
 
       if (!error && data && typeof data === 'object') {
-        return {
-          ...defaultOsSettings,
-          ...data,
-        };
+        return normalizeOsSettings(data);
       }
     } catch {
       // Fall through to site_settings
@@ -62,10 +75,7 @@ export async function getOsSettings(): Promise<ZahidOsSettings> {
         .maybeSingle();
 
       if (!error && data?.value && typeof data.value === 'object') {
-        return {
-          ...defaultOsSettings,
-          ...data.value,
-        };
+        return normalizeOsSettings(data.value);
       }
     } catch (err) {
       console.warn('Supabase getOsSettings fallback to file:', err);
@@ -76,10 +86,7 @@ export async function getOsSettings(): Promise<ZahidOsSettings> {
   try {
     const content = await fs.readFile(SETTINGS_FILE_PATH, 'utf-8');
     const parsed = JSON.parse(content);
-    return {
-      ...defaultOsSettings,
-      ...parsed,
-    };
+    return normalizeOsSettings(parsed);
   } catch (err) {
     console.warn('Failed to read os-settings.json, using defaults:', err);
   }

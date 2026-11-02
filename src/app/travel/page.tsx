@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { TravelWorkspace } from '@/components/travel/TravelWorkspace';
+import { TravelWorkspace } from '@/components/os/travel/TravelWorkspace';
 import { ArrowLeft, Terminal, Home } from 'lucide-react';
 
 export const metadata: Metadata = {

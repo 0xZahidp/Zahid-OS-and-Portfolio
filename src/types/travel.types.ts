@@ -22,6 +22,7 @@ export interface DistrictTravelData {
   visitsCount: number;
   rating?: number;
   notes?: string;
+  places?: string[];
   lastVisitedAt?: string | null;
   memories: TravelMemory[];
 }

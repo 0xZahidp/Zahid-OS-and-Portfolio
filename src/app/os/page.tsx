@@ -23,13 +23,17 @@ import {
   Terminal,
   Flame,
   Compass,
+  Mail,
 } from 'lucide-react';
 import { ShortLink, ZahidOsSettings, ZahidOsAppId } from '@/types/os';
-import { TravelWorkspace } from '@/components/travel/TravelWorkspace';
+import { TravelWorkspace } from '@/components/os/travel/TravelWorkspace';
+import { ApiPlaygroundApp } from '@/components/os/api-playground';
+import { TempMailApp } from '@/components/os/temp-mail';
 
 export default function PublicZahidOsPage() {
   const [settings, setSettings] = useState<ZahidOsSettings | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [hasMounted, setHasMounted] = useState<boolean>(false);
   const [openApp, setOpenApp] = useState<ZahidOsAppId | null>(null);
   const [currentTime, setCurrentTime] = useState<string>('09:41');
 
@@ -48,6 +52,10 @@ export default function PublicZahidOsPage() {
   // Focus clock state
   const [focusSeconds, setFocusSeconds] = useState<number>(25 * 60);
   const [isFocusRunning, setIsFocusRunning] = useState<boolean>(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   // Live clock
   useEffect(() => {
@@ -87,11 +95,13 @@ export default function PublicZahidOsPage() {
 
         if (settsRes.ok) {
           const sData = await settsRes.json();
-          setSettings(sData.settings);
+          if (sData?.settings) {
+            setSettings(sData.settings);
+          }
         }
         if (linksRes.ok) {
           const lData = await linksRes.json();
-          setLinks(lData.links || []);
+          setLinks(Array.isArray(lData.links) ? lData.links : []);
         }
       } catch (err) {
         console.warn('Error loading public OS:', err);
@@ -102,7 +112,7 @@ export default function PublicZahidOsPage() {
     loadData();
   }, []);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://0xZahidP.com';
+  const origin = hasMounted && typeof window !== 'undefined' ? window.location.origin : 'https://0xZahidP.com';
 
   const handleCopy = (slug: string) => {
     if (navigator.clipboard) {
@@ -138,7 +148,7 @@ export default function PublicZahidOsPage() {
       }
 
       if (data.link) {
-        setLinks((prev) => [data.link, ...prev.filter((l) => l.id !== data.link.id)]);
+        setLinks((prev) => [data.link, ...(Array.isArray(prev) ? prev : []).filter((l) => l.id !== data.link.id)]);
         setPublicUrlInput('');
         setPublicSlugInput('');
         setPublicCreateSuccess(`/s/${data.link.slug}`);
@@ -221,8 +231,8 @@ export default function PublicZahidOsPage() {
       subtitle: 'URL Engine',
       gradient: 'from-cyan-500 via-blue-600 to-indigo-600',
       icon: Link2,
-      enabled: settings.app_permissions?.shortener?.is_public !== false,
-      badge: `${links.length}`,
+      enabled: settings?.app_permissions?.shortener?.is_public !== false,
+      badge: `${(Array.isArray(links) ? links : []).length}`,
     },
     {
       id: 'travel' as ZahidOsAppId,
@@ -230,7 +240,7 @@ export default function PublicZahidOsPage() {
       subtitle: 'BD Explorer',
       gradient: 'from-emerald-500 via-teal-600 to-cyan-700',
       icon: Compass,
-      enabled: settings.app_permissions?.travel?.is_public !== false,
+      enabled: settings?.app_permissions?.travel?.is_public !== false,
       badge: '64',
     },
     {
@@ -239,7 +249,7 @@ export default function PublicZahidOsPage() {
       subtitle: 'Matrix Generator',
       gradient: 'from-fuchsia-500 via-purple-600 to-indigo-700',
       icon: QrCode,
-      enabled: settings.app_permissions?.qr?.is_public !== false,
+      enabled: settings?.app_permissions?.qr?.is_public !== false,
     },
     {
       id: 'snippets' as ZahidOsAppId,
@@ -247,7 +257,7 @@ export default function PublicZahidOsPage() {
       subtitle: 'Code Cheat Sheet',
       gradient: 'from-emerald-400 via-teal-500 to-emerald-700',
       icon: Code2,
-      enabled: settings.app_permissions?.snippets?.is_public !== false,
+      enabled: settings?.app_permissions?.snippets?.is_public !== false,
     },
     {
       id: 'focus' as ZahidOsAppId,
@@ -255,7 +265,25 @@ export default function PublicZahidOsPage() {
       subtitle: 'Pomodoro Timer',
       gradient: 'from-orange-500 via-rose-600 to-red-600',
       icon: Clock,
-      enabled: settings.app_permissions?.focus?.is_public !== false,
+      enabled: settings?.app_permissions?.focus?.is_public !== false,
+    },
+    {
+      id: 'api_playground' as ZahidOsAppId,
+      name: 'API Console',
+      subtitle: 'HTTP Workbench',
+      gradient: 'from-blue-600 via-indigo-600 to-violet-700',
+      icon: Terminal,
+      badge: 'REST',
+      enabled: settings?.app_permissions?.api_playground?.is_public !== false,
+    },
+    {
+      id: 'temp_mail' as ZahidOsAppId,
+      name: 'Temp Mail',
+      subtitle: 'Disposable Inboxes',
+      gradient: 'from-amber-500 via-orange-600 to-rose-600',
+      icon: Mail,
+      badge: 'OTP',
+      enabled: settings?.app_permissions?.temp_mail?.is_public !== false,
     },
   ].filter((a) => a.enabled);
 
@@ -266,6 +294,18 @@ export default function PublicZahidOsPage() {
         return (
           <div className="p-2 sm:p-5">
             <TravelWorkspace mode="public" />
+          </div>
+        );
+      case 'api_playground':
+        return (
+          <div className="p-2 sm:p-5">
+            <ApiPlaygroundApp />
+          </div>
+        );
+      case 'temp_mail':
+        return (
+          <div className="p-2 sm:p-5">
+            <TempMailApp />
           </div>
         );
       case 'shortener':
@@ -340,7 +380,7 @@ export default function PublicZahidOsPage() {
             )}
 
             <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
-              {links
+              {(Array.isArray(links) ? links : [])
                 .filter((l) => l.is_active !== false)
                 .map((link) => (
                   <div
@@ -472,7 +512,10 @@ export default function PublicZahidOsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col justify-center items-center p-3 sm:p-6 relative select-none">
+    <div
+      suppressHydrationWarning
+      className="min-h-screen bg-black flex flex-col justify-center items-center p-3 sm:p-6 relative select-none"
+    >
       {/* Top Navigation */}
       <div className="w-full max-w-4xl mb-3 flex items-center justify-between px-2">
         <Link
@@ -491,7 +534,10 @@ export default function PublicZahidOsPage() {
 
         {/* Top Status Bar */}
         <div className="relative pt-3 px-6 pb-2.5 flex items-center justify-between text-white text-xs z-30 border-b border-white/5 bg-black/20 shrink-0">
-          <span className="font-semibold text-xs tracking-tight font-sans">
+          <span
+            suppressHydrationWarning
+            className="font-semibold text-xs tracking-tight font-sans"
+          >
             {currentTime}
           </span>
           <div className="flex items-center gap-1.5">
@@ -539,7 +585,10 @@ export default function PublicZahidOsPage() {
           /* Springboard App Launcher */
           <div className="flex-1 flex flex-col justify-between p-6 sm:p-10">
             <div className="text-center pt-2">
-              <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight drop-shadow-md">
+              <h1
+                suppressHydrationWarning
+                className="text-4xl sm:text-6xl font-black text-white tracking-tight drop-shadow-md"
+              >
                 {currentTime}
               </h1>
               <p className="text-xs sm:text-sm font-medium text-white/80 mt-1">

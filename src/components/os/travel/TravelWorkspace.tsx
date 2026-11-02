@@ -289,46 +289,51 @@ export const TravelWorkspace: React.FC<TravelWorkspaceProps> = ({
           </div>
         </div>
 
-        {/* View Switcher Tabs */}
-        <div className="flex items-center gap-2 mt-6 pt-4 border-t border-white/10 overflow-x-auto text-xs">
-          <button
-            type="button"
-            onClick={() => setActiveTab('map')}
-            className={`px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'map'
-                ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
-                : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Compass className="size-3.5" />
-            <span>Interactive SVG Map</span>
-          </button>
+        {/* View Switcher Tabs - Modern Apple-style Segmented Control */}
+        <div
+          className="mt-6 pt-2 flex items-center justify-start overflow-x-auto select-none"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          <div className="inline-flex p-1.5 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-xl gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab('map')}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+                activeTab === 'map'
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 ring-1 ring-emerald-400/40'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Compass className="size-4 shrink-0" />
+              <span>Interactive SVG Map</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('explorer')}
-            className={`px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'explorer'
-                ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
-                : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Layers className="size-3.5" />
-            <span>64 Districts Directory</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('explorer')}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+                activeTab === 'explorer'
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 ring-1 ring-emerald-400/40'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Layers className="size-4 shrink-0" />
+              <span>64 Districts Directory</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('journal')}
-            className={`px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'journal'
-                ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
-                : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <BookOpen className="size-3.5" />
-            <span>Travel Journal ({allJournalMemories.length})</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('journal')}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+                activeTab === 'journal'
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 ring-1 ring-emerald-400/40'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <BookOpen className="size-4 shrink-0" />
+              <span>Travel Journal ({allJournalMemories.length})</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -369,19 +374,18 @@ export const TravelWorkspace: React.FC<TravelWorkspaceProps> = ({
       {/* TAB 2: DISTRICTS DIRECTORY */}
       {activeTab === 'explorer' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          <div className="lg:col-span-8">
+          <div className={selectedDistrict ? 'lg:col-span-7 xl:col-span-8' : 'lg:col-span-12'}>
             <DistrictExplorer
               districts={districts}
               selectedCode={selectedDistrict?.code || null}
               onSelectDistrict={(d) => {
                 setSelectedDistrict(d);
-                // Also scroll into view or show drawer
               }}
             />
           </div>
 
-          <div className="lg:col-span-4 sticky top-6">
-            {selectedDistrict && (
+          {selectedDistrict && (
+            <div className="lg:col-span-5 xl:col-span-4 sticky top-6">
               <DistrictDetailDrawer
                 district={selectedDistrict}
                 onClose={() => setSelectedDistrict(null)}
@@ -391,8 +395,8 @@ export const TravelWorkspace: React.FC<TravelWorkspaceProps> = ({
                 onAddMemory={handleAddMemory}
                 onDeleteMemory={handleDeleteMemory}
               />
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 

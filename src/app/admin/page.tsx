@@ -95,7 +95,7 @@ const TAB_META: Record<AdminTab, { title: string; description: string }> = {
 };
 
 function AdminDashboardInner() {
-  const { user, isLocalBypass, isLoading, mfaLevel } = useAdminAuth();
+  const { user, isLocalBypass, isLoading, mfaLevel, bypassLocalAuth } = useAdminAuth();
   const {
     isDirty,
     isSaving,
@@ -110,6 +110,18 @@ function AdminDashboardInner() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [supabaseReady, setSupabaseReady] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showLoadingFallback, setShowLoadingFallback] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setShowLoadingFallback(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setShowLoadingFallback(true);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
 
   // Check Supabase status
   const checkSupabase = async () => {
@@ -208,7 +220,7 @@ function AdminDashboardInner() {
     return (
       <div
         suppressHydrationWarning
-        className="min-h-screen bg-surface flex flex-col items-center justify-center gap-3 select-none"
+        className="min-h-screen bg-surface flex flex-col items-center justify-center gap-3 px-4 select-none"
       >
         <div
           suppressHydrationWarning
@@ -217,6 +229,30 @@ function AdminDashboardInner() {
           <Loader2 className="size-5.5 animate-spin" />
         </div>
         <p className="text-xs font-semibold text-ink-3">Verifying authentication session...</p>
+
+        {showLoadingFallback && (
+          <div className="flex flex-col items-center gap-2 mt-2 animate-fade-in text-center">
+            <p className="text-[11px] text-ink-4">Session check taking longer than expected?</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.reload();
+                }}
+                className="px-3 py-1.5 rounded-xl border border-line hover:bg-surface-2 text-xs font-semibold text-ink-2 cursor-pointer transition-colors"
+              >
+                Reload
+              </button>
+              <button
+                type="button"
+                onClick={bypassLocalAuth}
+                className="px-3 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+              >
+                Continue to Admin
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

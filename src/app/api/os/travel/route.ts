@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { code, status, visitsCount, rating, notes, memory } = body;
+    const { code, status, visitsCount, rating, notes, places, memory } = body;
 
     if (!code || typeof code !== 'string') {
       return NextResponse.json({ success: false, error: 'District code is required' }, { status: 400 });
@@ -97,6 +97,10 @@ export async function POST(req: NextRequest) {
 
     if (typeof notes === 'string') {
       target.notes = notes.trim();
+    }
+
+    if (Array.isArray(places)) {
+      target.places = places.map((p) => String(p).trim()).filter(Boolean);
     }
 
     // If a new memory / trip log is added

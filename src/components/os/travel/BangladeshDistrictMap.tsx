@@ -1,0 +1,323 @@
+'use client';
+
+import React, { useMemo, useState } from 'react';
+import { BANGLADESH_MAP_PATHS, BANGLADESH_MAP_VIEWBOX } from '@/lib/travel/bangladesh-map-paths';
+import type { DistrictCode } from '@/lib/travel/bangladesh-districts';
+import type { DistrictTravelData, DistrictTravelStatus } from '@/types/travel.types';
+import { Navigation, ZoomIn, ZoomOut, RotateCcw, Compass, MapPin } from 'lucide-react';
+
+const STATUS_FILL: Record<
+  DistrictTravelStatus,
+  { normal: string; hover: string; stroke: string; label: string; badgeBg: string; text: string }
+> = {
+  visited: {
+    normal: 'fill-emerald-500',
+    hover: 'hover:fill-emerald-400',
+    stroke: '#10b981',
+    label: 'Visited',
+    badgeBg: 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300',
+    text: 'text-emerald-400',
+  },
+  planned: {
+    normal: 'fill-amber-500',
+    hover: 'hover:fill-amber-400',
+    stroke: '#f59e0b',
+    label: 'Wishlist / Planned',
+    badgeBg: 'bg-amber-500/20 border-amber-500/30 text-amber-300',
+    text: 'text-amber-400',
+  },
+  revisit_planned: {
+    normal: 'fill-violet-500',
+    hover: 'hover:fill-violet-400',
+    stroke: '#8b5cf6',
+    label: 'Revisit Planned',
+    badgeBg: 'bg-violet-500/20 border-violet-500/30 text-violet-300',
+    text: 'text-violet-400',
+  },
+  not_visited: {
+    normal: 'fill-zinc-800',
+    hover: 'hover:fill-zinc-700',
+    stroke: '#3f3f46',
+    label: 'Unexplored',
+    badgeBg: 'bg-zinc-800/60 border-zinc-700/40 text-zinc-400',
+    text: 'text-zinc-400',
+  },
+};
+
+const MAP_PATHS_LIST = Object.values(BANGLADESH_MAP_PATHS);
+
+interface BangladeshDistrictMapProps {
+  districts: DistrictTravelData[];
+  selectedCode: DistrictCode | null;
+  onSelectDistrict: (district: DistrictTravelData) => void;
+  hoveredCode?: DistrictCode | null;
+  onHoverDistrict?: (code: DistrictCode | null) => void;
+}
+
+export const BangladeshDistrictMap: React.FC<BangladeshDistrictMapProps> = ({
+  districts,
+  selectedCode,
+  onSelectDistrict,
+  hoveredCode: externalHoveredCode,
+  onHoverDistrict: setExternalHovered,
+}) => {
+  const [internalHoveredCode, setInternalHoveredCode] = useState<DistrictCode | null>(null);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const hoveredCode = externalHoveredCode !== undefined ? externalHoveredCode : internalHoveredCode;
+
+  const districtMap = useMemo(() => {
+    const map = new Map<DistrictCode, DistrictTravelData>();
+    for (const d of districts) {
+      map.set(d.code, d);
+    }
+    return map;
+  }, [districts]);
+
+  const activeHoveredDistrict = hoveredCode ? districtMap.get(hoveredCode) : null;
+  const activeSelectedDistrict = selectedCode ? districtMap.get(selectedCode) : null;
+  const inspectorDistrict = activeHoveredDistrict || activeSelectedDistrict;
+
+  // Selected district centroid for smooth zoom focus
+  const selectedCentroid = useMemo(() => {
+    if (selectedCode && BANGLADESH_MAP_PATHS[selectedCode]) {
+      return BANGLADESH_MAP_PATHS[selectedCode].centroid;
+    }
+    return [350, 440] as const; // Default center of 700x880 map
+  }, [selectedCode]);
+
+  // Counts for legend
+  const counts = useMemo(() => {
+    let visited = 0;
+    let planned = 0;
+    let revisit = 0;
+    let notVisited = 0;
+    for (const d of districts) {
+      if (d.status === 'visited') visited++;
+      else if (d.status === 'planned') planned++;
+      else if (d.status === 'revisit_planned') revisit++;
+      else notVisited++;
+    }
+    return { visited, planned, revisit, notVisited };
+  }, [districts]);
+
+  const handleZoomIn = () => {
+    setZoomLevel((z) => Math.min(2.2, Number((z + 0.3).toFixed(1))));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel((z) => Math.max(1, Number((z - 0.3).toFixed(1))));
+  };
+
+  const handleResetZoom = () => {
+    setZoomLevel(1);
+  };
+
+  return (
+    <div className="space-y-3.5 select-none">
+      {/* Top District HUD Inspector Bar - Never overlaps the map */}
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-zinc-900/80 border border-white/10 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-h-[64px] transition-all shadow-xl">
+        {inspectorDistrict ? (
+          <div className="flex items-center gap-3 min-w-0">
+            <span
+              className={`size-3.5 rounded-full shrink-0 shadow-md ${
+                inspectorDistrict.status === 'visited'
+                  ? 'bg-emerald-400 shadow-emerald-400/80 ring-2 ring-emerald-500/30'
+                  : inspectorDistrict.status === 'planned'
+                  ? 'bg-amber-400 shadow-amber-400/80 ring-2 ring-amber-500/30'
+                  : inspectorDistrict.status === 'revisit_planned'
+                  ? 'bg-violet-400 shadow-violet-400/80 ring-2 ring-violet-500/30'
+                  : 'bg-zinc-600'
+              }`}
+            />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-black text-white text-base sm:text-lg tracking-tight">
+                  {inspectorDistrict.name}
+                </span>
+                <span className="font-serif text-emerald-400 font-bold text-sm sm:text-base">
+                  ({inspectorDistrict.bnName})
+                </span>
+                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-white/10 text-white/70">
+                  {inspectorDistrict.code.toUpperCase()}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-white/60 flex-wrap mt-0.5">
+                <span className="text-emerald-300 font-medium capitalize">
+                  {inspectorDistrict.division} Division
+                </span>
+                <span>•</span>
+                <span>{STATUS_FILL[inspectorDistrict.status].label}</span>
+                {inspectorDistrict.visitsCount > 0 && (
+                  <>
+                    <span>•</span>
+                    <span className="font-mono text-white font-medium">
+                      {inspectorDistrict.visitsCount} {inspectorDistrict.visitsCount === 1 ? 'visit' : 'visits'}
+                    </span>
+                  </>
+                )}
+                {inspectorDistrict.rating && (
+                  <>
+                    <span>•</span>
+                    <span className="text-amber-400 font-medium">★ {inspectorDistrict.rating}/5</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 text-white/50 text-xs">
+            <Compass className="size-4 text-emerald-400 shrink-0" />
+            <div>
+              <p className="font-semibold text-white/80">Interactive 64 Districts Canvas</p>
+              <p className="text-[11px] text-white/40">Hover or click any district to inspect records & memories</p>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+          {inspectorDistrict && (
+            <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-xl">
+              Click to Open Details
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Legend & Stats Pill Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 px-3 py-2.5 rounded-2xl bg-zinc-900/60 border border-white/5 backdrop-blur-md text-xs">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-5">
+          <div className="flex items-center gap-2">
+            <span className="size-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
+            <span className="text-white/80 font-medium">Visited ({counts.visited})</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="size-3 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50" />
+            <span className="text-white/80 font-medium">Planned ({counts.planned})</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="size-3 rounded-full bg-violet-500 shadow-sm shadow-violet-500/50" />
+            <span className="text-white/80 font-medium">Revisit ({counts.revisit})</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="size-3 rounded-full bg-zinc-700" />
+            <span className="text-white/40">Unexplored ({counts.notVisited})</span>
+          </div>
+        </div>
+
+        <div className="text-[11px] font-mono text-emerald-400/90 flex items-center gap-1.5 ml-auto">
+          <Navigation className="size-3" />
+          <span>Click any district to view details</span>
+        </div>
+      </div>
+
+      {/* Map Canvas Card */}
+      <div className="relative rounded-3xl border border-white/10 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black p-4 sm:p-8 shadow-2xl overflow-hidden min-h-[580px] sm:min-h-[660px] flex items-center justify-center">
+        {/* Subtle mesh background grid */}
+        <div className="absolute inset-0 bg-[radial-gradient(#10b98115_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none opacity-60" />
+
+        {/* Floating Interactive Zoom Controls in Bottom Right */}
+        <div className="absolute bottom-4 right-4 z-20 flex items-center gap-1 p-1 rounded-2xl bg-black/80 border border-white/10 backdrop-blur-xl shadow-xl">
+          <button
+            type="button"
+            onClick={handleZoomIn}
+            disabled={zoomLevel >= 2.2}
+            title="Zoom In"
+            className="size-8 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-40 text-white grid place-items-center transition-colors cursor-pointer"
+          >
+            <ZoomIn className="size-4" />
+          </button>
+
+          <span className="px-2 text-[11px] font-mono text-white/60">
+            {zoomLevel.toFixed(1)}x
+          </span>
+
+          <button
+            type="button"
+            onClick={handleZoomOut}
+            disabled={zoomLevel <= 1}
+            title="Zoom Out"
+            className="size-8 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-40 text-white grid place-items-center transition-colors cursor-pointer"
+          >
+            <ZoomOut className="size-4" />
+          </button>
+
+          {zoomLevel > 1 && (
+            <button
+              type="button"
+              onClick={handleResetZoom}
+              title="Reset Zoom"
+              className="size-8 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 grid place-items-center transition-colors cursor-pointer ml-0.5"
+            >
+              <RotateCcw className="size-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Floating Quick Hint Pin in Bottom Left */}
+        <div className="absolute bottom-4 left-4 z-20 pointer-events-none hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 border border-white/10 backdrop-blur-md text-[11px] text-white/50 font-mono">
+          <MapPin className="size-3 text-emerald-400" />
+          <span>Mercator ADM2 64-District Projection</span>
+        </div>
+
+        {/* SVG Map of Bangladesh (viewBox 0 0 700 880) */}
+        <div className="w-full h-full flex items-center justify-center overflow-hidden py-2">
+          <svg
+            viewBox={BANGLADESH_MAP_VIEWBOX}
+            preserveAspectRatio="xMidYMid meet"
+            role="img"
+            aria-label="Interactive Map of the 64 districts of Bangladesh"
+            className="mx-auto w-auto h-[500px] sm:h-[600px] max-h-[640px] max-w-full cursor-pointer transition-transform duration-300"
+            style={{
+              transform: `scale(${zoomLevel})`,
+              transformOrigin: `${selectedCentroid[0]}px ${selectedCentroid[1]}px`,
+            }}
+          >
+            <g>
+              {MAP_PATHS_LIST.map((item) => {
+                const district = districtMap.get(item.code);
+                const status = district?.status || 'not_visited';
+                const isSelected = selectedCode === item.code;
+                const isHovered = hoveredCode === item.code;
+                const style = STATUS_FILL[status];
+
+                return (
+                  <path
+                    key={item.code}
+                    id={item.mapIdentifier}
+                    data-code={item.code}
+                    d={item.d}
+                    tabIndex={0}
+                    role="button"
+                    vectorEffect="non-scaling-stroke"
+                    aria-label={`${item.name}, ${item.bnName}, ${style.label}`}
+                    onClick={() => {
+                      if (district) onSelectDistrict(district);
+                    }}
+                    onMouseEnter={() => {
+                      if (setExternalHovered) setExternalHovered(item.code);
+                      else setInternalHoveredCode(item.code);
+                    }}
+                    onMouseLeave={() => {
+                      if (setExternalHovered) setExternalHovered(null);
+                      else setInternalHoveredCode(null);
+                    }}
+                    className={`transition-colors duration-100 cursor-pointer ${style.normal} ${style.hover} ${
+                      isSelected
+                        ? 'stroke-white stroke-[3] fill-emerald-400'
+                        : isHovered
+                        ? 'stroke-white stroke-[2.2] brightness-125'
+                        : 'stroke-zinc-950/90 stroke-[1.2]'
+                    }`}
+                  />
+                );
+              })}
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+};

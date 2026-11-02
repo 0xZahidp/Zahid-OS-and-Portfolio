@@ -18,7 +18,16 @@ export interface ShortLinksResponse {
   error?: string;
 }
 
-export type ZahidOsAppId = 'shortener' | 'qr' | 'notes' | 'snippets' | 'focus' | 'travel' | 'settings';
+export type ZahidOsAppId =
+  | 'shortener'
+  | 'qr'
+  | 'notes'
+  | 'snippets'
+  | 'focus'
+  | 'travel'
+  | 'api_playground'
+  | 'temp_mail'
+  | 'settings';
 
 export interface ZahidOsAppMeta {
   id: ZahidOsAppId;

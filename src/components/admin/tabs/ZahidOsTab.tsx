@@ -34,9 +34,13 @@ import {
   Layers,
   ArrowRight,
   Compass,
+  Mail,
+  Terminal,
 } from 'lucide-react';
 import { ShortLink, ZahidOsAppId, ZahidOsSettings } from '@/types/os';
-import { TravelWorkspace } from '@/components/travel/TravelWorkspace';
+import { TravelWorkspace } from '@/components/os/travel/TravelWorkspace';
+import { ApiPlaygroundApp } from '@/components/os/api-playground';
+import { TempMailApp } from '@/components/os/temp-mail';
 
 interface SnippetItem {
   id: string;
@@ -481,6 +485,24 @@ export const ZahidOsTab: React.FC = () => {
       inDock: false,
     },
     {
+      id: 'api_playground' as ZahidOsAppId,
+      name: 'API Console',
+      subtitle: 'HTTP Workbench',
+      badge: 'REST',
+      gradient: 'from-blue-600 via-indigo-600 to-violet-700',
+      icon: Terminal,
+      inDock: false,
+    },
+    {
+      id: 'temp_mail' as ZahidOsAppId,
+      name: 'Temp Mail',
+      subtitle: 'Disposable Inboxes',
+      badge: 'OTP',
+      gradient: 'from-amber-500 via-orange-600 to-rose-600',
+      icon: Mail,
+      inDock: false,
+    },
+    {
       id: 'settings' as ZahidOsAppId,
       name: 'Settings',
       subtitle: 'Zahid OS Controls',
@@ -498,6 +520,20 @@ export const ZahidOsTab: React.FC = () => {
         return (
           <div className="p-2 sm:p-5">
             <TravelWorkspace mode="admin" adminHeaders={getAdminHeaders()} />
+          </div>
+        );
+
+      case 'api_playground':
+        return (
+          <div className="p-2 sm:p-5">
+            <ApiPlaygroundApp />
+          </div>
+        );
+
+      case 'temp_mail':
+        return (
+          <div className="p-2 sm:p-5">
+            <TempMailApp />
           </div>
         );
 
@@ -1116,7 +1152,7 @@ export const ZahidOsTab: React.FC = () => {
                 Individual App Permissions (Public vs Private)
               </label>
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2 text-xs">
-                {(['shortener', 'travel', 'qr', 'snippets', 'focus', 'notes'] as ZahidOsAppId[]).map(
+                {(['shortener', 'travel', 'api_playground', 'temp_mail', 'qr', 'snippets', 'focus', 'notes'] as ZahidOsAppId[]).map(
                   (appKey) => {
                     const isPub = osSettings.app_permissions?.[appKey]?.is_public ?? false;
 
@@ -1130,16 +1166,20 @@ export const ZahidOsTab: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            setOsSettings((prev) => ({
-                              ...prev,
-                              app_permissions: {
-                                ...prev.app_permissions,
-                                [appKey]: {
-                                  ...prev.app_permissions[appKey],
-                                  is_public: !isPub,
+                            setOsSettings((prev) => {
+                              const curPerms = prev.app_permissions || {};
+                              const curApp = curPerms[appKey] || { name: appKey, is_public: false };
+                              return {
+                                ...prev,
+                                app_permissions: {
+                                  ...curPerms,
+                                  [appKey]: {
+                                    ...curApp,
+                                    is_public: !isPub,
+                                  },
                                 },
-                              },
-                            }));
+                              };
+                            });
                           }}
                           className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                             isPub
