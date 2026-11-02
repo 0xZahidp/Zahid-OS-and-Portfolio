@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useAdminAuth } from '@/context/AdminAuthContext';
 import {
   Smartphone,
   Monitor,
@@ -44,6 +45,15 @@ interface SnippetItem {
 }
 
 export const ZahidOsTab: React.FC = () => {
+  const { session } = useAdminAuth();
+
+  // Admin request headers (with fallback key for local dev)
+  const getAdminHeaders = useCallback((): HeadersInit => ({
+    'Content-Type': 'application/json',
+    'x-admin-key': 'folioframe_admin',
+    ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+  }), [session?.access_token]);
+
   // Viewport mode: 'canvas' (spacious desktop app drawer, default) vs 'iphone' (phone preview)
   const [viewMode, setViewMode] = useState<'canvas' | 'iphone'>('canvas');
 
@@ -126,12 +136,12 @@ export const ZahidOsTab: React.FC = () => {
   }, []);
 
   // Fetch short links and OS settings on mount
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoadingLinks(true);
       const [linksRes, settingsRes] = await Promise.all([
-        fetch('/api/os/short-links'),
-        fetch('/api/os/settings'),
+        fetch('/api/os/short-links', { headers: getAdminHeaders() }),
+        fetch('/api/os/settings', { headers: getAdminHeaders() }),
       ]);
 
       if (linksRes.ok) {
@@ -150,7 +160,7 @@ export const ZahidOsTab: React.FC = () => {
     } finally {
       setIsLoadingLinks(false);
     }
-  };
+  }, [getAdminHeaders]);
 
   useEffect(() => {
     loadData();
@@ -183,7 +193,7 @@ export const ZahidOsTab: React.FC = () => {
         code: `.ios-squircle {\n  border-radius: 22.37%;\n  backdrop-filter: blur(24px);\n  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);\n}`,
       },
     ]);
-  }, []);
+  }, [loadData]);
 
   // Pomodoro countdown timer
   useEffect(() => {
@@ -258,7 +268,7 @@ export const ZahidOsTab: React.FC = () => {
     try {
       const res = await fetch('/api/os/short-links', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminHeaders(),
         body: JSON.stringify({
           original_url: quickUrl.trim(),
           title: 'Quick Link',
@@ -323,7 +333,7 @@ export const ZahidOsTab: React.FC = () => {
     try {
       const res = await fetch('/api/os/short-links', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminHeaders(),
         body: JSON.stringify({
           id: editingId || undefined,
           slug: formSlug.trim() || undefined,
@@ -358,7 +368,7 @@ export const ZahidOsTab: React.FC = () => {
       );
       await fetch('/api/os/short-links', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ id: link.id, is_active: newStatus }),
       });
     } catch {
@@ -372,6 +382,7 @@ export const ZahidOsTab: React.FC = () => {
       setDeletingId(null);
       await fetch(`/api/os/short-links?id=${encodeURIComponent(id)}`, {
         method: 'DELETE',
+        headers: getAdminHeaders(),
       });
     } catch {
       loadData();
@@ -384,7 +395,7 @@ export const ZahidOsTab: React.FC = () => {
     try {
       const res = await fetch('/api/os/settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminHeaders(),
         body: JSON.stringify(osSettings),
       });
       if (res.ok) {
@@ -1038,6 +1049,47 @@ export const ZahidOsTab: React.FC = () => {
                   </a>
                 </div>
               )}
+            </div>
+
+            {/* Allow Public Link Creation Switch */}
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Link2 className="size-5 text-cyan-400 shrink-0" />
+                  <div>
+                    <span className="text-sm font-bold text-white block">
+                      Allow Public Link Creation
+                    </span>
+                    <span className="text-xs text-white/60 block">
+                      {osSettings.allow_public_link_creation
+                        ? 'Active: Public visitors on /os can create their own short links'
+                        : 'Admin-Only (Recommended): Only 0xZahidP can create short links'}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOsSettings((prev) => ({
+                      ...prev,
+                      allow_public_link_creation: !prev.allow_public_link_creation,
+                    }))
+                  }
+                  className={`w-12 h-6.5 rounded-full transition-colors relative cursor-pointer ${
+                    osSettings.allow_public_link_creation ? 'bg-cyan-500' : 'bg-white/20'
+                  }`}
+                >
+                  <span
+                    className={`size-5 rounded-full bg-white transition-transform absolute top-0.75 left-0.75 shadow-xs ${
+                      osSettings.allow_public_link_creation ? 'translate-x-5.5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+              <p className="text-[11px] text-white/40 pt-2 border-t border-white/5">
+                💡 <strong>Note on Redirects:</strong> Anyone with a generated link (e.g. <code className="text-cyan-300">/s/[slug]</code>) can <em>always</em> click and redirect to the destination. This toggle only controls whether external users can create new links on your domain.
+              </p>
             </div>
 
             {/* Per-App Permissions */}

@@ -7,6 +7,7 @@ const SETTINGS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'os-settings.
 
 const defaultOsSettings: ZahidOsSettings = {
   is_public_enabled: false,
+  allow_public_link_creation: false,
   public_hero_title: 'Zahid OS',
   public_hero_subtitle: 'Cloud tools, web utilities & micro-apps designed by 0xZahidP',
   wallpaper: 'emerald-mesh',
@@ -94,4 +95,3 @@ export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promis
 
   return merged;
 }
-

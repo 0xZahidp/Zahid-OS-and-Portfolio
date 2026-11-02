@@ -34,6 +34,7 @@ export interface ZahidOsAppMeta {
 
 export interface ZahidOsSettings {
   is_public_enabled: boolean;
+  allow_public_link_creation?: boolean;
   public_hero_title: string;
   public_hero_subtitle: string;
   wallpaper: 'emerald-mesh' | 'ios-midnight' | 'cyber-dark' | 'cupertino-blue';

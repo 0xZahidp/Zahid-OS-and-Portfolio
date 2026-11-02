@@ -1,5 +1,6 @@
 {
   "is_public_enabled": true,
+  "allow_public_link_creation": false,
   "public_hero_title": "Zahid OS",
   "public_hero_subtitle": "Cloud tools, web utilities & micro-apps designed by 0xZahidP",
   "wallpaper": "emerald-mesh",
@@ -15,7 +16,7 @@
     },
     "notes": {
       "name": "Notes",
-      "is_public": false
+      "is_public": true
     },
     "settings": {
       "name": "Settings",
@@ -30,5 +31,5 @@
       "is_public": true
     }
   },
-  "updated_at": "2026-11-02T05:46:17.517Z"
+  "updated_at": "2026-11-02T06:01:00.800Z"
 }

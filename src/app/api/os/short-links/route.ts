@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getShortLinks, saveShortLinks } from '@/lib/os/short-links';
+import { getOsSettings } from '@/lib/os/settings';
+import { supabaseServer } from '@/lib/supabase/server';
 import { ShortLink } from '@/types/os';
 
 export const dynamic = 'force-dynamic';
@@ -22,17 +24,68 @@ function isValidUrl(stringUrl: string): boolean {
   }
 }
 
-// 1. GET: Retrieve all short links
-export async function GET() {
+/**
+ * Verify whether the incoming request has administrative permissions.
+ * Supports x-admin-key header, Bearer JWT token, and session cookies.
+ */
+async function isAdminRequest(req: NextRequest): Promise<boolean> {
+  // 1. Direct admin key header from trusted CMS client
+  const adminKey = req.headers.get('x-admin-key');
+  if (adminKey === 'folioframe_admin') {
+    return true;
+  }
+
+  // 2. Supabase Bearer Auth Token
+  const authHeader = req.headers.get('Authorization');
+  const token = authHeader?.replace(/^Bearer\s+/i, '');
+  if (token) {
+    try {
+      const supabase = supabaseServer();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser(token);
+      if (!error && user) {
+        return true;
+      }
+    } catch {
+      // fallback
+    }
+  }
+
+  // 3. Supabase Auth Cookie check
+  try {
+    const supabase = supabaseServer();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (!error && user) {
+      return true;
+    }
+  } catch {
+    // fallback
+  }
+
+  return false;
+}
+
+// 1. GET: Retrieve short links
+export async function GET(req: NextRequest) {
   try {
     const links = await getShortLinks();
-    const totalClicks = links.reduce((sum, link) => sum + (link.clicks || 0), 0);
+    const isAdmin = await isAdminRequest(req);
+
+    // If request is from admin, return all links. If public, filter to active only.
+    const visibleLinks = isAdmin ? links : links.filter((l) => l.is_active !== false);
+    const totalClicks = visibleLinks.reduce((sum, link) => sum + (link.clicks || 0), 0);
 
     return NextResponse.json({
       success: true,
-      links,
+      links: visibleLinks,
       totalClicks,
-      count: links.length,
+      count: visibleLinks.length,
+      isAdmin,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to fetch short links';
@@ -46,6 +99,32 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const { id, slug, title, description, is_active } = body;
     let original_url = body.original_url;
+
+    const isAdmin = await isAdminRequest(req);
+    const settings = await getOsSettings();
+
+    // If updating an existing link, admin privilege is strictly required
+    if (id && !isAdmin) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized: Only the administrator can modify existing short links.',
+        },
+        { status: 403 }
+      );
+    }
+
+    // If creating a new link, check if public link creation is enabled or if requester is admin
+    if (!id && !isAdmin && !settings.allow_public_link_creation) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'Public link creation is currently disabled. Only 0xZahidP can create short links on this domain.',
+        },
+        { status: 403 }
+      );
+    }
 
     // Validate original_url
     if (!original_url || typeof original_url !== 'string') {
@@ -91,6 +170,7 @@ export async function POST(req: NextRequest) {
       'login',
       's',
       'l',
+      'os',
       'reset-password',
       'opengraph-image',
       'favicon.ico',
@@ -99,7 +179,10 @@ export async function POST(req: NextRequest) {
     ];
     if (reservedSlugs.includes(cleanSlug)) {
       return NextResponse.json(
-        { success: false, error: `Slug "${cleanSlug}" is a reserved system path. Please choose another.` },
+        {
+          success: false,
+          error: `Slug "/s/${cleanSlug}" is a reserved system path. Please choose another.`,
+        },
         { status: 400 }
       );
     }
@@ -114,7 +197,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: `Slug "/s/${cleanSlug}" is already in use by "${existingWithSlug.title || existingWithSlug.original_url}". Choose a unique slug.`,
+          error: `Slug "/s/${cleanSlug}" is already in use by "${
+            existingWithSlug.title || existingWithSlug.original_url
+          }". Choose a unique slug.`,
         },
         { status: 409 }
       );
@@ -124,7 +209,7 @@ export async function POST(req: NextRequest) {
     let updatedLink: ShortLink;
 
     if (id) {
-      // Update existing
+      // Update existing (Admin only)
       const targetIndex = currentLinks.findIndex((l) => l.id === id);
       if (targetIndex === -1) {
         return NextResponse.json(
@@ -145,7 +230,7 @@ export async function POST(req: NextRequest) {
 
       currentLinks[targetIndex] = updatedLink;
     } else {
-      // Create new
+      // Create new (Admin or Public if allowed)
       const newId = `link_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       updatedLink = {
         id: newId,
@@ -153,7 +238,7 @@ export async function POST(req: NextRequest) {
         original_url,
         title: (title || cleanSlug).trim(),
         description: (description || '').trim(),
-        is_active: is_active !== false,
+        is_active: true,
         clicks: 0,
         last_clicked_at: null,
         created_at: now,
@@ -183,9 +268,17 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// 3. DELETE: Remove a short link
+// 3. DELETE: Remove a short link (Admin strictly required)
 export async function DELETE(req: NextRequest) {
   try {
+    const isAdmin = await isAdminRequest(req);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Only the administrator can delete short links.' },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     const slug = searchParams.get('slug');
@@ -225,9 +318,17 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-// 4. PATCH: Quick toggle active or reset clicks
+// 4. PATCH: Quick toggle active or reset clicks (Admin strictly required)
 export async function PATCH(req: NextRequest) {
   try {
+    const isAdmin = await isAdminRequest(req);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Only the administrator can modify short links.' },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const { id, is_active, reset_clicks } = body;
 

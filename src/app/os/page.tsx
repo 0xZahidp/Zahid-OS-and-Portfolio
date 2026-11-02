@@ -36,6 +36,13 @@ export default function PublicZahidOsPage() {
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [customQrUrl, setCustomQrUrl] = useState<string>('');
 
+  // Public link creation (when permitted in OS Settings)
+  const [publicUrlInput, setPublicUrlInput] = useState<string>('');
+  const [publicSlugInput, setPublicSlugInput] = useState<string>('');
+  const [isCreatingPublicLink, setIsCreatingPublicLink] = useState<boolean>(false);
+  const [publicCreateError, setPublicCreateError] = useState<string | null>(null);
+  const [publicCreateSuccess, setPublicCreateSuccess] = useState<string | null>(null);
+
   // Focus clock state
   const [focusSeconds, setFocusSeconds] = useState<number>(25 * 60);
   const [isFocusRunning, setIsFocusRunning] = useState<boolean>(false);
@@ -100,6 +107,48 @@ export default function PublicZahidOsPage() {
       navigator.clipboard.writeText(`${origin}/s/${slug}`);
       setCopiedSlug(slug);
       setTimeout(() => setCopiedSlug(null), 2000);
+    }
+  };
+
+  const handleCreatePublicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!publicUrlInput.trim()) return;
+
+    setIsCreatingPublicLink(true);
+    setPublicCreateError(null);
+    setPublicCreateSuccess(null);
+
+    try {
+      const res = await fetch('/api/os/short-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          original_url: publicUrlInput.trim(),
+          slug: publicSlugInput.trim() || undefined,
+          title: publicSlugInput.trim() || 'Shared Shortcut',
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setPublicCreateError(data.error || 'Failed to create short link');
+        return;
+      }
+
+      if (data.link) {
+        setLinks((prev) => [data.link, ...prev.filter((l) => l.id !== data.link.id)]);
+        setPublicUrlInput('');
+        setPublicSlugInput('');
+        setPublicCreateSuccess(`/s/${data.link.slug}`);
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(`${origin}/s/${data.link.slug}`);
+        }
+        setTimeout(() => setPublicCreateSuccess(null), 4000);
+      }
+    } catch (err: unknown) {
+      setPublicCreateError(err instanceof Error ? err.message : 'Network error creating link');
+    } finally {
+      setIsCreatingPublicLink(false);
     }
   };
 
@@ -207,12 +256,73 @@ export default function PublicZahidOsPage() {
           <div className="p-4 sm:p-7 space-y-4 max-w-3xl mx-auto">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div>
-                <h3 className="font-bold text-base text-white">Public Links Directory</h3>
-                <p className="text-xs text-white/60">Short shortcuts curated by 0xZahidP.</p>
+                <h3 className="font-bold text-base text-white">URL Shortener & Shortcuts</h3>
+                <p className="text-xs text-white/60">
+                  {settings?.allow_public_link_creation
+                    ? 'Shorten custom links or browse verified shortcuts.'
+                    : 'Curated shortcuts created and managed by 0xZahidP.'}
+                </p>
               </div>
             </div>
 
-            <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
+            {/* Public Link Shorten Bar (Only if Admin Enabled Public Creation in OS Settings) */}
+            {settings?.allow_public_link_creation ? (
+              <form
+                onSubmit={handleCreatePublicLink}
+                className="p-4 rounded-2xl bg-white/5 border border-cyan-500/20 space-y-3"
+              >
+                <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
+                  <Link2 className="size-4" />
+                  <span>Shorten a Web URL</span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={publicUrlInput}
+                    onChange={(e) => setPublicUrlInput(e.target.value)}
+                    placeholder="https://your-destination-url.com"
+                    className="flex-1 h-9 px-3 rounded-xl border border-white/10 bg-white/5 text-xs text-white outline-hidden font-mono focus:border-cyan-500"
+                  />
+                  <input
+                    type="text"
+                    value={publicSlugInput}
+                    onChange={(e) => setPublicSlugInput(e.target.value)}
+                    placeholder="custom-slug (optional)"
+                    className="w-full sm:w-44 h-9 px-3 rounded-xl border border-white/10 bg-white/5 text-xs text-white outline-hidden font-mono focus:border-cyan-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isCreatingPublicLink || !publicUrlInput.trim()}
+                    className="h-9 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 text-white font-semibold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-sm"
+                  >
+                    {isCreatingPublicLink ? 'Shortening...' : 'Shorten'}
+                  </button>
+                </div>
+
+                {publicCreateError && (
+                  <p className="text-xs text-rose-400 font-mono">{publicCreateError}</p>
+                )}
+                {publicCreateSuccess && (
+                  <p className="text-xs text-emerald-400 font-mono flex items-center gap-1.5">
+                    <Check className="size-3.5" />
+                    <span>Short link created and copied: {origin}{publicCreateSuccess}</span>
+                  </p>
+                )}
+              </form>
+            ) : (
+              <div className="p-3.5 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 flex items-center gap-3 text-xs text-cyan-200">
+                <ShieldCheck className="size-4 text-cyan-400 shrink-0" />
+                <div className="leading-relaxed">
+                  <span className="font-bold text-white block">Curated Developer Shortcuts</span>
+                  <span className="text-cyan-300/80">
+                    Browse and use verified links shared by 0xZahidP. (Link creation is restricted to the administrator).
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
               {links
                 .filter((l) => l.is_active !== false)
                 .map((link) => (
