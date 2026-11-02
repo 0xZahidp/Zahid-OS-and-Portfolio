@@ -245,12 +245,21 @@ export const TempMailApp: React.FC = () => {
               const parsed = JSON.parse(cached);
               const expTime = new Date(parsed.expiresAt).getTime();
               const now = Date.now();
+              const currentHost = window.location.hostname.toLowerCase();
 
-              // If still valid (at least 30s left), restore it
-              if (expTime - now > 30000) {
+              // Auto-purge stale inboxes from older domain/mock versions (e.g. patwary.dev, or localhost mismatch)
+              const isStale =
+                !parsed.address ||
+                parsed.address.includes('patwary.dev') ||
+                (currentHost === 'localhost' && !parsed.address.endsWith('@localhost'));
+
+              if (isStale) {
+                localStorage.removeItem(LOCAL_STORAGE_KEY);
+              } else if (expTime - now > 30000) {
+                // If still valid (at least 30s left), restore it
                 setInboxAddress(parsed.address);
                 setInboxToken(parsed.token);
-                setInboxDomain(parsed.domain || '');
+                setInboxDomain(parsed.domain || currentHost || 'localhost');
                 setSelectedTtl(parsed.ttl || '1h');
                 const diff = Math.floor((expTime - now) / 1000);
                 setSecondsRemaining(diff);
@@ -815,7 +824,7 @@ export const TempMailApp: React.FC = () => {
 
             <p className="text-xs text-white/60">
               Enter your desired username slug. It will be created under your active domain{' '}
-              <strong className="text-amber-300">@{inboxDomain || 'zahidp.com'}</strong>.
+              <strong className="text-amber-300">@{inboxDomain || (typeof window !== 'undefined' ? window.location.hostname : 'localhost')}</strong>.
             </p>
 
             <div className="space-y-1.5">
@@ -828,7 +837,7 @@ export const TempMailApp: React.FC = () => {
                   placeholder="e.g. github-test, dev-stripe, mytoken"
                   className="bg-transparent flex-1 text-xs text-white outline-hidden font-mono"
                 />
-                <span className="text-xs font-mono text-white/40">@{inboxDomain || 'zahidp.com'}</span>
+                <span className="text-xs font-mono text-white/40">@{inboxDomain || (typeof window !== 'undefined' ? window.location.hostname : 'localhost')}</span>
               </div>
             </div>
 

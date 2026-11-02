@@ -89,7 +89,15 @@ export async function resolveTempMailDomain(requestHost?: string): Promise<strin
     return envDomain.trim().toLowerCase();
   }
 
-  // 2. Sender email domain from secrets
+  // 2. Request host from client / header (e.g. localhost, domain.com)
+  if (requestHost) {
+    const cleanHost = requestHost.split(':')[0].trim().toLowerCase();
+    if (cleanHost) {
+      return cleanHost;
+    }
+  }
+
+  // 3. Sender email domain from secrets
   try {
     const defaultSender =
       (await getAppSecret('RESEND_DEFAULT_SENDER')) || process.env.RESEND_DEFAULT_SENDER;
@@ -103,15 +111,7 @@ export async function resolveTempMailDomain(requestHost?: string): Promise<strin
     // fall through
   }
 
-  // 3. Request host if not localhost
-  if (requestHost) {
-    const cleanHost = requestHost.split(':')[0].toLowerCase();
-    if (cleanHost && !cleanHost.includes('localhost') && !cleanHost.includes('127.0.0.1')) {
-      return cleanHost;
-    }
-  }
-
-  return 'zahidp.com';
+  return 'localhost';
 }
 
 /**

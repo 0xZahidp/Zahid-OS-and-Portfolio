@@ -95,8 +95,7 @@ export const DistrictExplorer: React.FC<DistrictExplorerProps> = ({
 
         {/* Division Filter Pills */}
         <div
-          className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs select-none"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs select-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]"
         >
           <button
             type="button"
@@ -132,8 +131,7 @@ export const DistrictExplorer: React.FC<DistrictExplorerProps> = ({
 
         {/* Status Filter Pills */}
         <div
-          className="flex items-center gap-1.5 text-xs overflow-x-auto pb-1 select-none"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="flex items-center gap-1.5 text-xs overflow-x-auto pb-1 select-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]"
         >
           {[
             { id: 'all', label: 'All Statuses' },
@@ -146,7 +144,7 @@ export const DistrictExplorer: React.FC<DistrictExplorerProps> = ({
               key={st.id}
               type="button"
               onClick={() => setSelectedStatus(st.id)}
-              className={`px-3 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer shrink-0 ${
+              className={`px-3 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
                 selectedStatus === st.id
                   ? 'bg-white/20 text-white font-bold ring-1 ring-white/20'
                   : 'text-white/50 hover:text-white hover:bg-white/5'
@@ -158,10 +156,9 @@ export const DistrictExplorer: React.FC<DistrictExplorerProps> = ({
         </div>
       </div>
 
-      {/* Grid of District Cards: Minimum 220px width guaranteed to eliminate squishing and overlap */}
+      {/* Grid of District Cards: Polished responsive grid with fixed min-height & no word-break artifacts */}
       <div
-        className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 max-h-[620px] overflow-y-auto overflow-x-hidden pr-1.5"
-        style={{ scrollbarWidth: 'thin' }}
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5 max-h-[640px] overflow-y-auto overflow-x-hidden pr-1.5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-white/5 [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full [scrollbar-width:thin]"
       >
         {filteredDistricts.map((district) => {
           const isSelected = selectedCode === district.code;
@@ -169,10 +166,10 @@ export const DistrictExplorer: React.FC<DistrictExplorerProps> = ({
             <div
               key={district.code}
               onClick={() => onSelectDistrict(district)}
-              className={`group relative p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 ${
+              className={`group relative p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 min-h-[108px] ${
                 isSelected
-                  ? 'border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/15 ring-1 ring-emerald-500/50 scale-[1.01]'
-                  : 'border-white/10 bg-zinc-900/60 hover:border-emerald-500/40 hover:bg-zinc-800/80 hover:-translate-y-0.5 backdrop-blur-sm'
+                  ? 'border-emerald-500 bg-emerald-500/15 shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-500/50 scale-[1.01]'
+                  : 'border-white/10 bg-zinc-900/70 hover:border-emerald-500/40 hover:bg-zinc-800/90 hover:-translate-y-0.5 backdrop-blur-md'
               }`}
             >
               {/* Top Row: District Name, Bengali Name & Status Badge */}
@@ -181,7 +178,7 @@ export const DistrictExplorer: React.FC<DistrictExplorerProps> = ({
                   <h4 className="font-bold text-sm text-white truncate group-hover:text-emerald-300 transition-colors">
                     {district.name}
                   </h4>
-                  <p className="text-xs text-emerald-400/90 font-serif truncate mt-0.5">
+                  <p className="text-xs text-emerald-400 font-medium truncate mt-0.5">
                     {district.bnName}
                   </p>
                 </div>
@@ -191,11 +188,11 @@ export const DistrictExplorer: React.FC<DistrictExplorerProps> = ({
               </div>
 
               {/* Bottom Row: Division Name & Visits Counter Pill */}
-              <div className="flex items-center justify-between text-[11px] text-white/50 pt-2.5 border-t border-white/5 gap-2">
-                <span className="capitalize truncate text-zinc-400 font-medium">
-                  {district.division} Division
+              <div className="flex items-center justify-between text-[11px] pt-2.5 border-t border-white/5 gap-2">
+                <span className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/5 text-[10.5px] font-semibold text-zinc-400 capitalize whitespace-nowrap">
+                  {district.division}
                 </span>
-                <span className="font-mono text-emerald-400/90 shrink-0 font-medium bg-white/5 border border-white/5 px-2 py-0.5 rounded-md">
+                <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10.5px] font-mono font-medium text-emerald-400 whitespace-nowrap">
                   {district.visitsCount > 0
                     ? `${district.visitsCount} ${district.visitsCount === 1 ? 'visit' : 'visits'}`
                     : '0 visits'}

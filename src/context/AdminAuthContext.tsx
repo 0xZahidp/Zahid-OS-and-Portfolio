@@ -105,20 +105,26 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const storedBypass = localStorage.getItem(LOCAL_BYPASS_KEY);
       if (storedBypass === 'true') {
         setIsLocalBypass(true);
+        setIsLoading(false);
       }
     }
 
-    // Unconditional safety timeout (2000ms max) so slow network / paused DB NEVER hangs UI
+    // Unconditional safety timeout (1200ms max) so slow network / paused DB NEVER hangs UI
     const safetyTimer = setTimeout(() => {
       if (mounted) {
         setIsLoading(false);
       }
-    }, 2000);
+    }, 1200);
 
-    // Get current session
-    supabase.auth
-      .getSession()
-      .then(async ({ data, error: sessionErr }) => {
+    // Fast session fetch with 1000ms hard ceiling
+    const fetchSession = async () => {
+      try {
+        const timeoutPromise = new Promise<{ data: { session: null }; error: null }>((resolve) =>
+          setTimeout(() => resolve({ data: { session: null }, error: null }), 1000)
+        );
+        const sessionPromise = supabase.auth.getSession();
+        const { data, error: sessionErr } = await Promise.race([sessionPromise, timeoutPromise]);
+
         if (!mounted) return;
         if (sessionErr) {
           console.warn('Supabase getSession error:', sessionErr);
@@ -133,16 +139,17 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             // non-fatal
           }
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.warn('Supabase getSession failed:', err);
-      })
-      .finally(() => {
+      } finally {
         if (mounted) {
           clearTimeout(safetyTimer);
           setIsLoading(false);
         }
-      });
+      }
+    };
+
+    fetchSession();
 
     // Subscribe to auth state updates (e.g. login, logout, token refresh, OAuth redirect)
     const {

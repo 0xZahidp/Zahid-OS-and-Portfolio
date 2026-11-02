@@ -291,16 +291,15 @@ export const TravelWorkspace: React.FC<TravelWorkspaceProps> = ({
 
         {/* View Switcher Tabs - Modern Apple-style Segmented Control */}
         <div
-          className="mt-6 pt-2 flex items-center justify-start overflow-x-auto select-none"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="mt-6 pt-2 flex items-center justify-start overflow-x-auto select-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]"
         >
-          <div className="inline-flex p-1.5 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-xl gap-1 shrink-0">
+          <div className="inline-flex p-1.5 rounded-2xl bg-black/70 border border-white/10 backdrop-blur-xl gap-1.5 shrink-0 shadow-lg">
             <button
               type="button"
               onClick={() => setActiveTab('map')}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'map'
-                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 ring-1 ring-emerald-400/40'
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 ring-1 ring-emerald-400/40'
                   : 'text-zinc-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -311,9 +310,9 @@ export const TravelWorkspace: React.FC<TravelWorkspaceProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('explorer')}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'explorer'
-                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 ring-1 ring-emerald-400/40'
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 ring-1 ring-emerald-400/40'
                   : 'text-zinc-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -324,9 +323,9 @@ export const TravelWorkspace: React.FC<TravelWorkspaceProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('journal')}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'journal'
-                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 ring-1 ring-emerald-400/40'
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 ring-1 ring-emerald-400/40'
                   : 'text-zinc-400 hover:text-white hover:bg-white/5'
               }`}
             >

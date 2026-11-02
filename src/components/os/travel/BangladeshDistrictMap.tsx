@@ -151,11 +151,11 @@ export const BangladeshDistrictMap: React.FC<BangladeshDistrictMapProps> = ({
 
   // Selected district centroid for smooth zoom focus
   const selectedCentroid = useMemo(() => {
-    if (selectedCode && BANGLADESH_MAP_PATHS[selectedCode]) {
+    if (zoomLevel > 1 && selectedCode && BANGLADESH_MAP_PATHS[selectedCode]) {
       return BANGLADESH_MAP_PATHS[selectedCode].centroid;
     }
     return [350, 440] as const;
-  }, [selectedCode]);
+  }, [selectedCode, zoomLevel]);
 
   // Counts for legend
   const counts = useMemo(() => {
@@ -333,7 +333,7 @@ export const BangladeshDistrictMap: React.FC<BangladeshDistrictMapProps> = ({
       </div>
 
       {/* Map Canvas Card */}
-      <div className="relative rounded-3xl border border-white/10 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black p-4 sm:p-8 shadow-2xl overflow-hidden min-h-[580px] sm:min-h-[660px] flex items-center justify-center">
+      <div className="relative rounded-3xl border border-white/10 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black p-4 sm:p-6 shadow-2xl overflow-hidden min-h-[680px] sm:min-h-[760px] flex flex-col items-center justify-center">
         {/* Subtle mesh background grid */}
         <div className="absolute inset-0 bg-[radial-gradient(#10b98115_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none opacity-60" />
 
@@ -381,14 +381,14 @@ export const BangladeshDistrictMap: React.FC<BangladeshDistrictMapProps> = ({
           <span>Mercator ADM2 64-District Projection</span>
         </div>
 
-        {/* SVG Map of Bangladesh (viewBox 0 0 700 880) */}
-        <div className="w-full h-full flex items-center justify-center overflow-hidden py-2">
+        {/* SVG Map of Bangladesh (viewBox 0 0 700 880) - 100% full bounds visible */}
+        <div className="w-full flex-1 flex items-center justify-center p-2 sm:p-4">
           <svg
             viewBox={BANGLADESH_MAP_VIEWBOX}
             preserveAspectRatio="xMidYMid meet"
             role="img"
             aria-label="Interactive Map of the 64 districts of Bangladesh"
-            className="mx-auto w-auto h-[500px] sm:h-[600px] max-h-[640px] max-w-full cursor-pointer transition-transform duration-300"
+            className="w-full h-auto max-w-[500px] sm:max-w-[540px] max-h-[740px] mx-auto block cursor-pointer transition-transform duration-300 select-none"
             style={{
               transform: `scale(${zoomLevel})`,
               transformOrigin: `${selectedCentroid[0]}px ${selectedCentroid[1]}px`,
