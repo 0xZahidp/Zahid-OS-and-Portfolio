@@ -22,11 +22,37 @@ const defaultOsSettings: ZahidOsSettings = {
   },
 };
 
+/**
+ * Get OS Settings with 3-tier fallback:
+ * 1. Dedicated Supabase table 'os_settings' (if created)
+ * 2. Supabase 'site_settings' key 'zahid_os_settings' (active store)
+ * 3. Local JSON file 'src/data/os-settings.json' (offline / dev fallback)
+ */
 export async function getOsSettings(): Promise<ZahidOsSettings> {
-  // 1. Try Supabase site_settings
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    // 1. Try dedicated table 'os_settings'
+    try {
+      const supabase = supabaseServer();
+      const { data, error } = await supabase
+        .from('os_settings')
+        .select('*')
+        .eq('id', 'default')
+        .maybeSingle();
+
+      if (!error && data && typeof data === 'object') {
+        return {
+          ...defaultOsSettings,
+          ...data,
+        };
+      }
+    } catch {
+      // Fall through to site_settings
+    }
+
+    // 2. Try Supabase site_settings JSONB store
+    try {
       const supabase = supabaseServer();
       const { data, error } = await supabase
         .from('site_settings')
@@ -40,12 +66,12 @@ export async function getOsSettings(): Promise<ZahidOsSettings> {
           ...data.value,
         };
       }
+    } catch (err) {
+      console.warn('Supabase getOsSettings fallback to file:', err);
     }
-  } catch (err) {
-    console.warn('Supabase getOsSettings fallback to file:', err);
   }
 
-  // 2. Try Local File
+  // 3. Try Local File
   try {
     const content = await fs.readFile(SETTINGS_FILE_PATH, 'utf-8');
     const parsed = JSON.parse(content);
@@ -60,6 +86,12 @@ export async function getOsSettings(): Promise<ZahidOsSettings> {
   return defaultOsSettings;
 }
 
+/**
+ * Save OS Settings across:
+ * 1. Local JSON file
+ * 2. Supabase site_settings (key: 'zahid_os_settings')
+ * 3. Supabase dedicated table 'os_settings' (if exists)
+ */
 export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promise<ZahidOsSettings> {
   const current = await getOsSettings();
   const merged: ZahidOsSettings = {
@@ -75,11 +107,13 @@ export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promis
     console.error('Error saving os-settings.json:', err);
   }
 
-  // 2. Sync to Supabase site_settings
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
-      const supabase = supabaseServer();
+  // 2. Sync to Supabase
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    const supabase = supabaseServer();
+
+    // 2a. Sync to site_settings (active JSON store)
+    try {
       await supabase.from('site_settings').upsert(
         {
           key: 'zahid_os_settings',
@@ -88,9 +122,29 @@ export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promis
         },
         { onConflict: 'key' }
       );
+    } catch (err) {
+      console.warn('Error saving OS settings to site_settings:', err);
     }
-  } catch (err) {
-    console.warn('Error saving os settings to Supabase:', err);
+
+    // 2b. Sync to dedicated table 'os_settings' if present
+    try {
+      await supabase.from('os_settings').upsert(
+        {
+          id: 'default',
+          is_public_enabled: merged.is_public_enabled,
+          allow_public_link_creation: merged.allow_public_link_creation ?? false,
+          public_hero_title: merged.public_hero_title,
+          public_hero_subtitle: merged.public_hero_subtitle,
+          wallpaper: merged.wallpaper,
+          sound_effects: merged.sound_effects,
+          app_permissions: merged.app_permissions,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
+    } catch {
+      // Table may not exist yet, site_settings already saved
+    }
   }
 
   return merged;

@@ -6,14 +6,32 @@ import { ShortLink } from '@/types/os';
 const SHORT_LINKS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'short-links.json');
 
 /**
- * Read short links from Supabase site_settings (key: 'zahid_os_short_links')
- * with fallback to local JSON file src/data/short-links.json
+ * Read short links with 3-tier fallback:
+ * 1. Dedicated Supabase table 'os_short_links' (if created)
+ * 2. Supabase 'site_settings' key 'zahid_os_short_links' (active store)
+ * 3. Local JSON file 'src/data/short-links.json' (offline / dev fallback)
  */
 export async function getShortLinks(): Promise<ShortLink[]> {
-  // 1. Try Supabase site_settings
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    // 1. Try dedicated table 'os_short_links'
+    try {
+      const supabase = supabaseServer();
+      const { data, error } = await supabase
+        .from('os_short_links')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return data as ShortLink[];
+      }
+    } catch {
+      // Fall through if table does not exist
+    }
+
+    // 2. Try Supabase site_settings JSONB store
+    try {
       const supabase = supabaseServer();
       const { data, error } = await supabase
         .from('site_settings')
@@ -24,12 +42,12 @@ export async function getShortLinks(): Promise<ShortLink[]> {
       if (!error && data?.value && Array.isArray(data.value)) {
         return data.value as ShortLink[];
       }
+    } catch (err) {
+      console.warn('Supabase site_settings getShortLinks fallback:', err);
     }
-  } catch (err) {
-    console.warn('Supabase getShortLinks fallback to local file:', err);
   }
 
-  // 2. Fallback to local file
+  // 3. Fallback to local JSON file
   try {
     const fileContent = await fs.readFile(SHORT_LINKS_FILE_PATH, 'utf-8');
     const parsed = JSON.parse(fileContent);
@@ -44,7 +62,10 @@ export async function getShortLinks(): Promise<ShortLink[]> {
 }
 
 /**
- * Save short links to both local JSON file and Supabase site_settings
+ * Save short links across:
+ * 1. Local JSON file
+ * 2. Supabase site_settings (key: 'zahid_os_short_links')
+ * 3. Supabase dedicated table 'os_short_links' (if exists)
  */
 export async function saveShortLinks(links: ShortLink[]): Promise<boolean> {
   let fileSaved = false;
@@ -57,11 +78,13 @@ export async function saveShortLinks(links: ShortLink[]): Promise<boolean> {
     console.error('Error writing short-links.json:', err);
   }
 
-  // 2. Save to Supabase site_settings
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
-      const supabase = supabaseServer();
+  // 2. Sync to Supabase
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    const supabase = supabaseServer();
+
+    // 2a. Sync to site_settings (key: 'zahid_os_short_links')
+    try {
       await supabase.from('site_settings').upsert(
         {
           key: 'zahid_os_short_links',
@@ -70,9 +93,32 @@ export async function saveShortLinks(links: ShortLink[]): Promise<boolean> {
         },
         { onConflict: 'key' }
       );
+    } catch (err) {
+      console.warn('Error syncing short links to site_settings:', err);
     }
-  } catch (err) {
-    console.warn('Error syncing short links to Supabase:', err);
+
+    // 2b. Sync to dedicated table 'os_short_links' if present
+    try {
+      if (links.length > 0) {
+        await supabase.from('os_short_links').upsert(
+          links.map((l) => ({
+            id: l.id,
+            slug: l.slug,
+            original_url: l.original_url,
+            title: l.title || l.slug,
+            description: l.description || '',
+            clicks: l.clicks || 0,
+            is_active: l.is_active !== false,
+            last_clicked_at: l.last_clicked_at || null,
+            created_at: l.created_at || new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })),
+          { onConflict: 'id' }
+        );
+      }
+    } catch {
+      // Table may not exist yet, site_settings already saved
+    }
   }
 
   return fileSaved;
@@ -83,8 +129,34 @@ export async function saveShortLinks(links: ShortLink[]): Promise<boolean> {
  */
 export async function recordLinkClick(slug: string): Promise<void> {
   try {
-    const links = await getShortLinks();
     const cleanSlug = slug.trim().toLowerCase();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+    // If dedicated table exists, attempt atomic increment
+    if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+      try {
+        const supabase = supabaseServer();
+        const { data: linkRow } = await supabase
+          .from('os_short_links')
+          .select('id, clicks')
+          .eq('slug', cleanSlug)
+          .maybeSingle();
+
+        if (linkRow) {
+          await supabase
+            .from('os_short_links')
+            .update({
+              clicks: (linkRow.clicks || 0) + 1,
+              last_clicked_at: new Date().toISOString(),
+            })
+            .eq('id', linkRow.id);
+        }
+      } catch {
+        // Fall back to memory links
+      }
+    }
+
+    const links = await getShortLinks();
     const targetIndex = links.findIndex((l) => l.slug.toLowerCase() === cleanSlug);
 
     if (targetIndex !== -1) {
@@ -96,4 +168,3 @@ export async function recordLinkClick(slug: string): Promise<void> {
     console.warn('Failed to record link click:', err);
   }
 }
-

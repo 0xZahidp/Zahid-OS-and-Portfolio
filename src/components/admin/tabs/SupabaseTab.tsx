@@ -42,6 +42,7 @@ const TABLE_GROUPS: Record<string, string[]> = {
   Content: ['projects', 'skills', 'experiences', 'languages', 'bio_paragraphs', 'portfolio_content'],
   Settings: ['site_settings', 'app_settings', 'profiles', 'social_links'],
   Inbox: ['inbox_messages', 'suggested_people'],
+  'Zahid OS': ['os_short_links', 'os_settings', 'os_snippets', 'os_notes'],
 };
 
 function getTableGroup(tableName: string): string {
@@ -51,7 +52,7 @@ function getTableGroup(tableName: string): string {
   return 'Other';
 }
 
-const GROUP_ORDER = ['Content', 'Settings', 'Inbox', 'Other'];
+const GROUP_ORDER = ['Content', 'Settings', 'Inbox', 'Zahid OS', 'Other'];
 
 export const SupabaseTab: React.FC = () => {
   // Navigation mode: 'browser' (Table Browser & CRUD) vs 'diagnostics' (Connection & SQL Setup)

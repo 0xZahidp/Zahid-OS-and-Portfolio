@@ -177,7 +177,52 @@ CREATE TABLE IF NOT EXISTS public.app_settings (
 );
 ALTER TABLE IF EXISTS public.app_settings ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
 
--- 12. GRANT PERMISSIONS (Essential for Supabase anon & service_role access)
+-- 12. ZAHID OS CLOUD UTILITIES & SHORT LINKS
+CREATE TABLE IF NOT EXISTS public.os_short_links (
+  id TEXT PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  original_url TEXT NOT NULL,
+  title TEXT,
+  description TEXT,
+  clicks INTEGER DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  last_clicked_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_os_short_links_slug ON public.os_short_links (lower(slug));
+
+CREATE TABLE IF NOT EXISTS public.os_settings (
+  id TEXT PRIMARY KEY DEFAULT 'default',
+  is_public_enabled BOOLEAN DEFAULT true,
+  allow_public_link_creation BOOLEAN DEFAULT false,
+  public_hero_title TEXT DEFAULT 'Zahid OS',
+  public_hero_subtitle TEXT DEFAULT 'Cloud tools, web utilities & micro-apps designed by 0xZahidP',
+  wallpaper TEXT DEFAULT 'emerald-mesh',
+  sound_effects BOOLEAN DEFAULT true,
+  app_permissions JSONB DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.os_snippets (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  language TEXT DEFAULT 'TypeScript',
+  description TEXT,
+  code TEXT NOT NULL,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.os_notes (
+  id TEXT PRIMARY KEY DEFAULT 'main_scratchpad',
+  title TEXT DEFAULT 'Admin Notes',
+  content TEXT DEFAULT '',
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 13. GRANT PERMISSIONS (Essential for Supabase anon & service_role access)
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
