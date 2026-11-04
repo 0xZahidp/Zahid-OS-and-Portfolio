@@ -7,13 +7,14 @@ import { normalizeWallpaperId } from './wallpapers';
 const SETTINGS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'os-settings.json');
 
 let memorySettingsCache: { settings: ZahidOsSettings; timestamp: number } | null = null;
-const SETTINGS_CACHE_TTL = 30000; // 30s
+const SETTINGS_CACHE_TTL = 15000; // 15s in-memory cache
+
 const defaultOsSettings: ZahidOsSettings = {
   is_public_enabled: false,
   allow_public_link_creation: false,
   public_hero_title: 'Zahid OS',
   public_hero_subtitle: 'Cloud tools, web utilities & micro-apps designed by 0xZahidP',
-  wallpaper: 'emerald-mesh',
+  wallpaper: 'zos-emerald',
   sound_effects: true,
   app_permissions: {
     shortener: { is_public: true, name: 'Shortener' },
@@ -45,46 +46,21 @@ function normalizeOsSettings(raw: Partial<ZahidOsSettings> | null | undefined): 
 
 /**
  * Get OS Settings with 3-tier fallback:
- * 1. Dedicated Supabase table 'os_settings' (if created)
- * 2. Supabase 'site_settings' key 'zahid_os_settings' (active store)
- * 3. Local JSON file 'src/data/os-settings.json' (offline / dev fallback)
+ * 1. Supabase 'site_settings' key 'zahid_os_settings' / dedicated 'os_settings' table
+ * 2. Local JSON file 'src/data/os-settings.json' (offline / dev fallback)
+ * 3. Default OS settings seed
  */
 export async function getOsSettings(): Promise<ZahidOsSettings> {
-  // 0. In-memory cache (<30s)
+  // 0. In-memory cache (<15s)
   if (memorySettingsCache && Date.now() - memorySettingsCache.timestamp < SETTINGS_CACHE_TTL) {
     return memorySettingsCache.settings;
   }
 
-  // 1. Ultra-fast local file read (<1ms)
-  try {
-    const content = await fs.readFile(SETTINGS_FILE_PATH, 'utf-8');
-    const parsed = JSON.parse(content);
-    const settings = normalizeOsSettings(parsed);
-    memorySettingsCache = { settings, timestamp: Date.now() };
-    return settings;
-  } catch {
-    // fallback to Supabase / defaults
-  }
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
+  // 1. Try Supabase first if configured (ensures serverless deployments on Vercel see latest updates)
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
-    // 1. Try dedicated table 'os_settings'
-    try {
-      const supabase = supabaseServer();
-      const { data, error } = await supabase
-        .from('os_settings')
-        .select('*')
-        .eq('id', 'default')
-        .maybeSingle();
-
-      if (!error && data && typeof data === 'object') {
-        return normalizeOsSettings(data);
-      }
-    } catch {
-      // Fall through to site_settings
-    }
-
-    // 2. Try Supabase site_settings JSONB store
+    // 1a. Try Supabase site_settings JSONB store (primary active store)
     try {
       const supabase = supabaseServer();
       const { data, error } = await supabase
@@ -94,20 +70,42 @@ export async function getOsSettings(): Promise<ZahidOsSettings> {
         .maybeSingle();
 
       if (!error && data?.value && typeof data.value === 'object') {
-        return normalizeOsSettings(data.value);
+        const settings = normalizeOsSettings(data.value);
+        memorySettingsCache = { settings, timestamp: Date.now() };
+        return settings;
       }
     } catch (err) {
-      console.warn('Supabase getOsSettings fallback to file:', err);
+      console.warn('[getOsSettings] Supabase site_settings fallback:', err);
+    }
+
+    // 1b. Try dedicated table 'os_settings'
+    try {
+      const supabase = supabaseServer();
+      const { data, error } = await supabase
+        .from('os_settings')
+        .select('*')
+        .eq('id', 'default')
+        .maybeSingle();
+
+      if (!error && data && typeof data === 'object') {
+        const settings = normalizeOsSettings(data);
+        memorySettingsCache = { settings, timestamp: Date.now() };
+        return settings;
+      }
+    } catch {
+      // Fall through to local file
     }
   }
 
-  // 3. Try Local File
+  // 2. Try Local File fallback
   try {
     const content = await fs.readFile(SETTINGS_FILE_PATH, 'utf-8');
     const parsed = JSON.parse(content);
-    return normalizeOsSettings(parsed);
+    const settings = normalizeOsSettings(parsed);
+    memorySettingsCache = { settings, timestamp: Date.now() };
+    return settings;
   } catch (err) {
-    console.warn('Failed to read os-settings.json, using defaults:', err);
+    console.warn('[getOsSettings] Failed to read os-settings.json, using defaults:', err);
   }
 
   return defaultOsSettings;
@@ -115,12 +113,12 @@ export async function getOsSettings(): Promise<ZahidOsSettings> {
 
 /**
  * Save OS Settings across:
- * 1. Local JSON file
+ * 1. Memory cache (instant consistency for subsequent requests)
  * 2. Supabase site_settings (key: 'zahid_os_settings')
  * 3. Supabase dedicated table 'os_settings' (if exists)
+ * 4. Local JSON file (offline / dev fallback)
  */
 export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promise<ZahidOsSettings> {
-  memorySettingsCache = null;
   const current = await getOsSettings();
   const merged: ZahidOsSettings = {
     ...current,
@@ -128,11 +126,14 @@ export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promis
     updated_at: new Date().toISOString(),
   };
 
-  // 1. Save to local file
+  // Immediate in-memory cache update
+  memorySettingsCache = { settings: merged, timestamp: Date.now() };
+
+  // 1. Save to local file (safely ignore EROFS in read-only / Vercel environments)
   try {
     await fs.writeFile(SETTINGS_FILE_PATH, JSON.stringify(merged, null, 2), 'utf-8');
   } catch (err) {
-    console.error('Error saving os-settings.json:', err);
+    console.warn('[saveOsSettings] Local file write skipped (read-only environment):', err);
   }
 
   // 2. Sync to Supabase
@@ -151,7 +152,7 @@ export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promis
         { onConflict: 'key' }
       );
     } catch (err) {
-      console.warn('Error saving OS settings to site_settings:', err);
+      console.warn('[saveOsSettings] Error saving OS settings to site_settings:', err);
     }
 
     // 2b. Sync to dedicated table 'os_settings' if present

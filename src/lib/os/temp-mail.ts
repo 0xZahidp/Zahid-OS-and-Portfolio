@@ -109,25 +109,31 @@ async function writeLocalStore(store: LocalTempStore): Promise<void> {
 
 /**
  * Automatically resolve the user's domain:
- * 1. TEMP_MAIL_DOMAIN env var
- * 2. Domain from RESEND_DEFAULT_SENDER (e.g. hello@zahidp.com -> zahidp.com)
- * 3. Verified domain on Resend API
+ * 1. Default domain from configured Temp Mail Domains system
+ * 2. TEMP_MAIL_DOMAIN env var
+ * 3. Domain from RESEND_DEFAULT_SENDER (e.g. hello@zahidp.com -> zahidp.com)
  * 4. Request Host (e.g. 0xzahidp.com)
  * 5. Fallback 'zahidp.com'
  */
 export async function resolveTempMailDomain(requestHost?: string): Promise<string> {
-  // 1. Explicit domain env var
+  // 1. Default domain from Temp Mail Domain System
+  try {
+    const { getTempMailDomains } = await import('./temp-mail-domains');
+    const { defaultDomain, domains } = await getTempMailDomains();
+    if (defaultDomain && defaultDomain !== 'localhost') {
+      return defaultDomain;
+    }
+    if (domains.length > 0 && domains[0].domain && domains[0].domain !== 'localhost') {
+      return domains[0].domain;
+    }
+  } catch {
+    // fallback
+  }
+
+  // 2. Explicit domain env var
   const envDomain = process.env.TEMP_MAIL_DOMAIN;
   if (envDomain && envDomain.trim()) {
     return envDomain.trim().toLowerCase();
-  }
-
-  // 2. Request host from client / header (e.g. localhost, domain.com)
-  if (requestHost) {
-    const cleanHost = requestHost.split(':')[0].trim().toLowerCase();
-    if (cleanHost) {
-      return cleanHost;
-    }
   }
 
   // 3. Sender email domain from secrets
@@ -144,7 +150,15 @@ export async function resolveTempMailDomain(requestHost?: string): Promise<strin
     // fall through
   }
 
-  return 'localhost';
+  // 4. Request host from client / header (e.g. localhost, domain.com)
+  if (requestHost) {
+    const cleanHost = requestHost.split(':')[0].trim().toLowerCase();
+    if (cleanHost && cleanHost !== 'localhost' && cleanHost !== '127.0.0.1') {
+      return cleanHost;
+    }
+  }
+
+  return 'zahidp.com';
 }
 
 /**

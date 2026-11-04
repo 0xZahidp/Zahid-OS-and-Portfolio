@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2026-11-02T21:06:04.491Z",
+  "updatedAt": "2026-11-04T06:27:37.135Z",
   "messages": [
     {
       "id": "msg_resend_a65f5890-249b-459e-b347-89dcd0c3afb7",
-      "folder": "inbox",
+      "folder": "trash",
       "from": {
         "name": "Md Zahid Hasan Patwary",
         "email": "mdzahidhasanpatwary@gmail.com"
@@ -23,7 +23,7 @@
       "receivedAt": "2026-11-02T20:54:33.748877+00:00",
       "isRead": false,
       "isStarred": false,
-      "isTrashed": false,
+      "isTrashed": true,
       "isArchived": false,
       "label": "inbox",
       "direction": "inbound",
@@ -35,7 +35,7 @@
     },
     {
       "id": "msg_resend_5ea3ddf2-0eda-4a07-8d88-514a3d9a0c38",
-      "folder": "inbox",
+      "folder": "trash",
       "from": {
         "name": "Md Zahid Hasan Patwary",
         "email": "zahid.tforce@gmail.com"
@@ -53,9 +53,9 @@
       "snippet": "Your OTP is : 123456 ",
       "createdAt": "2026-11-02T20:54:34.54306+00:00",
       "receivedAt": "2026-11-02T20:54:34.54306+00:00",
-      "isRead": false,
+      "isRead": true,
       "isStarred": false,
-      "isTrashed": false,
+      "isTrashed": true,
       "isArchived": false,
       "label": "inbox",
       "direction": "inbound",
@@ -67,7 +67,7 @@
     },
     {
       "id": "msg_resend_7c15e785-2596-4e83-8c01-473ccc8301ec",
-      "folder": "inbox",
+      "folder": "trash",
       "from": {
         "name": "Md Zahid Hasan Patwary",
         "email": "zahid.tforce@gmail.com"
@@ -85,9 +85,9 @@
       "snippet": "Your OTP is : 123456 ",
       "createdAt": "2026-11-02T20:54:35.242976+00:00",
       "receivedAt": "2026-11-02T20:54:35.242976+00:00",
-      "isRead": false,
+      "isRead": true,
       "isStarred": false,
-      "isTrashed": false,
+      "isTrashed": true,
       "isArchived": false,
       "label": "inbox",
       "direction": "inbound",
@@ -99,7 +99,7 @@
     },
     {
       "id": "msg_resend_7d71455c-6089-43d8-a3d3-3e75a0fbfc0c",
-      "folder": "inbox",
+      "folder": "trash",
       "from": {
         "name": "Md Zahid Hasan Patwary",
         "email": "zahid.tforce@gmail.com"
@@ -117,9 +117,9 @@
       "snippet": "test2@zahidp.com ",
       "createdAt": "2026-11-02T20:54:35.964718+00:00",
       "receivedAt": "2026-11-02T20:54:35.964718+00:00",
-      "isRead": false,
+      "isRead": true,
       "isStarred": false,
-      "isTrashed": false,
+      "isTrashed": true,
       "isArchived": false,
       "label": "inbox",
       "direction": "inbound",
@@ -131,7 +131,7 @@
     },
     {
       "id": "msg_resend_b419aead-04b0-4a5f-a125-2905486e7337",
-      "folder": "inbox",
+      "folder": "trash",
       "from": {
         "name": "Md Zahid Hasan Patwary",
         "email": "mdzahidhasanpatwary@gmail.com"
@@ -151,7 +151,7 @@
       "receivedAt": "2026-11-02T20:54:36.668969+00:00",
       "isRead": false,
       "isStarred": false,
-      "isTrashed": false,
+      "isTrashed": true,
       "isArchived": false,
       "label": "inbox",
       "direction": "inbound",
@@ -227,6 +227,7 @@
     },
     {
       "id": "msg_resend_4995eb6f-2eef-4e28-8dd6-3101e3d42194",
+      "resendId": "4995eb6f-2eef-4e28-8dd6-3101e3d42194",
       "folder": "inbox",
       "from": {
         "name": "Max Lane",
@@ -242,9 +243,10 @@
       "subject": "Website Revamp & SEO Boost Plan for Zahidp.com",
       "body": "Dear Business Owner of *Zahidp.com*,\n\nWhile reviewing *Zahidp.com*, I discovered that while it functioned well,\nthere were a few places where minor adjustments may enhance the site's\noverall design clarity, mobile usability, and efficiency.\n\nI have experience working with a variety of platforms, such as OpenCart,\nMagento, and WordPress, Shopify, etc. to assist companies in modernizing\ntheir websites and increasing user engagement.\n\nWould you prefer a brief proposal that includes site-specific\nrecommendations?\n\nSimply respond \"*Send the Proposal with Basic Features*,\" and I will\nforward the proposal document.\n\nBest Regards,\n\n*Max LaneWeb Expert*\n\n\n*Unsubscribe\n<https://thetechnomart-dot-yamm-track.appspot.com/22qMkv2WRJbDyEulitgX-PkoEmZ-TvG2P-naRsHikUL6OuRmMoQEgHo0SYvrkha_qlofQ0F_XmNohrywXAZVzGpGTFsgV_GgokY8y-mTiDQmepm_W6avwcNgvecc4RK9DMOtMJxIT2LytQvQ3BQOuP-pFwEcfGpF3T-a3nbmyam79dDQeb4Y>*\n[image: beacon]\n",
       "textBody": "Dear Business Owner of *Zahidp.com*,\n\nWhile reviewing *Zahidp.com*, I discovered that while it functioned well,\nthere were a few places where minor adjustments may enhance the site's\noverall design clarity, mobile usability, and efficiency.\n\nI have experience working with a variety of platforms, such as OpenCart,\nMagento, and WordPress, Shopify, etc. to assist companies in modernizing\ntheir websites and increasing user engagement.\n\nWould you prefer a brief proposal that includes site-specific\nrecommendations?\n\nSimply respond \"*Send the Proposal with Basic Features*,\" and I will\nforward the proposal document.\n\nBest Regards,\n\n*Max LaneWeb Expert*\n\n\n*Unsubscribe\n<https://thetechnomart-dot-yamm-track.appspot.com/22qMkv2WRJbDyEulitgX-PkoEmZ-TvG2P-naRsHikUL6OuRmMoQEgHo0SYvrkha_qlofQ0F_XmNohrywXAZVzGpGTFsgV_GgokY8y-mTiDQmepm_W6avwcNgvecc4RK9DMOtMJxIT2LytQvQ3BQOuP-pFwEcfGpF3T-a3nbmyam79dDQeb4Y>*\n[image: beacon]\n",
+      "htmlBody": "<div dir=\"ltr\"><div dir=\"ltr\"><span style=\"font-family:verdana,sans-serif\">Dear Business Owner of </span><b style=\"font-family:verdana,sans-serif\">Zahidp.com</b><span style=\"font-family:verdana,sans-serif\">,</span><div><font face=\"verdana, sans-serif\"><br>While reviewing <b>Zahidp.com</b>, I discovered that while it functioned well, there were a few places where minor adjustments may enhance the site&#39;s overall design clarity, mobile usability, and efficiency.<br><br>I have experience working with a variety of platforms, such as OpenCart, Magento, and WordPress, Shopify, etc. to assist companies in modernizing their websites and increasing user engagement.<br><br>Would you prefer a brief proposal that includes site-specific recommendations?<br><br>Simply respond &quot;<b>Send the Proposal with Basic Features</b>,&quot; and I will forward the proposal document.</font></div><div><div><font face=\"verdana, sans-serif\"><br></font></div><div><span style=\"font-family:verdana,sans-serif\">Best Regards,</span><br style=\"font-family:verdana,sans-serif\"><b style=\"font-family:verdana,sans-serif\">Max Lane<br>Web Expert</b><font face=\"verdana, sans-serif\"></font></div><div><b style=\"font-family:verdana,sans-serif\"><br></b></div><div><b style=\"font-family:verdana,sans-serif\"><br></b></div><div><b style=\"font-family:verdana,sans-serif\"><font size=\"1\"><a href=\"https://thetechnomart-dot-yamm-track.appspot.com/22qMkv2WRJbDyEulitgX-PkoEmZ-TvG2P-naRsHikUL6OuRmMoQEgHo0SYvrkha_qlofQ0F_XmNohrywXAZVzGpGTFsgV_GgokY8y-mTiDQmepm_W6avwcNgvecc4RK9DMOtMJxIT2LytQvQ3BQOuP-pFwEcfGpF3T-a3nbmyam79dDQeb4Y\" rel=\"nofollow\" target=\"_blank\">Unsubscribe</a></font></b></div></div></div>\n</div>\n<img src=\"https://thetechnomart-dot-yamm-track.appspot.com/2sKi8u2lbnfl4-Ie4W_6bsvx8ecr0ilIqw2nYd0EWbKaIuRmMoQFVH0JsrT5Dss5cKoZvATuEJj5H4L8ku6ZV_7hVvk4kBLGUUR4W-hEk-r4X4oFB7FSWptvBeaMfSwOWnCcO56EW4T80onAXu_RAMgg0npYPcw8Pj5xU\" width=\"1\" height=\"1\" alt=\"beacon\" style=\"display:none; display:none!important;\">\n",
       "snippet": "Dear Business Owner of *Zahidp.com*, While reviewing *Zahidp.com*, I discovered that while it functioned well, there wer",
-      "createdAt": "2026-11-01T17:19:46.389328+00:00",
-      "receivedAt": "2026-11-01T17:19:46.389328+00:00",
+      "createdAt": "2026-10-30T09:17:42.797Z",
+      "receivedAt": "2026-10-30T09:17:42.797Z",
       "isRead": true,
       "isStarred": false,
       "isTrashed": false,
@@ -252,14 +254,40 @@
       "label": "inbox",
       "direction": "inbound",
       "attachments": [],
-      "headers": {},
+      "headers": {
+        "return-path": "max.lane@thetechnomart.com",
+        "received": "[\"from mail-oa1-f50.google.com (mail-oa1-f50.google.com [209.85.160.50]) by inbound-smtp.ap-northeast-1.amazonaws.com with SMTP id gi8mqhoij7mbcdf9vlt59ghii5oerrhst26ho8g1 for hello@zahidp.com; Fri, 30 Oct 2026 09:17:41 +0000 (UTC)\",\"by mail-oa1-f50.google.com with SMTP id 586e51a60fabf-4a76f63b243so1439188fac.0 for <hello@zahidp.com>; Fri, 30 Oct 2026 02:17:40 -0700 (PDT)\",\"from 52669349336 named unknown by gmailapi.google.com with HTTPREST; Fri, 30 Oct 2026 02:17:38 -0700\",\"from 52669349336 named unknown by gmailapi.google.com with HTTPREST; Fri, 30 Oct 2026 02:17:38 -0700\"]",
+        "x-ses-spam-verdict": "PASS",
+        "x-ses-virus-verdict": "PASS",
+        "received-spf": "pass (spfCheck: domain of thetechnomart.com designates 209.85.160.50 as permitted sender) client-ip=209.85.160.50; envelope-from=max.lane@thetechnomart.com; helo=mail-oa1-f50.google.com;",
+        "authentication-results": "amazonses.com; spf=pass (spfCheck: domain of thetechnomart.com designates 209.85.160.50 as permitted sender) client-ip=209.85.160.50; envelope-from=max.lane@thetechnomart.com; helo=mail-oa1-f50.google.com; dkim=pass header.i=@thetechnomart.com; dmarc=pass header.from=thetechnomart.com;",
+        "x-ses-receipt": "AEFBQUFBQUFBQUFIS2VJQ2RMOGcrUkpYa0dWRndhc0lHWmRnT1I4MXVBUVFlZXVwZDl0NG4rbHp2VzJRS0x1NmcvSkx5N0E4RUxnQTdPWkRkMDZHZEVNMVVPU1NJWktsVjBBM1VwWkRJYXhWWU5TNEMySG1vem9sZTZ2NkxVVkFmalp1QlFzTzNxWGJ3dU1qbEtHYmhaMDhTS0J6YWVDUVhlOFJ0bDBpcEc4WXNpdDNhbG9DUU91VFR2QjNTU1VqdllWWUZ3VU1hN1JmRnprTHVtSndxaG5BcFllM1VGT3VTcUFTeUFYR2paeWY0M3RvcFNLck9jK3ZnMDBlS0ltbWF1c1F6UWFpeDVLc2h3cWIrNVI2Q0JyQ3ZWOFJSYW5ZaWQ5RlFpaGdGcCtURXBqTTB3WFM3Z0E9PQ==",
+        "x-ses-dkim-signature": "a=rsa-sha256; q=dns/txt; b=Jh27Cch4MoyT9NZuTABjVK7xCG9eui7kfTOiuP1qP4kNRhsiUsJmC38mpAJmqqaaQk2yULDtzjyOnrxPWUFTL/ps1K1ZsfPuwH9Wa2GsrWIpL+ONmw1GGEPXlhoZY0eCpnTDDbbMgGE+euDlEfqurmiwHFJrBQzFMl3rH4yXUuc=; c=relaxed/simple; s=zh4gjftm6etwoq6afzugpky45synznly; d=amazonses.com; t=1793351861; v=1; bh=rzuUUQh+iNfXnAy4qJjjbDvFgC6XAUzUc3g1Kr3HBOA=; h=From:To:Cc:Bcc:Subject:Date:Message-ID:MIME-Version:Content-Type:X-SES-RECEIPT;",
+        "arc-seal": "i=1; a=rsa-sha256; t=1793351859; cv=none; d=google.com; s=arc-20260327; b=XidKMrQ1GAJVPmCZ3uDNMYprinRB8FRRTf90A24MsofAxl0F4Q40ZwmASuO6i/EW6T s4a1rBoj+GFHTFN2SEaK9dm4dBsW3xvOCrIcy3mSAiLusZ/c3bTSeyEN/BvdKBprOgZY HHegGQ2W5EpUEHoevn8f5/IZC7NYnPBRW0EokBT4jz3Cto+KGSqfS7dia91Ef0h67PzO KMf5dXWxORNeQlVldZHrACkaGVfAD4yB1m6rba+QER3sMlRSYLEA4gC2qFPncFZb8kRR 774LfpuI/AhqZsSb7uOv4albaqA7P3LD5AgM4ZO1mLqYviv+zrr/dHpNYJEmUEkp8zod hQYQ==",
+        "arc-message-signature": "i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327; h=to:subject:message-id:date:from:sender:mime-version:dkim-signature; bh=rzuUUQh+iNfXnAy4qJjjbDvFgC6XAUzUc3g1Kr3HBOA=; fh=jzEAQ1kiAUbuKhgQBUKxDmNARWhLsdZL3DsKKNXnTKk=; b=iavzjFEhEYEn9MwvrgyINMj8I4Rq/mwZI7Ei9QCjaXIHpZlmMBbc7A+cBEArlpfCXa HwMJ12sBtRgPhQo9NiiCXvVgTFSg2AA3OPoj5jtB3IIf2IsCz7zElVOW4r5J4qj0M/e5 yGRb3Reu5NLDBjPDzzry16Q1L9MFXwMaaUBx7EkDGQpOKOluHJ0Zb5gPUkyf+rhcdq8Z Q+Iyq/beq6Vo5op2sb5DcbBCSbAbQPlkMFtovADj/G1rT3IKKaUZZbSh9mNHKiMpnvmR fNYmXoohCikStsZlFswWnQMSWzINHHoUiEoB+7U4kXZn4g0og1xOGV02q0HXrn/YtRwP y2dQ==; darn=zahidp.com",
+        "arc-authentication-results": "i=1; mx.google.com; arc=none",
+        "dkim-signature": "v=1",
+        "x-google-dkim-signature": "v=1; a=rsa-sha256; c=relaxed/relaxed; d=1e100.net; s=20260707; t=1793351859; x=1793956659; h=content-type:to:subject:message-id:date:from:sender:mime-version :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id :reply-to:content-type; bh=rzuUUQh+iNfXnAy4qJjjbDvFgC6XAUzUc3g1Kr3HBOA=; b=YotnNh++QqSJJAzNKb2yShLGpSRUZgGxvyZboETm0c+rzo25kBW28d4KQ5GKHBq3UR Xd3U///KXd7SN13Vr+QyZVZy6zzOPkJOOLlTeJfSAz3AOvsWR6tr1LhphXcDLZp2pEl7 uzkWYI1m+SCvEHH8GZzcnv36dXIpY4EdbHPVHaGQNaqfRiWWzLDjgL65zLP0TCy6sih4 E8lihtuzJ8M/R9kK5PIsrOV6s4hoSqaLI66SSeN4fmAWrOXOI9D07hCSTSn2oynV2qgr 8jpR75YR7tnXC/3qZX5FE82rKAhYscdOwLFs7/FkX2VEMEVMeyJhTnkgCPc+rcMOv0QF MePw==",
+        "x-gm-message-state": "AFq9FYKXNnDAiQ+grJ1lQGswKaQCmYd/H8LJYfzIVZfJJ+YneGyuR6Pe WcnLvTc9pOcmRYU+jVvlyZksbu3Old6da991VMUdDZPXDyuFx9QqpoAMTXRky+ITyXe+7xJFjhl +p5CSs5/By+aRvNf4v1oyJh0Cc0MhKONy70MN5Tu9cQ9bNxUE9YbY/MI=",
+        "x-gm-gg": "AYBFou3k9Ez7Zk4N7H28heDMAMsYQhtYjaAea1dF9Z+365UNo00YfEgulN5tkn+R37P Y/O6IrnswwILx6abqOBP8dkRogmH0+G9MttZemyIcG5pQQkdKsr3I7II/GdtrJSCYU5MS3TbACy IPFxS152QfBPklNLs6HbRw/g36pO6S+pgzfR7pMn1WZ5i51ju90kPhXXwDkVqsSaVQ3A2p/7TpH pJqI93wRzC+fxYpvKnE09BapfhMHZ9GQzeDHLpEzh3ETmvpeYAtFa/arBbZRqo9cvBmaVw5awZD 9hBN0ymxo5FL2Bv+PN+kyesCLWKOqM4m/TS4Rmoo4XoS6vKHd18Wwdig3KyXM/rlrBBNozGPOIm tbSWPkUx3As34I4xKr7IassB0MxO7f3H37T0dUneZHWa1oo7cG+KiZqPS42+AR4kjKV5i+TQ=",
+        "x-received": "by 2002:a05:6808:5394:b0:4c3:cab9:2ab7 with SMTP id 5614622812f47-563efb428ddmr2662377b6e.31.1793351859384; Fri, 30 Oct 2026 02:17:39 -0700 (PDT)",
+        "mime-version": "1.0",
+        "sender": "\"Max Lane\" <max.lane@thetechnomart.com>",
+        "from": "\"Max Lane\" <max.lane@thetechnomart.com>",
+        "date": "\"2026-10-30T09:17:38.000Z\"",
+        "x-google-sender-auth": "Gj75BK8O7knOkVG98Ab1LdzTBwE",
+        "x-gm-features": "AclHuK-iXNyLvd5b6JFXJ-QUOZDNFlPyaSvhdu3XVlhHoUGEG2X_RcHElUM_x_Q",
+        "message-id": "<CAGkO5Pmzit0j=7sVWJ3wUNtMW2+Sh28psSuqnijOfiux6R-Ahw@mail.gmail.com>",
+        "subject": "Website Revamp & SEO Boost Plan for Zahidp.com",
+        "to": "\"Hello\" <hello@zahidp.com>",
+        "content-type": "multipart/alternative"
+      },
       "tags": [
         "Inquiry"
       ]
     },
     {
       "id": "msg_resend_1ce0f0f7-9651-4f09-91e5-0b97946cbf73",
-      "resendId": "1ce0f0f7-9651-4f09-91e5-0b97946cbf73",
       "folder": "inbox",
       "from": {
         "name": "cvudhxh",
@@ -276,8 +304,8 @@
       "body": "\nEMAIL LISTS 2026\n100% MX TESTED EMAILS\n\n---------------------------------\nTalk to us:\n\nOn WhatsApp:\n+55 21 98684 2873\n\nOn Telegram:\n+55 21 98684 2873\n\nOn Teams:\nCorbett Software\n---------------------------------\n\nThe best email lists for your email blasting:\n\n- Choose any country, any region, any type, any categoy.\n- We deliver your lists in 4 hours after payment.\n- 100% fresh, updated, one by one MX tested emails.\n- 100% replacement policy, no questions asked.\n\n---------------------------------\nTalk to us:\n\nOn WhatsApp:\n+55 21 98684 2873\n\nOn Telegram:\n+55 21 98684 2873\n\nOn Teams:\nCorbett Software\n---------------------------------\n\nBest regards,\n\nSUPER LIST\nThe best email lists since 1998\n\n\n\nwfwoykm bwrnvdxo\n\nmail.acess.gob.ec:25:0:45.182.115.114:4153:socks4:25\n\n",
       "textBody": "\nEMAIL LISTS 2026\n100% MX TESTED EMAILS\n\n---------------------------------\nTalk to us:\n\nOn WhatsApp:\n+55 21 98684 2873\n\nOn Telegram:\n+55 21 98684 2873\n\nOn Teams:\nCorbett Software\n---------------------------------\n\nThe best email lists for your email blasting:\n\n- Choose any country, any region, any type, any categoy.\n- We deliver your lists in 4 hours after payment.\n- 100% fresh, updated, one by one MX tested emails.\n- 100% replacement policy, no questions asked.\n\n---------------------------------\nTalk to us:\n\nOn WhatsApp:\n+55 21 98684 2873\n\nOn Telegram:\n+55 21 98684 2873\n\nOn Teams:\nCorbett Software\n---------------------------------\n\nBest regards,\n\nSUPER LIST\nThe best email lists since 1998\n\n\n\nwfwoykm bwrnvdxo\n\nmail.acess.gob.ec:25:0:45.182.115.114:4153:socks4:25\n\n",
       "snippet": " EMAIL LISTS 2026 100% MX TESTED EMAILS --------------------------------- Talk to us: On WhatsApp: +55 21 98684 2873 On ",
-      "createdAt": "2026-10-05T10:47:23.489Z",
-      "receivedAt": "2026-10-05T10:47:23.489Z",
+      "createdAt": "2026-11-01T17:19:46.389328+00:00",
+      "receivedAt": "2026-11-01T17:19:46.389328+00:00",
       "isRead": true,
       "isStarred": false,
       "isTrashed": false,
@@ -285,21 +313,7 @@
       "label": "inbox",
       "direction": "inbound",
       "attachments": [],
-      "headers": {
-        "return-path": "cvudhxh@taxinsightworld.com",
-        "received": "[\"from server.webtelconnect.com (server.webtelconnect.com [160.187.251.31]) by inbound-smtp.ap-northeast-1.amazonaws.com with SMTP id msf4494t612jb4s3ru7oi7djg9hvsugtt6uio4g1 for hello@zahidp.com; Mon, 05 Oct 2026 10:47:22 +0000 (UTC)\",\"from mail.taxinsightworld.com (57.13.102.103.fisnet.id [103.102.13.57]) by server.webtelconnect.com with SMTP; Mon, 5 Oct 2026 12:15:38 +0530\"]",
-        "x-ses-spam-verdict": "PASS",
-        "x-ses-virus-verdict": "PASS",
-        "received-spf": "pass (spfCheck: domain of taxinsightworld.com designates 160.187.251.31 as permitted sender) client-ip=160.187.251.31; envelope-from=cvudhxh@taxinsightworld.com; helo=server.webtelconnect.com;",
-        "authentication-results": "amazonses.com; spf=pass (spfCheck: domain of taxinsightworld.com designates 160.187.251.31 as permitted sender) client-ip=160.187.251.31; envelope-from=cvudhxh@taxinsightworld.com; helo=server.webtelconnect.com; dmarc=pass header.from=taxinsightworld.com;",
-        "x-ses-receipt": "AEFBQUFBQUFBQUFGT1hBM1BFZmNBdUU0a3dCVm9OK0crT0k5VHZyRU9NU1pYbnBhK1JWSWFEaUFxcWwrbisvRVVtUHc1RWdzSi9jUXcyQTZBR0xDSS94ejREaHdvTlQ4N1BDZ25EY2R2K29wSDY4eEJrZ2ZXOU9sZzRaNDFLemtlUVBFRWJidFlraHBmYWE5ZkFpWXJQTmkyUXRSUElXNmNCaC9tZkIzaDJ4eFZFRmd5WTRxWGc3U0tRR1d3T1ZrNU44bUY5QjNlZG5Icy9VRWk3cGtoY01UOHpnc2tZc042L1FwRCtxRjhhS0haN2xGekphWEZBN0NwN2IveGdxQU0yaWxCR0pKWnhNcXY0VXZvRUt6TTJPU3hsdy9jOEdYSjZCTmxhdTNJTi9RVWgyZ0xCU3dGVkE9PQ==",
-        "x-ses-dkim-signature": "a=rsa-sha256; q=dns/txt; b=hS+zFa7uNZlFC3SQeMMm0+4tWHJ6FCsuFKw+ejYlugWfduFthxPrtsBoRw23c2WFAUDUq4gFN6azdFK6B7tAriqr39EQGeC+jDMCBzxLnnRKMzkmgcICe5GM+ovS92Yaheg3M3MAo4trUSc5pPxvCHvQHN4bKnTV6Rzh7u1JZ4g=; c=relaxed/simple; s=zh4gjftm6etwoq6afzugpky45synznly; d=amazonses.com; t=1791197242; v=1; bh=f4HeBuC9p0R/UtIMRwsTnupPFgf7IUC/NA/WipmqDDk=; h=From:To:Cc:Bcc:Subject:Date:Message-ID:MIME-Version:Content-Type:X-SES-RECEIPT;",
-        "from": "cvudhxh@taxinsightworld.com",
-        "subject": "EMAIL LISTS 2026 - 100% MX TESTED EMAILS",
-        "to": "lagunaenergymedicine@gmail.com",
-        "reply-to": "boomofsales@gmailhotmail.com.br",
-        "date": "\"2026-10-05T06:45:38.000Z\""
-      },
+      "headers": {},
       "tags": [
         "Inquiry"
       ]

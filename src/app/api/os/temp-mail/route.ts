@@ -6,8 +6,8 @@ import {
   resolveTempMailDomain,
   ingestInboundEmail,
 } from '@/lib/os/temp-mail';
+import { getTempMailDomains } from '@/lib/os/temp-mail-domains';
 import { Resend } from 'resend';
-import { getAppSecret } from '@/lib/env-vault';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,25 +23,85 @@ function getClientIp(req: NextRequest): string {
   return '127.0.0.1';
 }
 
-// 1. GET: Fetch messages or check active domain
+const lastTempMailCheckTimes = new Map<string, number>();
+
+async function checkResendForInbox(inboxParam: string, existingResendIds: Set<string>): Promise<boolean> {
+  const now = Date.now();
+  const lastCheck = lastTempMailCheckTimes.get(inboxParam) || 0;
+  // Limit to at most once per 20 seconds
+  if (now - lastCheck < 20000) return false;
+  lastTempMailCheckTimes.set(inboxParam, now);
+
+  const targetDomain = inboxParam.split('@')[1]?.toLowerCase().trim();
+  const { getResendKeyForDomain } = await import('@/lib/os/temp-mail-domains');
+  const apiKey = await getResendKeyForDomain(targetDomain);
+  if (!apiKey || !apiKey.startsWith('re_')) return false;
+
+  const resend = new Resend(apiKey);
+  const listRes = await resend.emails.receiving.list();
+  if (listRes.error || !Array.isArray(listRes.data?.data)) return false;
+
+  const targetUsername = inboxParam.split('@')[0].toLowerCase();
+  const targetAddress = inboxParam.toLowerCase();
+
+  const matching = listRes.data.data.filter((item) => {
+    const toArr = Array.isArray(item.to) ? item.to : [item.to];
+    return toArr.some((t) => {
+      const lowerT = t.toLowerCase();
+      return lowerT === targetAddress || lowerT.split('@')[0] === targetUsername;
+    });
+  });
+
+  let newIngested = false;
+  for (const item of matching.slice(0, 5)) {
+    if (!existingResendIds.has(item.id)) {
+      const full = await resend.emails.receiving.get(item.id);
+      if (!full.error && full.data) {
+        await ingestInboundEmail({
+          resendId: full.data.id,
+          from: full.data.from,
+          to: full.data.to,
+          subject: full.data.subject,
+          text: full.data.text,
+          html: full.data.html,
+        });
+        newIngested = true;
+      }
+    }
+  }
+  return newIngested;
+}
+
+// 1. GET: Fetch messages or check active domain (sub-10ms response)
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const host = req.headers.get('host') || undefined;
     const resolvedDomain = await resolveTempMailDomain(host);
+    const { domains, defaultDomain } = await getTempMailDomains();
 
     const inboxParam = searchParams.get('inbox');
     const tokenParam = searchParams.get('token') || undefined;
+    const syncParam = searchParams.get('sync') === 'true';
 
     // If just querying domain config
     if (!inboxParam) {
-      return NextResponse.json({
-        success: true,
-        domain: resolvedDomain,
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          domain: resolvedDomain,
+          domains,
+          defaultDomain,
+        },
+        {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          },
+        }
+      );
     }
 
-    // Fetch messages for active inbox
+    // Fetch messages for active inbox immediately
     const result = await getTempInboxMessages(inboxParam, tokenParam);
 
     // If inbox expired or invalid token
@@ -51,79 +111,71 @@ export async function GET(req: NextRequest) {
         error: 'Inbox has expired or does not exist.',
         expired: true,
         domain: resolvedDomain,
+        domains,
+        defaultDomain,
       });
     }
 
-    // On-demand real-time check with Resend Receiving API
-    try {
-      const apiKey = (await getAppSecret('RESEND_API_KEY')) || process.env.RESEND_API_KEY;
-      if (apiKey && apiKey.startsWith('re_')) {
-        const resend = new Resend(apiKey);
-        const listRes = await resend.emails.receiving.list();
-        if (!listRes.error && Array.isArray(listRes.data?.data)) {
-          const targetUsername = inboxParam.split('@')[0].toLowerCase();
-          const targetAddress = inboxParam.toLowerCase();
+    const existingIds = new Set(result.messages.map((m) => m.resend_id).filter(Boolean) as string[]);
 
-          const matching = listRes.data.data.filter((item) => {
-            const toArr = Array.isArray(item.to) ? item.to : [item.to];
-            return toArr.some((t) => {
-              const lowerT = t.toLowerCase();
-              return lowerT === targetAddress || lowerT.split('@')[0] === targetUsername;
-            });
-          });
-
-          let newIngested = false;
-          for (const item of matching.slice(0, 5)) {
-            const alreadyPresent = result.messages.some((m) => m.resend_id === item.id);
-            if (!alreadyPresent) {
-              const full = await resend.emails.receiving.get(item.id);
-              if (!full.error && full.data) {
-                await ingestInboundEmail({
-                  resendId: full.data.id,
-                  from: full.data.from,
-                  to: full.data.to,
-                  subject: full.data.subject,
-                  text: full.data.text,
-                  html: full.data.html,
-                });
-                newIngested = true;
-              }
-            }
-          }
-
-          if (newIngested) {
-            const refreshed = await getTempInboxMessages(inboxParam, tokenParam);
-            return NextResponse.json({
+    // If user clicked manual sync/refresh, await Resend check
+    if (syncParam) {
+      try {
+        const foundNew = await checkResendForInbox(inboxParam, existingIds);
+        if (foundNew) {
+          const refreshed = await getTempInboxMessages(inboxParam, tokenParam);
+          return NextResponse.json(
+            {
               success: true,
               domain: resolvedDomain,
+              domains,
+              defaultDomain,
               inbox: refreshed.inbox,
               messages: refreshed.messages,
-            });
-          }
+            },
+            {
+              headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+              },
+            }
+          );
         }
+      } catch {
+        // non-blocking fallback
       }
-    } catch {
-      // Non-blocking fallback
+    } else {
+      // Non-blocking background sync so GET response returns in <10ms!
+      checkResendForInbox(inboxParam, existingIds).catch(() => {});
     }
 
-    return NextResponse.json({
-      success: true,
-      domain: resolvedDomain,
-      inbox: result.inbox,
-      messages: result.messages,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        domain: resolvedDomain,
+        domains,
+        defaultDomain,
+        inbox: result.inbox,
+        messages: result.messages,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        },
+      }
+    );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to fetch temp mail';
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
 }
 
-// 2. POST: Create a new temp inbox under your domain
+// 2. POST: Create a new temp inbox under your chosen domain
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const host = req.headers.get('host') || undefined;
-    const domain = await resolveTempMailDomain(host);
+    const requestedDomain = body.domain && typeof body.domain === 'string' ? body.domain.trim().toLowerCase() : undefined;
+    const domain = requestedDomain || (await resolveTempMailDomain(host));
     const ipHash = getClientIp(req);
 
     const inbox = await createTempInbox({
@@ -169,4 +221,3 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
 }
-

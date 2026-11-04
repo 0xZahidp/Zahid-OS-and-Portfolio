@@ -407,6 +407,10 @@ export const ZahidOsTab: React.FC = () => {
         body: JSON.stringify(osSettings),
       });
       if (res.ok) {
+        const data = await res.json();
+        if (data.settings) {
+          setOsSettings(data.settings);
+        }
         setSettingsSaveSuccess(true);
         setTimeout(() => setSettingsSaveSuccess(false), 3000);
       }
@@ -1219,10 +1223,16 @@ export const ZahidOsTab: React.FC = () => {
                       key={wp.id}
                       type="button"
                       onClick={() => {
-                        setOsSettings((prev) => ({
-                          ...prev,
+                        const updated = {
+                          ...osSettings,
                           wallpaper: wp.id,
-                        }));
+                        };
+                        setOsSettings(updated);
+                        fetch('/api/os/settings', {
+                          method: 'POST',
+                          headers: getAdminHeaders(),
+                          body: JSON.stringify(updated),
+                        }).catch((err) => console.warn('Auto-save wallpaper error:', err));
                       }}
                       className={`group relative p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col gap-2 ${
                         isActive
@@ -1361,7 +1371,8 @@ export const ZahidOsTab: React.FC = () => {
             <div className="space-y-6">
               {/* App Drawer Launcher Grid */}
               <div className="rounded-3xl border border-line bg-gradient-to-b from-surface to-surface-2 p-6 sm:p-8 shadow-xl relative overflow-hidden">
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-line">
+                <ZosWallpaper wallpaperId={osSettings.wallpaper} isContainer className="rounded-3xl opacity-30 pointer-events-none" />
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-line relative z-10">
                   <div>
                     <h3 className="font-extrabold text-base text-ink flex items-center gap-2">
                       <Layers className="size-4.5 text-brand-500" />

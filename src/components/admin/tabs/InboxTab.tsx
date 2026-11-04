@@ -127,14 +127,11 @@ export const InboxTab: React.FC = () => {
           }
 
           // Auto select first message if none selected
-          if (!selectedMessageId && msgs.length > 0) {
-            setSelectedMessageId(msgs[0].id);
-          } else if (selectedMessageId) {
-            const exists = msgs.some((m) => m.id === selectedMessageId);
-            if (!exists && msgs.length > 0) {
-              setSelectedMessageId(msgs[0].id);
-            }
-          }
+          setSelectedMessageId((prevId) => {
+            if (!prevId && msgs.length > 0) return msgs[0].id;
+            if (prevId && !msgs.some((m) => m.id === prevId) && msgs.length > 0) return msgs[0].id;
+            return prevId;
+          });
         }
       } catch (err) {
         console.error('Failed to load messages:', err);
@@ -142,7 +139,7 @@ export const InboxTab: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [folder, searchQuery, selectedAlias, mailCategory, selectedMessageId]
+    [folder, searchQuery, selectedAlias, mailCategory]
   );
 
   useEffect(() => {

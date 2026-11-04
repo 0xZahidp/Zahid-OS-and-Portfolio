@@ -154,8 +154,8 @@ export default function PublicZahidOsPage() {
     async function loadData() {
       try {
         const [settsRes, linksRes] = await Promise.all([
-          fetch('/api/os/settings'),
-          fetch('/api/os/short-links'),
+          fetch('/api/os/settings', { cache: 'no-store' }),
+          fetch('/api/os/short-links', { cache: 'no-store' }),
         ]);
 
         if (settsRes.ok) {

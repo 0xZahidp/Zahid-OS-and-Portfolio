@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  listMailMessages,
+  readMailStore,
+  filterMailMessages,
+  calculateUnreadCount,
+  calculateMailFolderCounts,
+  getUnreadCount,
+  getMailFolderCounts,
   addMailMessage,
   updateMailMessage,
   deleteMailMessage,
   emptyTrash,
-  getUnreadCount,
-  getMailFolderCounts,
   syncReceivedEmailsFromResend,
 } from '@/lib/mail/store';
 import { MailMessage } from '@/types/mail';
@@ -27,28 +30,47 @@ export async function GET(req: NextRequest) {
     const forceSync = searchParams.get('forceSync') === 'true';
     const autoSync = searchParams.get('sync') !== 'false';
 
-    // 1. Auto-sync newly received emails from Resend Receiving
+    // 1. Sync emails from Resend Receiving
+    // If explicitly forceSync=true, wait for it.
+    // Otherwise, trigger in background without blocking so the inbox loads instantly (<30ms)!
     if (autoSync) {
-      try {
-        await syncReceivedEmailsFromResend(forceSync);
-      } catch (syncErr) {
-        console.warn('[Messages Route] Resend auto-sync warning:', syncErr);
+      if (forceSync) {
+        try {
+          await syncReceivedEmailsFromResend(true);
+        } catch (syncErr) {
+          console.warn('[Messages Route] Resend auto-sync warning:', syncErr);
+        }
+      } else {
+        syncReceivedEmailsFromResend(false).catch((syncErr) => {
+          console.warn('[Messages Route] Background Resend sync note:', syncErr);
+        });
       }
     }
 
-    const messages = await listMailMessages({ folder, search, alias, category });
-    const unreadCount = await getUnreadCount();
-    const counts = await getMailFolderCounts(category);
+    // 2. Read mail store ONCE and calculate all views in memory (no repeated DB round-trips)
+    const store = await readMailStore();
+    const allMessages = store.messages || [];
 
-    return NextResponse.json({
-      success: true,
-      folder,
-      category,
-      count: messages.length,
-      unreadCount,
-      counts,
-      messages,
-    });
+    const messages = filterMailMessages(allMessages, { folder, search, alias, category });
+    const unreadCount = calculateUnreadCount(allMessages);
+    const counts = calculateMailFolderCounts(allMessages, category);
+
+    return NextResponse.json(
+      {
+        success: true,
+        folder,
+        category,
+        count: messages.length,
+        unreadCount,
+        counts,
+        messages,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        },
+      }
+    );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to retrieve messages';
     return NextResponse.json({ success: false, error: msg }, { status: 500 });

@@ -251,15 +251,17 @@ export async function writeMailStore(data: MailStoreData): Promise<boolean> {
   }
 }
 
-export async function listMailMessages(filter?: {
-  folder?: string;
-  search?: string;
-  isStarred?: boolean;
-  alias?: string;
-  category?: 'official' | 'temp' | 'all';
-}): Promise<MailMessage[]> {
-  const store = await readMailStore();
-  let msgs = store.messages || [];
+export function filterMailMessages(
+  allMsgs: MailMessage[],
+  filter?: {
+    folder?: string;
+    search?: string;
+    isStarred?: boolean;
+    alias?: string;
+    category?: 'official' | 'temp' | 'all';
+  }
+): MailMessage[] {
+  let msgs = allMsgs || [];
 
   if (filter?.folder) {
     if (filter.folder === 'starred') {
@@ -323,10 +325,8 @@ export async function listMailMessages(filter?: {
   return msgs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
-export async function getUnreadCount(): Promise<number> {
-  const store = await readMailStore();
-  const msgs = store.messages || [];
-  return msgs.filter(
+export function calculateUnreadCount(msgs: MailMessage[]): number {
+  return (msgs || []).filter(
     (m) =>
       (m.folder === 'inbox' || !m.folder) &&
       !m.isRead &&
@@ -335,7 +335,10 @@ export async function getUnreadCount(): Promise<number> {
   ).length;
 }
 
-export async function getMailFolderCounts(filterCategory?: 'official' | 'temp' | 'all'): Promise<{
+export function calculateMailFolderCounts(
+  msgs: MailMessage[],
+  filterCategory?: 'official' | 'temp' | 'all'
+): {
   inbox: number;
   unread: number;
   sent: number;
@@ -344,9 +347,8 @@ export async function getMailFolderCounts(filterCategory?: 'official' | 'temp' |
   trash: number;
   official: number;
   temp: number;
-}> {
-  const store = await readMailStore();
-  const msgs = store.messages || [];
+} {
+  const allMsgs = msgs || [];
 
   let inbox = 0;
   let unread = 0;
@@ -357,7 +359,7 @@ export async function getMailFolderCounts(filterCategory?: 'official' | 'temp' |
   let official = 0;
   let temp = 0;
 
-  for (const m of msgs) {
+  for (const m of allMsgs) {
     const isT = isTempEmail(m);
     if (isT) temp++;
     else official++;
@@ -391,6 +393,36 @@ export async function getMailFolderCounts(filterCategory?: 'official' | 'temp' |
   }
 
   return { inbox, unread, sent, starred, archive, trash, official, temp };
+}
+
+export async function listMailMessages(filter?: {
+  folder?: string;
+  search?: string;
+  isStarred?: boolean;
+  alias?: string;
+  category?: 'official' | 'temp' | 'all';
+}): Promise<MailMessage[]> {
+  const store = await readMailStore();
+  return filterMailMessages(store.messages || [], filter);
+}
+
+export async function getUnreadCount(): Promise<number> {
+  const store = await readMailStore();
+  return calculateUnreadCount(store.messages || []);
+}
+
+export async function getMailFolderCounts(filterCategory?: 'official' | 'temp' | 'all'): Promise<{
+  inbox: number;
+  unread: number;
+  sent: number;
+  starred: number;
+  archive: number;
+  trash: number;
+  official: number;
+  temp: number;
+}> {
+  const store = await readMailStore();
+  return calculateMailFolderCounts(store.messages || [], filterCategory);
 }
 
 export async function addMailMessage(message: MailMessage): Promise<boolean> {

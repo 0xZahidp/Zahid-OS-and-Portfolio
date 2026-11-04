@@ -72,7 +72,7 @@
       ],
       "is_current": true,
       "sort_order": 0,
-      "updated_at": "2026-11-01T13:45:34.103+00:00"
+      "updated_at": "2026-11-03T16:22:28.595+00:00"
     },
     {
       "id": "exp-db",
@@ -115,7 +115,7 @@
       ],
       "is_current": true,
       "sort_order": 1,
-      "updated_at": "2026-11-01T13:45:34.103+00:00"
+      "updated_at": "2026-11-03T16:22:28.595+00:00"
     },
     {
       "id": "exp-ipb",
@@ -158,7 +158,7 @@
       ],
       "is_current": true,
       "sort_order": 2,
-      "updated_at": "2026-11-01T13:45:34.103+00:00"
+      "updated_at": "2026-11-03T16:22:28.595+00:00"
     },
     {
       "id": "exp-zf",
@@ -184,7 +184,7 @@
       ],
       "is_current": true,
       "sort_order": 3,
-      "updated_at": "2026-11-01T13:45:34.103+00:00"
+      "updated_at": "2026-11-03T16:22:28.595+00:00"
     },
     {
       "id": "exp-tsp",
@@ -210,7 +210,7 @@
       ],
       "is_current": true,
       "sort_order": 4,
-      "updated_at": "2026-11-01T13:45:34.103+00:00"
+      "updated_at": "2026-11-03T16:22:28.595+00:00"
     },
     {
       "id": "exp-madrasah",
@@ -236,7 +236,7 @@
       ],
       "is_current": true,
       "sort_order": 5,
-      "updated_at": "2026-11-01T13:45:34.103+00:00"
+      "updated_at": "2026-11-03T16:22:28.595+00:00"
     },
     {
       "id": "exp-bidvers",
@@ -278,7 +278,7 @@
       ],
       "is_current": true,
       "sort_order": 6,
-      "updated_at": "2026-11-01T13:45:34.103+00:00"
+      "updated_at": "2026-11-03T16:22:28.595+00:00"
     }
   ],
   "projects": [
@@ -300,7 +300,7 @@
       "highlight_badge": "",
       "logo_type": "",
       "sort_order": 0,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "proj-zf",
@@ -320,7 +320,7 @@
       "highlight_badge": "",
       "logo_type": "",
       "sort_order": 1,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "proj-db",
@@ -340,7 +340,7 @@
       "highlight_badge": "",
       "logo_type": "",
       "sort_order": 2,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "proj-tsp",
@@ -359,7 +359,7 @@
       "highlight_badge": "",
       "logo_type": "",
       "sort_order": 3,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "proj-booknagar",
@@ -379,7 +379,7 @@
       "highlight_badge": "",
       "logo_type": "",
       "sort_order": 4,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "proj-madrasah",
@@ -398,7 +398,7 @@
       "highlight_badge": "",
       "logo_type": "",
       "sort_order": 5,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "proj-bidvers",
@@ -417,7 +417,7 @@
       "highlight_badge": "",
       "logo_type": "",
       "sort_order": 6,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "proj-learn-laravel",
@@ -436,7 +436,7 @@
       "highlight_badge": "",
       "logo_type": "",
       "sort_order": 7,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     }
   ],
   "skills": [
@@ -446,7 +446,7 @@
       "category": "ai",
       "color": "#d97757",
       "sort_order": 0,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "openai",
@@ -454,7 +454,7 @@
       "category": "ai",
       "color": "#10a37f",
       "sort_order": 1,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "antigravity",
@@ -462,7 +462,7 @@
       "category": "ai",
       "color": "#6366f1",
       "sort_order": 2,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "opencode",
@@ -470,7 +470,7 @@
       "category": "ai",
       "color": "#0ea5e9",
       "sort_order": 3,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "telegram-bot",
@@ -478,7 +478,7 @@
       "category": "ai",
       "color": "#24A1DE",
       "sort_order": 4,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "python",
@@ -486,7 +486,7 @@
       "category": "ai",
       "color": "#3776AB",
       "sort_order": 5,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "react",
@@ -494,7 +494,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 6,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "nextjs",
@@ -502,7 +502,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 7,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "typescript",
@@ -510,7 +510,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 8,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "javascript",
@@ -518,7 +518,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 9,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "supabase",
@@ -526,7 +526,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 10,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "tailwind",
@@ -534,7 +534,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 11,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "tanstack",
@@ -542,7 +542,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 12,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "indexeddb",
@@ -550,7 +550,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 13,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "laravel",
@@ -558,7 +558,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 14,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "php",
@@ -566,7 +566,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 15,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "livewire",
@@ -574,7 +574,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 16,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "alpine",
@@ -582,7 +582,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 17,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "vue",
@@ -590,7 +590,7 @@
       "category": "tech",
       "color": "",
       "sort_order": 18,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "vscode",
@@ -598,7 +598,7 @@
       "category": "tool",
       "color": "",
       "sort_order": 19,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "git",
@@ -606,7 +606,7 @@
       "category": "tool",
       "color": "",
       "sort_order": 20,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "github",
@@ -614,7 +614,7 @@
       "category": "tool",
       "color": "",
       "sort_order": 21,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "vercel",
@@ -622,7 +622,7 @@
       "category": "tool",
       "color": "",
       "sort_order": 22,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "vite",
@@ -630,7 +630,7 @@
       "category": "tool",
       "color": "",
       "sort_order": 23,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "figma",
@@ -638,7 +638,7 @@
       "category": "tool",
       "color": "",
       "sort_order": 24,
-      "updated_at": "2026-11-01T13:45:34.104+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     }
   ],
   "languages": [
@@ -650,7 +650,7 @@
       "note": "Professional & technical communication",
       "has_voice": true,
       "sort_order": 0,
-      "updated_at": "2026-11-01T13:45:34.105+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "lang-bangla",
@@ -660,7 +660,7 @@
       "note": "Native tongue",
       "has_voice": true,
       "sort_order": 1,
-      "updated_at": "2026-11-01T13:45:34.105+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "lang-arabic",
@@ -670,7 +670,7 @@
       "note": "Conversational & liturgical reading",
       "has_voice": true,
       "sort_order": 2,
-      "updated_at": "2026-11-01T13:45:34.105+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     }
   ],
   "socialLinks": [
@@ -681,7 +681,7 @@
       "handle": "@OxZahidP",
       "label": "Telegram",
       "sort_order": 0,
-      "updated_at": "2026-11-01T13:45:34.105+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "soc-github",
@@ -690,7 +690,7 @@
       "handle": "@0xzahidp",
       "label": "GitHub",
       "sort_order": 1,
-      "updated_at": "2026-11-01T13:45:34.105+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "soc-x",
@@ -699,7 +699,7 @@
       "handle": "@0xzahidp",
       "label": "X (Twitter)",
       "sort_order": 2,
-      "updated_at": "2026-11-01T13:45:34.105+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "soc-linkedin",
@@ -708,7 +708,7 @@
       "handle": "in/oxzahidp",
       "label": "LinkedIn",
       "sort_order": 3,
-      "updated_at": "2026-11-01T13:45:34.105+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     },
     {
       "id": "soc-facebook",
@@ -717,111 +717,111 @@
       "handle": "0xzahidp",
       "label": "Facebook",
       "sort_order": 4,
-      "updated_at": "2026-11-01T13:45:34.105+00:00"
+      "updated_at": "2026-11-03T16:22:28.596+00:00"
     }
   ],
   "suggestedPeople": [
     {
       "id": "person-hasinhayder",
+      "url": "https://github.com/hasinhayder",
       "name": "Hasin Hayder",
       "role": "Product Architect | Creator of TyroLabs & HappyAddons | Building EdTech Tools & Mentoring Thousands of Developers",
-      "avatar_url": "https://avatars.githubusercontent.com/u/490779?v=4",
-      "url": "https://github.com/hasinhayder",
-      "handle": "hasinhayder"
+      "handle": "hasinhayder",
+      "avatar_url": "https://avatars.githubusercontent.com/u/490779?v=4"
     },
     {
       "id": "person-aniruddha-adhikary",
+      "url": "https://github.com/aniruddha-adhikary",
       "name": "Aniruddha Adhikary (Ani)",
       "role": "@GovTechSG",
-      "avatar_url": "https://avatars.githubusercontent.com/u/932949?v=4",
-      "url": "https://github.com/aniruddha-adhikary",
-      "handle": "aniruddha-adhikary"
+      "handle": "aniruddha-adhikary",
+      "avatar_url": "https://avatars.githubusercontent.com/u/932949?v=4"
     },
     {
       "id": "person-reacheight",
+      "url": "https://github.com/reacheight",
       "name": "Roman Mendaliev",
       "role": "trying hard not to make something useful",
-      "avatar_url": "https://avatars.githubusercontent.com/u/21079607?v=4",
-      "url": "https://github.com/reacheight",
-      "handle": "reacheight"
+      "handle": "reacheight",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21079607?v=4"
     },
     {
       "id": "person-emranrx02",
+      "url": "https://github.com/Emranrx02",
       "name": "Emran Haque",
       "role": "Community Relations Specialist | Ex~ CoinEx PRP ||Web3 & Blockchain Enthusiast | KOL & Twitter Growth Strategist",
-      "avatar_url": "https://avatars.githubusercontent.com/u/55331321?v=4",
-      "url": "https://github.com/Emranrx02",
-      "handle": "Emranrx02"
+      "handle": "Emranrx02",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55331321?v=4"
     },
     {
       "id": "person-syed-eftasum-alam",
+      "url": "https://github.com/Syed-Eftasum-Alam",
       "name": "Syed Eftasum Alam",
       "role": "A Computer Science and Engineering graduate with noob skills :3",
-      "avatar_url": "https://avatars.githubusercontent.com/u/62606974?v=4",
-      "url": "https://github.com/Syed-Eftasum-Alam",
-      "handle": "Syed-Eftasum-Alam"
+      "handle": "Syed-Eftasum-Alam",
+      "avatar_url": "https://avatars.githubusercontent.com/u/62606974?v=4"
     },
     {
       "id": "person-benrobo",
+      "url": "https://github.com/Benrobo",
       "name": " Benaiah",
       "role": "I'd win",
-      "avatar_url": "https://avatars.githubusercontent.com/u/65370456?v=4",
-      "url": "https://github.com/Benrobo",
-      "handle": "Benrobo"
+      "handle": "Benrobo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/65370456?v=4"
     },
     {
       "id": "person-ssani7",
+      "url": "https://github.com/ssani7",
       "name": "Sanaullah Sani ",
       "role": "Full Stack web developer",
-      "avatar_url": "https://avatars.githubusercontent.com/u/66258879?v=4",
-      "url": "https://github.com/ssani7",
-      "handle": "ssani7"
+      "handle": "ssani7",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66258879?v=4"
     },
     {
       "id": "person-rezaurofficial",
+      "url": "https://github.com/RezaurOfficial",
       "name": "Rezaur Rahman",
       "role": "Senior software engineer, specialized in distributed systems & microservices.",
-      "avatar_url": "https://avatars.githubusercontent.com/u/68007353?v=4",
-      "url": "https://github.com/RezaurOfficial",
-      "handle": "RezaurOfficial"
+      "handle": "RezaurOfficial",
+      "avatar_url": "https://avatars.githubusercontent.com/u/68007353?v=4"
     },
     {
       "id": "person-isherezahin",
+      "url": "https://github.com/IsHereZahin",
       "name": "Zahin Mohammad",
       "role": "Web-Based Software Developer | Specialist in React, Next.js, Vue, and the Laravel & Go Ecosystem",
-      "avatar_url": "https://avatars.githubusercontent.com/u/105446082?v=4",
-      "url": "https://github.com/IsHereZahin",
-      "handle": "IsHereZahin"
+      "handle": "IsHereZahin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/105446082?v=4"
     },
     {
       "id": "person-tahsinulhoque",
+      "url": "https://github.com/tahsinulhoque",
       "name": "Md.Tahsinul Hoque Siddiki ",
       "role": "DevOps Intern | AWS | Docker | Kubernetes |CI/CD | Terraform | Linux | Cloud Automation",
-      "avatar_url": "https://avatars.githubusercontent.com/u/107357207?v=4",
-      "url": "https://github.com/tahsinulhoque",
-      "handle": "tahsinulhoque"
+      "handle": "tahsinulhoque",
+      "avatar_url": "https://avatars.githubusercontent.com/u/107357207?v=4"
     },
     {
       "id": "person-abmprottoy",
+      "url": "https://github.com/abmprottoy",
       "name": "ABM Prottoy",
       "role": "Software Developer",
-      "avatar_url": "https://avatars.githubusercontent.com/u/115341293?v=4",
-      "url": "https://github.com/abmprottoy",
-      "handle": "abmprottoy"
+      "handle": "abmprottoy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/115341293?v=4"
     },
     {
       "id": "person-shakib5551",
+      "url": "https://github.com/shakib5551",
       "name": "Shakibul Islam",
       "role": "Software Developer",
-      "avatar_url": "https://avatars.githubusercontent.com/u/206897066?v=4",
-      "url": "https://github.com/shakib5551",
       "handle": "shakib5551",
       "platforms": [
         {
-          "platform": "github",
-          "url": "https://github.com/shakib5551"
+          "url": "https://github.com/shakib5551",
+          "platform": "github"
         }
-      ]
+      ],
+      "avatar_url": "https://avatars.githubusercontent.com/u/206897066?v=4"
     }
   ],
   "worksSettings": {
@@ -844,164 +844,164 @@
   },
   "githubSettings": {
     "username": "0xZahidp",
-    "totalRepos": 26,
+    "totalRepos": 92,
     "followersCount": 6,
-    "totalContributions": 102
+    "totalContributions": 1378
   },
-  "updatedAt": "2026-11-01T17:19:08.703Z",
   "libraryData": {
+    "music": [
+      {
+        "id": "track-1",
+        "url": "https://www.youtube.com/watch?v=Vqfy4ScRXFQ",
+        "title": "Ya Nabi Salam Alayka",
+        "artist": "Maher Zain",
+        "duration": "4:59",
+        "arabic_title": "يا نبي سلام عليك"
+      },
+      {
+        "id": "track-2",
+        "url": "https://www.youtube.com/watch?v=0k5G6H2Q8jU",
+        "title": "Qalbi Fil Madinah",
+        "artist": "Maher Zain feat. Harris J",
+        "duration": "4:12",
+        "arabic_title": "قلبي في المدينة"
+      },
+      {
+        "id": "track-3",
+        "url": "https://www.youtube.com/watch?v=b-J_f_xM8Qc",
+        "title": "Ramadan",
+        "artist": "Maher Zain",
+        "duration": "4:08",
+        "arabic_title": "رمضان"
+      },
+      {
+        "id": "track-4",
+        "url": "https://www.youtube.com/watch?v=2Tz8N_bK1qA",
+        "title": "Bika Moulhimi",
+        "artist": "Maher Zain feat. Mustafa Ceceli",
+        "duration": "3:58",
+        "arabic_title": "بـك ملهمي"
+      },
+      {
+        "id": "track-5",
+        "url": "https://www.youtube.com/watch?v=9_H8Xf0oR5U",
+        "title": "Barak Allah Lakuma",
+        "artist": "Maher Zain",
+        "duration": "4:30",
+        "arabic_title": "بارك الله لكما"
+      }
+    ],
     "aiSkills": [
       {
         "id": "skill-grill-me",
-        "name": "grill-me",
-        "author": "Matt Pocock",
-        "description": "The agent interviews me relentlessly about a plan or design until every weak spot is out in the open.",
-        "command": "npx skills add mattpocock/skills --skill grill-me",
         "url": "https://www.skills.sh/mattpocock/skills/grill-me",
-        "badge": "Planning"
+        "name": "grill-me",
+        "badge": "Planning",
+        "author": "Matt Pocock",
+        "command": "npx skills add mattpocock/skills --skill grill-me",
+        "description": "The agent interviews me relentlessly about a plan or design until every weak spot is out in the open."
       },
       {
         "id": "skill-caveman",
-        "name": "caveman",
-        "author": "Julius Brussee",
-        "description": "Makes the agent talk like a caveman: answer first, fluff gone, every technical fact kept. Fewer tokens, faster reading.",
-        "command": "npx skills add JuliusBrussee/caveman --skill caveman",
         "url": "https://www.skills.sh/juliusbrussee/caveman/caveman",
-        "badge": "Speed"
+        "name": "caveman",
+        "badge": "Speed",
+        "author": "Julius Brussee",
+        "command": "npx skills add JuliusBrussee/caveman --skill caveman",
+        "description": "Makes the agent talk like a caveman: answer first, fluff gone, every technical fact kept. Fewer tokens, faster reading."
       },
       {
         "id": "skill-impeccable",
-        "name": "impeccable",
-        "author": "Paul Bakaus",
-        "description": "One skill to design, critique, audit and polish any interface: hierarchy, type, color, motion, accessibility.",
-        "command": "npx skills add pbakaus/impeccable --skill impeccable",
         "url": "https://www.skills.sh/pbakaus/impeccable/impeccable",
-        "badge": "Design"
+        "name": "impeccable",
+        "badge": "Design",
+        "author": "Paul Bakaus",
+        "command": "npx skills add pbakaus/impeccable --skill impeccable",
+        "description": "One skill to design, critique, audit and polish any interface: hierarchy, type, color, motion, accessibility."
       },
       {
         "id": "skill-agent-skills",
-        "name": "agent-skills",
-        "author": "Addy Osmani",
-        "description": "Senior-engineer workflows and quality gates for the whole software lifecycle, for Claude Code, Codex, Cursor and more.",
-        "command": "npx skills add addyosmani/agent-skills",
         "url": "https://skills.addy.ie/",
-        "badge": "24 skills"
+        "name": "agent-skills",
+        "badge": "24 skills",
+        "author": "Addy Osmani",
+        "command": "npx skills add addyosmani/agent-skills",
+        "description": "Senior-engineer workflows and quality gates for the whole software lifecycle, for Claude Code, Codex, Cursor and more."
       },
       {
         "id": "skill-apple-design",
-        "name": "apple-design",
-        "author": "Emil Kowalski",
-        "description": "Apple’s design and motion rules from their WWDC talks, made for the web: springs, gestures, sheets, depth and type.",
-        "command": "npx skills add emilkowalski/skills --skill apple-design",
         "url": "https://www.skills.sh/emilkowalski/skills/apple-design",
-        "badge": "Animation"
+        "name": "apple-design",
+        "badge": "Animation",
+        "author": "Emil Kowalski",
+        "command": "npx skills add emilkowalski/skills --skill apple-design",
+        "description": "Apple’s design and motion rules from their WWDC talks, made for the web: springs, gestures, sheets, depth and type."
       }
     ],
     "bookmarks": [
       {
         "id": "bm-mysql",
+        "url": "https://planetscale.com/learn/courses/mysql-for-developers",
         "title": "MySQL for Developers",
         "author": "Aaron Francis",
-        "description": "A complete, professional MySQL course that’s 100% free. Honestly, this should cost money.",
-        "url": "https://planetscale.com/learn/courses/mysql-for-developers",
-        "isTopPick": true,
         "badges": [
           "Top pick",
           "Free course"
         ],
-        "image_url": "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=800&auto=format&fit=crop&q=80"
+        "image_url": "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=800&auto=format&fit=crop&q=80",
+        "isTopPick": true,
+        "description": "A complete, professional MySQL course that’s 100% free. Honestly, this should cost money."
       },
       {
         "id": "bm-roadmap",
-        "title": "roadmap.sh",
-        "description": "Step-by-step roadmaps, guides, and educational pathways for modern developer roles and technologies.",
         "url": "https://roadmap.sh",
-        "badge": "Guide"
+        "badge": "Guide",
+        "title": "roadmap.sh",
+        "description": "Step-by-step roadmaps, guides, and educational pathways for modern developer roles and technologies."
       },
       {
         "id": "bm-react-bits",
-        "title": "React Bits",
-        "description": "An open-source collection of animated, interactive, and accessible React UI components.",
         "url": "https://reactbits.dev",
-        "badge": "Components"
+        "badge": "Components",
+        "title": "React Bits",
+        "description": "An open-source collection of animated, interactive, and accessible React UI components."
       },
       {
         "id": "bm-shots",
-        "title": "Shots",
-        "description": "Turn plain screenshots into polished device mockups and presentation slides in seconds.",
         "url": "https://shots.so",
-        "badge": "Design tool"
+        "badge": "Design tool",
+        "title": "Shots",
+        "description": "Turn plain screenshots into polished device mockups and presentation slides in seconds."
       },
       {
         "id": "bm-free-for-dev",
-        "title": "Free for Developers",
-        "description": "A massive curated directory of software, infrastructure, and SaaS offerings with generous free tiers for developers.",
         "url": "https://free-for.dev",
-        "badge": "Directory"
-      }
-    ],
-    "music": [
-      {
-        "id": "track-1",
-        "title": "Ya Nabi Salam Alayka",
-        "artist": "Maher Zain",
-        "arabic_title": "يا نبي سلام عليك",
-        "duration": "4:59",
-        "url": "https://www.youtube.com/watch?v=Vqfy4ScRXFQ"
-      },
-      {
-        "id": "track-2",
-        "title": "Qalbi Fil Madinah",
-        "artist": "Maher Zain feat. Harris J",
-        "arabic_title": "قلبي في المدينة",
-        "duration": "4:12",
-        "url": "https://www.youtube.com/watch?v=0k5G6H2Q8jU"
-      },
-      {
-        "id": "track-3",
-        "title": "Ramadan",
-        "artist": "Maher Zain",
-        "arabic_title": "رمضان",
-        "duration": "4:08",
-        "url": "https://www.youtube.com/watch?v=b-J_f_xM8Qc"
-      },
-      {
-        "id": "track-4",
-        "title": "Bika Moulhimi",
-        "artist": "Maher Zain feat. Mustafa Ceceli",
-        "arabic_title": "بـك ملهمي",
-        "duration": "3:58",
-        "url": "https://www.youtube.com/watch?v=2Tz8N_bK1qA"
-      },
-      {
-        "id": "track-5",
-        "title": "Barak Allah Lakuma",
-        "artist": "Maher Zain",
-        "arabic_title": "بارك الله لكما",
-        "duration": "4:30",
-        "url": "https://www.youtube.com/watch?v=9_H8Xf0oR5U"
+        "badge": "Directory",
+        "title": "Free for Developers",
+        "description": "A massive curated directory of software, infrastructure, and SaaS offerings with generous free tiers for developers."
       }
     ],
     "voiceovers": {
-      "channelName": "Tafheem",
-      "handle": "@TafheemOfficial",
-      "description": "Bangla voiceovers, audiobooks, and reflective narratives recorded for personal and community growth.",
-      "subscribeUrl": "https://www.youtube.com/@TafheemOfficial?sub_confirmation=1",
-      "subscriberCount": "5 voiceovers in Bangla",
       "items": [
         {
           "id": "vo-1",
-          "title": "'অবক্ষয়কাল' অডিওবুক কন্টেস্ট এর বিজয়ী সাবমিশন | Al Nahian | Obokkhoykal | Asif Adnan | Tafheem",
           "url": "https://www.youtube.com/@TafheemOfficial",
+          "title": "'অবক্ষয়কাল' অডিওবুক কন্টেস্ট এর বিজয়ী সাবমিশন | Al Nahian | Obokkhoykal | Asif Adnan | Tafheem",
           "duration": "14:22"
         },
         {
           "id": "vo-2",
-          "title": "কেমন লাগবে রাসুল (সা.) এর মুখে নিজের নাম শুনতে? | Tafheem",
           "url": "https://www.youtube.com/@TafheemOfficial",
+          "title": "কেমন লাগবে রাসুল (সা.) এর মুখে নিজের নাম শুনতে? | Tafheem",
           "duration": "08:45"
         }
-      ]
+      ],
+      "handle": "@TafheemOfficial",
+      "channelName": "Tafheem",
+      "description": "Bangla voiceovers, audiobooks, and reflective narratives recorded for personal and community growth.",
+      "subscribeUrl": "https://www.youtube.com/@TafheemOfficial?sub_confirmation=1",
+      "subscriberCount": "5 voiceovers in Bangla"
     }
-  }
+  },
+  "updatedAt": "2026-11-04T06:24:10.003Z"
 }
