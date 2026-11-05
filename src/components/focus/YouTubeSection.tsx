@@ -297,6 +297,7 @@ export const YouTubeSection: React.FC = () => {
                           alt={pick.title}
                           fill
                           sizes="80px"
+                          unoptimized
                           className="size-full object-cover"
                         />
                         {isCurrent && (
@@ -352,6 +353,7 @@ export const YouTubeSection: React.FC = () => {
                           alt={link.title}
                           fill
                           sizes="80px"
+                          unoptimized
                           className="size-full object-cover"
                         />
                       </div>

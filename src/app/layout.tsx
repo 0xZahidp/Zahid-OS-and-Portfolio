@@ -84,6 +84,47 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`scroll-smooth ${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+              try {
+                // Neutralize browser extension DOM mutations (e.g. Bitdefender bis_skin_checked) that break React hydration
+                var origSet = Element.prototype.setAttribute;
+                Element.prototype.setAttribute = function(name, val) {
+                  if (name === 'bis_skin_checked') return;
+                  return origSet.apply(this, arguments);
+                };
+                if (typeof document !== 'undefined') {
+                  if (window.MutationObserver) {
+                    var obs = new MutationObserver(function(muts) {
+                      for (var i = 0; i < muts.length; i++) {
+                        var m = muts[i];
+                        if (m.attributeName === 'bis_skin_checked' && m.target) {
+                          m.target.removeAttribute('bis_skin_checked');
+                        }
+                      }
+                    });
+                    obs.observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ['bis_skin_checked'] });
+                  }
+                }
+                if (typeof window !== 'undefined') {
+                  var origError = console.error;
+                  console.error = function() {
+                    for (var i = 0; i < arguments.length; i++) {
+                      var a = arguments[i];
+                      if (typeof a === 'string' && a.indexOf('bis_skin_checked') !== -1) {
+                        return;
+                      }
+                    }
+                    return origError.apply(console, arguments);
+                  };
+                }
+              } catch(e){}
+            })();`,
+          }}
+        />
+      </head>
       <body className="min-h-dvh antialiased font-sans [scrollbar-gutter:stable]" suppressHydrationWarning>
         <PortfolioProvider>
           <AuthRecoveryListener />
