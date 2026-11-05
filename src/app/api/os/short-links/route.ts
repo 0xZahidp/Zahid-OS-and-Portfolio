@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getShortLinks, saveShortLinks } from '@/lib/os/short-links';
+import { getShortLinks, saveShortLinks, deleteShortLink } from '@/lib/os/short-links';
 import { getOsSettings } from '@/lib/os/settings';
 import { supabaseServer } from '@/lib/supabase/server';
 import { ShortLink } from '@/types/os';
@@ -280,8 +280,20 @@ export async function DELETE(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
-    const slug = searchParams.get('slug');
+    let id = searchParams.get('id');
+    let slug = searchParams.get('slug');
+
+    if (!id && !slug) {
+      try {
+        const body = await req.json();
+        if (body) {
+          id = body.id;
+          slug = body.slug;
+        }
+      } catch {
+        // ignore
+      }
+    }
 
     if (!id && !slug) {
       return NextResponse.json(
@@ -290,26 +302,12 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const currentLinks = await getShortLinks();
-    const initialLen = currentLinks.length;
-    const filtered = currentLinks.filter((l) => {
-      if (id && l.id === id) return false;
-      if (slug && l.slug.toLowerCase() === slug.toLowerCase()) return false;
-      return true;
-    });
-
-    if (filtered.length === initialLen) {
-      return NextResponse.json(
-        { success: false, error: 'Link not found to delete.' },
-        { status: 404 }
-      );
-    }
-
-    await saveShortLinks(filtered);
+    await deleteShortLink(id || '', slug || undefined);
+    const updated = await getShortLinks();
 
     return NextResponse.json({
       success: true,
-      links: filtered,
+      links: updated,
       message: 'Short link deleted successfully.',
     });
   } catch (err: unknown) {

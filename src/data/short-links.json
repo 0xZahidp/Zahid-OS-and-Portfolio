@@ -1,1 +1,62 @@
-[]
+[
+  {
+    "id": "link_1793904706348_82o1x",
+    "slug": "gmail",
+    "original_url": "https://mail.google.com/mail/u/0/#sent/QgrcJHrtsHbJRLhJdpFHNKqmsLqhqqlPSbq",
+    "title": "Just a Test",
+    "description": "",
+    "clicks": 1,
+    "is_active": true,
+    "last_clicked_at": "2026-11-05T18:51:50.842+00:00",
+    "created_at": "2026-11-05T18:51:46.348+00:00",
+    "updated_at": "2026-11-05T18:51:51.086+00:00"
+  },
+  {
+    "id": "link_1793648433908_6048w",
+    "slug": "test-public-link",
+    "original_url": "https://github.com/0xZahidP",
+    "title": "GitHub Profile Test",
+    "description": "",
+    "clicks": 0,
+    "is_active": true,
+    "last_clicked_at": null,
+    "created_at": "2026-11-02T19:40:33.908+00:00",
+    "updated_at": "2026-11-02T19:40:34.142+00:00"
+  },
+  {
+    "id": "link_1793647359476_f4lhv",
+    "slug": "139-partners",
+    "original_url": "https://drive.google.com/drive/folders/1gaEowySeBY43PigTwOkRre43THQnxp4LLZC87teOGcWV5JBF6a3KpoaD6PYEj5nukaMk3sKj?usp=sharing",
+    "title": "139 partners",
+    "description": "",
+    "clicks": 2,
+    "is_active": true,
+    "last_clicked_at": "2026-11-02T19:22:50.394+00:00",
+    "created_at": "2026-11-02T19:22:39.476+00:00",
+    "updated_at": "2026-11-02T19:40:39.26+00:00"
+  },
+  {
+    "id": "link_1793646542647_m0u0z",
+    "slug": "test1",
+    "original_url": "http://localhost:3000/admin",
+    "title": "test1",
+    "description": "",
+    "clicks": 2,
+    "is_active": true,
+    "last_clicked_at": "2026-11-02T19:09:07.089+00:00",
+    "created_at": "2026-11-02T19:09:02.647+00:00",
+    "updated_at": "2026-11-03T16:16:45.6+00:00"
+  },
+  {
+    "id": "link_1793597574408_eas56",
+    "slug": "test",
+    "original_url": "https://docs.google.com/spreadsheets/d/1ODNJ_giRDeLgeje0ZLH4-KxFahkJhmFNY6cjHQpUdBg/edit?usp=drive_link",
+    "title": "My Data",
+    "description": "Nothing",
+    "clicks": 4,
+    "is_active": true,
+    "last_clicked_at": null,
+    "created_at": "2026-11-02T05:32:54.408+00:00",
+    "updated_at": "2026-11-03T16:16:46.97+00:00"
+  }
+]

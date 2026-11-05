@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getShortLinks, recordLinkClick } from '@/lib/os/short-links';
+import { getShortLinkBySlug, recordLinkClick } from '@/lib/os/short-links';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,8 +17,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
     }
 
     const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
-    const links = await getShortLinks();
-    const targetLink = links.find((l) => l.slug.toLowerCase() === cleanSlug);
+    const targetLink = await getShortLinkBySlug(cleanSlug);
 
     // If link not found
     if (!targetLink) {
@@ -52,4 +51,3 @@ export async function GET(req: NextRequest, context: RouteContext) {
     return NextResponse.redirect(new URL('/', req.url));
   }
 }
-

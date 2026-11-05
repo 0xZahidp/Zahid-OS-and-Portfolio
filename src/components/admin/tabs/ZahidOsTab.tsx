@@ -283,8 +283,14 @@ export const ZahidOsTab: React.FC = () => {
         }),
       });
 
-      const data = await res.json();
-      if (res.ok && data.success) {
+      let data: { success?: boolean; links?: ShortLink[]; link?: ShortLink } | null = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
+
+      if (res.ok && data?.success) {
         setLinks(data.links || []);
         setQuickUrl('');
         setCopiedSlug(data.link?.slug || null);
@@ -352,9 +358,17 @@ export const ZahidOsTab: React.FC = () => {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setFormError(data.error || 'Failed to save short link.');
+      let data: { success?: boolean; error?: string; links?: ShortLink[]; link?: ShortLink } | null = null;
+      try {
+        data = await res.json();
+      } catch {
+        setFormError(`Server returned an invalid response (HTTP ${res.status}).`);
+        setIsSubmittingLink(false);
+        return;
+      }
+
+      if (!res.ok || !data?.success) {
+        setFormError(data?.error || 'Failed to save short link.');
         setIsSubmittingLink(false);
         return;
       }

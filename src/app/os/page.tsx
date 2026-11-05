@@ -207,19 +207,27 @@ export default function PublicZahidOsPage() {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setPublicCreateError(data.error || 'Failed to create short link');
+      let data: { success?: boolean; error?: string; link?: ShortLink } | null = null;
+      try {
+        data = await res.json();
+      } catch {
+        setPublicCreateError(`Server returned an invalid response (HTTP ${res.status}).`);
         return;
       }
 
-      if (data.link) {
-        setLinks((prev) => [data.link, ...(Array.isArray(prev) ? prev : []).filter((l) => l.id !== data.link.id)]);
+      if (!res.ok || !data?.success) {
+        setPublicCreateError(data?.error || 'Failed to create short link');
+        return;
+      }
+
+      if (data?.link) {
+        const createdLink = data.link;
+        setLinks((prev) => [createdLink, ...(Array.isArray(prev) ? prev : []).filter((l) => l.id !== createdLink.id)]);
         setPublicUrlInput('');
         setPublicSlugInput('');
-        setPublicCreateSuccess(`/s/${data.link.slug}`);
+        setPublicCreateSuccess(`/s/${createdLink.slug}`);
         if (navigator.clipboard) {
-          navigator.clipboard.writeText(`${origin}/s/${data.link.slug}`);
+          navigator.clipboard.writeText(`${origin}/s/${createdLink.slug}`);
         }
         setTimeout(() => setPublicCreateSuccess(null), 4000);
       }
