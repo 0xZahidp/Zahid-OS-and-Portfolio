@@ -411,12 +411,7 @@ export const ContactSection: React.FC = () => {
               </div>
 
               {/* Submit footer */}
-              <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-line/60">
-                <span className="text-[11px] text-ink-3 flex items-center gap-1.5">
-                  <span className="size-1.5 rounded-full bg-emerald-500" />
-                  <span>Delivered via Resend to <strong>hello@zahidp.com</strong></span>
-                </span>
-
+              <div className="pt-2 flex flex-wrap items-center justify-end gap-2 border-t border-line/60">
                 <div className="flex items-center gap-2">
                   <a
                     href={`mailto:hello@zahidp.com?subject=${encodeURIComponent(visitorSubject || 'Portfolio Message')}&body=${encodeURIComponent(visitorMessage || '')}`}
@@ -606,29 +601,26 @@ export const ContactSection: React.FC = () => {
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-between border-t border-line">
-                <span className="text-[11px] text-ink-3">Delivered via Resend</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsMessageModalOpen(false)}
-                    className="btn btn-secondary h-9 px-4 rounded-xl text-xs font-semibold cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !visitorName || !visitorEmail || !visitorMessage}
-                    className="btn btn-primary h-9 px-5 rounded-xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {isSubmitting ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <Send className="size-3.5" />
-                    )}
-                    <span>{isSubmitting ? 'Sending...' : 'Send Message'}</span>
-                  </button>
-                </div>
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-line">
+                <button
+                  type="button"
+                  onClick={() => setIsMessageModalOpen(false)}
+                  className="btn btn-secondary h-9 px-4 rounded-xl text-xs font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !visitorName || !visitorEmail || !visitorMessage}
+                  className="btn btn-primary h-9 px-5 rounded-xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Send className="size-3.5" />
+                  )}
+                  <span>{isSubmitting ? 'Sending...' : 'Send Message'}</span>
+                </button>
               </div>
             </form>
           </div>
