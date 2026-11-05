@@ -41,6 +41,7 @@ export type AdminTab =
   | 'people'
   | 'library'
   | 'os'
+  | 'career'
   | 'inbox'
   | 'supabase'
   | 'settings'
@@ -119,6 +120,18 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             unreadCount > 0
               ? 'bg-brand-500 text-white font-bold'
               : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+        },
+      ],
+    },
+    {
+      label: 'PRIVATE & CAREER CRM',
+      items: [
+        {
+          id: 'career' as AdminTab,
+          label: 'Career & Pipeline',
+          icon: Briefcase,
+          badge: 'Private',
+          badgeColor: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
         },
       ],
     },

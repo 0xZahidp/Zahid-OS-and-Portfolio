@@ -1,0 +1,170 @@
+[
+  {
+    "id": "app_1793860000001",
+    "company_name": "Supabase",
+    "company_website": "https://supabase.com",
+    "company_location": "Singapore / Remote",
+    "role_title": "Full Stack Engineer (Growth & AI)",
+    "status": "technical",
+    "priority": "urgent",
+    "source": "referral",
+    "source_detail": "Referred by Engineering Lead",
+    "remote_type": "remote",
+    "location": "Global Remote",
+    "employment_type": "full_time",
+    "applied_date": "2026-10-24T10:00:00.000Z",
+    "salary_currency": "USD",
+    "salary_min": 140000,
+    "salary_max": 170000,
+    "salary_period": "yearly",
+    "compensation_notes": "Stock options + health stipend",
+    "notes": "Discussed PostgreSQL real-time sync and Next.js 15 App router architecture in first screen.",
+    "cv_version": "Zahid_FullStack_2026.pdf",
+    "portfolio_url": "https://zahidp.com",
+    "next_followup_date": "2026-11-08",
+    "next_followup_notes": "Submit take-home system design demo",
+    "contacts": [
+      {
+        "id": "cnt_1",
+        "name": "Sarah Lin",
+        "role": "recruiter",
+        "email": "sarah.lin@supabase.io",
+        "linkedin": "https://linkedin.com/in/sarahlin"
+      }
+    ],
+    "interviews": [
+      {
+        "id": "int_1",
+        "round": 1,
+        "title": "Recruiter Screening",
+        "stage": "screening",
+        "scheduled_at": "2026-10-28T15:00:00.000Z",
+        "completed": true,
+        "interviewer": "Sarah Lin",
+        "notes": "Went great. Focused on agentic workflows and production Next.js experience."
+      },
+      {
+        "id": "int_2",
+        "round": 2,
+        "title": "Live Architecture & Coding",
+        "stage": "technical",
+        "scheduled_at": "2026-11-09T14:00:00.000Z",
+        "completed": false,
+        "interviewer": "Tech Lead & Principal Architect",
+        "meeting_url": "https://meet.google.com/xyz-supabase",
+        "questions": [
+          { "q": "How do you optimize serverless Cold Starts with edge compute?", "a": "Fluid compute, bundle size splitting, lightweight direct REST over heavy ORMs." },
+          { "q": "Explain conflict resolution in multi-master real-time sync.", "a": "CRDTs, timestamp vectors, or server-side serialized row locks." }
+        ]
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-10-24T10:00:00.000Z",
+    "updated_at": "2026-11-03T12:00:00.000Z"
+  },
+  {
+    "id": "app_1793860000002",
+    "company_name": "Vercel",
+    "company_website": "https://vercel.com",
+    "company_location": "San Francisco, CA / Remote",
+    "role_title": "Developer Experience Engineer",
+    "status": "screening",
+    "priority": "high",
+    "source": "twitter",
+    "source_detail": "DMed Hiring Manager on X",
+    "remote_type": "remote",
+    "location": "Remote (Worldwide)",
+    "employment_type": "full_time",
+    "applied_date": "2026-10-29T14:30:00.000Z",
+    "salary_currency": "USD",
+    "salary_min": 150000,
+    "salary_max": 185000,
+    "salary_period": "yearly",
+    "notes": "Shared FolioFrame portfolio and open source Next.js micro-apps.",
+    "cv_version": "Zahid_DevRel_Staff.pdf",
+    "portfolio_url": "https://zahidp.com",
+    "next_followup_date": "2026-11-06",
+    "next_followup_notes": "Check in regarding technical interview schedule",
+    "contacts": [
+      {
+        "id": "cnt_2",
+        "name": "Marcus Vance",
+        "role": "hiring_manager",
+        "linkedin": "https://linkedin.com/in/marcusvance"
+      }
+    ],
+    "interviews": [
+      {
+        "id": "int_vercel_1",
+        "round": 1,
+        "title": "Hiring Manager Chat",
+        "stage": "screening",
+        "scheduled_at": "2026-11-07T17:00:00.000Z",
+        "completed": false,
+        "interviewer": "Marcus Vance",
+        "meeting_url": "https://zoom.us/j/vercel-dx"
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-10-29T14:30:00.000Z",
+    "updated_at": "2026-11-02T09:15:00.000Z"
+  },
+  {
+    "id": "app_1793860000003",
+    "company_name": "Linear",
+    "company_website": "https://linear.app",
+    "company_location": "San Francisco / Remote",
+    "role_title": "Senior Frontend Engineer",
+    "status": "offer",
+    "priority": "urgent",
+    "source": "company_site",
+    "remote_type": "remote",
+    "location": "Global Remote",
+    "employment_type": "full_time",
+    "applied_date": "2026-09-15T11:00:00.000Z",
+    "salary_currency": "USD",
+    "salary_min": 160000,
+    "salary_max": 190000,
+    "salary_period": "yearly",
+    "compensation_notes": "Offer letter received. Stock equity + $5,000 home office setup.",
+    "notes": "Outstanding design culture and performance obsession.",
+    "cv_version": "Zahid_ProductEngineer.pdf",
+    "next_followup_date": "2026-11-10",
+    "next_followup_notes": "Decision deadline for offer acceptance",
+    "contacts": [
+      {
+        "id": "cnt_3",
+        "name": "Elena Rostova",
+        "role": "executive",
+        "email": "elena@linear.app"
+      }
+    ],
+    "interviews": [
+      {
+        "id": "int_linear_1",
+        "round": 1,
+        "title": "Screening",
+        "stage": "screening",
+        "completed": true
+      },
+      {
+        "id": "int_linear_2",
+        "round": 2,
+        "title": "Tactile UI & Web Performance",
+        "stage": "technical",
+        "completed": true
+      },
+      {
+        "id": "int_linear_3",
+        "round": 3,
+        "title": "Founder Chat",
+        "stage": "final",
+        "completed": true
+      }
+    ],
+    "archived": false,
+    "created_at": "2026-09-15T11:00:00.000Z",
+    "updated_at": "2026-11-04T18:00:00.000Z"
+  }
+]
+

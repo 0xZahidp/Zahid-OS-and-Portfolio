@@ -26,11 +26,16 @@ import { SupabaseTab } from '@/components/admin/tabs/SupabaseTab';
 import { SettingsTab } from '@/components/admin/tabs/SettingsTab';
 import { InboxTab } from '@/components/admin/tabs/InboxTab';
 import { BackupsTab } from '@/components/admin/tabs/BackupsTab';
+import { CareerTab } from '@/components/admin/tabs/CareerTab';
 
 const TAB_META: Record<AdminTab, { title: string; description: string }> = {
   inbox: {
     title: 'Inbox & Client Communication',
     description: 'Read incoming inquiries, star messages, and compose/dispatch emails via Resend.',
+  },
+  career: {
+    title: 'Career Tracker & Job Pipeline',
+    description: 'Confidential tracking for software engineering applications, interview rounds, offers, and proactive follow-ups.',
   },
   profile: {
     title: 'Personal Identity & Hero Roles',
@@ -203,6 +208,8 @@ function AdminDashboardInner() {
         return <LibraryTab />;
       case 'os':
         return <ZahidOsTab />;
+      case 'career':
+        return <CareerTab />;
       case 'supabase':
         return <SupabaseTab />;
       case 'settings':
