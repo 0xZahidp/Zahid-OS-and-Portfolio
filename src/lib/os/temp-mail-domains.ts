@@ -35,8 +35,8 @@ let memoryDomainsCache: { domains: TempMailDomainRecord[]; defaultDomain: string
 const CACHE_TTL_MS = 15000; // 15s cache
 
 function maskApiKey(key: string): string {
-  if (!key || key.length < 8) return '****';
-  return `${key.substring(0, 5)}...${key.substring(key.length - 4)}`;
+  if (!key || key.length < 4) return '••••••••';
+  return `••••••••••••${key.slice(-4)}`;
 }
 
 /**
@@ -131,7 +131,12 @@ export async function getTempMailDomains(): Promise<{
     timestamp: Date.now(),
   };
 
-  return { domains: list, defaultDomain };
+  const sanitizedList = list.map((d) => ({
+    ...d,
+    resendApiKey: undefined,
+  }));
+
+  return { domains: sanitizedList, defaultDomain };
 }
 
 /**
@@ -361,7 +366,10 @@ export async function addTempMailDomain(params: {
 
   return {
     success: true,
-    domain: newRecord,
+    domain: {
+      ...newRecord,
+      resendApiKey: undefined,
+    },
     resendVerified,
     dnsRecords,
   };

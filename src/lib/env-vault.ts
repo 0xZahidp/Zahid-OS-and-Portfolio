@@ -232,19 +232,6 @@ export async function listAppSecrets(): Promise<EnvVaultItem[]> {
 export function maskSecretValue(val: string, isSecret: boolean): string {
   if (!val) return '';
   if (!isSecret) return val;
-
-  if (val.startsWith('re_')) {
-    // Resend key format
-    return val.slice(0, 7) + '•'.repeat(Math.max(12, val.length - 11)) + val.slice(-4);
-  }
-  if (val.startsWith('ghp_')) {
-    // GitHub PAT format
-    return val.slice(0, 6) + '•'.repeat(Math.max(12, val.length - 10)) + val.slice(-4);
-  }
-
-  if (val.length <= 8) {
-    return '••••••••';
-  }
-
-  return val.slice(0, 4) + '•'.repeat(Math.min(16, val.length - 8)) + val.slice(-4);
+  if (val.length <= 4) return '••••••••';
+  return `••••••••••••${val.slice(-4)}`;
 }

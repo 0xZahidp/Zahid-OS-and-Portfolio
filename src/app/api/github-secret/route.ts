@@ -22,9 +22,9 @@ export async function GET(req: NextRequest) {
 
         if (!error && setting?.value) {
           const val = String(setting.value);
-          const preview = val.length > 8
-            ? `${val.slice(0, 4)}••••••••••••••••${val.slice(-4)}`
-            : '••••••••••••••••';
+          const preview = val.length > 4
+            ? `••••••••••••${val.slice(-4)}`
+            : '••••••••';
           return NextResponse.json({
             configured: true,
             source: 'supabase',
@@ -39,9 +39,9 @@ export async function GET(req: NextRequest) {
     // 2. Fallback to process.env.GITHUB_TOKEN
     if (process.env.GITHUB_TOKEN) {
       const val = process.env.GITHUB_TOKEN;
-      const preview = val.length > 8
-        ? `${val.slice(0, 4)}••••••••••••••••${val.slice(-4)}`
-        : '••••••••••••••••';
+      const preview = val.length > 4
+        ? `••••••••••••${val.slice(-4)}`
+        : '••••••••';
       return NextResponse.json({
         configured: true,
         source: 'env',
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const preview = `${token.slice(0, 4)}••••••••••••••••${token.slice(-4)}`;
+    const preview = `••••••••••••${token.slice(-4)}`;
     return NextResponse.json({
       success: true,
       message: 'Token securely encrypted and stored directly in Supabase app_settings table.',

@@ -248,4 +248,39 @@ END $$;
 4. **Phase 4: Verification & Test Suite**
    - Produce `supabase/verify-security.sql` to test RLS policies and role isolation.
    - Write `scripts/verify-rls.mjs` test runner.
+
+---
+
+## 6. Secrets Segregation: Environment Variables vs. Database Settings
+
+To prevent secret leakage and credential exposure in database tables:
+
+### A. Environment Variables (.env.local / Hosting Platform)
+The following credentials **must strictly live in environment variables** (e.g. Vercel Project Settings / `.env.local`) and NEVER be seeded or permanently stored in SQL tables:
+
+| Variable Name | Purpose | Sensitivity | Location |
+| :--- | :--- | :--- | :--- |
+| `SUPABASE_SERVICE_ROLE_KEY` | Bypasses all RLS on server | Critical | `.env.local` / Host Secret |
+| `ADMIN_USER_ID` | UUID of designated owner | High | `.env.local` / Host Secret |
+| `RESEND_API_KEY` | Mail sending & receiving API | High | `.env.local` / Host Secret |
+| `RESEND_WEBHOOK_SECRET` | Svix signature verification | High | `.env.local` / Host Secret |
+| `CONTACT_RATE_LIMIT_SECRET`| HMAC rate-limiting secret | High | `.env.local` / Host Secret |
+| `GITHUB_TOKEN` | GitHub PAT for private contributions | High | `.env.local` / Host Secret (or masked in `app_settings`) |
+
+### B. Database Dynamic Settings (`site_settings` / `app_settings`)
+Only dynamic runtime toggles and operational configuration that administrators edit in the UI belong in database tables:
+
+| Setting Key | Table | Purpose |
+| :--- | :--- | :--- |
+| `works_settings` | `site_settings` | Project display ordering and active tabs |
+| `based_in_settings` | `site_settings` | Current city, country, coordinates |
+| `github_settings` | `site_settings` | GitHub username, display toggles, pinned repos (token stripped) |
+| `suggested_people_rich` | `site_settings` | People recommendations list |
+| `library_data` | `site_settings` | Books, readings, podcasts collection |
+| `temp_mail_domains` | `site_settings` | Registered domain names for temp-mail (API keys masked) |
+| `os_settings` | `os_settings` | Wallpaper, audio fx, micro-app permissions |
+| `CONTACT_TO_EMAIL` | `app_settings` | Target address for portfolio contact submissions |
+| `CONTACT_FROM_EMAIL` | `app_settings` | Sender display name header |
+| `RESEND_DEFAULT_SENDER` | `app_settings` | Sender email address for outgoing mail |
+
    - Execute `npx tsc --noEmit`, `npm run lint`, and production build (`NEXT_DIST_DIR=.next-prod`).
