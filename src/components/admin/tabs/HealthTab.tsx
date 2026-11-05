@@ -37,6 +37,7 @@ import { MedicationsSubTab } from '@/components/admin/health/MedicationsSubTab';
 import { DocumentsSubTab } from '@/components/admin/health/DocumentsSubTab';
 import { VisitsSubTab } from '@/components/admin/health/VisitsSubTab';
 import { VitalsSubTab } from '@/components/admin/health/VitalsSubTab';
+import { useAdminAuth } from '@/context/AdminAuthContext';
 
 export type HealthSubTab = 'overview' | 'medications' | 'documents' | 'visits' | 'vitals';
 
@@ -48,6 +49,13 @@ interface SubTabConfig {
 }
 
 export const HealthTab: React.FC = () => {
+  const { session } = useAdminAuth();
+
+  const getAuthHeaders = useCallback((): HeadersInit => ({
+    'Content-Type': 'application/json',
+    ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+  }), [session?.access_token]);
+
   const [activeSubTab, setActiveSubTab] = useState<HealthSubTab>('overview');
   const [loading, setLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -116,7 +124,7 @@ export const HealthTab: React.FC = () => {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const headers = { 'x-admin-key': 'folioframe_admin' };
+      const headers = getAuthHeaders();
       const [resData, resUsage] = await Promise.all([
         fetch('/api/admin/health', { headers }),
         fetch('/api/admin/health/usage', { headers }),
@@ -140,7 +148,7 @@ export const HealthTab: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, getAuthHeaders]);
 
   useEffect(() => {
     loadData();
@@ -150,7 +158,7 @@ export const HealthTab: React.FC = () => {
   const handleExportBackup = async () => {
     try {
       const res = await fetch('/api/admin/health/export', {
-        headers: { 'x-admin-key': 'folioframe_admin' },
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error();
       const blob = await res.blob();
@@ -197,10 +205,7 @@ export const HealthTab: React.FC = () => {
     try {
       const res = await fetch('/api/admin/health/export', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': 'folioframe_admin',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(restorePayload),
       });
 
@@ -227,10 +232,7 @@ export const HealthTab: React.FC = () => {
     try {
       const res = await fetch('/api/admin/health', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': 'folioframe_admin',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           collection: 'profile',
           item: updated,
@@ -256,10 +258,7 @@ export const HealthTab: React.FC = () => {
       const isExisting = healthData.medications.some((m) => m.id === med.id);
       const res = await fetch('/api/admin/health', {
         method: isExisting ? 'PATCH' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': 'folioframe_admin',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           collection: 'medications',
           item: med,
@@ -287,7 +286,7 @@ export const HealthTab: React.FC = () => {
     try {
       const res = await fetch(`/api/admin/health?collection=medications&id=${id}`, {
         method: 'DELETE',
-        headers: { 'x-admin-key': 'folioframe_admin' },
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error();
       setHealthData((prev) => ({
@@ -310,7 +309,7 @@ export const HealthTab: React.FC = () => {
         if (existing) {
           await fetch(`/api/admin/health?collection=reminders&id=${existing.id}`, {
             method: 'DELETE',
-            headers: { 'x-admin-key': 'folioframe_admin' },
+            headers: getAuthHeaders(),
           });
           setHealthData((prev) => ({
             ...prev,
@@ -330,10 +329,7 @@ export const HealthTab: React.FC = () => {
 
         const res = await fetch('/api/admin/health', {
           method: existing ? 'PATCH' : 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin-key': 'folioframe_admin',
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             collection: 'reminders',
             item: reminderItem,
@@ -365,10 +361,7 @@ export const HealthTab: React.FC = () => {
     try {
       const res = await fetch('/api/admin/health', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': 'folioframe_admin',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           collection: 'reminders',
           item: updated,
@@ -394,10 +387,7 @@ export const HealthTab: React.FC = () => {
       const isExisting = healthData.visits.some((v) => v.id === visit.id);
       const res = await fetch('/api/admin/health', {
         method: isExisting ? 'PATCH' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': 'folioframe_admin',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           collection: 'visits',
           item: visit,
@@ -424,7 +414,7 @@ export const HealthTab: React.FC = () => {
     try {
       const res = await fetch(`/api/admin/health?collection=visits&id=${id}`, {
         method: 'DELETE',
-        headers: { 'x-admin-key': 'folioframe_admin' },
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error();
       setHealthData((prev) => ({
@@ -446,7 +436,7 @@ export const HealthTab: React.FC = () => {
         if (existing) {
           await fetch(`/api/admin/health?collection=reminders&id=${existing.id}`, {
             method: 'DELETE',
-            headers: { 'x-admin-key': 'folioframe_admin' },
+            headers: getAuthHeaders(),
           });
           setHealthData((prev) => ({
             ...prev,
@@ -466,10 +456,7 @@ export const HealthTab: React.FC = () => {
 
         const res = await fetch('/api/admin/health', {
           method: existing ? 'PATCH' : 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin-key': 'folioframe_admin',
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             collection: 'reminders',
             item: reminderItem,
@@ -495,10 +482,7 @@ export const HealthTab: React.FC = () => {
     try {
       const res = await fetch('/api/admin/health', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': 'folioframe_admin',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           collection: 'vitals',
           item: vital,
@@ -519,7 +503,7 @@ export const HealthTab: React.FC = () => {
     try {
       const res = await fetch(`/api/admin/health?collection=vitals&id=${id}`, {
         method: 'DELETE',
-        headers: { 'x-admin-key': 'folioframe_admin' },
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error();
       setHealthData((prev) => ({
@@ -537,10 +521,7 @@ export const HealthTab: React.FC = () => {
       const isExisting = healthData.vaccinations.some((v) => v.id === vac.id);
       const res = await fetch('/api/admin/health', {
         method: isExisting ? 'PATCH' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': 'folioframe_admin',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           collection: 'vaccinations',
           item: vac,
@@ -563,7 +544,7 @@ export const HealthTab: React.FC = () => {
     try {
       const res = await fetch(`/api/admin/health?collection=vaccinations&id=${id}`, {
         method: 'DELETE',
-        headers: { 'x-admin-key': 'folioframe_admin' },
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error();
       setHealthData((prev) => ({
@@ -585,7 +566,7 @@ export const HealthTab: React.FC = () => {
         if (existing) {
           await fetch(`/api/admin/health?collection=reminders&id=${existing.id}`, {
             method: 'DELETE',
-            headers: { 'x-admin-key': 'folioframe_admin' },
+            headers: getAuthHeaders(),
           });
           setHealthData((prev) => ({
             ...prev,
@@ -605,10 +586,7 @@ export const HealthTab: React.FC = () => {
 
         const res = await fetch('/api/admin/health', {
           method: existing ? 'PATCH' : 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin-key': 'folioframe_admin',
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             collection: 'reminders',
             item: reminderItem,

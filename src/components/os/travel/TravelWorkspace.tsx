@@ -97,7 +97,6 @@ export const TravelWorkspace: React.FC<TravelWorkspaceProps> = ({
         method: 'POST',
         headers: adminHeaders || {
           'Content-Type': 'application/json',
-          'x-admin-key': 'folioframe_admin',
         },
         body: JSON.stringify({ code, status: newStatus }),
       });
@@ -119,7 +118,6 @@ export const TravelWorkspace: React.FC<TravelWorkspaceProps> = ({
         method: 'POST',
         headers: adminHeaders || {
           'Content-Type': 'application/json',
-          'x-admin-key': 'folioframe_admin',
         },
         body: JSON.stringify({ code, ...updates }),
       });
@@ -141,7 +139,6 @@ export const TravelWorkspace: React.FC<TravelWorkspaceProps> = ({
         method: 'POST',
         headers: adminHeaders || {
           'Content-Type': 'application/json',
-          'x-admin-key': 'folioframe_admin',
         },
         body: JSON.stringify({ code, memory }),
       });
@@ -163,9 +160,7 @@ export const TravelWorkspace: React.FC<TravelWorkspaceProps> = ({
         `/api/os/travel?code=${encodeURIComponent(code)}&memoryId=${encodeURIComponent(memoryId)}`,
         {
           method: 'DELETE',
-          headers: adminHeaders || {
-            'x-admin-key': 'folioframe_admin',
-          },
+          headers: adminHeaders || {},
         }
       );
       const data = await res.json();

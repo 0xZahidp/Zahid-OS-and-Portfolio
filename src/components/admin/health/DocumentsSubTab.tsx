@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useAdminAuth } from '@/context/AdminAuthContext';
 import {
   FileText,
   Upload,
@@ -79,6 +80,7 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
   onRefreshData,
   showToast,
 }) => {
+  const { session } = useAdminAuth();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -228,7 +230,7 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
       const res = await fetch('/api/admin/health/upload', {
         method: 'POST',
         headers: {
-          'x-admin-key': 'folioframe_admin',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
         },
         body: formData,
       });
@@ -258,7 +260,9 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
     setIsLoadingPreview(true);
     try {
       const res = await fetch(`/api/admin/health/file?id=${doc.id}`, {
-        headers: { 'x-admin-key': 'folioframe_admin' },
+        headers: {
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
       });
       const json = await res.json();
       if (!res.ok || !json.url) throw new Error();
@@ -277,7 +281,9 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
     try {
       const res = await fetch(`/api/admin/health/file?id=${doc.id}`, {
         method: 'DELETE',
-        headers: { 'x-admin-key': 'folioframe_admin' },
+        headers: {
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
       });
       if (!res.ok) throw new Error();
       showToast('✓ Document deleted from private storage');

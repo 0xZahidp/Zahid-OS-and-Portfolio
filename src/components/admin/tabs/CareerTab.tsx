@@ -52,6 +52,7 @@ import {
   CareerInterview,
   CareerContact,
 } from '@/types/career';
+import { useAdminAuth } from '@/context/AdminAuthContext';
 
 const STATUS_CONFIG: Record<
   CareerApplicationStatus,
@@ -425,6 +426,13 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
 };
 
 export const CareerTab: React.FC = () => {
+  const { session } = useAdminAuth();
+
+  const getAuthHeaders = useCallback((): HeadersInit => ({
+    'Content-Type': 'application/json',
+    ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+  }), [session?.access_token]);
+
   const [applications, setApplications] = useState<CareerApplication[]>([]);
   const [metrics, setMetrics] = useState<CareerMetrics>({
     total: 0,
@@ -550,7 +558,7 @@ export const CareerTab: React.FC = () => {
     try {
       const res = await fetch('/api/admin/career', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ id: draggedId, status: targetStatus }),
       });
 
@@ -579,10 +587,12 @@ export const CareerTab: React.FC = () => {
     }
   };
 
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await fetch('/api/admin/career');
+      const res = await fetch('/api/admin/career', {
+        headers: getAuthHeaders(),
+      });
       if (res.ok) {
         const data = await res.json();
         setApplications(data.applications || []);
@@ -593,11 +603,11 @@ export const CareerTab: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     fetchApplications();
-  }, []);
+  }, [fetchApplications]);
 
   // Open detail panel and sync URL hash
   const handleOpenDetail = (app: CareerApplication) => {
@@ -777,7 +787,10 @@ export const CareerTab: React.FC = () => {
     if (!confirm('Are you sure you want to delete this application record?')) return;
     try {
       setSaveState('saving');
-      const res = await fetch(`/api/admin/career?id=${appId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/career?id=${appId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
       if (res.ok) {
         setApplications((prev) => prev.filter((a) => a.id !== appId));
         if (activeDetailApp?.id === appId) {
@@ -1886,6 +1899,7 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
   saveState,
   setSaveState,
 }) => {
+  const { session } = useAdminAuth();
   const [localApp, setLocalApp] = useState<CareerApplication>(app);
   const [activeTab, setActiveTab] = useState<'overview' | 'interviews' | 'contacts' | 'emails'>('overview');
   const [hasUnsaved, setHasUnsaved] = useState(false);
@@ -1909,7 +1923,10 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
       try {
         const res = await fetch('/api/admin/career', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
           body: JSON.stringify(data),
         });
         if (res.ok) {
@@ -1925,7 +1942,7 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
         setSaveState('error');
       }
     },
-    [onUpdate, setSaveState]
+    [onUpdate, setSaveState, session?.access_token]
   );
 
   // Debounced field change (600ms)
@@ -2758,6 +2775,7 @@ const CreateApplicationModal: React.FC<{
   onClose: () => void;
   onCreated: (app: CareerApplication) => void;
 }> = ({ onClose, onCreated }) => {
+  const { session } = useAdminAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [roleTitle, setRoleTitle] = useState('');
@@ -2778,7 +2796,10 @@ const CreateApplicationModal: React.FC<{
       setIsSubmitting(true);
       const res = await fetch('/api/admin/career', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           company_name: companyName,
           role_title: roleTitle,

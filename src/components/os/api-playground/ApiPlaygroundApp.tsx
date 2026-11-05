@@ -523,8 +523,8 @@ export const ApiPlaygroundApp: React.FC = () => {
 
               <div className="flex items-center gap-1.5 text-[11px] text-white/40 font-mono">
                 <span>Tip: Use</span>
-                <span className="text-white/80 bg-white/10 px-1.5 py-0.5 rounded">x-admin-key: folioframe_admin</span>
-                <span>for CMS APIs</span>
+                <span className="text-white/80 bg-white/10 px-1.5 py-0.5 rounded">Authorization: Bearer &lt;token&gt;</span>
+                <span>for Admin APIs</span>
               </div>
             </div>
           </div>

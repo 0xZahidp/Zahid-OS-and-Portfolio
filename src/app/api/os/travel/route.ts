@@ -1,43 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTravelData, saveTravelData, calculateTravelStats } from '@/lib/travel/travel-storage';
-import { supabaseServer } from '@/lib/supabase/server';
 import { DistrictCode } from '@/lib/travel/bangladesh-districts';
 import { DistrictTravelStatus, TravelMemory } from '@/types/travel.types';
+import { isAdminRequest } from '@/lib/auth/admin-auth';
 
 export const dynamic = 'force-dynamic';
-
-async function isAdminRequest(req: NextRequest): Promise<boolean> {
-  const adminKey = req.headers.get('x-admin-key');
-  if (adminKey === 'folioframe_admin') return true;
-
-  const authHeader = req.headers.get('Authorization');
-  const token = authHeader?.replace(/^Bearer\s+/i, '');
-  if (token) {
-    try {
-      const supabase = supabaseServer();
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser(token);
-      if (!error && user) return true;
-    } catch {
-      // fallback
-    }
-  }
-
-  try {
-    const supabase = supabaseServer();
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-    if (!error && user) return true;
-  } catch {
-    // fallback
-  }
-
-  return false;
-}
 
 // 1. GET: Fetch districts and travel stats (Publicly accessible)
 export async function GET(req: NextRequest) {

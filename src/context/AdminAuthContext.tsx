@@ -50,8 +50,6 @@ interface AdminAuthContextType {
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
-const LOCAL_BYPASS_KEY = 'folioframe_admin_local_bypass';
-
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -100,16 +98,12 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     let mounted = true;
 
-    // Check if local dev bypass was previously enabled or if no session token exists
+    // Check if any Supabase auth token exists in localStorage
     if (typeof window !== 'undefined') {
-      const storedBypass = localStorage.getItem(LOCAL_BYPASS_KEY);
-      if (storedBypass === 'true') {
-        setIsLocalBypass(true);
-        setIsLoading(false);
-        return;
-      }
+      try {
+        localStorage.removeItem('folioframe_admin_local_bypass');
+      } catch {}
 
-      // Check if any Supabase auth token exists in localStorage
       let hasSupabaseSession = false;
       try {
         for (let i = 0; i < localStorage.length; i++) {
@@ -156,6 +150,9 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setSession(data.session);
           setUser(data.session.user);
           setIsLocalBypass(false);
+          if (typeof document !== 'undefined') {
+            document.cookie = `sb-access-token=${encodeURIComponent(data.session.access_token)}; path=/; SameSite=Lax; max-age=3600`;
+          }
           checkMfaLevel().catch(() => {});
         }
       } catch (err) {
@@ -180,12 +177,15 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setIsLoading(false);
       if (currentSession) {
         setIsLocalBypass(false);
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem(LOCAL_BYPASS_KEY);
+        if (typeof document !== 'undefined') {
+          document.cookie = `sb-access-token=${encodeURIComponent(currentSession.access_token)}; path=/; SameSite=Lax; max-age=3600`;
         }
         checkMfaLevel().catch(() => {});
       } else {
         setMfaLevel(null);
+        if (typeof document !== 'undefined') {
+          document.cookie = `sb-access-token=; path=/; SameSite=Lax; max-age=0`;
+        }
       }
     });
 
@@ -567,9 +567,6 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setUser(null);
     setIsLocalBypass(false);
     setMfaLevel(null);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(LOCAL_BYPASS_KEY);
-    }
   }, []);
 
   // 13. Sign Out Everywhere
@@ -583,9 +580,6 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setUser(null);
       setIsLocalBypass(false);
       setMfaLevel(null);
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(LOCAL_BYPASS_KEY);
-      }
       return { success: true };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to sign out all devices';
@@ -593,12 +587,9 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  // 14. Bypass local dev auth
+  // 14. Bypass local dev auth (deprecated, disabled)
   const bypassLocalAuth = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(LOCAL_BYPASS_KEY, 'true');
-    }
-    setIsLocalBypass(true);
+    setIsLocalBypass(false);
     setIsLoading(false);
   }, []);
 

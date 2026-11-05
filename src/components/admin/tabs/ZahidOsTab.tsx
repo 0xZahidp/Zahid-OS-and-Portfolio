@@ -55,10 +55,9 @@ interface SnippetItem {
 export const ZahidOsTab: React.FC = () => {
   const { session } = useAdminAuth();
 
-  // Admin request headers (with fallback key for local dev)
+  // Admin request headers
   const getAdminHeaders = useCallback((): HeadersInit => ({
     'Content-Type': 'application/json',
-    'x-admin-key': 'folioframe_admin',
     ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
   }), [session?.access_token]);
 
