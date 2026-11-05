@@ -26,6 +26,8 @@
 *.pem
 scratch/
 /career/
+/health/
+src/data/health-*.json
 
 # debug
 npm-debug.log*
