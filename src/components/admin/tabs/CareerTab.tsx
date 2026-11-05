@@ -20,11 +20,23 @@ import {
   Copy,
   Check,
   Building,
-  DollarSign,
   X,
   Loader2,
   Download,
 } from 'lucide-react';
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  useDraggable,
+  DragStartEvent,
+  DragEndEvent,
+} from '@dnd-kit/core';
 import {
   CareerApplication,
   CareerApplicationStatus,
@@ -40,7 +52,7 @@ const STATUS_CONFIG: Record<
     label: 'Saved',
     color: 'text-neutral-600 dark:text-neutral-300',
     bg: 'bg-neutral-500/10 border-neutral-500/20',
-    dot: 'bg-neutral-400',
+    dot: 'bg-neutral-400 dark:bg-neutral-500',
   },
   applied: {
     label: 'Applied',
@@ -61,7 +73,7 @@ const STATUS_CONFIG: Record<
     dot: 'bg-amber-500',
   },
   manager: {
-    label: 'Final Round',
+    label: 'Final',
     color: 'text-orange-600 dark:text-orange-400',
     bg: 'bg-orange-500/10 border-orange-500/20',
     dot: 'bg-orange-500',
@@ -73,7 +85,7 @@ const STATUS_CONFIG: Record<
     dot: 'bg-emerald-500',
   },
   rejected: {
-    label: 'Rejected',
+    label: 'Closed',
     color: 'text-rose-600 dark:text-rose-400',
     bg: 'bg-rose-500/10 border-rose-500/20',
     dot: 'bg-rose-500',
@@ -84,6 +96,13 @@ const STATUS_CONFIG: Record<
     bg: 'bg-neutral-500/10 border-neutral-500/20',
     dot: 'bg-neutral-400',
   },
+};
+
+const PRIORITY_BORDER: Record<CareerPriorityLevel, string> = {
+  urgent: 'border-l-[3px] border-l-rose-500',
+  high: 'border-l-[3px] border-l-amber-500',
+  medium: 'border-l-[3px] border-l-blue-500',
+  low: 'border-l-[3px] border-l-neutral-400 dark:border-l-neutral-600',
 };
 
 const PRIORITY_CONFIG: Record<
@@ -108,15 +127,265 @@ const PRIORITY_CONFIG: Record<
   },
 };
 
-const KANBAN_STAGES: { id: CareerApplicationStatus; title: string }[] = [
-  { id: 'saved', title: 'Saved' },
-  { id: 'applied', title: 'Applied' },
-  { id: 'screening', title: 'Screening' },
-  { id: 'technical', title: 'Technical' },
-  { id: 'manager', title: 'Final / Team' },
-  { id: 'offer', title: 'Offer' },
-  { id: 'rejected', title: 'Closed' },
+const KANBAN_STAGES: {
+  id: CareerApplicationStatus;
+  title: string;
+  dot: string;
+}[] = [
+  { id: 'saved', title: 'Saved', dot: 'bg-neutral-400 dark:bg-neutral-500' },
+  { id: 'applied', title: 'Applied', dot: 'bg-blue-500' },
+  { id: 'screening', title: 'Screening', dot: 'bg-purple-500' },
+  { id: 'technical', title: 'Technical', dot: 'bg-amber-500' },
+  { id: 'manager', title: 'Final', dot: 'bg-orange-500' },
+  { id: 'offer', title: 'Offer', dot: 'bg-emerald-500' },
+  { id: 'rejected', title: 'Closed', dot: 'bg-rose-500' },
 ];
+
+const AVATAR_COLORS = [
+  'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+  'bg-sky-500/20 text-sky-600 dark:text-sky-400 border-sky-500/30',
+  'bg-violet-500/20 text-violet-600 dark:text-violet-400 border-violet-500/30',
+  'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30',
+  'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30',
+  'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/30',
+  'bg-teal-500/20 text-teal-600 dark:text-teal-400 border-teal-500/30',
+];
+
+function getCompanyAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const idx = Math.abs(hash) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[idx];
+}
+
+function formatRelativeDueDate(dateStr?: string): { label: string; status: 'overdue' | 'soon' | 'normal' } | null {
+  if (!dateStr) return null;
+  const target = new Date(dateStr);
+  const now = new Date();
+  const targetDay = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const diffDays = Math.round((targetDay - today) / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    const overdueDays = Math.abs(diffDays);
+    return {
+      label: overdueDays === 1 ? '1d overdue' : `${overdueDays}d overdue`,
+      status: 'overdue',
+    };
+  }
+  if (diffDays === 0) {
+    return { label: 'Today', status: 'soon' };
+  }
+  if (diffDays === 1) {
+    return { label: 'Tomorrow', status: 'soon' };
+  }
+  if (diffDays <= 2) {
+    return { label: `in ${diffDays}d`, status: 'soon' };
+  }
+  return { label: `in ${diffDays}d`, status: 'normal' };
+}
+
+function getDaysInStage(app: CareerApplication): number {
+  const dateStr = app.stageChangedAt || app.updated_at || app.created_at;
+  if (!dateStr) return 0;
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+}
+
+interface KanbanCardProps {
+  app: CareerApplication;
+  onClick: () => void;
+  isOverlay?: boolean;
+}
+
+const KanbanCard: React.FC<KanbanCardProps> = ({ app, onClick, isOverlay = false }) => {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: app.id,
+    disabled: isOverlay,
+  });
+
+  const dueInfo = formatRelativeDueDate(app.next_followup_date);
+  const daysInStage = getDaysInStage(app);
+  const avatarColor = getCompanyAvatarColor(app.company_name);
+  const priorityBorder = PRIORITY_BORDER[app.priority] || PRIORITY_BORDER.medium;
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={onClick}
+      className={`rounded-2xl border border-line bg-surface p-3 space-y-2.5 transition-all shadow-2xs hover:shadow-md cursor-grab active:cursor-grabbing group relative select-none ${priorityBorder} ${
+        isDragging ? 'opacity-30 border-dashed border-indigo-500' : 'hover:border-line-hover'
+      }`}
+    >
+      {/* Top: Avatar + Company Name */}
+      <div className="flex items-center gap-2.5 min-w-0">
+        <div
+          className={`size-7 rounded-lg border flex items-center justify-center font-bold text-xs shrink-0 ${avatarColor}`}
+        >
+          {app.company_name.charAt(0).toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold text-ink truncate leading-tight">
+            {app.company_name}
+          </p>
+          {app.company_location && (
+            <p className="text-[10px] text-ink-3 truncate leading-none mt-0.5">
+              {app.company_location}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Role Title (up to 2 lines, line-clamp-2, no single-line truncation) */}
+      <h4 className="text-xs font-semibold text-ink line-clamp-2 leading-snug">
+        {app.role_title}
+      </h4>
+
+      {/* Chips: Salary, Remote, Scholarship */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {(app.salary_min || app.salary_max) && (
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-surface-2 border border-line text-ink-2 font-medium">
+            ${app.salary_min ? `${Math.round(app.salary_min / 1000)}k` : ''}
+            {app.salary_min && app.salary_max ? '–' : ''}
+            {app.salary_max ? `${Math.round(app.salary_max / 1000)}k` : ''}
+          </span>
+        )}
+        <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-md bg-surface-2 border border-line text-ink-3">
+          {app.remote_type}
+        </span>
+        {app.type === 'scholarship' && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-semibold">
+            Scholarship
+          </span>
+        )}
+      </div>
+
+      {/* Footer: Due date + Days in stage */}
+      <div className="flex items-center justify-between pt-2 border-t border-line/60 text-[10px]">
+        {dueInfo ? (
+          <span
+            title={`Follow-up deadline: ${app.next_followup_date}`}
+            className={`font-medium flex items-center gap-1 ${
+              dueInfo.status === 'overdue'
+                ? 'text-rose-500 font-bold'
+                : dueInfo.status === 'soon'
+                ? 'text-amber-500 font-semibold'
+                : 'text-ink-3'
+            }`}
+          >
+            <Clock className="size-2.5" />
+            <span>{dueInfo.label}</span>
+          </span>
+        ) : (
+          <span className="text-ink-4">No follow-up</span>
+        )}
+
+        <span
+          title={`Stage last moved: ${app.stageChangedAt || app.updated_at || app.created_at}`}
+          className={`font-mono ${
+            daysInStage >= 10 ? 'text-amber-500 font-semibold' : 'text-ink-4'
+          }`}
+        >
+          {daysInStage}d in stage
+        </span>
+      </div>
+    </div>
+  );
+};
+
+interface KanbanColumnProps {
+  stage: {
+    id: CareerApplicationStatus;
+    title: string;
+    dot: string;
+  };
+  apps: CareerApplication[];
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onSelectApp: (app: CareerApplication) => void;
+}
+
+const KanbanColumn: React.FC<KanbanColumnProps> = ({
+  stage,
+  apps,
+  isExpanded,
+  onToggleExpand,
+  onSelectApp,
+}) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: stage.id,
+  });
+
+  const isEmpty = apps.length === 0;
+  const showExpanded = !isEmpty || isExpanded || isOver;
+
+  if (!showExpanded) {
+    // Collapsed 48px rail
+    return (
+      <div
+        ref={setNodeRef}
+        onClick={onToggleExpand}
+        className="w-12 shrink-0 rounded-2xl border border-line/70 bg-surface-2/30 hover:bg-surface-2/60 transition-all flex flex-col items-center justify-between py-5 cursor-pointer min-h-[420px] group select-none hover:border-line"
+        title={`Click to expand ${stage.title} (0)`}
+      >
+        <div className="flex flex-col items-center gap-2">
+          <span className={`size-2 rounded-full ${stage.dot}`} />
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-surface border border-line text-ink-3">
+            0
+          </span>
+        </div>
+
+        <div
+          style={{ writingMode: 'vertical-rl' }}
+          className="rotate-180 text-xs font-bold tracking-wider uppercase text-ink-3 group-hover:text-ink transition-colors"
+        >
+          {stage.title}
+        </div>
+
+        <div className="size-2" />
+      </div>
+    );
+  }
+
+  // Expanded column (min 260px, max 340px, share remaining width)
+  return (
+    <div
+      ref={setNodeRef}
+      className={`min-w-[260px] max-w-[340px] flex-1 shrink-0 rounded-3xl border p-3 flex flex-col min-h-[420px] transition-all bg-surface-2/20 select-none ${
+        isOver
+          ? 'border-indigo-500 bg-indigo-500/5 shadow-md ring-2 ring-indigo-500/20'
+          : 'border-line/70'
+      }`}
+    >
+      {/* Column Header */}
+      <div className="flex items-center justify-between pb-2.5 mb-2 px-1 border-b border-line/60 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={`size-2 rounded-full shrink-0 ${stage.dot}`} />
+          <h4 className="text-xs font-bold text-ink truncate tracking-tight">{stage.title}</h4>
+        </div>
+        <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-surface border border-line text-ink-3 shrink-0">
+          {apps.length}
+        </span>
+      </div>
+
+      {/* Cards List */}
+      <div className="space-y-2.5 flex-1 overflow-y-auto pr-0.5 [scrollbar-width:thin]">
+        {apps.map((app) => (
+          <KanbanCard key={app.id} app={app} onClick={() => onSelectApp(app)} />
+        ))}
+        {apps.length === 0 && (
+          <div className="h-32 border-2 border-dashed border-line/60 rounded-2xl flex flex-col items-center justify-center p-3 text-center">
+            <p className="text-xs text-ink-4">Drop cards here</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const CareerTab: React.FC = () => {
   const [applications, setApplications] = useState<CareerApplication[]>([]);
@@ -148,6 +417,123 @@ export const CareerTab: React.FC = () => {
     'follow_up' | 'thank_you' | 'negotiation' | 'status_inquiry'
   >('follow_up');
   const [copiedEmail, setCopiedEmail] = useState<boolean>(false);
+
+  // Drag and drop & Column expansion state
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [expandedStages, setExpandedStages] = useState<Set<string>>(new Set());
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor)
+  );
+
+  const activeDragApp = useMemo(() => {
+    return activeDragId ? applications.find((a) => a.id === activeDragId) || null : null;
+  }, [activeDragId, applications]);
+
+  const toggleStageExpand = (stageId: string) => {
+    setExpandedStages((prev) => {
+      const next = new Set(prev);
+      if (next.has(stageId)) {
+        next.delete(stageId);
+      } else {
+        next.add(stageId);
+      }
+      return next;
+    });
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(String(event.active.id));
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveDragId(null);
+    if (!over) return;
+
+    const draggedId = String(active.id);
+    const draggedApp = applications.find((a) => a.id === draggedId);
+    if (!draggedApp) return;
+
+    let targetStatus: CareerApplicationStatus | null = null;
+    const isDirectStage = KANBAN_STAGES.some((s) => s.id === over.id);
+
+    if (isDirectStage) {
+      targetStatus = over.id as CareerApplicationStatus;
+    } else {
+      const targetApp = applications.find((a) => a.id === String(over.id));
+      if (targetApp) {
+        targetStatus = targetApp.status;
+      }
+    }
+
+    if (!targetStatus || targetStatus === draggedApp.status) return;
+
+    // Optimistic update
+    const previousApps = [...applications];
+    const nowIso = new Date().toISOString();
+    const updatedApps = applications.map((a) =>
+      a.id === draggedId
+        ? {
+            ...a,
+            status: targetStatus!,
+            stageChangedAt: nowIso,
+            updated_at: nowIso,
+          }
+        : a
+    );
+
+    setApplications(updatedApps);
+    if (activeDetailApp?.id === draggedId) {
+      setActiveDetailApp((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: targetStatus!,
+              stageChangedAt: nowIso,
+              updated_at: nowIso,
+            }
+          : null
+      );
+    }
+    setSaveState('saving');
+
+    try {
+      const res = await fetch('/api/admin/career', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: draggedId, status: targetStatus }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setApplications((prev) =>
+          prev.map((a) => (a.id === draggedId ? data.application : a))
+        );
+        if (activeDetailApp?.id === draggedId) {
+          setActiveDetailApp(data.application);
+        }
+        setSaveState('saved');
+        setTimeout(() => setSaveState('idle'), 2000);
+        const stageName =
+          KANBAN_STAGES.find((s) => s.id === targetStatus)?.title || targetStatus;
+        showToast(`Moved ${draggedApp.company_name} to ${stageName}`);
+      } else {
+        setApplications(previousApps);
+        setSaveState('error');
+        showToast('Failed to update stage. Rolled back.');
+      }
+    } catch {
+      setApplications(previousApps);
+      setSaveState('error');
+      showToast('Network error updating stage. Rolled back.');
+    }
+  };
 
   const fetchApplications = async () => {
     try {
@@ -537,104 +923,46 @@ Md Zahid Hasan Patwary`;
           <span className="text-xs font-mono text-ink-3">Loading pipeline...</span>
         </div>
       ) : viewMode === 'kanban' ? (
-        /* KANBAN BOARD VIEW */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3.5 items-start overflow-x-auto pb-4">
-          {KANBAN_STAGES.map((stage) => {
-            const stageApps = filteredApps.filter((a) => {
-              if (stage.id === 'rejected') {
-                return a.status === 'rejected' || a.status === 'withdrawn';
-              }
-              return a.status === stage.id;
-            });
+        /* KANBAN BOARD VIEW (Redesigned with @dnd-kit & collapsible empty rails) */
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex gap-3 items-start overflow-x-auto pb-6 pt-1 w-full [scrollbar-width:thin]">
+            {KANBAN_STAGES.map((stage) => {
+              const stageApps = filteredApps.filter((a) => {
+                if (stage.id === 'rejected') {
+                  return a.status === 'rejected' || a.status === 'withdrawn';
+                }
+                return a.status === stage.id;
+              });
 
-            return (
-              <div
-                key={stage.id}
-                className="flex flex-col rounded-2xl border border-line bg-surface/50 p-2.5 min-h-[480px]"
-              >
-                {/* Stage Header */}
-                <div className="flex items-center justify-between px-2 py-1.5 mb-2 border-b border-line/60">
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className={`size-2 rounded-full ${
-                        STATUS_CONFIG[stage.id]?.dot || 'bg-neutral-400'
-                      }`}
-                    />
-                    <h3 className="text-xs font-bold text-ink">{stage.title}</h3>
-                  </div>
-                  <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-surface-2 text-ink-3">
-                    {stageApps.length}
-                  </span>
-                </div>
+              return (
+                <KanbanColumn
+                  key={stage.id}
+                  stage={stage}
+                  apps={stageApps}
+                  isExpanded={expandedStages.has(stage.id)}
+                  onToggleExpand={() => toggleStageExpand(stage.id)}
+                  onSelectApp={(app) => {
+                    setActiveDetailApp(app);
+                    setDetailTab('overview');
+                  }}
+                />
+              );
+            })}
+          </div>
 
-                {/* Stage Cards */}
-                <div className="space-y-2 flex-1">
-                  {stageApps.length === 0 ? (
-                    <div className="h-28 rounded-xl border border-dashed border-line/60 flex items-center justify-center text-[11px] text-ink-4">
-                      Empty
-                    </div>
-                  ) : (
-                    stageApps.map((app) => (
-                      <div
-                        key={app.id}
-                        onClick={() => {
-                          setActiveDetailApp(app);
-                          setDetailTab('overview');
-                        }}
-                        className="group relative rounded-xl border border-line bg-surface p-3 shadow-2xs hover:shadow-sm hover:border-line-strong transition-all cursor-pointer space-y-2.5"
-                      >
-                        {/* Company & Role */}
-                        <div>
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="text-xs font-bold text-ink truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                              {app.company_name}
-                            </span>
-                            <span
-                              className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-sm border ${
-                                PRIORITY_CONFIG[app.priority]?.badge
-                              }`}
-                            >
-                              {app.priority}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-ink-2 font-medium truncate mt-0.5">
-                            {app.role_title}
-                          </p>
-                        </div>
-
-                        {/* Salary and tags */}
-                        <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-ink-3">
-                          {app.salary_min && (
-                            <span className="inline-flex items-center gap-0.5 font-mono text-ink-2">
-                              <DollarSign className="size-2.5" />
-                              <span>
-                                {Math.round(app.salary_min / 1000)}k
-                                {app.salary_max ? `-${Math.round(app.salary_max / 1000)}k` : ''}
-                              </span>
-                            </span>
-                          )}
-                          <span className="px-1.5 py-0.5 rounded-md bg-surface-2 border border-line">
-                            {app.remote_type}
-                          </span>
-                        </div>
-
-                        {/* Next Action Indicator */}
-                        {app.next_followup_date && (
-                          <div className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 border-t border-line/60 pt-2 font-medium">
-                            <Clock className="size-3" />
-                            <span className="truncate">
-                              Follow-up: {app.next_followup_date}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
+          <DragOverlay>
+            {activeDragApp ? (
+              <div className="rotate-2 opacity-95 shadow-2xl scale-105 pointer-events-none w-72">
+                <KanbanCard app={activeDragApp} onClick={() => {}} isOverlay />
               </div>
-            );
-          })}
-        </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       ) : (
         /* TABLE VIEW */
         <div className="rounded-2xl border border-line bg-surface overflow-hidden shadow-xs">
