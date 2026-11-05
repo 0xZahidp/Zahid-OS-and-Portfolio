@@ -23,6 +23,13 @@ import {
   X,
   Loader2,
   Download,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+  ChevronDown,
+  ChevronUp,
+  HelpCircle,
+  Zap,
 } from 'lucide-react';
 import {
   DndContext,
@@ -187,6 +194,34 @@ function formatRelativeDueDate(dateStr?: string): { label: string; status: 'over
     return { label: `in ${diffDays}d`, status: 'soon' };
   }
   return { label: `in ${diffDays}d`, status: 'normal' };
+}
+
+function formatRelativeDate(dateStr?: string): { label: string; full: string } {
+  if (!dateStr) return { label: '—', full: 'No date recorded' };
+  try {
+    const target = new Date(dateStr);
+    if (isNaN(target.getTime())) return { label: '—', full: 'Invalid date' };
+    const full = target.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+    const now = new Date();
+    const targetDay = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const diffDays = Math.round((targetDay - today) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return { label: 'Today', full };
+    if (diffDays === 1) return { label: 'Tomorrow', full };
+    if (diffDays === -1) return { label: 'Yesterday', full };
+    if (diffDays > 1 && diffDays <= 7) return { label: `in ${diffDays}d`, full };
+    if (diffDays < -1 && diffDays >= -7) return { label: `${Math.abs(diffDays)}d ago`, full };
+    if (diffDays > 7 && diffDays <= 30) return { label: `in ${Math.round(diffDays / 7)}w`, full };
+    if (diffDays < -7 && diffDays >= -30) return { label: `${Math.round(Math.abs(diffDays) / 7)}w ago`, full };
+    return { label: full, full };
+  } catch {
+    return { label: '—', full: 'Invalid date' };
+  }
 }
 
 function getDaysInStage(app: CareerApplication): number {
@@ -413,6 +448,20 @@ export const CareerTab: React.FC = () => {
   const [activeDetailApp, setActiveDetailApp] = useState<CareerApplication | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // CRM Features & Strip State
+  const [isNextActionsCollapsed, setIsNextActionsCollapsed] = useState<boolean>(false);
+  const [isFunnelCollapsed, setIsFunnelCollapsed] = useState<boolean>(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
+
+  // Table sorting
+  type SortField = 'company' | 'role' | 'status' | 'priority' | 'salary' | 'followup' | 'updated';
+  type SortDirection = 'asc' | 'desc';
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection | null>(null);
+
+  // Search input ref for keyboard shortcut '/'
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   // Drag and drop & Column expansion state
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [expandedStages, setExpandedStages] = useState<Set<string>>(new Set());
@@ -606,16 +655,117 @@ export const CareerTab: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHash);
   }, [applications]);
 
-  // Escape key closes detail panel
+  // Load persisted collapse states safely from localStorage
   useEffect(() => {
+    try {
+      const savedActions = localStorage.getItem('career-next-actions-collapsed');
+      if (savedActions !== null) {
+        setIsNextActionsCollapsed(savedActions === 'true');
+      }
+      const savedFunnel = localStorage.getItem('career-funnel-collapsed');
+      if (savedFunnel !== null) {
+        setIsFunnelCollapsed(savedFunnel === 'true');
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const toggleNextActions = () => {
+    setIsNextActionsCollapsed((prev) => {
+      const nextVal = !prev;
+      try {
+        localStorage.setItem('career-next-actions-collapsed', String(nextVal));
+      } catch {
+        // ignore
+      }
+      return nextVal;
+    });
+  };
+
+  const toggleFunnelCollapsed = () => {
+    setIsFunnelCollapsed((prev) => {
+      const nextVal = !prev;
+      try {
+        localStorage.setItem('career-funnel-collapsed', String(nextVal));
+      } catch {
+        // ignore
+      }
+      return nextVal;
+    });
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDirection('asc');
+    } else if (sortDirection === 'asc') {
+      setSortDirection('desc');
+    } else {
+      setSortField(null);
+      setSortDirection(null);
+    }
+  };
+
+  // Keyboard shortcuts (N, /, B, T, Esc, ?)
+  useEffect(() => {
+    const isInputFocused = () => {
+      const active = document.activeElement;
+      if (!active) return false;
+      const tag = active.tagName.toLowerCase();
+      return tag === 'input' || tag === 'textarea' || (active as HTMLElement).isContentEditable;
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      // If modal or popover open, Esc closes it
+      if (isHelpModalOpen) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          setIsHelpModalOpen(false);
+        }
+        return;
+      }
+
+      if (isCreateModalOpen) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          setIsCreateModalOpen(false);
+        }
+        return;
+      }
+
+      // If activeDetailApp is open, Esc closes it
       if (e.key === 'Escape' && activeDetailApp) {
+        e.preventDefault();
         handleCloseDetail();
+        return;
+      }
+
+      // If user is focused in input, textarea, or contenteditable, do not trigger shortcuts
+      if (isInputFocused()) return;
+
+      const key = e.key.toLowerCase();
+      if (key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        setIsCreateModalOpen(true);
+      } else if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (key === 'b' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setViewMode('kanban');
+      } else if (key === 't' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setViewMode('table');
+      } else if (e.key === '?' || (e.shiftKey && e.key === '?')) {
+        e.preventDefault();
+        setIsHelpModalOpen((prev) => !prev);
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeDetailApp]);
+  }, [activeDetailApp, isCreateModalOpen, isHelpModalOpen]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -682,6 +832,196 @@ export const CareerTab: React.FC = () => {
       return true;
     });
   }, [applications, showArchived, statusFilter, priorityFilter, typeFilter, search]);
+
+  // Next actions strip groups (Due today, Overdue, Stale > 10d)
+  const nextActionsData = useMemo(() => {
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+
+    const dueToday: CareerApplication[] = [];
+    const overdue: CareerApplication[] = [];
+    const stale: CareerApplication[] = [];
+
+    for (const app of applications) {
+      if (app.archived) continue;
+      const isTerminal = app.status === 'rejected' || app.status === 'withdrawn' || app.status === 'offer';
+
+      if (app.next_followup_date) {
+        const target = new Date(app.next_followup_date);
+        const targetStart = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+        const diffDays = Math.round((targetStart - todayStart) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+          dueToday.push(app);
+        } else if (diffDays < 0 && !isTerminal) {
+          overdue.push(app);
+        }
+      }
+
+      if (!isTerminal) {
+        const days = getDaysInStage(app);
+        if (days > 10) {
+          stale.push(app);
+        }
+      }
+    }
+
+    return {
+      dueToday,
+      overdue,
+      stale,
+      totalCount: dueToday.length + overdue.length + stale.length,
+    };
+  }, [applications]);
+
+  // Stage Conversion Funnel (Applied -> Screening -> Technical -> Final -> Offer)
+  const funnelData = useMemo(() => {
+    const nonArchived = applications.filter((a) => !a.archived);
+
+    const getStageRank = (status: CareerApplicationStatus) => {
+      switch (status) {
+        case 'offer':
+          return 5;
+        case 'manager':
+          return 4;
+        case 'technical':
+          return 3;
+        case 'screening':
+          return 2;
+        case 'applied':
+          return 1;
+        case 'rejected':
+        case 'withdrawn':
+          return 1;
+        default:
+          return 0;
+      }
+    };
+
+    const appliedCount = nonArchived.filter((a) => getStageRank(a.status) >= 1).length;
+    const screeningCount = nonArchived.filter(
+      (a) => getStageRank(a.status) >= 2 || (a.interviews && a.interviews.length > 0)
+    ).length;
+    const technicalCount = nonArchived.filter((a) => getStageRank(a.status) >= 3).length;
+    const finalCount = nonArchived.filter((a) => getStageRank(a.status) >= 4).length;
+    const offerCount = nonArchived.filter((a) => getStageRank(a.status) >= 5).length;
+
+    const pct = (part: number, total: number) => {
+      if (total <= 0) return 0;
+      return Math.round((part / total) * 100);
+    };
+
+    return [
+      {
+        stage: 'Applied',
+        count: appliedCount,
+        color: 'bg-blue-500',
+        conversionLabel: 'Top of funnel',
+      },
+      {
+        stage: 'Screening',
+        count: screeningCount,
+        color: 'bg-purple-500',
+        conversionLabel: `${pct(screeningCount, appliedCount)}% conversion`,
+      },
+      {
+        stage: 'Technical',
+        count: technicalCount,
+        color: 'bg-amber-500',
+        conversionLabel: `${pct(technicalCount, screeningCount)}% conversion`,
+      },
+      {
+        stage: 'Final',
+        count: finalCount,
+        color: 'bg-orange-500',
+        conversionLabel: `${pct(finalCount, technicalCount)}% conversion`,
+      },
+      {
+        stage: 'Offer',
+        count: offerCount,
+        color: 'bg-emerald-500',
+        conversionLabel: `${pct(offerCount, finalCount)}% from Final (${pct(
+          offerCount,
+          appliedCount
+        )}% overall)`,
+      },
+    ];
+  }, [applications]);
+
+  // Sorted applications for table view
+  const sortedApps = useMemo(() => {
+    if (!sortField || !sortDirection) return filteredApps;
+
+    const PRIORITY_ORDER: Record<string, number> = {
+      urgent: 4,
+      high: 3,
+      medium: 2,
+      low: 1,
+    };
+
+    const STATUS_ORDER: Record<string, number> = {
+      saved: 1,
+      applied: 2,
+      screening: 3,
+      technical: 4,
+      manager: 5,
+      offer: 6,
+      rejected: 7,
+      withdrawn: 8,
+    };
+
+    return [...filteredApps].sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case 'company':
+          comparison = a.company_name.localeCompare(b.company_name);
+          break;
+        case 'role':
+          comparison = a.role_title.localeCompare(b.role_title);
+          break;
+        case 'status':
+          comparison = (STATUS_ORDER[a.status] || 0) - (STATUS_ORDER[b.status] || 0);
+          break;
+        case 'priority':
+          comparison = (PRIORITY_ORDER[a.priority] || 0) - (PRIORITY_ORDER[b.priority] || 0);
+          break;
+        case 'salary': {
+          const aSal = a.salary_max || a.salary_min || 0;
+          const bSal = b.salary_max || b.salary_min || 0;
+          comparison = aSal - bSal;
+          break;
+        }
+        case 'followup': {
+          const aDate = a.next_followup_date || '';
+          const bDate = b.next_followup_date || '';
+          if (!aDate && !bDate) comparison = 0;
+          else if (!aDate) comparison = 1;
+          else if (!bDate) comparison = -1;
+          else comparison = aDate.localeCompare(bDate);
+          break;
+        }
+        case 'updated': {
+          const aDate = a.updated_at || a.created_at || '';
+          const bDate = b.updated_at || b.created_at || '';
+          comparison = aDate.localeCompare(bDate);
+          break;
+        }
+      }
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [filteredApps, sortField, sortDirection]);
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return (
+        <ArrowUpDown className="size-3 text-ink-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+      );
+    }
+    if (sortDirection === 'asc') {
+      return <ArrowUp className="size-3 text-indigo-500 font-bold" />;
+    }
+    return <ArrowDown className="size-3 text-indigo-500 font-bold" />;
+  };
 
   return (
     <div className="w-full px-6 py-5 space-y-4 select-none pb-20">
@@ -823,26 +1163,27 @@ export const CareerTab: React.FC = () => {
           <div className="relative flex-1 max-w-sm min-w-[180px]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-ink-3 pointer-events-none" />
             <input
+              ref={searchInputRef}
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search company, role, notes..."
+              placeholder="Search company, role, notes... (Press /)"
               className="w-full h-8.5 pl-8 pr-3 rounded-xl border border-line bg-surface-2 text-xs text-ink placeholder:text-ink-4 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
             />
           </div>
         </div>
 
-        {/* Right Section: Status Indicator, Export, and New Application */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        {/* Right Section: Status Indicator, Shortcuts Help, Export, and New Application */}
+        <div className="flex items-center gap-2 shrink-0">
           {/* Save Status Indicator */}
           {saveState === 'saving' && (
-            <span className="text-xs text-ink-3 flex items-center gap-1.5">
+            <span className="text-xs text-ink-3 flex items-center gap-1.5 mr-1">
               <Loader2 className="size-3 animate-spin text-ink-3" />
               <span>Saving…</span>
             </span>
           )}
           {saveState === 'saved' && (
-            <span className="text-xs text-emerald-500 font-semibold flex items-center gap-1 animate-in fade-in">
+            <span className="text-xs text-emerald-500 font-semibold flex items-center gap-1 animate-in fade-in mr-1">
               <Check className="size-3" />
               <span>Saved ✓</span>
             </span>
@@ -851,12 +1192,23 @@ export const CareerTab: React.FC = () => {
             <button
               type="button"
               onClick={() => fetchApplications()}
-              className="text-xs text-rose-500 font-semibold flex items-center gap-1 hover:underline cursor-pointer"
+              className="text-xs text-rose-500 font-semibold flex items-center gap-1 hover:underline cursor-pointer mr-1"
             >
               <AlertCircle className="size-3" />
               <span>Save failed, retry</span>
             </button>
           )}
+
+          {/* Keyboard Shortcuts (?) Button */}
+          <button
+            type="button"
+            onClick={() => setIsHelpModalOpen(true)}
+            className="size-8.5 rounded-xl border border-line bg-surface-2 hover:bg-surface-3 flex items-center justify-center text-ink-3 hover:text-ink transition-colors cursor-pointer"
+            title="Keyboard shortcuts (?)"
+            aria-label="Keyboard shortcuts"
+          >
+            <HelpCircle className="size-3.5" />
+          </button>
 
           {/* Export Button */}
           <button
@@ -880,6 +1232,204 @@ export const CareerTab: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* 3. Collapsible Next Actions Strip */}
+      {!isLoading && (
+        <div className="rounded-2xl border border-line bg-surface-2/30 p-3.5 space-y-3 transition-all">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-1.5 font-bold text-xs text-ink">
+                <Zap className="size-3.5 text-amber-500" />
+                <span>Next Actions</span>
+              </div>
+              {nextActionsData.totalCount > 0 ? (
+                <div className="flex items-center gap-1.5 text-[10px] font-mono">
+                  {nextActionsData.overdue.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-bold">
+                      {nextActionsData.overdue.length} overdue
+                    </span>
+                  )}
+                  {nextActionsData.dueToday.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-bold">
+                      {nextActionsData.dueToday.length} today
+                    </span>
+                  )}
+                  {nextActionsData.stale.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-neutral-500/15 text-neutral-600 dark:text-neutral-400 border border-neutral-500/30 font-semibold">
+                      {nextActionsData.stale.length} stale (&gt;10d)
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-[11px] text-ink-3 font-medium">All clear 🎉</span>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={toggleNextActions}
+              className="h-7 px-2 rounded-lg border border-line bg-surface hover:bg-surface-2 text-ink-3 hover:text-ink text-[11px] font-medium flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              <span>{isNextActionsCollapsed ? 'Show' : 'Hide'}</span>
+              {isNextActionsCollapsed ? (
+                <ChevronDown className="size-3" />
+              ) : (
+                <ChevronUp className="size-3" />
+              )}
+            </button>
+          </div>
+
+          {!isNextActionsCollapsed && (
+            <>
+              {nextActionsData.totalCount === 0 ? (
+                <div className="py-3 text-center text-xs text-ink-3 flex items-center justify-center gap-2 border-t border-line/50">
+                  <span className="text-base">🎉</span>
+                  <span className="font-medium">
+                    All clear — no overdue follow-ups, items due today, or stale applications.
+                  </span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-line/50">
+                  {/* Due Today */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-ink-2 px-1">
+                      <span>Due Today</span>
+                      <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-surface border border-line text-ink-3">
+                        {nextActionsData.dueToday.length}
+                      </span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {nextActionsData.dueToday.map((app) => (
+                        <div
+                          key={app.id}
+                          onClick={() => handleOpenDetail(app)}
+                          className="p-2.5 rounded-xl border border-line bg-surface hover:bg-surface-3 transition-colors cursor-pointer flex items-center justify-between gap-2 group"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div
+                              className={`size-6 rounded-md border flex items-center justify-center font-bold text-[10px] shrink-0 ${getCompanyAvatarColor(
+                                app.company_name
+                              )}`}
+                            >
+                              {app.company_name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-ink truncate group-hover:text-indigo-500 transition-colors">
+                                {app.company_name}
+                              </p>
+                              <p className="text-[10px] text-ink-3 truncate">
+                                {app.notes ? app.notes.slice(0, 36) : app.role_title}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+                            Today
+                          </span>
+                        </div>
+                      ))}
+                      {nextActionsData.dueToday.length === 0 && (
+                        <p className="text-[11px] text-ink-4 italic px-1 py-1">No items due today</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Overdue */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-ink-2 px-1">
+                      <span className="text-rose-600 dark:text-rose-400">Overdue</span>
+                      <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-surface border border-line text-rose-500 font-bold">
+                        {nextActionsData.overdue.length}
+                      </span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {nextActionsData.overdue.map((app) => {
+                        const due = formatRelativeDueDate(app.next_followup_date);
+                        return (
+                          <div
+                            key={app.id}
+                            onClick={() => handleOpenDetail(app)}
+                            className="p-2.5 rounded-xl border border-rose-500/30 bg-surface hover:bg-rose-500/5 transition-colors cursor-pointer flex items-center justify-between gap-2 group"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div
+                                className={`size-6 rounded-md border flex items-center justify-center font-bold text-[10px] shrink-0 ${getCompanyAvatarColor(
+                                  app.company_name
+                                )}`}
+                              >
+                                {app.company_name.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-ink truncate group-hover:text-rose-500 transition-colors">
+                                  {app.company_name}
+                                </p>
+                                <p className="text-[10px] text-ink-3 truncate">
+                                  {app.notes ? app.notes.slice(0, 36) : app.role_title}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 shrink-0">
+                              {due?.label || 'Overdue'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {nextActionsData.overdue.length === 0 && (
+                        <p className="text-[11px] text-ink-4 italic px-1 py-1">No overdue items</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Stale (>10d) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-ink-2 px-1">
+                      <span>Stale (&gt;10d in stage)</span>
+                      <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-surface border border-line text-ink-3">
+                        {nextActionsData.stale.length}
+                      </span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {nextActionsData.stale.map((app) => {
+                        const days = getDaysInStage(app);
+                        return (
+                          <div
+                            key={app.id}
+                            onClick={() => handleOpenDetail(app)}
+                            className="p-2.5 rounded-xl border border-line bg-surface hover:bg-surface-3 transition-colors cursor-pointer flex items-center justify-between gap-2 group"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div
+                                className={`size-6 rounded-md border flex items-center justify-center font-bold text-[10px] shrink-0 ${getCompanyAvatarColor(
+                                  app.company_name
+                                )}`}
+                              >
+                                {app.company_name.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-ink truncate group-hover:text-indigo-500 transition-colors">
+                                  {app.company_name}
+                                </p>
+                                <p className="text-[10px] text-ink-3 truncate">
+                                  {STATUS_CONFIG[app.status]?.label} · {app.role_title}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+                              {days}d in stage
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {nextActionsData.stale.length === 0 && (
+                        <p className="text-[11px] text-ink-4 italic px-1 py-1">No stale applications</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {/* Main Content Area */}
       {isLoading ? (
@@ -926,82 +1476,293 @@ export const CareerTab: React.FC = () => {
           </DragOverlay>
         </DndContext>
       ) : (
-        /* TABLE VIEW */
-        <div className="rounded-2xl border border-line bg-surface overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-line bg-surface-2 text-ink-3 font-semibold uppercase text-[10px] tracking-wider">
-                <tr>
-                  <th className="px-4 py-3">Company &amp; Role</th>
-                  <th className="px-3 py-3">Status</th>
-                  <th className="px-3 py-3">Priority</th>
-                  <th className="px-3 py-3">Applied Date</th>
-                  <th className="px-3 py-3">Compensation</th>
-                  <th className="px-3 py-3">Next Action</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {filteredApps.map((app) => (
-                  <tr
-                    key={app.id}
-                    onClick={() => handleOpenDetail(app)}
-                    className="hover:bg-surface-2/60 transition-colors cursor-pointer"
-                  >
-                    <td className="px-4 py-3.5">
-                      <div className="font-bold text-ink text-xs">{app.company_name}</div>
-                      <div className="text-[11px] text-ink-3">{app.role_title}</div>
-                    </td>
-                    <td className="px-3 py-3.5">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                          STATUS_CONFIG[app.status]?.bg
-                        } ${STATUS_CONFIG[app.status]?.color}`}
-                      >
-                        <span
-                          className={`size-1.5 rounded-full ${
-                            STATUS_CONFIG[app.status]?.dot
-                          }`}
-                        />
-                        <span>{STATUS_CONFIG[app.status]?.label}</span>
-                      </span>
-                    </td>
-                    <td className="px-3 py-3.5">
-                      <span
-                        className={`inline-flex px-1.5 py-0.5 rounded-md text-[10px] font-bold border uppercase ${
-                          PRIORITY_CONFIG[app.priority]?.badge
-                        }`}
-                      >
-                        {app.priority}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3.5 text-ink-3 font-mono text-[11px]">
-                      {app.applied_date ? app.applied_date.split('T')[0] : '—'}
-                    </td>
-                    <td className="px-3 py-3.5 text-ink-2 font-mono text-[11px]">
-                      {app.salary_min
-                        ? `$${app.salary_min.toLocaleString()} ${
-                            app.salary_max ? `- $${app.salary_max.toLocaleString()}` : ''
-                          }`
-                        : '—'}
-                    </td>
-                    <td className="px-3 py-3.5 text-ink-3 text-[11px]">
-                      {app.next_followup_date || 'No upcoming alarms'}
-                    </td>
-                    <td className="px-4 py-3.5 text-right space-x-1" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenDetail(app)}
-                        className="p-1.5 rounded-lg hover:bg-surface-3 text-ink-3 hover:text-ink cursor-pointer"
-                        title="View detail"
-                      >
-                        <ChevronRight className="size-4" />
-                      </button>
-                    </td>
+        /* TABLE VIEW WITH SORTABLE COLUMNS & STICKY HEADER */
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-line bg-surface overflow-hidden shadow-xs">
+            <div className="overflow-x-auto max-h-[620px] [scrollbar-width:thin]">
+              <table className="w-full text-left text-xs">
+                <thead className="sticky top-0 bg-surface-2 z-10 border-b border-line text-ink-3 font-semibold uppercase text-[10px] tracking-wider select-none shadow-2xs">
+                  <tr>
+                    <th
+                      onClick={() => handleSort('company')}
+                      className="px-4 py-3 cursor-pointer hover:text-ink transition-colors group select-none"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span>Company</span>
+                        {renderSortIcon('company')}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('role')}
+                      className="px-3 py-3 cursor-pointer hover:text-ink transition-colors group select-none"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span>Role</span>
+                        {renderSortIcon('role')}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('status')}
+                      className="px-3 py-3 cursor-pointer hover:text-ink transition-colors group select-none"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span>Status</span>
+                        {renderSortIcon('status')}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('priority')}
+                      className="px-3 py-3 cursor-pointer hover:text-ink transition-colors group select-none"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span>Priority</span>
+                        {renderSortIcon('priority')}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('salary')}
+                      className="px-3 py-3 cursor-pointer hover:text-ink transition-colors group select-none"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span>Salary</span>
+                        {renderSortIcon('salary')}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('followup')}
+                      className="px-3 py-3 cursor-pointer hover:text-ink transition-colors group select-none"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span>Follow-up</span>
+                        {renderSortIcon('followup')}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('updated')}
+                      className="px-3 py-3 cursor-pointer hover:text-ink transition-colors group select-none"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span>Updated</span>
+                        {renderSortIcon('updated')}
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {sortedApps.map((app) => {
+                    const dueInfo = formatRelativeDueDate(app.next_followup_date);
+                    const updatedInfo = formatRelativeDate(app.updated_at || app.created_at);
+                    const avatarColor = getCompanyAvatarColor(app.company_name);
+
+                    return (
+                      <tr
+                        key={app.id}
+                        onClick={() => handleOpenDetail(app)}
+                        className="hover:bg-surface-2/60 transition-colors cursor-pointer group"
+                      >
+                        {/* Company */}
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div
+                              className={`size-6 rounded-md border flex items-center justify-center font-bold text-[10px] shrink-0 ${avatarColor}`}
+                            >
+                              {app.company_name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-ink text-xs truncate group-hover:text-indigo-500 transition-colors">
+                                  {app.company_name}
+                                </span>
+                                {app.type === 'scholarship' && (
+                                  <span className="text-[9px] px-1 py-0.2 rounded-sm bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold border border-purple-500/20 shrink-0">
+                                    Scholarship
+                                  </span>
+                                )}
+                              </div>
+                              {app.company_location && (
+                                <p className="text-[10px] text-ink-3 truncate mt-0.5">
+                                  {app.company_location}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Role */}
+                        <td className="px-3 py-3.5 text-ink-2 font-medium text-xs">
+                          {app.role_title}
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-3 py-3.5">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                              STATUS_CONFIG[app.status]?.bg
+                            } ${STATUS_CONFIG[app.status]?.color}`}
+                          >
+                            <span
+                              className={`size-1.5 rounded-full ${
+                                STATUS_CONFIG[app.status]?.dot
+                              }`}
+                            />
+                            <span>{STATUS_CONFIG[app.status]?.label}</span>
+                          </span>
+                        </td>
+
+                        {/* Priority */}
+                        <td className="px-3 py-3.5">
+                          <span
+                            className={`inline-flex px-1.5 py-0.5 rounded-md text-[10px] font-bold border uppercase ${
+                              PRIORITY_CONFIG[app.priority]?.badge
+                            }`}
+                          >
+                            {app.priority}
+                          </span>
+                        </td>
+
+                        {/* Salary */}
+                        <td className="px-3 py-3.5 text-ink-2 font-mono text-[11px]">
+                          {app.salary_min || app.salary_max
+                            ? `$${app.salary_min ? `${Math.round(app.salary_min / 1000)}k` : ''}${
+                                app.salary_min && app.salary_max ? ' – ' : ''
+                              }${app.salary_max ? `${Math.round(app.salary_max / 1000)}k` : ''}`
+                            : '—'}
+                        </td>
+
+                        {/* Follow-up with relative date & absolute tooltip */}
+                        <td className="px-3 py-3.5 text-[11px]">
+                          {dueInfo ? (
+                            <span
+                              title={`Target date: ${app.next_followup_date}`}
+                              className={`font-medium ${
+                                dueInfo.status === 'overdue'
+                                  ? 'text-rose-500 font-bold'
+                                  : dueInfo.status === 'soon'
+                                  ? 'text-amber-500 font-semibold'
+                                  : 'text-ink-3'
+                              }`}
+                            >
+                              {dueInfo.label}
+                            </span>
+                          ) : (
+                            <span className="text-ink-4">—</span>
+                          )}
+                        </td>
+
+                        {/* Updated with relative date & absolute tooltip */}
+                        <td className="px-3 py-3.5 text-ink-3 text-[11px]">
+                          <span title={`Last updated: ${updatedInfo.full}`}>
+                            {updatedInfo.label}
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td
+                          className="px-4 py-3.5 text-right space-x-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleOpenDetail(app)}
+                            className="p-1.5 rounded-lg hover:bg-surface-3 text-ink-3 hover:text-ink cursor-pointer"
+                            title="View application detail"
+                          >
+                            <ChevronRight className="size-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {sortedApps.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="py-12 text-center text-xs text-ink-3">
+                        No applications found matching your criteria.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Pipeline Stage Funnel Summary (Collapsible under Table view) */}
+          <div className="rounded-2xl border border-line bg-surface overflow-hidden shadow-xs">
+            <button
+              type="button"
+              onClick={toggleFunnelCollapsed}
+              className="w-full px-5 py-3.5 bg-surface-2/40 hover:bg-surface-2/70 transition-colors flex items-center justify-between cursor-pointer border-b border-line/60 select-none"
+            >
+              <div className="flex items-center gap-2.5">
+                <TrendingUp className="size-4 text-indigo-500" />
+                <span className="text-xs font-bold text-ink">Stage Conversion Funnel</span>
+                <span className="text-[10px] text-ink-3 font-mono hidden sm:inline">
+                  (Applied → Screening → Technical → Final → Offer)
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-ink-3 font-medium">
+                  {isFunnelCollapsed ? 'Show funnel' : 'Hide funnel'}
+                </span>
+                {isFunnelCollapsed ? (
+                  <ChevronDown className="size-3.5 text-ink-3" />
+                ) : (
+                  <ChevronUp className="size-3.5 text-ink-3" />
+                )}
+              </div>
+            </button>
+
+            {!isFunnelCollapsed && (
+              <div className="p-5 space-y-4">
+                {/* Funnel bars */}
+                <div className="space-y-3">
+                  {funnelData.map((item) => (
+                    <div key={item.stage} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className={`size-2 rounded-full ${item.color}`} />
+                          <span className="font-bold text-ink">{item.stage}</span>
+                          <span className="font-mono text-[11px] px-1.5 py-0.2 rounded-md bg-surface-2 border border-line text-ink-3 font-semibold">
+                            {item.count}
+                          </span>
+                        </div>
+                        <span className="font-mono text-[11px] text-ink-3 font-medium">
+                          {item.conversionLabel}
+                        </span>
+                      </div>
+
+                      {/* CSS Progress Bar */}
+                      <div className="h-3 w-full bg-surface-2 rounded-full border border-line/70 overflow-hidden relative">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${item.color}`}
+                          style={{
+                            width: `${Math.max(
+                              item.count > 0 ? 8 : 0,
+                              Math.min(
+                                100,
+                                Math.round((item.count / Math.max(funnelData[0].count, 1)) * 100)
+                              )
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Funnel summary footer */}
+                <div className="pt-3 border-t border-line/60 flex items-center justify-between text-xs text-ink-3">
+                  <span>Pipeline conversion health</span>
+                  <span className="font-mono font-bold text-ink">
+                    Overall Offer Rate:{' '}
+                    {funnelData[0].count > 0
+                      ? Math.round((funnelData[4].count / funnelData[0].count) * 100)
+                      : 0}
+                    %
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1016,6 +1777,72 @@ export const CareerTab: React.FC = () => {
             showToast(`Added application for ${newApp.company_name}!`);
           }}
         />
+      )}
+
+      {/* KEYBOARD SHORTCUTS HELP MODAL */}
+      {isHelpModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-2xs flex items-center justify-center p-4 animate-in fade-in select-none"
+          onClick={() => setIsHelpModalOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-2xl border border-line bg-surface shadow-2xl overflow-hidden animate-in zoom-in-95"
+          >
+            <div className="p-4 border-b border-line bg-surface-2/40 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="size-4 text-indigo-500" />
+                <h3 className="text-xs font-bold text-ink">Keyboard Shortcuts</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsHelpModalOpen(false)}
+                className="text-ink-3 hover:text-ink cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between py-1 border-b border-line/40">
+                <span className="text-ink-2">New application</span>
+                <kbd className="px-2 py-0.5 rounded-md bg-surface-2 border border-line font-mono font-bold text-ink text-[11px]">
+                  N
+                </kbd>
+              </div>
+              <div className="flex items-center justify-between py-1 border-b border-line/40">
+                <span className="text-ink-2">Focus search</span>
+                <kbd className="px-2 py-0.5 rounded-md bg-surface-2 border border-line font-mono font-bold text-ink text-[11px]">
+                  /
+                </kbd>
+              </div>
+              <div className="flex items-center justify-between py-1 border-b border-line/40">
+                <span className="text-ink-2">Board view</span>
+                <kbd className="px-2 py-0.5 rounded-md bg-surface-2 border border-line font-mono font-bold text-ink text-[11px]">
+                  B
+                </kbd>
+              </div>
+              <div className="flex items-center justify-between py-1 border-b border-line/40">
+                <span className="text-ink-2">Table view</span>
+                <kbd className="px-2 py-0.5 rounded-md bg-surface-2 border border-line font-mono font-bold text-ink text-[11px]">
+                  T
+                </kbd>
+              </div>
+              <div className="flex items-center justify-between py-1 border-b border-line/40">
+                <span className="text-ink-2">Close panel / modal</span>
+                <kbd className="px-2 py-0.5 rounded-md bg-surface-2 border border-line font-mono font-bold text-ink text-[11px]">
+                  Esc
+                </kbd>
+              </div>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-ink-2">Toggle sidebar rail</span>
+                <kbd className="px-2 py-0.5 rounded-md bg-surface-2 border border-line font-mono font-bold text-ink text-[11px]">
+                  Ctrl / ⌘ + B
+                </kbd>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* APPLICATION SLIDE-OVER DETAIL PANEL (480px) */}
