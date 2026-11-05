@@ -31,8 +31,19 @@ export async function GET(req: NextRequest) {
     const links = await getShortLinks();
     const isAdmin = await isAdminRequest(req);
 
-    // If request is from admin, return all links. If public, filter to active only.
-    const visibleLinks = isAdmin ? links : links.filter((l) => l.is_active !== false);
+    // If request is from admin, return all links. If public, filter to active only and strip internal fields.
+    const visibleLinks = isAdmin
+      ? links
+      : links
+          .filter((l) => l.is_active !== false)
+          .map((l) => ({
+            id: l.id,
+            slug: l.slug,
+            title: l.title,
+            description: l.description || '',
+            clicks: l.clicks || 0,
+            is_active: true,
+          }));
     const totalClicks = visibleLinks.reduce((sum, link) => sum + (link.clicks || 0), 0);
 
     return NextResponse.json({

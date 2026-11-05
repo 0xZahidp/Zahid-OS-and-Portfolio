@@ -23,6 +23,33 @@ function getClientIp(req: NextRequest): string {
   return '127.0.0.1';
 }
 
+interface RateLimitBucket {
+  count: number;
+  resetAt: number;
+}
+
+const getIpRateLimits = new Map<string, RateLimitBucket>();
+const postIpRateLimits = new Map<string, RateLimitBucket>();
+
+function checkRateLimit(
+  map: Map<string, RateLimitBucket>,
+  ip: string,
+  maxRequests: number,
+  windowMs: number
+): boolean {
+  const now = Date.now();
+  const bucket = map.get(ip);
+  if (!bucket || now > bucket.resetAt) {
+    map.set(ip, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  if (bucket.count >= maxRequests) {
+    return false;
+  }
+  bucket.count++;
+  return true;
+}
+
 const lastTempMailCheckTimes = new Map<string, number>();
 
 async function checkResendForInbox(inboxParam: string, existingResendIds: Set<string>): Promise<boolean> {
@@ -75,6 +102,15 @@ async function checkResendForInbox(inboxParam: string, existingResendIds: Set<st
 // 1. GET: Fetch messages or check active domain (sub-10ms response)
 export async function GET(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req);
+    // Rate limit: max 60 requests per minute per IP for GET
+    if (!checkRateLimit(getIpRateLimits, clientIp, 60, 60000)) {
+      return NextResponse.json(
+        { success: false, error: 'Too many requests. Please slow down.' },
+        { status: 429 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const host = req.headers.get('host') || undefined;
     const resolvedDomain = await resolveTempMailDomain(host);
@@ -98,6 +134,17 @@ export async function GET(req: NextRequest) {
             'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
           },
         }
+      );
+    }
+
+    // Require matching secret token to view inbox messages
+    if (!tokenParam) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Secret token is required to access temporary inbox messages.',
+        },
+        { status: 401 }
       );
     }
 
@@ -172,6 +219,15 @@ export async function GET(req: NextRequest) {
 // 2. POST: Create a new temp inbox under your chosen domain
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req);
+    // Rate limit: max 10 inbox creations per minute per IP
+    if (!checkRateLimit(postIpRateLimits, clientIp, 10, 60000)) {
+      return NextResponse.json(
+        { success: false, error: 'Rate limit exceeded: too many inbox creations. Please wait a minute.' },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const host = req.headers.get('host') || undefined;
     const requestedDomain = body.domain && typeof body.domain === 'string' ? body.domain.trim().toLowerCase() : undefined;

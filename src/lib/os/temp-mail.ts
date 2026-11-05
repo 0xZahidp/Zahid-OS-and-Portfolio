@@ -524,8 +524,8 @@ export async function getTempInboxMessages(
         .maybeSingle();
 
       if (inbox) {
-        // If token provided, verify ownership
-        if (token && inbox.token && inbox.token !== token) {
+        // Enforce secret token verification: reading inbox messages strictly requires valid ownership token
+        if (!token || !inbox.token || inbox.token !== token) {
           return { inbox: null, messages: [] };
         }
 
@@ -556,7 +556,8 @@ export async function getTempInboxMessages(
     return { inbox: null, messages: [] };
   }
 
-  if (token && localInbox.token && localInbox.token !== token) {
+  // Local fallback: enforce secret token verification
+  if (!token || !localInbox.token || localInbox.token !== token) {
     return { inbox: null, messages: [] };
   }
 

@@ -36,26 +36,65 @@ export async function GET() {
       try {
         const supabase = supabaseServer();
 
-        // 1. Try Relational Tables in Supabase
-        const { data: profileRow } = await supabase.from('profiles').select('*').limit(1).maybeSingle();
+        // 1. Try Relational Tables in Supabase (Explicit whitelisted columns & public site_settings keys only)
+        const { data: profileRow } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, headline, bio, avatar_url, location, timezone, availability, github_followers_count, roles, updated_at')
+          .limit(1)
+          .maybeSingle();
 
         if (profileRow) {
           const [bioRes, expRes, projRes, skillRes, langRes, socRes, peepRes, setRes] = await Promise.all([
-            supabase.from('bio_paragraphs').select('*').order('sort_order', { ascending: true }),
-            supabase.from('experiences').select('*').order('sort_order', { ascending: true }),
-            supabase.from('projects').select('*').order('sort_order', { ascending: true }),
-            supabase.from('skills').select('*').order('sort_order', { ascending: true }),
-            supabase.from('languages').select('*').order('sort_order', { ascending: true }),
-            supabase.from('social_links').select('*').order('sort_order', { ascending: true }),
-            supabase.from('suggested_people').select('*').order('sort_order', { ascending: true }),
-            supabase.from('site_settings').select('*'),
+            supabase
+              .from('bio_paragraphs')
+              .select('sort_order, content')
+              .order('sort_order', { ascending: true }),
+            supabase
+              .from('experiences')
+              .select('id, company, company_url, company_logo, position, period, type, workplace_type, description, highlights, bullet_points, tags, is_current, sort_order')
+              .order('sort_order', { ascending: true }),
+            supabase
+              .from('projects')
+              .select('id, title, description, tags, image_url, project_url, repository_url, stars, highlight_badge, logo_type, sort_order')
+              .order('sort_order', { ascending: true }),
+            supabase
+              .from('skills')
+              .select('id, name, category, color, sort_order')
+              .order('sort_order', { ascending: true }),
+            supabase
+              .from('languages')
+              .select('id, name, proficiency, rating, note, has_voice, sort_order')
+              .order('sort_order', { ascending: true }),
+            supabase
+              .from('social_links')
+              .select('id, platform, url, handle, label, sort_order')
+              .order('sort_order', { ascending: true }),
+            supabase
+              .from('suggested_people')
+              .select('id, name, role, avatar_url, url, handle, sort_order')
+              .order('sort_order', { ascending: true }),
+            supabase
+              .from('site_settings')
+              .select('key, value')
+              .in('key', [
+                'works_settings',
+                'based_in_settings',
+                'github_settings',
+                'suggested_people_rich',
+                'library_data',
+              ]),
           ]);
 
           const worksSetting = setRes.data?.find((s) => s.key === 'works_settings')?.value;
           const basedInSetting = setRes.data?.find((s) => s.key === 'based_in_settings')?.value;
-          const githubSetting = setRes.data?.find((s) => s.key === 'github_settings')?.value;
+          const rawGithubSetting = setRes.data?.find((s) => s.key === 'github_settings')?.value as Record<string, unknown> | undefined;
           const richPeopleSetting = setRes.data?.find((s) => s.key === 'suggested_people_rich')?.value;
           const librarySetting = setRes.data?.find((s) => s.key === 'library_data')?.value;
+
+          // Never expose tokens or private fields
+          const githubSetting = rawGithubSetting
+            ? { ...rawGithubSetting, token: undefined }
+            : defaultPortfolioContent.githubSettings;
 
           const assembled: PortfolioContent = {
             profile: {
@@ -84,7 +123,7 @@ export async function GET() {
               : defaultPortfolioContent.suggestedPeople,
             worksSettings: worksSetting || defaultPortfolioContent.worksSettings,
             basedInSettings: basedInSetting || defaultPortfolioContent.basedInSettings,
-            githubSettings: githubSetting || defaultPortfolioContent.githubSettings,
+            githubSettings: githubSetting as unknown as typeof defaultPortfolioContent.githubSettings,
             libraryData: librarySetting || defaultPortfolioContent.libraryData,
             updatedAt: profileRow.updated_at || new Date().toISOString(),
           };
@@ -104,10 +143,17 @@ export async function GET() {
           .maybeSingle();
 
         if (!legacyErr && legacyData?.data) {
+          const legacyObj = legacyData.data as PortfolioContent;
+          const sanitizedLegacy: PortfolioContent = {
+            ...legacyObj,
+            githubSettings: legacyObj.githubSettings
+              ? { ...legacyObj.githubSettings, token: undefined }
+              : defaultPortfolioContent.githubSettings,
+          };
           return NextResponse.json({
             success: true,
             source: 'supabase_legacy',
-            content: legacyData.data as PortfolioContent,
+            content: sanitizedLegacy,
           });
         }
       } catch (err) {
@@ -118,10 +164,16 @@ export async function GET() {
     // 3. Try Local File
     const localContent = await readLocalContent();
     if (localContent) {
+      const sanitizedLocal: PortfolioContent = {
+        ...localContent,
+        githubSettings: localContent.githubSettings
+          ? { ...localContent.githubSettings, token: undefined }
+          : defaultPortfolioContent.githubSettings,
+      };
       return NextResponse.json({
         success: true,
         source: 'local_file',
-        content: localContent,
+        content: sanitizedLocal,
       });
     }
 
