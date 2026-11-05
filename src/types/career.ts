@@ -26,6 +26,8 @@ export type CareerLocationType = 'remote' | 'hybrid' | 'onsite';
 
 export type CareerSalaryPeriod = 'yearly' | 'monthly' | 'hourly';
 
+export type CareerOpportunityType = 'job' | 'scholarship';
+
 export interface CareerContact {
   id: string;
   name: string;
@@ -56,8 +58,10 @@ export interface CareerApplication {
   company_location?: string;
   company_logo?: string;
   role_title: string;
+  type?: CareerOpportunityType; // 'job' | 'scholarship', defaults to 'job'
   status: CareerApplicationStatus;
   priority: CareerPriorityLevel;
+  stageChangedAt?: string; // ISO timestamp when stage last changed
   source: CareerSourceType;
   source_detail?: string;
   source_url?: string;

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Briefcase,
   Plus,
   Search,
   Kanban,
@@ -134,7 +133,9 @@ export const CareerTab: React.FC = () => {
   const [search, setSearch] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'job' | 'scholarship'>('all');
   const [showArchived, setShowArchived] = useState<boolean>(false);
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
@@ -176,6 +177,7 @@ export const CareerTab: React.FC = () => {
   // Quick Status change
   const handleUpdateStatus = async (appId: string, newStatus: CareerApplicationStatus) => {
     try {
+      setSaveState('saving');
       const res = await fetch('/api/admin/career', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -189,9 +191,15 @@ export const CareerTab: React.FC = () => {
         if (activeDetailApp?.id === appId) {
           setActiveDetailApp(data.application);
         }
+        setSaveState('saved');
+        setTimeout(() => setSaveState('idle'), 2000);
         showToast(`Status updated to ${STATUS_CONFIG[newStatus].label}`);
+      } else {
+        setSaveState('error');
+        showToast('Error updating status');
       }
     } catch {
+      setSaveState('error');
       showToast('Error updating status');
     }
   };
@@ -200,15 +208,22 @@ export const CareerTab: React.FC = () => {
   const handleDeleteApplication = async (appId: string) => {
     if (!confirm('Are you sure you want to delete this application record?')) return;
     try {
+      setSaveState('saving');
       const res = await fetch(`/api/admin/career?id=${appId}`, { method: 'DELETE' });
       if (res.ok) {
         setApplications((prev) => prev.filter((a) => a.id !== appId));
         if (activeDetailApp?.id === appId) {
           setActiveDetailApp(null);
         }
+        setSaveState('saved');
+        setTimeout(() => setSaveState('idle'), 2000);
         showToast('Application deleted');
+      } else {
+        setSaveState('error');
+        showToast('Error deleting application');
       }
     } catch {
+      setSaveState('error');
       showToast('Error deleting application');
     }
   };
@@ -234,6 +249,7 @@ export const CareerTab: React.FC = () => {
 
       if (statusFilter !== 'all' && app.status !== statusFilter) return false;
       if (priorityFilter !== 'all' && app.priority !== priorityFilter) return false;
+      if (typeFilter !== 'all' && (app.type || 'job') !== typeFilter) return false;
 
       if (search.trim()) {
         const q = search.toLowerCase().trim();
@@ -247,7 +263,7 @@ export const CareerTab: React.FC = () => {
       }
       return true;
     });
-  }, [applications, showArchived, statusFilter, priorityFilter, search]);
+  }, [applications, showArchived, statusFilter, priorityFilter, typeFilter, search]);
 
   // Generated follow-up email template
   const generatedEmail = useMemo(() => {
@@ -317,7 +333,7 @@ Md Zahid Hasan Patwary`;
   };
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="w-full px-6 py-5 space-y-4 select-none pb-20">
       {/* Toast notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 rounded-2xl bg-neutral-900 text-white px-4 py-2.5 shadow-xl border border-white/10 text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
@@ -326,106 +342,55 @@ Md Zahid Hasan Patwary`;
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="rounded-3xl border border-line bg-surface p-6 sm:p-7 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="grid size-8 place-items-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                <Briefcase className="size-4" />
-              </span>
-              <h2 className="text-xl font-bold tracking-tight text-ink">
-                Career Tracker &amp; Job Pipeline
-              </h2>
-              <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border border-neutral-500/20">
-                <Lock className="size-2.5" />
-                <span>Private &amp; Confidential</span>
-              </span>
-            </div>
-            <p className="text-xs text-ink-3 max-w-2xl">
-              Track confidential job applications, scheduled interview rounds, compensation targets, recruiter contacts, and proactive follow-ups without exposing them publicly.
-            </p>
+      {/* 1. Compact Single-Row Metrics Strip (56px tall) */}
+      <div className="h-14 px-4 rounded-2xl border border-line bg-surface-2/40 flex items-center justify-between text-xs overflow-x-auto shrink-0 [scrollbar-width:thin]">
+        <div className="flex items-center gap-6 divide-x divide-line/60">
+          <div className="flex items-center gap-2">
+            <Building className="size-3.5 text-ink-3" />
+            <span className="text-ink-3">Total</span>
+            <span className="font-mono font-bold text-ink">{metrics.total}</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleExportData}
-              className="btn btn-secondary h-9 px-3.5 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
-              title="Download full JSON backup"
-            >
-              <Download className="size-3.5" />
-              <span>Export</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="btn btn-primary h-9 px-4 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <Plus className="size-3.5" />
-              <span>New Application</span>
-            </button>
+          <div className="flex items-center gap-2 pl-6">
+            <TrendingUp className="size-3.5 text-indigo-500 dark:text-indigo-400" />
+            <span className="text-ink-3">Pipeline</span>
+            <span className="font-mono font-bold text-ink">{metrics.active}</span>
+          </div>
+
+          <div className="flex items-center gap-2 pl-6">
+            <Calendar className="size-3.5 text-amber-500 dark:text-amber-400" />
+            <span className="text-ink-3">Interviews</span>
+            <span className="font-mono font-bold text-ink">{metrics.interviewsScheduled}</span>
+          </div>
+
+          <div className="flex items-center gap-2 pl-6">
+            <Award className="size-3.5 text-emerald-500 dark:text-emerald-400" />
+            <span className="text-ink-3">Offers</span>
+            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{metrics.offers}</span>
+          </div>
+
+          <div className="flex items-center gap-2 pl-6">
+            <AlertCircle className={`size-3.5 ${metrics.overdueFollowups > 0 ? 'text-rose-500' : 'text-ink-3'}`} />
+            <span className={metrics.overdueFollowups > 0 ? 'text-rose-500 font-semibold' : 'text-ink-3'}>Overdue</span>
+            <span className={`font-mono font-bold ${metrics.overdueFollowups > 0 ? 'text-rose-500' : 'text-ink'}`}>
+              {metrics.overdueFollowups}
+            </span>
           </div>
         </div>
 
-        {/* Metrics Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6 pt-5 border-t border-line">
-          <div className="rounded-2xl border border-line bg-surface-2 p-3.5">
-            <div className="text-[11px] text-ink-3 font-medium flex items-center justify-between">
-              <span>Total Applications</span>
-              <Building className="size-3.5 opacity-60" />
-            </div>
-            <p className="text-xl font-black text-ink mt-1">{metrics.total}</p>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-surface-2 p-3.5">
-            <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium flex items-center justify-between">
-              <span>In Pipeline</span>
-              <TrendingUp className="size-3.5 opacity-80" />
-            </div>
-            <p className="text-xl font-black text-ink mt-1">{metrics.active}</p>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-surface-2 p-3.5">
-            <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium flex items-center justify-between">
-              <span>Interviews</span>
-              <Calendar className="size-3.5 opacity-80" />
-            </div>
-            <p className="text-xl font-black text-ink mt-1">{metrics.interviewsScheduled}</p>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-surface-2 p-3.5">
-            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center justify-between">
-              <span>Offers</span>
-              <Award className="size-3.5 opacity-80" />
-            </div>
-            <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
-              {metrics.offers}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-surface-2 p-3.5">
-            <div className="text-[11px] text-rose-600 dark:text-rose-400 font-medium flex items-center justify-between">
-              <span>Overdue Action</span>
-              <AlertCircle className="size-3.5 opacity-80" />
-            </div>
-            <p
-              className={`text-xl font-black mt-1 ${
-                metrics.overdueFollowups > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-ink'
-              }`}
-            >
-              {metrics.overdueFollowups}
-            </p>
-          </div>
+        {/* Private Confidential Beacon */}
+        <div className="hidden md:flex items-center gap-1.5 text-[10px] text-ink-3 font-semibold px-2 py-1 rounded-lg bg-surface border border-line">
+          <Lock className="size-3 text-ink-3" />
+          <span>Private CRM</span>
         </div>
       </div>
 
-      {/* Control Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Left: View Mode Toggle + Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* View mode */}
-          <div className="inline-flex rounded-xl border border-line bg-surface-2 p-0.5">
+      {/* 2. ONE Toolbar Row */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* Left Controls in Exact Specified Order */}
+        <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
+          {/* View switch (Board / Table) */}
+          <div className="inline-flex rounded-xl border border-line bg-surface-2 p-0.5 shrink-0">
             <button
               type="button"
               onClick={() => setViewMode('kanban')}
@@ -456,7 +421,7 @@ Md Zahid Hasan Patwary`;
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-9 px-3 rounded-xl border border-line bg-surface-2 text-xs font-medium text-ink focus:outline-hidden cursor-pointer"
+            className="h-8.5 px-2.5 rounded-xl border border-line bg-surface-2 text-xs font-medium text-ink focus:outline-hidden cursor-pointer shrink-0"
           >
             <option value="all">All Statuses</option>
             {Object.entries(STATUS_CONFIG).map(([k, v]) => (
@@ -470,7 +435,7 @@ Md Zahid Hasan Patwary`;
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="h-9 px-3 rounded-xl border border-line bg-surface-2 text-xs font-medium text-ink focus:outline-hidden cursor-pointer"
+            className="h-8.5 px-2.5 rounded-xl border border-line bg-surface-2 text-xs font-medium text-ink focus:outline-hidden cursor-pointer shrink-0"
           >
             <option value="all">All Priorities</option>
             <option value="urgent">Urgent</option>
@@ -479,11 +444,22 @@ Md Zahid Hasan Patwary`;
             <option value="low">Low</option>
           </select>
 
-          {/* Archived toggle */}
+          {/* Type filter (All / Job / Scholarship) */}
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as 'all' | 'job' | 'scholarship')}
+            className="h-8.5 px-2.5 rounded-xl border border-line bg-surface-2 text-xs font-medium text-ink focus:outline-hidden cursor-pointer shrink-0"
+          >
+            <option value="all">All Types</option>
+            <option value="job">Jobs</option>
+            <option value="scholarship">Scholarships</option>
+          </select>
+
+          {/* Show Archived toggle */}
           <button
             type="button"
             onClick={() => setShowArchived(!showArchived)}
-            className={`h-9 px-3 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
+            className={`h-8.5 px-3 rounded-xl border text-xs font-medium transition-all cursor-pointer shrink-0 ${
               showArchived
                 ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold'
                 : 'border-line bg-surface-2 text-ink-3 hover:text-ink'
@@ -491,18 +467,66 @@ Md Zahid Hasan Patwary`;
           >
             {showArchived ? 'Viewing Archived' : 'Show Archived'}
           </button>
+
+          {/* Search input (flex-1, max-w-sm) */}
+          <div className="relative flex-1 max-w-sm min-w-[180px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-ink-3 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search company, role, notes..."
+              className="w-full h-8.5 pl-8 pr-3 rounded-xl border border-line bg-surface-2 text-xs text-ink placeholder:text-ink-4 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+            />
+          </div>
         </div>
 
-        {/* Right: Search */}
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-ink-3 pointer-events-none" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search company, role..."
-            className="w-full h-9 pl-9 pr-3 rounded-xl border border-line bg-surface-2 text-xs text-ink placeholder:text-ink-4 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
-          />
+        {/* Right Section: Status Indicator, Export, and New Application */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* Save Status Indicator */}
+          {saveState === 'saving' && (
+            <span className="text-xs text-ink-3 flex items-center gap-1.5">
+              <Loader2 className="size-3 animate-spin text-ink-3" />
+              <span>Saving…</span>
+            </span>
+          )}
+          {saveState === 'saved' && (
+            <span className="text-xs text-emerald-500 font-semibold flex items-center gap-1 animate-in fade-in">
+              <Check className="size-3" />
+              <span>Saved ✓</span>
+            </span>
+          )}
+          {saveState === 'error' && (
+            <button
+              type="button"
+              onClick={() => fetchApplications()}
+              className="text-xs text-rose-500 font-semibold flex items-center gap-1 hover:underline cursor-pointer"
+            >
+              <AlertCircle className="size-3" />
+              <span>Save failed, retry</span>
+            </button>
+          )}
+
+          {/* Export Button */}
+          <button
+            type="button"
+            onClick={handleExportData}
+            className="btn btn-secondary h-8.5 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+            title="Export JSON snapshot"
+          >
+            <Download className="size-3.5" />
+            <span className="hidden sm:inline">Export</span>
+          </button>
+
+          {/* Primary New Application Button */}
+          <button
+            type="button"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="btn btn-primary h-8.5 px-3.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            <Plus className="size-3.5" />
+            <span>New Application</span>
+          </button>
         </div>
       </div>
 
@@ -1074,6 +1098,7 @@ const CreateApplicationModal: React.FC<{
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [roleTitle, setRoleTitle] = useState('');
+  const [opportunityType, setOpportunityType] = useState<'job' | 'scholarship'>('job');
   const [website, setWebsite] = useState('');
   const [status, setStatus] = useState<CareerApplicationStatus>('applied');
   const [priority, setPriority] = useState<CareerPriorityLevel>('high');
@@ -1094,6 +1119,7 @@ const CreateApplicationModal: React.FC<{
         body: JSON.stringify({
           company_name: companyName,
           role_title: roleTitle,
+          type: opportunityType,
           company_website: website,
           status,
           priority,
@@ -1156,7 +1182,18 @@ const CreateApplicationModal: React.FC<{
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-2.5">
+            <div>
+              <label className="text-[11px] font-semibold text-ink-2 mb-1 block">Type</label>
+              <select
+                value={opportunityType}
+                onChange={(e) => setOpportunityType(e.target.value as 'job' | 'scholarship')}
+                className="w-full h-9 px-2 rounded-xl border border-line bg-surface-2 text-xs text-ink focus:outline-hidden"
+              >
+                <option value="job">Job</option>
+                <option value="scholarship">Scholarship</option>
+              </select>
+            </div>
             <div>
               <label className="text-[11px] font-semibold text-ink-2 mb-1 block">Status</label>
               <select

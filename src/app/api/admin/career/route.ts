@@ -29,8 +29,10 @@ export async function POST(req: NextRequest) {
       company_location: body.company_location?.trim() || '',
       company_logo: body.company_logo?.trim() || '',
       role_title: body.role_title?.trim() || 'Software Engineer',
+      type: body.type === 'scholarship' ? 'scholarship' : 'job',
       status: body.status || 'applied',
       priority: body.priority || 'medium',
+      stageChangedAt: new Date().toISOString(),
       source: body.source || 'linkedin',
       source_detail: body.source_detail?.trim() || '',
       source_url: body.source_url?.trim() || '',
@@ -81,9 +83,16 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Application not found' }, { status: 404 });
     }
 
+    const existing = applications[index];
+    const statusChanged = body.status && body.status !== existing.status;
+
     const updatedApp: CareerApplication = {
-      ...applications[index],
+      ...existing,
       ...body,
+      stageChangedAt: statusChanged
+        ? new Date().toISOString()
+        : (body.stageChangedAt || existing.stageChangedAt || existing.updated_at || existing.created_at),
+      type: body.type !== undefined ? body.type : (existing.type || 'job'),
       updated_at: new Date().toISOString(),
     };
 
