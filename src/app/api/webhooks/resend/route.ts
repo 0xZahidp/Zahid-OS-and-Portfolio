@@ -28,42 +28,38 @@ export async function POST(req: NextRequest) {
 
     const resend = new Resend(apiKey);
 
-    // 3. Verify webhook signature if RESEND_WEBHOOK_SECRET is configured
-    if (webhookSecret) {
-      const svixId = req.headers.get('svix-id') || req.headers.get('webhook-id') || '';
-      const svixTimestamp = req.headers.get('svix-timestamp') || req.headers.get('webhook-timestamp') || '';
-      const svixSignature = req.headers.get('svix-signature') || req.headers.get('webhook-signature') || '';
+    // 3. Verify webhook signature (fail closed: requires RESEND_WEBHOOK_SECRET)
+    if (!webhookSecret) {
+      console.error('[Resend Webhook] RESEND_WEBHOOK_SECRET is not configured. Rejecting request.');
+      return NextResponse.json({ error: 'RESEND_WEBHOOK_SECRET missing' }, { status: 500 });
+    }
 
-      if (!svixId || !svixTimestamp || !svixSignature) {
-        console.error('[Resend Webhook] Missing svix signature headers');
-        return NextResponse.json(
-          { error: 'Missing svix signature headers (svix-id, svix-timestamp, svix-signature)' },
-          { status: 400 }
-        );
-      }
+    const svixId = req.headers.get('svix-id') || req.headers.get('webhook-id') || '';
+    const svixTimestamp = req.headers.get('svix-timestamp') || req.headers.get('webhook-timestamp') || '';
+    const svixSignature = req.headers.get('svix-signature') || req.headers.get('webhook-signature') || '';
 
-      try {
-        resend.webhooks.verify({
-          payload: rawBody,
-          webhookSecret,
-          headers: {
-            id: svixId,
-            timestamp: svixTimestamp,
-            signature: svixSignature,
-          },
-        });
-      } catch (verifyErr: unknown) {
-        const msg = verifyErr instanceof Error ? verifyErr.message : 'Signature verification failed';
-        console.error('[Resend Webhook] Invalid signature:', msg);
-        return NextResponse.json({ error: 'Invalid webhook signature', details: msg }, { status: 400 });
-      }
-    } else {
-      // In production, warn if secret is not set
-      if (process.env.NODE_ENV === 'production') {
-        console.warn(
-          '[Resend Webhook] WARNING: RESEND_WEBHOOK_SECRET is not configured. Webhook was accepted without signature verification.'
-        );
-      }
+    if (!svixId || !svixTimestamp || !svixSignature) {
+      console.error('[Resend Webhook] Missing svix signature headers');
+      return NextResponse.json(
+        { error: 'Missing svix signature headers (svix-id, svix-timestamp, svix-signature)' },
+        { status: 400 }
+      );
+    }
+
+    try {
+      resend.webhooks.verify({
+        payload: rawBody,
+        webhookSecret,
+        headers: {
+          id: svixId,
+          timestamp: svixTimestamp,
+          signature: svixSignature,
+        },
+      });
+    } catch (verifyErr: unknown) {
+      const msg = verifyErr instanceof Error ? verifyErr.message : 'Signature verification failed';
+      console.error('[Resend Webhook] Invalid signature:', msg);
+      return NextResponse.json({ error: 'Invalid webhook signature', details: msg }, { status: 400 });
     }
 
     // 4. Parse JSON payload

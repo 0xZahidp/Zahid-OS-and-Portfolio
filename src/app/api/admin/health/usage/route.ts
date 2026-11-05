@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAdminRequest } from '@/lib/auth/admin-auth';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 import { getHealthCollection } from '@/lib/health/health-store';
 import { HealthStorageUsage } from '@/types/health';
 
 const ONE_GB_BYTES = 1024 * 1024 * 1024; // 1 GB free-tier storage quota
 
 export async function GET(req: NextRequest) {
-  if (!(await isAdminRequest(req))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
 
   try {
     const documents = await getHealthCollection('documents');

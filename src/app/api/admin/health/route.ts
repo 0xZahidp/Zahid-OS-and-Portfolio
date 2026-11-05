@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAdminRequest } from '@/lib/auth/admin-auth';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 import {
   getHealthCollection,
   saveHealthCollection,
@@ -27,9 +27,8 @@ const VALID_COLLECTIONS: HealthCollectionKey[] = [
 ];
 
 export async function GET(req: NextRequest) {
-  if (!(await isAdminRequest(req))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
 
   try {
     const { searchParams } = new URL(req.url);
@@ -51,9 +50,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await isAdminRequest(req))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
 
   try {
     const body = await req.json();
@@ -121,9 +119,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  if (!(await isAdminRequest(req))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
 
   try {
     const body = await req.json();
@@ -201,9 +198,8 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!(await isAdminRequest(req))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
 
   try {
     const { searchParams } = new URL(req.url);

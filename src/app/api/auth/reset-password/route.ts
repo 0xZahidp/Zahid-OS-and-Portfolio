@@ -51,6 +51,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Fail closed: enforce that the user recovering password is the designated admin
+    const adminUserId = process.env.ADMIN_USER_ID;
+    if (!adminUserId || user.id !== adminUserId.trim()) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
+
+    // CSRF origin check
+    const originHeader = req.headers.get('origin');
+    const refererHeader = req.headers.get('referer');
+    const candidate = originHeader || (refererHeader ? new URL(refererHeader).origin : null);
+    if (candidate) {
+      const candidateOrigin = new URL(candidate).origin;
+      const reqOrigin = new URL(req.url).origin;
+      if (candidateOrigin !== reqOrigin) {
+        if (!process.env.NEXT_PUBLIC_SITE_URL || candidateOrigin !== new URL(process.env.NEXT_PUBLIC_SITE_URL).origin) {
+          return NextResponse.json({ success: false, error: 'Invalid origin' }, { status: 403 });
+        }
+      }
+    }
+
     // Update password with administrative privilege
     const { data: updateData, error: updateErr } = await supabase.auth.admin.updateUserById(
       user.id,

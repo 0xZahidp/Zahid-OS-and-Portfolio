@@ -57,6 +57,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const adminUserId = process.env.ADMIN_USER_ID;
+    if (!adminUserId || user.id !== adminUserId.trim()) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const { factorId } = body;
 

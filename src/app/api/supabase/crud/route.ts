@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,8 @@ function getCredentials() {
 
 // GET /api/supabase/crud?table=...&page=1&limit=20&search=...&sortBy=...&order=asc|desc
 export async function GET(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
   const { supabaseUrl, serviceKey } = getCredentials();
   const { searchParams } = new URL(req.url);
 
@@ -182,6 +185,8 @@ export async function GET(req: NextRequest) {
 
 // POST /api/supabase/crud (Create new record)
 export async function POST(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
   const { supabaseUrl, serviceKey } = getCredentials();
   if (!supabaseUrl || !serviceKey) {
     return NextResponse.json({ success: false, error: 'Supabase credentials missing.' }, { status: 500 });
@@ -234,6 +239,8 @@ export async function POST(req: NextRequest) {
 
 // PATCH /api/supabase/crud (Update existing record)
 export async function PATCH(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
   const { supabaseUrl, serviceKey } = getCredentials();
   if (!supabaseUrl || !serviceKey) {
     return NextResponse.json({ success: false, error: 'Supabase credentials missing.' }, { status: 500 });
@@ -290,6 +297,8 @@ export async function PATCH(req: NextRequest) {
 
 // DELETE /api/supabase/crud?table=...&pkColumn=...&pkValue=...
 export async function DELETE(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
   const { supabaseUrl, serviceKey } = getCredentials();
   if (!supabaseUrl || !serviceKey) {
     return NextResponse.json({ success: false, error: 'Supabase credentials missing.' }, { status: 500 });

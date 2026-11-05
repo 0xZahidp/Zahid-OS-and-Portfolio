@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { saveSentMessage } from '@/lib/mail/store';
 import { getAppSecret } from '@/lib/env-vault';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const apiKey = (await getAppSecret('RESEND_API_KEY')) || process.env.RESEND_API_KEY;
     if (!apiKey) {

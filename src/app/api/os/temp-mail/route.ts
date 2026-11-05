@@ -206,8 +206,8 @@ export async function DELETE(req: NextRequest) {
     const inbox = searchParams.get('inbox');
     const token = searchParams.get('token') || undefined;
 
-    if (!inbox) {
-      return NextResponse.json({ success: false, error: 'Missing inbox address' }, { status: 400 });
+    if (!inbox || !token) {
+      return NextResponse.json({ success: false, error: 'Missing inbox address or secret token' }, { status: 400 });
     }
 
     await deleteTempInbox(inbox, token);

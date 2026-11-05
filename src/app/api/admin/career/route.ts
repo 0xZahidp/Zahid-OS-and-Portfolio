@@ -4,10 +4,14 @@ import {
   saveCareerApplications,
 } from '@/lib/career/career-store';
 import { CareerApplication } from '@/types/career';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const data = await getCareerApplications();
     return NextResponse.json({ success: true, ...data });
@@ -18,6 +22,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const body = await req.json();
     const { applications } = await getCareerApplications();
@@ -70,6 +77,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const body = await req.json();
     if (!body.id) {
@@ -107,6 +117,9 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

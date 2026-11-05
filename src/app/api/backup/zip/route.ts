@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ALL_TABLE_NAMES, getTableRows, saveTableRows } from '@/lib/table-store';
 import { createDatabaseZip, extractDatabaseZip } from '@/lib/csv-zip';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const tablesData: Record<string, Record<string, unknown>[]> = {};
 
@@ -31,6 +35,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;

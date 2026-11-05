@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 
 export const revalidate = 3600; // Cache for 1 hour
 
@@ -126,7 +127,10 @@ async function getGitHubToken(): Promise<string | null> {
   return token || null;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const token = await getGitHubToken();
 

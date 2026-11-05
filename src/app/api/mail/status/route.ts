@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUnreadCount } from '@/lib/mail/store';
 import { getAppSecret, setAppSecret } from '@/lib/env-vault';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const apiKey = await getAppSecret('RESEND_API_KEY');
     const isConfigured = Boolean(apiKey && apiKey.startsWith('re_'));
@@ -53,6 +57,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const body = await req.json();
     const { defaultSender } = body;

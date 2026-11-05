@@ -6,6 +6,7 @@ import {
   setDefaultTempMailDomain,
   syncDomainFromResend,
 } from '@/lib/os/temp-mail-domains';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const body = await req.json().catch(() => ({}));
     const { domain, resendApiKey, isDefault, action } = body;
@@ -79,6 +83,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const { searchParams } = new URL(req.url);
     const domainQuery = searchParams.get('domain') || searchParams.get('id');

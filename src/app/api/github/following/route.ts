@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import portfolioContent from '@/data/portfolio-content.json';
 import { FollowerRecommendation } from '@/types/profile';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 
 export const revalidate = 3600; // 1 hour cache
 
@@ -113,7 +114,10 @@ async function getGitHubToken(): Promise<string | null> {
   return token || null;
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const authError = await requireAdmin(request);
+  if (authError) return authError;
+
   try {
     const { searchParams } = new URL(request.url);
     const username = searchParams.get('username') || DEFAULT_USERNAME;

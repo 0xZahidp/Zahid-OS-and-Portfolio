@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 import {
   readMailStore,
   filterMailMessages,
@@ -18,6 +19,9 @@ export const dynamic = 'force-dynamic';
 
 // GET /api/mail/messages?folder=inbox&search=keyword&alias=test@zahidp.com&category=official&forceSync=false
 export async function GET(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const { searchParams } = new URL(req.url);
     const folder = searchParams.get('folder') || 'inbox';
@@ -79,6 +83,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/mail/messages (Simulate inbound or incoming contact inquiry)
 export async function POST(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const body = await req.json();
     const { name, email, subject, message, tags, recipient } = body;
@@ -131,6 +138,9 @@ export async function POST(req: NextRequest) {
 
 // PATCH /api/mail/messages (Update isRead, isStarred, folder, isArchived, isTrashed)
 export async function PATCH(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const body = await req.json();
     const { id, isRead, isStarred, folder, isArchived, isTrashed } = body;
@@ -168,6 +178,9 @@ export async function PATCH(req: NextRequest) {
 
 // DELETE /api/mail/messages (Trash or empty trash or permanent delete)
 export async function DELETE(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

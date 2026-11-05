@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAdminRequest } from '@/lib/auth/admin-auth';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 import { exportHealthData, restoreHealthData } from '@/lib/health/health-store';
 import { HealthData } from '@/types/health';
 
 export async function GET(req: NextRequest) {
-  if (!(await isAdminRequest(req))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
 
   try {
     const data = await exportHealthData();
@@ -26,9 +25,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await isAdminRequest(req))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
 
   try {
     const payload = (await req.json()) as Partial<HealthData>;

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { supabaseServer } from '@/lib/supabase/server';
 import { defaultPortfolioContent } from '@/data/default-content';
 import { PortfolioContent, CmsSaveResponse } from '@/types/cms';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -145,6 +146,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const body = (await req.json()) as PortfolioContent;
 

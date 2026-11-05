@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getShortLinks, saveShortLinks, deleteShortLink } from '@/lib/os/short-links';
-import { getOsSettings } from '@/lib/os/settings';
-import { isAdminRequest } from '@/lib/auth/admin-auth';
+import { requireAdmin, isAdminRequest } from '@/lib/auth/admin-auth';
 import { ShortLink } from '@/types/os';
 
 export const dynamic = 'force-dynamic';
@@ -49,38 +48,15 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// 2. POST: Create or Update a short link
+// 2. POST: Create or Update a short link (Admin strictly required)
 export async function POST(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const body = await req.json().catch(() => ({}));
     const { id, slug, title, description, is_active } = body;
     let original_url = body.original_url;
-
-    const isAdmin = await isAdminRequest(req);
-    const settings = await getOsSettings();
-
-    // If updating an existing link, admin privilege is strictly required
-    if (id && !isAdmin) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Unauthorized: Only the administrator can modify existing short links.',
-        },
-        { status: 403 }
-      );
-    }
-
-    // If creating a new link, check if public link creation is enabled or if requester is admin
-    if (!id && !isAdmin && !settings.allow_public_link_creation) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            'Public link creation is currently disabled. Only 0xZahidP can create short links on this domain.',
-        },
-        { status: 403 }
-      );
-    }
 
     // Validate original_url
     if (!original_url || typeof original_url !== 'string') {
@@ -226,14 +202,10 @@ export async function POST(req: NextRequest) {
 
 // 3. DELETE: Remove a short link (Admin strictly required)
 export async function DELETE(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
-    const isAdmin = await isAdminRequest(req);
-    if (!isAdmin) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized: Only the administrator can delete short links.' },
-        { status: 403 }
-      );
-    }
 
     const { searchParams } = new URL(req.url);
     let id = searchParams.get('id');

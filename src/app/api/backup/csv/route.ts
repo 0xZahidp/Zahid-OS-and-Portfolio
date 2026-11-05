@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTableRows, saveTableRows } from '@/lib/table-store';
 import { serializeToCsv, parseCsv } from '@/lib/csv-zip';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const { searchParams } = new URL(req.url);
     const table = searchParams.get('table');
@@ -33,6 +37,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
     const { searchParams } = new URL(req.url);
     const table = searchParams.get('table');

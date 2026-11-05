@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTravelData, saveTravelData, calculateTravelStats } from '@/lib/travel/travel-storage';
 import { DistrictCode } from '@/lib/travel/bangladesh-districts';
 import { DistrictTravelStatus, TravelMemory } from '@/types/travel.types';
-import { isAdminRequest } from '@/lib/auth/admin-auth';
+import { requireAdmin, isAdminRequest } from '@/lib/auth/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,14 +26,10 @@ export async function GET(req: NextRequest) {
 
 // 2. POST: Update district status or add trip memory (Admin strictly required)
 export async function POST(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
-    const isAdmin = await isAdminRequest(req);
-    if (!isAdmin) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized: Only the administrator can modify travel records.' },
-        { status: 403 }
-      );
-    }
 
     const body = await req.json().catch(() => ({}));
     const { code, status, visitsCount, rating, notes, places, memory } = body;
@@ -121,14 +117,10 @@ export async function POST(req: NextRequest) {
 
 // 3. DELETE: Remove a trip memory (Admin strictly required)
 export async function DELETE(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
   try {
-    const isAdmin = await isAdminRequest(req);
-    if (!isAdmin) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized: Only the administrator can delete travel memories.' },
-        { status: 403 }
-      );
-    }
 
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code') as DistrictCode | null;

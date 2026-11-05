@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAdminRequest } from '@/lib/auth/admin-auth';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 import { supabaseServer } from '@/lib/supabase/server';
 import { getHealthCollection, saveHealthCollection } from '@/lib/health/health-store';
 import { HealthDocument, HealthDocumentCategory } from '@/types/health';
@@ -56,9 +56,8 @@ function detectMimeAndExtension(buffer: Buffer): { mime: string; ext: string } |
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await isAdminRequest(req))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
 
   try {
     const formData = await req.formData();

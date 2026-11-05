@@ -4,15 +4,20 @@ import { getAppSecret } from '@/lib/env-vault';
 import { upsertReceivedEmail, readMailStore, writeMailStore } from '@/lib/mail/store';
 import { supabaseServer } from '@/lib/supabase/server';
 import { EmailAttachment } from '@/types/mail';
+import { requireAdmin } from '@/lib/auth/admin-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
   return handleBackfill(req);
 }
 
 export async function GET(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
   return handleBackfill(req);
 }
 
