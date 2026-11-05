@@ -361,16 +361,12 @@ if (content.githubSettings) {
 sql += `
 INSERT INTO public.app_settings (key, value, is_secret, description)
 VALUES 
-  ('RESEND_API_KEY', 're_ZDpWhajB_JZ6cCMrkca3p9EbFDcJCwq2E', TRUE, 'Resend API key for inbox communications and contact form dispatches'),
-  ('CONTACT_RATE_LIMIT_SECRET', 'd14e27bfeffe65f7544ebf67803b71b0984288fb9fb010d0b5ebd3b8db54235c', TRUE, 'HMAC secret token used for public rate limiting'),
-  ('CONTACT_TO_EMAIL', 'mdzahidhasanpatwary@gmail.com', FALSE, 'Destination email for portfolio contact form inquiries'),
+  ('RESEND_API_KEY', 'your-resend-api-key', TRUE, 'Resend API key for inbox communications and contact form dispatches'),
+  ('CONTACT_RATE_LIMIT_SECRET', 'your-contact-rate-limit-secret', TRUE, 'HMAC secret token used for public rate limiting'),
+  ('CONTACT_TO_EMAIL', 'hello@zahidp.com', FALSE, 'Destination email for portfolio contact form inquiries'),
   ('CONTACT_FROM_EMAIL', 'Md Zahid Hasan <hello@zahidp.com>', FALSE, 'Default sender identity for outbound emails'),
   ('NEXT_PUBLIC_SITE_URL', 'https://zahidp.com', FALSE, 'Canonical domain for OpenGraph meta tags and SEO')
-ON CONFLICT (key) DO UPDATE SET
-  value = EXCLUDED.value,
-  is_secret = EXCLUDED.is_secret,
-  description = EXCLUDED.description,
-  updated_at = NOW();
+ON CONFLICT (key) DO NOTHING;
 `;
 
 const outDir = path.join(__dirname, '../supabase');

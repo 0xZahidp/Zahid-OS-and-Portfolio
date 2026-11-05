@@ -8,8 +8,6 @@ import {
   RotateCcw,
   FileCode,
   Database,
-  Check,
-  Copy,
   ExternalLink,
   Layers,
   Sparkles,
@@ -45,7 +43,7 @@ export const BackupsTab: React.FC = () => {
   const [activeImportTable, setActiveImportTable] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [copiedSql, setCopiedSql] = useState<boolean>(false);
+
 
   const showStatus = (type: 'success' | 'error', text: string) => {
     setStatusMessage({ type, text });
@@ -235,21 +233,7 @@ export const BackupsTab: React.FC = () => {
     }
   };
 
-  const copySqlToClipboard = async () => {
-    try {
-      const res = await fetch('/api/supabase/schema-sql');
-      const text = await res.text();
-      await navigator.clipboard.writeText(text);
-      setCopiedSql(true);
-      setTimeout(() => setCopiedSql(false), 3000);
-      showStatus('success', '✓ Relational Schema SQL copied to clipboard!');
-    } catch {
-      // Fallback
-      await navigator.clipboard.writeText(`GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;\nGRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;\nALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;`);
-      setCopiedSql(true);
-      setTimeout(() => setCopiedSql(false), 3000);
-    }
-  };
+
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -437,15 +421,6 @@ export const BackupsTab: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={copySqlToClipboard}
-                className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
-              >
-                {copiedSql ? <Check className="size-3.5 text-emerald-500" /> : <Copy className="size-3.5" />}
-                <span>{copiedSql ? 'Copied SQL!' : 'Copy Schema SQL'}</span>
-              </button>
-
               <a
                 href="https://supabase.com/dashboard/project/txrnbazpdyoaazszkwwq/sql/new"
                 target="_blank"
