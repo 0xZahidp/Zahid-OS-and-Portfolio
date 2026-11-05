@@ -24,12 +24,17 @@ import {
   HealthData,
   HealthProfile,
   Medication,
+  Visit,
+  Vital,
+  Vaccination,
   Reminder,
   HealthStorageUsage,
 } from '@/types/health';
 import { EmergencyCard } from '@/components/admin/health/EmergencyCard';
 import { MedicationsSubTab } from '@/components/admin/health/MedicationsSubTab';
 import { DocumentsSubTab } from '@/components/admin/health/DocumentsSubTab';
+import { VisitsSubTab } from '@/components/admin/health/VisitsSubTab';
+import { VitalsSubTab } from '@/components/admin/health/VitalsSubTab';
 
 export type HealthSubTab = 'overview' | 'medications' | 'documents' | 'visits' | 'vitals';
 
@@ -323,6 +328,249 @@ export const HealthTab: React.FC = () => {
     }
   };
 
+  // Visit handlers
+  const handleSaveVisit = async (visit: Visit) => {
+    setIsSaving(true);
+    setSaveStatus('Saving visit...');
+    try {
+      const isExisting = healthData.visits.some((v) => v.id === visit.id);
+      const res = await fetch('/api/admin/health', {
+        method: isExisting ? 'PATCH' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': 'folioframe_admin',
+        },
+        body: JSON.stringify({
+          collection: 'visits',
+          item: visit,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+      setHealthData((prev) => {
+        const nextList = isExisting
+          ? prev.visits.map((v) => (v.id === visit.id ? visit : v))
+          : [visit, ...prev.visits];
+        return { ...prev, visits: nextList };
+      });
+      setSaveStatus('All changes encrypted & saved');
+    } catch {
+      setSaveStatus('Save error');
+      throw new Error();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteVisit = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/health?collection=visits&id=${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-key': 'folioframe_admin' },
+      });
+      if (!res.ok) throw new Error();
+      setHealthData((prev) => ({
+        ...prev,
+        visits: prev.visits.filter((v) => v.id !== id),
+      }));
+    } catch {
+      throw new Error();
+    }
+  };
+
+  const handleSyncFollowUpReminder = async (visit: Visit, removed?: boolean) => {
+    const existing = healthData.reminders.find(
+      (r) => r.relatedId === visit.id && r.kind === 'followUp'
+    );
+
+    try {
+      if (removed || !visit.followUpDate) {
+        if (existing) {
+          await fetch(`/api/admin/health?collection=reminders&id=${existing.id}`, {
+            method: 'DELETE',
+            headers: { 'x-admin-key': 'folioframe_admin' },
+          });
+          setHealthData((prev) => ({
+            ...prev,
+            reminders: prev.reminders.filter((r) => r.id !== existing.id),
+          }));
+        }
+      } else {
+        const reminderItem: Reminder = {
+          id: existing ? existing.id : crypto.randomUUID(),
+          title: `Follow-up: ${visit.reason} (Dr. ${visit.doctor})`,
+          dueDate: visit.followUpDate,
+          kind: 'followUp',
+          relatedId: visit.id,
+          done: false,
+          updatedAt: new Date().toISOString(),
+        };
+
+        const res = await fetch('/api/admin/health', {
+          method: existing ? 'PATCH' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-key': 'folioframe_admin',
+          },
+          body: JSON.stringify({
+            collection: 'reminders',
+            item: reminderItem,
+          }),
+        });
+
+        if (res.ok) {
+          setHealthData((prev) => {
+            const nextReminders = existing
+              ? prev.reminders.map((r) => (r.id === existing.id ? reminderItem : r))
+              : [reminderItem, ...prev.reminders];
+            return { ...prev, reminders: nextReminders };
+          });
+        }
+      }
+    } catch {
+      // background sync
+    }
+  };
+
+  // Vital handlers
+  const handleSaveVital = async (vital: Vital) => {
+    try {
+      const res = await fetch('/api/admin/health', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': 'folioframe_admin',
+        },
+        body: JSON.stringify({
+          collection: 'vitals',
+          item: vital,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+      setHealthData((prev) => ({
+        ...prev,
+        vitals: [vital, ...prev.vitals],
+      }));
+    } catch {
+      throw new Error();
+    }
+  };
+
+  const handleDeleteVital = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/health?collection=vitals&id=${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-key': 'folioframe_admin' },
+      });
+      if (!res.ok) throw new Error();
+      setHealthData((prev) => ({
+        ...prev,
+        vitals: prev.vitals.filter((v) => v.id !== id),
+      }));
+    } catch {
+      throw new Error();
+    }
+  };
+
+  // Vaccination handlers
+  const handleSaveVaccination = async (vac: Vaccination) => {
+    try {
+      const isExisting = healthData.vaccinations.some((v) => v.id === vac.id);
+      const res = await fetch('/api/admin/health', {
+        method: isExisting ? 'PATCH' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': 'folioframe_admin',
+        },
+        body: JSON.stringify({
+          collection: 'vaccinations',
+          item: vac,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+      setHealthData((prev) => {
+        const nextList = isExisting
+          ? prev.vaccinations.map((v) => (v.id === vac.id ? vac : v))
+          : [vac, ...prev.vaccinations];
+        return { ...prev, vaccinations: nextList };
+      });
+    } catch {
+      throw new Error();
+    }
+  };
+
+  const handleDeleteVaccination = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/health?collection=vaccinations&id=${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-key': 'folioframe_admin' },
+      });
+      if (!res.ok) throw new Error();
+      setHealthData((prev) => ({
+        ...prev,
+        vaccinations: prev.vaccinations.filter((v) => v.id !== id),
+      }));
+    } catch {
+      throw new Error();
+    }
+  };
+
+  const handleSyncVaccineReminder = async (vac: Vaccination, removed?: boolean) => {
+    const existing = healthData.reminders.find(
+      (r) => r.relatedId === vac.id && r.kind === 'vaccination'
+    );
+
+    try {
+      if (removed || !vac.nextDueDate) {
+        if (existing) {
+          await fetch(`/api/admin/health?collection=reminders&id=${existing.id}`, {
+            method: 'DELETE',
+            headers: { 'x-admin-key': 'folioframe_admin' },
+          });
+          setHealthData((prev) => ({
+            ...prev,
+            reminders: prev.reminders.filter((r) => r.id !== existing.id),
+          }));
+        }
+      } else {
+        const reminderItem: Reminder = {
+          id: existing ? existing.id : crypto.randomUUID(),
+          title: `Booster Due: ${vac.name}`,
+          dueDate: vac.nextDueDate,
+          kind: 'vaccination',
+          relatedId: vac.id,
+          done: false,
+          updatedAt: new Date().toISOString(),
+        };
+
+        const res = await fetch('/api/admin/health', {
+          method: existing ? 'PATCH' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-key': 'folioframe_admin',
+          },
+          body: JSON.stringify({
+            collection: 'reminders',
+            item: reminderItem,
+          }),
+        });
+
+        if (res.ok) {
+          setHealthData((prev) => {
+            const nextReminders = existing
+              ? prev.reminders.map((r) => (r.id === existing.id ? reminderItem : r))
+              : [reminderItem, ...prev.reminders];
+            return { ...prev, reminders: nextReminders };
+          });
+        }
+      }
+    } catch {
+      // background sync
+    }
+  };
+
   // Upcoming reminders categorized
   const activeReminders = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -397,6 +645,9 @@ export const HealthTab: React.FC = () => {
       } else if (e.key === '5') {
         e.preventDefault();
         handleSelectSubTab('vitals');
+      } else if (e.key === 'u' || e.key === 'U') {
+        e.preventDefault();
+        handleSelectSubTab('documents');
       } else if (e.key === '?') {
         e.preventDefault();
         setShowShortcutsModal((prev) => !prev);
@@ -720,24 +971,28 @@ export const HealthTab: React.FC = () => {
 
           {/* VISITS SUB-TAB */}
           {activeSubTab === 'visits' && (
-            <div className="p-8 rounded-2xl bg-surface-2/40 border border-line text-center text-ink-3">
-              <Stethoscope className="size-8 mx-auto text-purple-500 mb-2" />
-              <h3 className="text-sm font-bold text-ink">Doctor Visits & Timeline</h3>
-              <p className="text-xs text-ink-4 mt-1 max-w-md mx-auto">
-                Phase 5 will render visits timeline, follow-up sync, and slide-over consultation editor.
-              </p>
-            </div>
+            <VisitsSubTab
+              visits={healthData.visits}
+              documents={healthData.documents}
+              onSaveVisit={handleSaveVisit}
+              onDeleteVisit={handleDeleteVisit}
+              onSyncFollowUpReminder={handleSyncFollowUpReminder}
+              showToast={showToast}
+            />
           )}
 
           {/* VITALS SUB-TAB */}
           {activeSubTab === 'vitals' && (
-            <div className="p-8 rounded-2xl bg-surface-2/40 border border-line text-center text-ink-3">
-              <Activity className="size-8 mx-auto text-amber-500 mb-2" />
-              <h3 className="text-sm font-bold text-ink">Vitals & Trend Analytics</h3>
-              <p className="text-xs text-ink-4 mt-1 max-w-md mx-auto">
-                Phase 5 will render inline-SVG vitals chart with 30d/90d/1y ranges, BP tracking, and vaccinations.
-              </p>
-            </div>
+            <VitalsSubTab
+              vitals={healthData.vitals}
+              vaccinations={healthData.vaccinations}
+              onSaveVital={handleSaveVital}
+              onDeleteVital={handleDeleteVital}
+              onSaveVaccination={handleSaveVaccination}
+              onDeleteVaccination={handleDeleteVaccination}
+              onSyncVaccineReminder={handleSyncVaccineReminder}
+              showToast={showToast}
+            />
           )}
         </div>
       )}
