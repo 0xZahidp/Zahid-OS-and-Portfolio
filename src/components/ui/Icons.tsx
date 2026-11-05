@@ -1,4 +1,5 @@
 import React from 'react';
+export { ZahidLogo } from './ZahidLogo';
 
 // Exact Tabler Icons from nahian.bd
 export const TablerUserCircle = ({ className = 'size-6' }: { className?: string }) => (

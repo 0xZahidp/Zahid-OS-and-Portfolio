@@ -570,7 +570,7 @@ export const servicesData: ServiceItem[] = [
       'Code reviews, architecture advice and performance fixes for your web app or SaaS.',
     icon: 'consultation',
     actionText: 'Book a consultation',
-    actionUrl: 'mailto:mdzahidhasanpatwary@gmail.com?subject=Paid%20Consultation',
+    actionUrl: 'mailto:hello@zahidp.com?subject=Paid%20Consultation',
   },
   {
     id: 'srv-2',
@@ -579,7 +579,7 @@ export const servicesData: ServiceItem[] = [
       'Career chats, mentoring, or a second opinion on what you’re building.',
     icon: 'call',
     actionText: 'Book a call',
-    actionUrl: 'mailto:mdzahidhasanpatwary@gmail.com?subject=1:1%20Call',
+    actionUrl: 'mailto:hello@zahidp.com?subject=1:1%20Call',
   },
   {
     id: 'srv-3',
@@ -588,7 +588,7 @@ export const servicesData: ServiceItem[] = [
       'Relaxed conversation practice with a near-native speaker, in a British or American accent. No judging, no drills.',
     icon: 'english',
     actionText: 'Book a session',
-    actionUrl: 'mailto:mdzahidhasanpatwary@gmail.com?subject=Spoken%20English%20Session',
+    actionUrl: 'mailto:hello@zahidp.com?subject=Spoken%20English%20Session',
   },
 ];
 
@@ -596,8 +596,8 @@ export const directContactData: DirectContactItem[] = [
   {
     id: 'dc-1',
     title: 'Email me',
-    handle: 'hello@0xzahidp.com',
-    url: 'mailto:mdzahidhasanpatwary@gmail.com',
+    handle: 'hello@zahidp.com',
+    url: 'mailto:hello@zahidp.com',
     icon: 'email',
   },
   {

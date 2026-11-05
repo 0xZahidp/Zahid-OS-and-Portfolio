@@ -17,6 +17,7 @@ import {
   LinkedInIcon,
   FacebookIcon,
 } from '@/components/ui/Icons';
+import { ZahidLogo } from '@/components/ui/ZahidLogo';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -64,9 +65,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             className="group inline-flex items-center gap-2.5"
           >
             <span className="grid size-9 place-items-center rounded-[11px] bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/40">
-              <span className="text-lg leading-none font-black tracking-tighter text-white">
-                Z
-              </span>
+              <ZahidLogo className="size-5 text-white" />
             </span>
             <span className="text-title font-bold tracking-tight text-ink">
               0xZahidP

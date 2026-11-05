@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { ShortLink, ZahidOsSettings, ZahidOsAppId } from '@/types/os';
 import { ZosWallpaper } from '@/components/os/ZosWallpaper';
+import { ZahidLogo } from '@/components/ui/ZahidLogo';
 
 // Code-split heavy micro-apps so Zahid OS Desktop boots in sub-100ms with a lightweight bundle
 const TravelWorkspace = dynamic(
@@ -233,8 +234,8 @@ export default function PublicZahidOsPage() {
   if (isLoading && !settings) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-3 select-none">
-        <div className="size-12 rounded-[22%] bg-gradient-to-br from-emerald-500 to-teal-700 animate-pulse grid place-items-center shadow-lg shadow-emerald-500/20 text-white font-black text-xl">
-          Z
+        <div className="size-12 rounded-[22%] bg-gradient-to-br from-emerald-500 to-teal-700 animate-pulse grid place-items-center shadow-lg shadow-emerald-500/20 text-white">
+          <ZahidLogo className="size-7 text-white" />
         </div>
         <p className="text-xs font-mono text-neutral-400">Booting Zahid OS...</p>
       </div>

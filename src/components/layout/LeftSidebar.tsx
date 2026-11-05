@@ -9,6 +9,7 @@ import {
   TablerSidebarLeftCollapse,
   TablerSidebarLeftExpand,
 } from '@/components/ui/Icons';
+import { ZahidLogo } from '@/components/ui/ZahidLogo';
 
 interface LeftSidebarProps {
   activeSection: string;
@@ -43,9 +44,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           aria-label="Zahid, home"
         >
           <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-b from-brand-500 to-brand-700 shadow-[0_0_15px_rgba(16,185,129,0.35)] ring-1 ring-brand-400/40 transition-transform group-hover:rotate-[-4deg] group-active:scale-95">
-            <span className="text-xl leading-none font-black tracking-tighter text-white">
-              Z
-            </span>
+            <ZahidLogo className="size-6 text-white" />
           </span>
 
           {!isCollapsed && (

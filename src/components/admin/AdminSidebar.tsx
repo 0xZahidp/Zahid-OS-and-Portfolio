@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAdminAuth } from '@/context/AdminAuthContext';
+import { ZahidLogo } from '@/components/ui/ZahidLogo';
 
 export type AdminTab =
   | 'profile'
@@ -244,8 +245,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       {/* Brand Header */}
       <div className="p-4 sm:p-4.5 border-b border-line flex items-center justify-between shrink-0">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="size-9 rounded-xl bg-gradient-to-b from-brand-500 to-brand-700 shadow-sm flex items-center justify-center text-white font-black text-lg transition-transform group-hover:scale-105">
-            Z
+          <div className="size-9 rounded-xl bg-gradient-to-b from-brand-500 to-brand-700 shadow-sm flex items-center justify-center text-white transition-transform group-hover:scale-105">
+            <ZahidLogo className="size-5.5 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">

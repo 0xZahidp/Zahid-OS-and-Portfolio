@@ -45,6 +45,19 @@ export const ContactSection: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitFeedback, setSubmitFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  const handleScrollToMailbox = () => {
+    const el = document.getElementById('mailbox');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => {
+        const input = el.querySelector('input');
+        input?.focus();
+      }, 400);
+    } else {
+      setIsMessageModalOpen(true);
+    }
+  };
+
   const handleSubmitContact = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!visitorName || !visitorEmail || !visitorMessage) return;
@@ -66,7 +79,7 @@ export const ContactSection: React.FC = () => {
       if (data.success) {
         setSubmitFeedback({
           type: 'success',
-          message: 'Thank you! Your message has been sent directly to Zahid.',
+          message: 'Thank you! Your message has been delivered to hello@zahidp.com.',
         });
         setVisitorName('');
         setVisitorEmail('');
@@ -213,7 +226,7 @@ export const ContactSection: React.FC = () => {
             <div className="tactile-button-wrap">
               <button
                 type="button"
-                onClick={() => setIsMessageModalOpen(true)}
+                onClick={handleScrollToMailbox}
                 className="tactile-button cursor-pointer"
               >
                 <span>Send direct message</span>
@@ -221,7 +234,7 @@ export const ContactSection: React.FC = () => {
               </button>
             </div>
             <a
-              href="mailto:mdzahidhasanpatwary@gmail.com?subject=Build%20Something%20Together"
+              href="mailto:hello@zahidp.com?subject=Build%20Something%20Together"
               className="btn btn-secondary h-10 px-4 rounded-[14px] text-xs font-semibold inline-flex items-center gap-1.5"
             >
               <span>Email Client</span>
@@ -265,6 +278,174 @@ export const ContactSection: React.FC = () => {
         </div>
       </section>
 
+      {/* 3. Direct Mailbox (To hello@zahidp.com) */}
+      <section id="mailbox" aria-labelledby="mailbox-heading" className="space-y-4 scroll-mt-20">
+        <div className="flex items-center justify-between">
+          <h3
+            id="mailbox-heading"
+            className="text-base font-bold tracking-tight text-ink"
+          >
+            Direct Mailbox
+          </h3>
+          <div className="inline-flex items-center gap-1.5 text-xs text-ink-3">
+            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>To: <strong className="text-ink font-semibold">hello@zahidp.com</strong></span>
+          </div>
+        </div>
+
+        <div className="rounded-[24px] border border-line bg-surface p-6 sm:p-7 shadow-xs relative overflow-hidden">
+          {submitFeedback?.type === 'success' ? (
+            <div className="py-8 flex flex-col items-center text-center space-y-3">
+              <div className="size-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 grid place-items-center">
+                <CheckCircle2 className="size-6" />
+              </div>
+              <h4 className="text-base font-bold text-ink">Email Delivered</h4>
+              <p className="text-xs text-ink-2 max-w-sm">
+                Your message was sent directly to <strong className="text-emerald-600 dark:text-emerald-400">hello@zahidp.com</strong>. Zahid has received your inquiry and will reply shortly.
+              </p>
+              <button
+                type="button"
+                onClick={() => setSubmitFeedback(null)}
+                className="btn btn-secondary h-8 px-4 rounded-xl text-xs font-semibold mt-2 cursor-pointer"
+              >
+                Send another message
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmitContact} className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-line">
+                <div className="flex items-center gap-2">
+                  <span className="grid size-8 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <Mail className="size-4" />
+                  </span>
+                  <div>
+                    <h4 className="text-xs font-bold text-ink">Write to Zahid</h4>
+                    <p className="text-[11px] text-ink-3">Recipient: <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">hello@zahidp.com</span></p>
+                  </div>
+                </div>
+
+                <a
+                  href="mailto:hello@zahidp.com"
+                  className="inline-flex items-center gap-1.5 text-xs text-ink-3 hover:text-ink transition-colors"
+                >
+                  <span>Open in app</span>
+                  <ArrowUpRight className="size-3.5" />
+                </a>
+              </div>
+
+              {submitFeedback?.type === 'error' && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 text-xs flex items-center gap-2 font-semibold">
+                  <AlertCircle className="size-4 shrink-0" />
+                  <span>{submitFeedback.message}</span>
+                </div>
+              )}
+
+              {/* Name & Email 2-column */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold text-ink-2 mb-1.5">Your Name</label>
+                  <input
+                    type="text"
+                    value={visitorName}
+                    onChange={(e) => setVisitorName(e.target.value)}
+                    placeholder="Alex Morgan"
+                    required
+                    className="w-full h-10 px-3.5 rounded-xl bg-surface-2 border border-line text-xs font-medium text-ink placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-ink-2 mb-1.5">Your Email</label>
+                  <input
+                    type="email"
+                    value={visitorEmail}
+                    onChange={(e) => setVisitorEmail(e.target.value)}
+                    placeholder="alex@company.com"
+                    required
+                    className="w-full h-10 px-3.5 rounded-xl bg-surface-2 border border-line text-xs font-medium text-ink placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Subject with Quick Suggestion Chips */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-ink-2">Subject / Topic</label>
+                  <span className="text-[11px] text-ink-4">Select or type</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {['Project Collaboration', 'Paid Consultation', '1:1 Mentoring', 'Quick Question'].map((topic) => (
+                    <button
+                      key={topic}
+                      type="button"
+                      onClick={() => setVisitorSubject(topic)}
+                      className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                        visitorSubject === topic
+                          ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 font-semibold'
+                          : 'bg-surface-2 border-line text-ink-3 hover:text-ink hover:border-line-strong'
+                      }`}
+                    >
+                      {topic}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  value={visitorSubject}
+                  onChange={(e) => setVisitorSubject(e.target.value)}
+                  placeholder="e.g. Project Collaboration or Web App Inquiry"
+                  className="w-full h-10 px-3.5 rounded-xl bg-surface-2 border border-line text-xs font-medium text-ink placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+
+              {/* Message */}
+              <div>
+                <label className="block text-xs font-semibold text-ink-2 mb-1.5">Message</label>
+                <textarea
+                  value={visitorMessage}
+                  onChange={(e) => setVisitorMessage(e.target.value)}
+                  placeholder="Tell me a bit about what you are looking to build or ask..."
+                  rows={4}
+                  required
+                  className="w-full p-3.5 rounded-xl bg-surface-2 border border-line text-xs font-medium text-ink placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none font-sans transition-all"
+                />
+              </div>
+
+              {/* Submit footer */}
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-line/60">
+                <span className="text-[11px] text-ink-3 flex items-center gap-1.5">
+                  <span className="size-1.5 rounded-full bg-emerald-500" />
+                  <span>Delivered via Resend to <strong>hello@zahidp.com</strong></span>
+                </span>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`mailto:hello@zahidp.com?subject=${encodeURIComponent(visitorSubject || 'Portfolio Message')}&body=${encodeURIComponent(visitorMessage || '')}`}
+                    className="btn btn-secondary h-10 px-3.5 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Use mailto</span>
+                    <ArrowUpRight className="size-3.5" />
+                  </a>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !visitorName || !visitorEmail || !visitorMessage}
+                    className="btn btn-primary h-10 px-5 rounded-xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Send className="size-3.5" />
+                    )}
+                    <span>{isSubmitting ? 'Sending to hello@zahidp.com...' : 'Send to hello@zahidp.com'}</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+        </div>
+      </section>
+
+      
       {/* 3. Reach me Section (Image 5) */}
       <section aria-labelledby="reach-me-heading" className="space-y-4">
         <h3

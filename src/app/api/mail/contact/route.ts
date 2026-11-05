@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
         const destinationEmail =
           (await getAppSecret('CONTACT_TO_EMAIL')) ||
           process.env.CONTACT_TO_EMAIL ||
-          'mdzahidhasanpatwary@gmail.com';
+          'hello@zahidp.com';
 
         const resend = new Resend(apiKey);
         await resend.emails.send({
