@@ -24,6 +24,7 @@
 .DS_Store
 *.pem
 scratch/
+career/
 
 # debug
 npm-debug.log*

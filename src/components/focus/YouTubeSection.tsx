@@ -130,46 +130,27 @@ export const YouTubeSection: React.FC = () => {
             )}
           </div>
 
-          {/* Under player controls & status */}
-          <div className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-surface-2 border border-line">
-            <div className="min-w-0 flex items-center gap-2.5">
+          {/* Under player controls & status matching screenshot 4 */}
+          <div className="flex items-center justify-between gap-4 pt-1">
+            <div className="min-w-0 flex items-center gap-2">
               {currentVideo ? (
                 <>
-                  <span className="flex items-center gap-0.5 h-3 text-brand-500 shrink-0">
-                    <span className="w-0.5 h-3 bg-brand-500 rounded-full animate-bounce [animation-delay:0ms]" />
-                    <span className="w-0.5 h-3 bg-brand-500 rounded-full animate-bounce [animation-delay:150ms]" />
-                    <span className="w-0.5 h-3 bg-brand-500 rounded-full animate-bounce [animation-delay:300ms]" />
+                  <span className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 truncate">
+                    {currentVideo.title}
                   </span>
-                  <div className="truncate">
-                    <span className="text-xs font-semibold text-ink truncate block">
-                      {currentVideo.title}
-                    </span>
-                    {currentVideo.sub && (
-                      <span className="text-[10px] text-ink-3 truncate block">{currentVideo.sub}</span>
-                    )}
-                  </div>
                 </>
               ) : (
-                <span className="text-xs text-ink-3 font-medium">Not playing</span>
+                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                  Not playing
+                </span>
               )}
             </div>
 
-            {/* Volume capsule */}
+            {/* Volume green capsule + mute icon button */}
             <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsMuted(!isMuted)}
-                className="size-7 rounded-lg text-ink-3 hover:text-ink grid place-items-center transition-colors cursor-pointer"
-                title={isMuted ? 'Unmute' : 'Mute'}
-              >
-                {isMuted || ytVolume === 0 ? (
-                  <VolumeX className="size-4 text-ink-3" />
-                ) : (
-                  <Volume2 className="size-4 text-ink-2" />
-                )}
-              </button>
-
-              <div className="w-24 relative flex items-center">
+              <div className="flex items-center h-8 px-3 rounded-full bg-emerald-600 text-white gap-2 shadow-xs">
+                <Volume2 className="size-4 shrink-0" />
                 <input
                   type="range"
                   min="0"
@@ -180,9 +161,22 @@ export const YouTubeSection: React.FC = () => {
                     setYtVolume(val);
                     if (isMuted) setIsMuted(false);
                   }}
-                  className="w-full h-1.5 rounded-full appearance-none bg-surface-3 cursor-pointer accent-brand-500"
+                  className="w-20 h-1.5 rounded-full appearance-none bg-emerald-800/60 cursor-pointer accent-white"
                 />
               </div>
+
+              <button
+                type="button"
+                onClick={() => setIsMuted(!isMuted)}
+                className="size-8 rounded-full border border-line bg-surface-2 hover:bg-surface-3 grid place-items-center text-ink-2 hover:text-ink transition-colors cursor-pointer"
+                title={isMuted ? 'Unmute' : 'Mute'}
+              >
+                {isMuted || ytVolume === 0 ? (
+                  <VolumeX className="size-4 text-ink-3" />
+                ) : (
+                  <Volume2 className="size-4 text-ink-2" />
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -202,7 +196,7 @@ export const YouTubeSection: React.FC = () => {
                   href="https://www.youtube.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-link hover:underline font-medium"
+                  className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
                 >
                   <span>Find a video on YouTube</span>
                   <ExternalLink className="size-3" />
@@ -228,11 +222,11 @@ export const YouTubeSection: React.FC = () => {
                 value={inputUrl}
                 onChange={(e) => setInputUrl(e.target.value)}
                 placeholder="Paste a YouTube link"
-                className="flex-1 px-3.5 py-2 rounded-xl bg-surface border border-line text-xs text-ink placeholder:text-ink-3 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+                className="flex-1 px-3.5 py-2.5 rounded-xl bg-surface border border-line text-xs text-ink placeholder:text-ink-4 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-semibold text-xs transition-colors cursor-pointer shadow-xs"
+                className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-colors cursor-pointer shadow-xs"
               >
                 Play
               </button>
