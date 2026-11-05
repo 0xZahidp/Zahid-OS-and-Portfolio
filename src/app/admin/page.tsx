@@ -318,7 +318,13 @@ function AdminDashboardInner() {
           {/* Body: Editor Workspace + Optional Live Preview Pane */}
           <div className="flex-1 flex">
             {/* Form Editor Column */}
-            <main className="flex-1 p-3.5 sm:p-6 lg:p-8 overflow-y-auto max-w-5xl w-full min-w-0 mx-auto">
+            <main
+              className={`flex-1 overflow-y-auto w-full min-w-0 ${
+                activeTab === 'career'
+                  ? 'p-0 max-w-none'
+                  : 'p-3.5 sm:p-6 lg:p-8 max-w-5xl mx-auto'
+              }`}
+            >
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}

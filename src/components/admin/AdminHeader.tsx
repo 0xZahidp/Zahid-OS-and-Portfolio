@@ -132,20 +132,22 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           <LogOut className="size-3.5" />
         </button>
 
-        {/* Primary Save Changes Button */}
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={isSaving}
-          className={`btn btn-primary h-8 sm:h-8.5 px-2.5 sm:px-4 text-xs font-semibold flex items-center gap-1.5 sm:gap-2 rounded-xl shadow-xs transition-all cursor-pointer ${
-            isDirty ? 'ring-2 ring-emerald-500/30' : ''
-          }`}
-          title="Save changes (Ctrl+S / ⌘S)"
-        >
-          <Save className="size-3.5" />
-          <span>{isSaving ? 'Saving...' : 'Save'}</span>
-          <span className="hidden sm:inline">{!isSaving && ' Changes'}</span>
-        </button>
+        {/* Primary Save Changes Button (Hidden on Career tab which has dedicated auto-saving) */}
+        {activeTab !== 'career' && (
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={isSaving}
+            className={`btn btn-primary h-8 sm:h-8.5 px-2.5 sm:px-4 text-xs font-semibold flex items-center gap-1.5 sm:gap-2 rounded-xl shadow-xs transition-all cursor-pointer ${
+              isDirty ? 'ring-2 ring-emerald-500/30' : ''
+            }`}
+            title="Save changes (Ctrl+S / ⌘S)"
+          >
+            <Save className="size-3.5" />
+            <span>{isSaving ? 'Saving...' : 'Save'}</span>
+            <span className="hidden sm:inline">{!isSaving && ' Changes'}</span>
+          </button>
+        )}
       </div>
     </header>
   );
