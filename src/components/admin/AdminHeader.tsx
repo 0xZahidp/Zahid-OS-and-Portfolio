@@ -132,8 +132,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           <LogOut className="size-3.5" />
         </button>
 
-        {/* Primary Save Changes Button (Hidden on Career tab which has dedicated auto-saving) */}
-        {activeTab !== 'career' && (
+        {/* Primary Save Changes Button (Hidden on Career and Health tabs which have dedicated auto-saving) */}
+        {activeTab !== 'career' && activeTab !== 'health' && (
           <button
             type="button"
             onClick={onSave}

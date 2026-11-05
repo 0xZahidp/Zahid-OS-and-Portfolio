@@ -26,6 +26,7 @@ import {
   Terminal,
   ChevronLeft,
   ChevronRight,
+  HeartPulse,
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAdminAuth } from '@/context/AdminAuthContext';
@@ -44,6 +45,7 @@ export type AdminTab =
   | 'library'
   | 'os'
   | 'career'
+  | 'health'
   | 'inbox'
   | 'supabase'
   | 'settings'
@@ -183,6 +185,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           icon: Briefcase,
           badge: 'Private',
           badgeColor: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
+        },
+        {
+          id: 'health' as AdminTab,
+          label: 'Health & Medical',
+          icon: HeartPulse,
+          badge: 'Private',
+          badgeColor: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
         },
       ],
     },
