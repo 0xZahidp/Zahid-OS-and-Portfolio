@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import DOMPurify from 'dompurify';
-import { supabase } from '@/lib/supabase/client';
 import {
   Send,
   Star,
@@ -146,29 +145,13 @@ export const InboxTab: React.FC = () => {
     fetchMessages();
   }, [fetchMessages]);
 
-  // Realtime Supabase Subscription for incoming emails & status updates
+  // Periodic 30s poll of /api/mail/messages for incoming emails & status updates
   useEffect(() => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!supabaseUrl || supabaseUrl.includes('placeholder.supabase.co')) return;
+    const interval = setInterval(() => {
+      fetchMessages(folder, searchQuery, selectedAlias);
+    }, 30_000);
 
-    try {
-      const channel = supabase
-        .channel('realtime_inbox_messages')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'inbox_messages' },
-          () => {
-            fetchMessages(folder, searchQuery, selectedAlias);
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    } catch (e) {
-      console.warn('Realtime subscription not available:', e);
-    }
+    return () => clearInterval(interval);
   }, [fetchMessages, folder, searchQuery, selectedAlias]);
 
 
