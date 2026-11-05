@@ -29,6 +29,7 @@ import {
 } from '@/types/health';
 import { EmergencyCard } from '@/components/admin/health/EmergencyCard';
 import { MedicationsSubTab } from '@/components/admin/health/MedicationsSubTab';
+import { DocumentsSubTab } from '@/components/admin/health/DocumentsSubTab';
 
 export type HealthSubTab = 'overview' | 'medications' | 'documents' | 'visits' | 'vitals';
 
@@ -709,13 +710,12 @@ export const HealthTab: React.FC = () => {
 
           {/* DOCUMENTS SUB-TAB */}
           {activeSubTab === 'documents' && (
-            <div className="p-8 rounded-2xl bg-surface-2/40 border border-line text-center text-ink-3">
-              <FileText className="size-8 mx-auto text-emerald-500 mb-2" />
-              <h3 className="text-sm font-bold text-ink">Documents & Storage</h3>
-              <p className="text-xs text-ink-4 mt-1 max-w-md mx-auto">
-                Next phase will render storage meter, client-side Canvas compression upload, and 60s signed preview URLs.
-              </p>
-            </div>
+            <DocumentsSubTab
+              documents={healthData.documents}
+              storageUsage={storageUsage}
+              onRefreshData={loadData}
+              showToast={showToast}
+            />
           )}
 
           {/* VISITS SUB-TAB */}
