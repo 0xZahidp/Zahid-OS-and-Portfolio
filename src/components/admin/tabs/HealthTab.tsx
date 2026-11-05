@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   HeartPulse,
   ShieldCheck,
   Download,
+  Upload,
   HelpCircle,
   Pill,
   FileText,
@@ -19,6 +20,7 @@ import {
   Clock,
   HardDrive,
   AlertTriangle,
+  X,
 } from 'lucide-react';
 import {
   HealthData,
@@ -52,6 +54,10 @@ export const HealthTab: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<string>('All changes encrypted & saved');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showShortcutsModal, setShowShortcutsModal] = useState<boolean>(false);
+  const [showRestoreModal, setShowRestoreModal] = useState<boolean>(false);
+  const [restorePayload, setRestorePayload] = useState<Partial<HealthData> | null>(null);
+  const [isRestoring, setIsRestoring] = useState<boolean>(false);
+  const restoreFileRef = useRef<HTMLInputElement>(null);
 
   // Health data state
   const [healthData, setHealthData] = useState<HealthData>({
@@ -159,6 +165,58 @@ export const HealthTab: React.FC = () => {
       showToast('✓ Health backup exported successfully');
     } catch {
       showToast('✕ Failed to export backup');
+    }
+  };
+
+  // Select restore JSON file
+  const handleSelectRestoreFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string;
+        const parsed = JSON.parse(text) as Partial<HealthData>;
+
+        if (!parsed || typeof parsed !== 'object') {
+          showToast('✕ Invalid backup file format');
+          return;
+        }
+
+        setRestorePayload(parsed);
+        setShowRestoreModal(true);
+      } catch {
+        showToast('✕ Failed to read or parse JSON backup file');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Confirm restore
+  const handleConfirmRestore = async () => {
+    if (!restorePayload) return;
+    setIsRestoring(true);
+    try {
+      const res = await fetch('/api/admin/health/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': 'folioframe_admin',
+        },
+        body: JSON.stringify(restorePayload),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Restore failed');
+      }
+
+      setShowRestoreModal(false);
+      setRestorePayload(null);
+      await loadData();
+      showToast('✓ Backup restored and records merged successfully');
+    } catch {
+      showToast('✕ Failed to restore backup');
+    } finally {
+      setIsRestoring(false);
     }
   };
 
@@ -745,6 +803,19 @@ export const HealthTab: React.FC = () => {
             )}
           </div>
 
+          {/* Hidden restore input */}
+          <input
+            ref={restoreFileRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleSelectRestoreFile(file);
+              e.target.value = '';
+            }}
+          />
+
           {/* Export Backup Button */}
           <button
             type="button"
@@ -755,6 +826,17 @@ export const HealthTab: React.FC = () => {
             <Download className="size-3.5" />
             <span className="hidden md:inline">Export</span>
             <span>Backup</span>
+          </button>
+
+          {/* Restore Backup Button */}
+          <button
+            type="button"
+            onClick={() => restoreFileRef.current?.click()}
+            className="btn btn-secondary h-8.5 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 text-ink-2 hover:text-ink cursor-pointer"
+            title="Restore and merge JSON health backup"
+          >
+            <Upload className="size-3.5" />
+            <span className="hidden md:inline">Restore</span>
           </button>
 
           {/* Refresh Data */}
@@ -1054,6 +1136,118 @@ export const HealthTab: React.FC = () => {
                   ?
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Restore Backup Preview & Confirmation Modal */}
+      {showRestoreModal && restorePayload && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+          onClick={() => {
+            if (!isRestoring) setShowRestoreModal(false);
+          }}
+        >
+          <div
+            className="w-full max-w-lg rounded-3xl bg-surface border border-line p-6 shadow-2xl space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-line">
+              <div className="flex items-center gap-2">
+                <Upload className="size-5 text-indigo-500" />
+                <h3 className="text-sm font-bold text-ink">Restore & Merge Health Records</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRestoreModal(false)}
+                disabled={isRestoring}
+                className="size-7 grid place-items-center rounded-lg text-ink-4 hover:text-ink"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-ink-3 leading-relaxed">
+              Records will be non-destructively merged by record ID. Existing items will be preserved and incoming records will be added.
+            </p>
+
+            {/* Counts Preview Card */}
+            <div className="p-4 rounded-2xl bg-surface-2 border border-line space-y-2 text-xs">
+              <div className="flex justify-between py-1 border-b border-line/60">
+                <span className="text-ink-3">Profile Data:</span>
+                <span className="font-bold text-ink">
+                  {restorePayload.profile ? 'Included (Allergies & Contacts)' : 'None'}
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-line/60">
+                <span className="text-ink-3">Medications:</span>
+                <span className="font-bold font-mono text-ink">
+                  {restorePayload.medications?.length || 0} records
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-line/60">
+                <span className="text-ink-3">Documents Metadata:</span>
+                <span className="font-bold font-mono text-ink">
+                  {restorePayload.documents?.length || 0} records
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-line/60">
+                <span className="text-ink-3">Doctor Visits:</span>
+                <span className="font-bold font-mono text-ink">
+                  {restorePayload.visits?.length || 0} records
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-line/60">
+                <span className="text-ink-3">Vitals & Metrics:</span>
+                <span className="font-bold font-mono text-ink">
+                  {restorePayload.vitals?.length || 0} records
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-line/60">
+                <span className="text-ink-3">Vaccinations:</span>
+                <span className="font-bold font-mono text-ink">
+                  {restorePayload.vaccinations?.length || 0} records
+                </span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-ink-3">Reminders:</span>
+                <span className="font-bold font-mono text-ink">
+                  {restorePayload.reminders?.length || 0} records
+                </span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="pt-2 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowRestoreModal(false)}
+                disabled={isRestoring}
+                className="btn btn-secondary h-9 px-4 rounded-xl text-xs font-semibold text-ink-3 hover:text-ink cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmRestore}
+                disabled={isRestoring}
+                className="btn btn-primary h-9 px-4 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+              >
+                {isRestoring ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin" />
+                    <span>Merging Records...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="size-3.5" />
+                    <span>Confirm & Merge Records</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
