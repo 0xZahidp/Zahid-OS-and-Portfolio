@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   Plus,
   Search,
@@ -42,6 +42,8 @@ import {
   CareerApplicationStatus,
   CareerPriorityLevel,
   CareerMetrics,
+  CareerInterview,
+  CareerContact,
 } from '@/types/career';
 
 const STATUS_CONFIG: Record<
@@ -409,14 +411,7 @@ export const CareerTab: React.FC = () => {
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [activeDetailApp, setActiveDetailApp] = useState<CareerApplication | null>(null);
-  const [detailTab, setDetailTab] = useState<'overview' | 'interviews' | 'contacts' | 'email'>('overview');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  // Email generator state
-  const [emailTemplateType, setEmailTemplateType] = useState<
-    'follow_up' | 'thank_you' | 'negotiation' | 'status_inquiry'
-  >('follow_up');
-  const [copiedEmail, setCopiedEmail] = useState<boolean>(false);
 
   // Drag and drop & Column expansion state
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -555,39 +550,76 @@ export const CareerTab: React.FC = () => {
     fetchApplications();
   }, []);
 
+  // Open detail panel and sync URL hash
+  const handleOpenDetail = (app: CareerApplication) => {
+    setActiveDetailApp(app);
+    try {
+      window.history.replaceState(null, '', `#career=${app.id}`);
+    } catch {
+      // ignore
+    }
+  };
+
+  // Close detail panel and restore URL
+  const handleCloseDetail = () => {
+    setActiveDetailApp(null);
+    try {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    } catch {
+      // ignore
+    }
+  };
+
+  // Restore active detail from URL hash on load
+  useEffect(() => {
+    try {
+      const hash = window.location.hash;
+      if (hash.startsWith('#career=')) {
+        const id = hash.replace('#career=', '');
+        const matched = applications.find((a) => a.id === id);
+        if (matched) {
+          setActiveDetailApp(matched);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [applications]);
+
+  // Sync back/forward hash changes
+  useEffect(() => {
+    const handleHash = () => {
+      try {
+        const hash = window.location.hash;
+        if (hash.startsWith('#career=')) {
+          const id = hash.replace('#career=', '');
+          const matched = applications.find((a) => a.id === id);
+          if (matched) setActiveDetailApp(matched);
+        } else {
+          setActiveDetailApp(null);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, [applications]);
+
+  // Escape key closes detail panel
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && activeDetailApp) {
+        handleCloseDetail();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeDetailApp]);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  // Quick Status change
-  const handleUpdateStatus = async (appId: string, newStatus: CareerApplicationStatus) => {
-    try {
-      setSaveState('saving');
-      const res = await fetch('/api/admin/career', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: appId, status: newStatus }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setApplications((prev) =>
-          prev.map((a) => (a.id === appId ? data.application : a))
-        );
-        if (activeDetailApp?.id === appId) {
-          setActiveDetailApp(data.application);
-        }
-        setSaveState('saved');
-        setTimeout(() => setSaveState('idle'), 2000);
-        showToast(`Status updated to ${STATUS_CONFIG[newStatus].label}`);
-      } else {
-        setSaveState('error');
-        showToast('Error updating status');
-      }
-    } catch {
-      setSaveState('error');
-      showToast('Error updating status');
-    }
   };
 
   // Delete Application
@@ -650,73 +682,6 @@ export const CareerTab: React.FC = () => {
       return true;
     });
   }, [applications, showArchived, statusFilter, priorityFilter, typeFilter, search]);
-
-  // Generated follow-up email template
-  const generatedEmail = useMemo(() => {
-    if (!activeDetailApp) return '';
-    const name = activeDetailApp.contacts[0]?.name || 'Hiring Team';
-    const role = activeDetailApp.role_title;
-    const company = activeDetailApp.company_name;
-
-    switch (emailTemplateType) {
-      case 'follow_up':
-        return `Hi ${name},
-
-I hope you're having a productive week.
-
-I wanted to quickly follow up regarding my application for the ${role} position at ${company}. I remain very enthusiastic about the work you're doing, especially regarding your tech stack and product mission.
-
-Please let me know if there are any additional materials or code samples I can provide to support my application. I look forward to hearing about next steps.
-
-Best regards,
-Md Zahid Hasan Patwary
-https://zahidp.com`;
-
-      case 'thank_you':
-        return `Hi ${name},
-
-Thank you very much for your time today discussing the ${role} opportunity at ${company}.
-
-I truly enjoyed learning more about the team's upcoming challenges and technical direction. Our discussion reinforced my interest in bringing my full-stack engineering and agentic workflows background to ${company}.
-
-Looking forward to the next steps!
-
-Warm regards,
-Md Zahid Hasan Patwary
-https://zahidp.com`;
-
-      case 'negotiation':
-        return `Hi ${name},
-
-Thank you again for extending the offer to join ${company} as a ${role}! I am genuinely excited about the vision and the chance to contribute to the team.
-
-Before formally signing, I wanted to discuss the compensation package. Given my background in end-to-end full-stack systems and current competitive market rates, I was hoping we could explore aligning closer to ${activeDetailApp.salary_max ? `$${activeDetailApp.salary_max.toLocaleString()}` : 'the upper range'} (or equivalent equity adjustments).
-
-I am confident in the impact I will make and would love to find a package that works well for both sides.
-
-Best regards,
-Md Zahid Hasan Patwary`;
-
-      case 'status_inquiry':
-        return `Hi ${name},
-
-I wanted to check in to see if there are any updates regarding the ${role} search at ${company}. 
-
-I have a few pending timelines with other interview processes, but ${company} remains a top priority for me, so I wanted to touch base before making any commitments.
-
-Thank you again for your time and consideration!
-
-Best,
-Md Zahid Hasan Patwary`;
-    }
-  }, [activeDetailApp, emailTemplateType]);
-
-  const copyEmailText = () => {
-    if (!generatedEmail) return;
-    navigator.clipboard.writeText(generatedEmail);
-    setCopiedEmail(true);
-    setTimeout(() => setCopiedEmail(false), 2000);
-  };
 
   return (
     <div className="w-full px-6 py-5 space-y-4 select-none pb-20">
@@ -946,10 +911,7 @@ Md Zahid Hasan Patwary`;
                   apps={stageApps}
                   isExpanded={expandedStages.has(stage.id)}
                   onToggleExpand={() => toggleStageExpand(stage.id)}
-                  onSelectApp={(app) => {
-                    setActiveDetailApp(app);
-                    setDetailTab('overview');
-                  }}
+                  onSelectApp={(app) => handleOpenDetail(app)}
                 />
               );
             })}
@@ -983,10 +945,7 @@ Md Zahid Hasan Patwary`;
                 {filteredApps.map((app) => (
                   <tr
                     key={app.id}
-                    onClick={() => {
-                      setActiveDetailApp(app);
-                      setDetailTab('overview');
-                    }}
+                    onClick={() => handleOpenDetail(app)}
                     className="hover:bg-surface-2/60 transition-colors cursor-pointer"
                   >
                     <td className="px-4 py-3.5">
@@ -1032,10 +991,7 @@ Md Zahid Hasan Patwary`;
                     <td className="px-4 py-3.5 text-right space-x-1" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
-                        onClick={() => {
-                          setActiveDetailApp(app);
-                          setDetailTab('overview');
-                        }}
+                        onClick={() => handleOpenDetail(app)}
                         className="p-1.5 rounded-lg hover:bg-surface-3 text-ink-3 hover:text-ink cursor-pointer"
                         title="View detail"
                       >
@@ -1062,359 +1018,911 @@ Md Zahid Hasan Patwary`;
         />
       )}
 
-      {/* APPLICATION DETAIL DRAWER / MODAL */}
+      {/* APPLICATION SLIDE-OVER DETAIL PANEL (480px) */}
       {activeDetailApp && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-3xl border border-line bg-surface shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
-            {/* Modal Header */}
-            <div className="p-5 sm:p-6 border-b border-line flex items-center justify-between shrink-0 bg-surface-2/40">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-bold text-ink">
-                    {activeDetailApp.company_name}
-                  </h3>
-                  {activeDetailApp.company_website && (
+        <CareerSlideOver
+          app={activeDetailApp}
+          onClose={handleCloseDetail}
+          onUpdate={(updated) => {
+            setApplications((prev) =>
+              prev.map((a) => (a.id === updated.id ? updated : a))
+            );
+            setActiveDetailApp(updated);
+          }}
+          onDelete={(id) => {
+            handleDeleteApplication(id);
+            handleCloseDetail();
+          }}
+          saveState={saveState}
+          setSaveState={setSaveState}
+        />
+      )}
+    </div>
+  );
+};
+
+// SLIDE-OVER DETAIL PANEL (480px, interactive, debounced autosave 600ms)
+interface CareerSlideOverProps {
+  app: CareerApplication;
+  onClose: () => void;
+  onUpdate: (app: CareerApplication) => void;
+  onDelete: (id: string) => void;
+  saveState: 'idle' | 'saving' | 'saved' | 'error';
+  setSaveState: (s: 'idle' | 'saving' | 'saved' | 'error') => void;
+}
+
+const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
+  app,
+  onClose,
+  onUpdate,
+  onDelete,
+  saveState,
+  setSaveState,
+}) => {
+  const [localApp, setLocalApp] = useState<CareerApplication>(app);
+  const [activeTab, setActiveTab] = useState<'overview' | 'interviews' | 'contacts' | 'emails'>('overview');
+  const [hasUnsaved, setHasUnsaved] = useState(false);
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Email generator state
+  const [emailTemplate, setEmailTemplate] = useState<
+    'follow_up' | 'thank_you' | 'negotiation' | 'status_inquiry'
+  >('follow_up');
+  const [copiedEmail, setCopiedEmail] = useState(false);
+
+  // Sync when app prop changes
+  useEffect(() => {
+    setLocalApp(app);
+  }, [app]);
+
+  // Persist changes to backend
+  const persistChanges = useCallback(
+    async (data: CareerApplication) => {
+      setSaveState('saving');
+      try {
+        const res = await fetch('/api/admin/career', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          onUpdate(json.application);
+          setSaveState('saved');
+          setHasUnsaved(false);
+          setTimeout(() => setSaveState('idle'), 2000);
+        } else {
+          setSaveState('error');
+        }
+      } catch {
+        setSaveState('error');
+      }
+    },
+    [onUpdate, setSaveState]
+  );
+
+  // Debounced field change (600ms)
+  const handleFieldChange = (updates: Partial<CareerApplication>) => {
+    const statusChanged = updates.status && updates.status !== localApp.status;
+    const updated: CareerApplication = {
+      ...localApp,
+      ...updates,
+      stageChangedAt: statusChanged ? new Date().toISOString() : localApp.stageChangedAt,
+      updated_at: new Date().toISOString(),
+    };
+    setLocalApp(updated);
+    setHasUnsaved(true);
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      persistChanges(updated);
+    }, 600);
+  };
+
+  // Safe close that flushes pending edits
+  const handleSafeClose = () => {
+    if (hasUnsaved) {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      persistChanges(localApp);
+    }
+    onClose();
+  };
+
+  // Generated email preview
+  const generatedEmailText = useMemo(() => {
+    const contactName = localApp.contacts[0]?.name || 'Hiring Team';
+    const role = localApp.role_title;
+    const company = localApp.company_name;
+
+    switch (emailTemplate) {
+      case 'follow_up':
+        return `Hi ${contactName},
+
+I hope you're having a wonderful week!
+
+I wanted to quickly follow up on my application for the ${role} position at ${company}. I'm very excited about what ${company} is building and remain confident that my background in production web platforms aligns well with what your engineering team needs.
+
+Please let me know if there are any additional materials or code samples I can provide to help with your review.
+
+Best regards,
+Md Zahid Hasan Patwary
+https://zahidp.com`;
+
+      case 'thank_you':
+        return `Hi ${contactName},
+
+Thank you so much for taking the time to speak with me today about the ${role} role at ${company}.
+
+I really enjoyed our conversation regarding your current technical challenges and engineering culture. The discussion reinforced my strong interest in joining the team and contributing to ${company}'s milestones.
+
+Looking forward to the next steps!
+
+Warm regards,
+Md Zahid Hasan Patwary`;
+
+      case 'negotiation':
+        return `Dear ${contactName},
+
+Thank you again for extending the offer to join ${company} as ${role}! I am genuinely excited about the team, the vision, and the opportunity to make a high impact.
+
+After reviewing the details of the compensation package, I would like to discuss whether there is any flexibility regarding the base compensation. Based on my technical background and current market benchmarks for senior roles, I am targeting a base of $${localApp.salary_max ? localApp.salary_max.toLocaleString() : '140,000'}.
+
+I am eager to find a package that works for both of us so I can accept and get started.
+
+Best regards,
+Md Zahid Hasan Patwary`;
+
+      case 'status_inquiry':
+        return `Hi ${contactName},
+
+I hope all is well!
+
+I wanted to check in to see if there are any updates regarding the ${role} search at ${company}. 
+
+I have a few pending timelines with other interview processes, but ${company} remains a top priority for me, so I wanted to touch base before making any commitments.
+
+Thank you again for your time and consideration!
+
+Best,
+Md Zahid Hasan Patwary`;
+    }
+  }, [localApp, emailTemplate]);
+
+  const copyEmail = () => {
+    if (!generatedEmailText) return;
+    navigator.clipboard.writeText(generatedEmailText);
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2000);
+  };
+
+  return (
+    <>
+      {/* Light Backdrop Dim */}
+      <div
+        onClick={handleSafeClose}
+        className="fixed inset-0 bg-black/25 backdrop-blur-2xs z-30 transition-opacity"
+        aria-hidden="true"
+      />
+
+      {/* 480px Slide-Over Panel */}
+      <aside className="fixed inset-y-0 right-0 z-40 w-full sm:w-[480px] bg-surface border-l border-line shadow-2xl flex flex-col animate-in slide-in-from-right duration-200 select-none">
+        {/* Top Header */}
+        <div className="p-4 border-b border-line bg-surface-2/40 flex items-center justify-between shrink-0 gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <div
+                className={`size-6 rounded-md border flex items-center justify-center font-bold text-xs shrink-0 ${getCompanyAvatarColor(
+                  localApp.company_name
+                )}`}
+              >
+                {localApp.company_name.charAt(0).toUpperCase()}
+              </div>
+              <h3 className="text-sm font-bold text-ink truncate leading-tight">
+                {localApp.company_name}
+              </h3>
+              {localApp.company_website && (
+                <a
+                  href={localApp.company_website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-ink-3 hover:text-ink shrink-0"
+                  title="Visit Website"
+                >
+                  <ExternalLink className="size-3" />
+                </a>
+              )}
+            </div>
+            <p className="text-[11px] text-ink-3 truncate mt-0.5">{localApp.role_title}</p>
+          </div>
+
+          {/* Status Select & Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Status Selector */}
+            <select
+              value={localApp.status}
+              onChange={(e) =>
+                handleFieldChange({ status: e.target.value as CareerApplicationStatus })
+              }
+              className={`h-7 px-2 rounded-lg border text-xs font-semibold cursor-pointer ${
+                STATUS_CONFIG[localApp.status]?.bg
+              } ${STATUS_CONFIG[localApp.status]?.color}`}
+            >
+              {KANBAN_STAGES.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title}
+                </option>
+              ))}
+            </select>
+
+            {/* Autosave feedback */}
+            {saveState === 'saving' && (
+              <span className="text-[10px] text-ink-3 flex items-center gap-1 font-mono">
+                <Loader2 className="size-2.5 animate-spin" />
+                <span>Saving…</span>
+              </span>
+            )}
+            {saveState === 'saved' && (
+              <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-0.5 animate-in fade-in">
+                <Check className="size-2.5" />
+                <span>Saved ✓</span>
+              </span>
+            )}
+            {saveState === 'error' && (
+              <span className="text-[10px] text-rose-500 font-semibold">Save failed</span>
+            )}
+
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={handleSafeClose}
+              className="size-7 rounded-lg border border-line bg-surface hover:bg-surface-3 flex items-center justify-center text-ink-3 hover:text-ink transition-colors cursor-pointer"
+              title="Close panel (Esc)"
+              aria-label="Close detail panel"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex items-center px-4 border-b border-line bg-surface text-xs font-semibold shrink-0 gap-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab('overview')}
+            className={`py-2.5 px-2.5 border-b-2 transition-all cursor-pointer ${
+              activeTab === 'overview'
+                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold'
+                : 'border-transparent text-ink-3 hover:text-ink'
+            }`}
+          >
+            Overview
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('interviews')}
+            className={`py-2.5 px-2.5 border-b-2 transition-all cursor-pointer inline-flex items-center gap-1 ${
+              activeTab === 'interviews'
+                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold'
+                : 'border-transparent text-ink-3 hover:text-ink'
+            }`}
+          >
+            <span>Interviews</span>
+            <span className="size-4 rounded-full bg-surface-2 text-[10px] grid place-items-center font-mono">
+              {localApp.interviews?.length || 0}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('contacts')}
+            className={`py-2.5 px-2.5 border-b-2 transition-all cursor-pointer inline-flex items-center gap-1 ${
+              activeTab === 'contacts'
+                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold'
+                : 'border-transparent text-ink-3 hover:text-ink'
+            }`}
+          >
+            <span>Contacts</span>
+            <span className="size-4 rounded-full bg-surface-2 text-[10px] grid place-items-center font-mono">
+              {localApp.contacts?.length || 0}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('emails')}
+            className={`py-2.5 px-2.5 border-b-2 transition-all cursor-pointer inline-flex items-center gap-1 ${
+              activeTab === 'emails'
+                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold'
+                : 'border-transparent text-ink-3 hover:text-ink'
+            }`}
+          >
+            <Sparkles className="size-3 text-amber-500" />
+            <span>Emails</span>
+          </button>
+        </div>
+
+        {/* Tab Content Body (Scrollable) */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 [scrollbar-width:thin]">
+          {/* TAB 1: OVERVIEW */}
+          {activeTab === 'overview' && (
+            <div className="space-y-3.5 text-xs">
+              {/* Role Title & Company inputs */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="text-[11px] font-semibold text-ink-2 mb-1 block">
+                    Company Name
+                  </label>
+                  <input
+                    type="text"
+                    value={localApp.company_name}
+                    onChange={(e) => handleFieldChange({ company_name: e.target.value })}
+                    className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface-2 text-ink focus:outline-hidden"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-ink-2 mb-1 block">Role Title</label>
+                  <input
+                    type="text"
+                    value={localApp.role_title}
+                    onChange={(e) => handleFieldChange({ role_title: e.target.value })}
+                    className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface-2 text-ink focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              {/* Priority, Opportunity Type, Workplace Mode */}
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <label className="text-[11px] font-semibold text-ink-2 mb-1 block">Priority</label>
+                  <select
+                    value={localApp.priority}
+                    onChange={(e) =>
+                      handleFieldChange({ priority: e.target.value as CareerPriorityLevel })
+                    }
+                    className="w-full h-8 px-2 rounded-xl border border-line bg-surface-2 text-ink focus:outline-hidden"
+                  >
+                    <option value="urgent">Urgent</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-ink-2 mb-1 block">Type</label>
+                  <select
+                    value={localApp.type || 'job'}
+                    onChange={(e) =>
+                      handleFieldChange({
+                        type: e.target.value as 'job' | 'scholarship',
+                      })
+                    }
+                    className="w-full h-8 px-2 rounded-xl border border-line bg-surface-2 text-ink focus:outline-hidden"
+                  >
+                    <option value="job">Job</option>
+                    <option value="scholarship">Scholarship</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-ink-2 mb-1 block">Workplace</label>
+                  <select
+                    value={localApp.remote_type}
+                    onChange={(e) =>
+                      handleFieldChange({
+                        remote_type: e.target.value as 'remote' | 'hybrid' | 'onsite',
+                      })
+                    }
+                    className="w-full h-8 px-2 rounded-xl border border-line bg-surface-2 text-ink focus:outline-hidden"
+                  >
+                    <option value="remote">Remote</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="onsite">On-site</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Salary Bracket */}
+              <div className="p-3 rounded-2xl border border-line bg-surface-2/40 space-y-2">
+                <span className="text-[11px] font-semibold text-ink block">Compensation Target</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[10px] text-ink-3">Min Salary ($)</span>
+                    <input
+                      type="number"
+                      value={localApp.salary_min || ''}
+                      onChange={(e) =>
+                        handleFieldChange({ salary_min: Number(e.target.value) || undefined })
+                      }
+                      placeholder="120000"
+                      className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface text-ink font-mono focus:outline-hidden"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-ink-3">Max Salary ($)</span>
+                    <input
+                      type="number"
+                      value={localApp.salary_max || ''}
+                      onChange={(e) =>
+                        handleFieldChange({ salary_max: Number(e.target.value) || undefined })
+                      }
+                      placeholder="150000"
+                      className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface text-ink font-mono focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[10px] text-ink-3">Compensation Notes</span>
+                  <input
+                    type="text"
+                    value={localApp.compensation_notes || ''}
+                    onChange={(e) => handleFieldChange({ compensation_notes: e.target.value })}
+                    placeholder="e.g. + 0.1% equity, $10k sign-on bonus"
+                    className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface text-ink focus:outline-hidden mt-0.5"
+                  />
+                </div>
+              </div>
+
+              {/* Links & Website */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-ink-2 block">Company Website / Job URL</label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="url"
+                    value={localApp.company_website || ''}
+                    onChange={(e) => handleFieldChange({ company_website: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface-2 text-ink focus:outline-hidden"
+                  />
+                  {localApp.company_website && (
                     <a
-                      href={activeDetailApp.company_website}
+                      href={localApp.company_website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-ink-3 hover:text-ink"
+                      className="size-8 rounded-xl border border-line bg-surface-2 flex items-center justify-center text-ink-3 hover:text-ink shrink-0"
                     >
                       <ExternalLink className="size-3.5" />
                     </a>
                   )}
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                      PRIORITY_CONFIG[activeDetailApp.priority]?.badge
-                    }`}
-                  >
-                    {activeDetailApp.priority}
-                  </span>
                 </div>
-                <p className="text-xs text-ink-2 font-medium">
-                  {activeDetailApp.role_title} • {activeDetailApp.remote_type}
-                </p>
               </div>
 
-              {/* Status Switcher & Close */}
-              <div className="flex items-center gap-2">
-                <select
-                  value={activeDetailApp.status}
-                  onChange={(e) =>
-                    handleUpdateStatus(
-                      activeDetailApp.id,
-                      e.target.value as CareerApplicationStatus
-                    )
-                  }
-                  className={`h-8 px-2.5 rounded-xl border text-xs font-semibold cursor-pointer ${
-                    STATUS_CONFIG[activeDetailApp.status]?.bg
-                  } ${STATUS_CONFIG[activeDetailApp.status]?.color}`}
+              {/* Next Follow-up Alarms */}
+              <div className="p-3 rounded-2xl border border-line bg-surface-2/40 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-ink">Next Follow-up Action</span>
+                  {localApp.next_followup_date && (
+                    <span className="text-[10px] font-mono text-ink-3">
+                      {formatRelativeDueDate(localApp.next_followup_date)?.label}
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="date"
+                    value={localApp.next_followup_date || ''}
+                    onChange={(e) => handleFieldChange({ next_followup_date: e.target.value })}
+                    className="w-full h-8 px-2 rounded-xl border border-line bg-surface text-ink focus:outline-hidden font-mono text-xs"
+                  />
+                  <input
+                    type="text"
+                    value={localApp.next_followup_notes || ''}
+                    onChange={(e) => handleFieldChange({ next_followup_notes: e.target.value })}
+                    placeholder="e.g. Check in with recruiter"
+                    className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface text-ink focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-ink-2 block">Application Notes</label>
+                <textarea
+                  rows={4}
+                  value={localApp.notes || ''}
+                  onChange={(e) => handleFieldChange({ notes: e.target.value })}
+                  placeholder="Notes on the hiring process, recruiter calls, tech stack..."
+                  className="w-full p-2.5 rounded-xl border border-line bg-surface-2 text-ink leading-relaxed resize-none focus:outline-hidden text-xs"
+                />
+              </div>
+
+              {/* Danger Zone */}
+              <div className="pt-3 border-t border-line flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm('Delete this application permanently?')) {
+                      onDelete(localApp.id);
+                    }
+                  }}
+                  className="text-xs text-rose-500 hover:text-rose-600 font-semibold inline-flex items-center gap-1 cursor-pointer"
                 >
-                  {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v.label}
-                    </option>
-                  ))}
-                </select>
+                  <Trash2 className="size-3" />
+                  <span>Delete Application</span>
+                </button>
 
                 <button
                   type="button"
-                  onClick={() => setActiveDetailApp(null)}
-                  className="size-8 rounded-xl border border-line bg-surface hover:bg-surface-3 grid place-items-center text-ink-3 hover:text-ink transition-colors cursor-pointer"
+                  onClick={() => handleFieldChange({ archived: !localApp.archived })}
+                  className="text-xs text-ink-3 hover:text-ink cursor-pointer"
                 >
-                  <X className="size-4" />
+                  {localApp.archived ? 'Unarchive' : 'Archive'}
                 </button>
               </div>
             </div>
+          )}
 
-            {/* Modal Tab Navigation */}
-            <div className="flex items-center gap-2 px-6 border-b border-line bg-surface-2/20 text-xs font-semibold shrink-0">
-              <button
-                type="button"
-                onClick={() => setDetailTab('overview')}
-                className={`py-3 px-2 border-b-2 transition-all cursor-pointer ${
-                  detailTab === 'overview'
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold'
-                    : 'border-transparent text-ink-3 hover:text-ink'
-                }`}
-              >
-                Overview
-              </button>
-              <button
-                type="button"
-                onClick={() => setDetailTab('interviews')}
-                className={`py-3 px-2 border-b-2 transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                  detailTab === 'interviews'
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold'
-                    : 'border-transparent text-ink-3 hover:text-ink'
-                }`}
-              >
-                <span>Interviews &amp; Q&amp;A</span>
-                <span className="size-4 rounded-full bg-surface-3 text-[10px] grid place-items-center">
-                  {activeDetailApp.interviews?.length || 0}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setDetailTab('contacts')}
-                className={`py-3 px-2 border-b-2 transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                  detailTab === 'contacts'
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold'
-                    : 'border-transparent text-ink-3 hover:text-ink'
-                }`}
-              >
-                <span>Contacts</span>
-                <span className="size-4 rounded-full bg-surface-3 text-[10px] grid place-items-center">
-                  {activeDetailApp.contacts?.length || 0}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setDetailTab('email')}
-                className={`py-3 px-2 border-b-2 transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                  detailTab === 'email'
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold'
-                    : 'border-transparent text-ink-3 hover:text-ink'
-                }`}
-              >
-                <Sparkles className="size-3.5 text-amber-500" />
-                <span>Follow-up Generator</span>
-              </button>
-            </div>
+          {/* TAB 2: INTERVIEWS & Q&A */}
+          {activeTab === 'interviews' && (
+            <div className="space-y-3.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-ink">Interview Schedule &amp; Q&amp;A</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newRound = {
+                      id: `int_${Date.now()}`,
+                      round: (localApp.interviews?.length || 0) + 1,
+                      title: `Round ${(localApp.interviews?.length || 0) + 1}`,
+                      stage: 'screening' as const,
+                      completed: false,
+                      questions: [],
+                    };
+                    handleFieldChange({ interviews: [...(localApp.interviews || []), newRound] });
+                  }}
+                  className="btn btn-secondary h-7 px-2.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="size-3" />
+                  <span>Add Round</span>
+                </button>
+              </div>
 
-            {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-5 flex-1">
-              {detailTab === 'overview' && (
-                <div className="space-y-4">
-                  {/* Grid of basic attributes */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                    <div className="rounded-xl border border-line bg-surface-2 p-3">
-                      <span className="text-ink-4 text-[10px] font-semibold uppercase">Source</span>
-                      <p className="font-semibold text-ink mt-0.5 capitalize">{activeDetailApp.source}</p>
-                    </div>
-                    <div className="rounded-xl border border-line bg-surface-2 p-3">
-                      <span className="text-ink-4 text-[10px] font-semibold uppercase">Salary Range</span>
-                      <p className="font-semibold text-ink mt-0.5">
-                        {activeDetailApp.salary_min
-                          ? `$${activeDetailApp.salary_min.toLocaleString()} - $${(activeDetailApp.salary_max || activeDetailApp.salary_min).toLocaleString()}`
-                          : 'Not specified'}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-line bg-surface-2 p-3">
-                      <span className="text-ink-4 text-[10px] font-semibold uppercase">Applied Date</span>
-                      <p className="font-semibold text-ink mt-0.5">
-                        {activeDetailApp.applied_date ? activeDetailApp.applied_date.split('T')[0] : '—'}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-line bg-surface-2 p-3">
-                      <span className="text-ink-4 text-[10px] font-semibold uppercase">CV Submitted</span>
-                      <p className="font-semibold text-ink mt-0.5 truncate">
-                        {activeDetailApp.cv_version || 'Default Portfolio'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Notes & context */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-ink-2">Application Notes &amp; Highlights</label>
-                    <div className="p-3.5 rounded-xl border border-line bg-surface-2 text-xs text-ink-2 whitespace-pre-wrap leading-relaxed">
-                      {activeDetailApp.notes || 'No specific notes recorded yet.'}
-                    </div>
-                  </div>
-
-                  {/* Next follow-up alarm */}
-                  <div className="p-4 rounded-2xl border border-line bg-surface-2 flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-semibold text-ink block">Next Proactive Follow-up</span>
-                      <span className="text-[11px] text-ink-3">
-                        {activeDetailApp.next_followup_date
-                          ? `${activeDetailApp.next_followup_date} — ${activeDetailApp.next_followup_notes || 'Follow up with recruiter'}`
-                          : 'No alarm scheduled'}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setDetailTab('email')}
-                      className="btn btn-secondary h-8 px-3 rounded-lg text-xs font-semibold cursor-pointer"
-                    >
-                      Draft Email
-                    </button>
-                  </div>
+              {(!localApp.interviews || localApp.interviews.length === 0) ? (
+                <div className="py-12 border-2 border-dashed border-line/60 rounded-2xl flex flex-col items-center justify-center text-center p-4">
+                  <p className="text-xs text-ink-3">No interview rounds added yet.</p>
+                  <p className="text-[11px] text-ink-4 mt-1">Track screening, technical, system design, and final rounds.</p>
                 </div>
-              )}
+              ) : (
+                localApp.interviews.map((intv, idx) => (
+                  <div key={intv.id} className="rounded-2xl border border-line bg-surface-2/40 p-3 space-y-2.5">
+                    {/* Round Header */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="size-5 rounded-md bg-indigo-500/10 text-indigo-600 font-bold text-[10px] grid place-items-center shrink-0">
+                          R{intv.round}
+                        </span>
+                        <input
+                          type="text"
+                          value={intv.title}
+                          onChange={(e) => {
+                            const updatedList = [...(localApp.interviews || [])];
+                            updatedList[idx] = { ...intv, title: e.target.value };
+                            handleFieldChange({ interviews: updatedList });
+                          }}
+                          className="h-7 px-2 rounded-lg border border-line bg-surface text-ink text-xs font-bold flex-1 min-w-0"
+                        />
+                      </div>
 
-              {detailTab === 'interviews' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-ink">Interview Schedule &amp; Rounds</h4>
-                    <span className="text-xs text-ink-3">
-                      {activeDetailApp.interviews?.length || 0} rounds total
-                    </span>
-                  </div>
-
-                  <div className="space-y-2.5">
-                    {(!activeDetailApp.interviews || activeDetailApp.interviews.length === 0) ? (
-                      <p className="text-xs text-ink-3 py-6 text-center">No interview rounds recorded.</p>
-                    ) : (
-                      activeDetailApp.interviews.map((intv) => (
-                        <div
-                          key={intv.id}
-                          className="rounded-2xl border border-line bg-surface-2 p-4 space-y-2"
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <select
+                          value={intv.stage}
+                          onChange={(e) => {
+                            const updatedList = [...(localApp.interviews || [])];
+                            updatedList[idx] = {
+                              ...intv,
+                              stage: e.target.value as CareerInterview['stage'],
+                            };
+                            handleFieldChange({ interviews: updatedList });
+                          }}
+                          className="h-7 px-1.5 rounded-lg border border-line bg-surface text-ink text-[11px] capitalize cursor-pointer"
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="size-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold text-xs grid place-items-center">
-                                R{intv.round}
-                              </span>
-                              <span className="font-bold text-xs text-ink">{intv.title}</span>
-                              <span className="text-[10px] px-2 py-0.5 rounded-md bg-surface border border-line capitalize">
-                                {intv.stage}
-                              </span>
-                            </div>
-                            <span
-                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                                intv.completed
-                                  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                                  : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                              }`}
+                          <option value="screening">Screening</option>
+                          <option value="technical">Technical</option>
+                          <option value="take_home">Take Home</option>
+                          <option value="system_design">System Design</option>
+                          <option value="culture">Culture</option>
+                          <option value="final">Final</option>
+                        </select>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updatedList = (localApp.interviews || []).filter((_, i) => i !== idx);
+                            handleFieldChange({ interviews: updatedList });
+                          }}
+                          className="size-7 rounded-lg text-ink-3 hover:text-rose-500 hover:bg-rose-500/10 flex items-center justify-center transition-colors cursor-pointer"
+                          title="Delete round"
+                        >
+                          <Trash2 className="size-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Interviewer & Meeting URL */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        value={intv.interviewer || ''}
+                        onChange={(e) => {
+                          const updatedList = [...(localApp.interviews || [])];
+                          updatedList[idx] = { ...intv, interviewer: e.target.value };
+                          handleFieldChange({ interviews: updatedList });
+                        }}
+                        placeholder="Interviewer name(s)"
+                        className="h-7 px-2 rounded-lg border border-line bg-surface text-ink text-xs"
+                      />
+                      <input
+                        type="url"
+                        value={intv.meeting_url || ''}
+                        onChange={(e) => {
+                          const updatedList = [...(localApp.interviews || [])];
+                          updatedList[idx] = { ...intv, meeting_url: e.target.value };
+                          handleFieldChange({ interviews: updatedList });
+                        }}
+                        placeholder="Google Meet / Zoom URL"
+                        className="h-7 px-2 rounded-lg border border-line bg-surface text-ink text-xs"
+                      />
+                    </div>
+
+                    {/* Prep Notes */}
+                    <textarea
+                      rows={2}
+                      value={intv.notes || ''}
+                      onChange={(e) => {
+                        const updatedList = [...(localApp.interviews || [])];
+                        updatedList[idx] = { ...intv, notes: e.target.value };
+                        handleFieldChange({ interviews: updatedList });
+                      }}
+                      placeholder="Round notes & prep guidance..."
+                      className="w-full p-2 rounded-lg border border-line bg-surface text-ink text-xs resize-none focus:outline-hidden"
+                    />
+
+                    {/* Q&A Prep Items */}
+                    <div className="pt-2 border-t border-line/60 space-y-2">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-ink-3">
+                        <span>Prepared Questions &amp; Answers</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const curQ = intv.questions || [];
+                            const updatedList = [...(localApp.interviews || [])];
+                            updatedList[idx] = {
+                              ...intv,
+                              questions: [...curQ, { q: 'New question?', a: '' }],
+                            };
+                            handleFieldChange({ interviews: updatedList });
+                          }}
+                          className="text-[10px] text-indigo-500 hover:underline font-semibold cursor-pointer"
+                        >
+                          + Add Q&amp;A
+                        </button>
+                      </div>
+
+                      {intv.questions?.map((qa, qIdx) => (
+                        <div key={qIdx} className="p-2 rounded-xl bg-surface border border-line space-y-1.5">
+                          <div className="flex items-center justify-between gap-1">
+                            <input
+                              type="text"
+                              value={qa.q}
+                              onChange={(e) => {
+                                const curQ = [...(intv.questions || [])];
+                                curQ[qIdx] = { ...qa, q: e.target.value };
+                                const updatedList = [...(localApp.interviews || [])];
+                                updatedList[idx] = { ...intv, questions: curQ };
+                                handleFieldChange({ interviews: updatedList });
+                              }}
+                              placeholder="Question"
+                              className="h-6 px-1.5 rounded border border-line text-xs font-semibold text-ink w-full"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const curQ = (intv.questions || []).filter((_, i) => i !== qIdx);
+                                const updatedList = [...(localApp.interviews || [])];
+                                updatedList[idx] = { ...intv, questions: curQ };
+                                handleFieldChange({ interviews: updatedList });
+                              }}
+                              className="size-6 text-ink-3 hover:text-rose-500 flex items-center justify-center shrink-0 cursor-pointer"
                             >
-                              {intv.completed ? 'Completed' : 'Upcoming'}
-                            </span>
+                              <Trash2 className="size-2.5" />
+                            </button>
                           </div>
-
-                          {intv.notes && (
-                            <p className="text-xs text-ink-3 leading-relaxed">{intv.notes}</p>
-                          )}
-
-                          {intv.questions && intv.questions.length > 0 && (
-                            <div className="pt-2 border-t border-line/60 space-y-1.5">
-                              <span className="text-[10px] font-bold text-ink-4 uppercase">
-                                Questions &amp; Prep Notes
-                              </span>
-                              {intv.questions.map((q, idx) => (
-                                <div key={idx} className="p-2 rounded-lg bg-surface text-xs space-y-1">
-                                  <div className="font-semibold text-ink">Q: {q.q}</div>
-                                  {q.a && <div className="text-ink-3 text-[11px]">A: {q.a}</div>}
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                          <textarea
+                            rows={2}
+                            value={qa.a || ''}
+                            onChange={(e) => {
+                              const curQ = [...(intv.questions || [])];
+                              curQ[qIdx] = { ...qa, a: e.target.value };
+                              const updatedList = [...(localApp.interviews || [])];
+                              updatedList[idx] = { ...intv, questions: curQ };
+                              handleFieldChange({ interviews: updatedList });
+                            }}
+                            placeholder="Prepared response & talking points..."
+                            className="w-full p-1.5 rounded border border-line bg-surface-2 text-ink text-[11px] resize-none focus:outline-hidden"
+                          />
                         </div>
-                      ))
-                    )}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ))
               )}
+            </div>
+          )}
 
-              {detailTab === 'contacts' && (
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-ink">Recruiter &amp; Team Contacts</h4>
-                  {(!activeDetailApp.contacts || activeDetailApp.contacts.length === 0) ? (
-                    <p className="text-xs text-ink-3 py-6 text-center">No contacts added for this company.</p>
-                  ) : (
-                    activeDetailApp.contacts.map((cnt) => (
-                      <div
-                        key={cnt.id}
-                        className="rounded-2xl border border-line bg-surface-2 p-4 flex items-center justify-between"
+          {/* TAB 3: CONTACTS */}
+          {activeTab === 'contacts' && (
+            <div className="space-y-3.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-ink">Recruiter &amp; Team Contacts</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newContact = {
+                      id: `cnt_${Date.now()}`,
+                      name: 'Recruiter Name',
+                      role: 'recruiter' as const,
+                      email: '',
+                      linkedin: '',
+                    };
+                    handleFieldChange({ contacts: [...(localApp.contacts || []), newContact] });
+                  }}
+                  className="btn btn-secondary h-7 px-2.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="size-3" />
+                  <span>Add Contact</span>
+                </button>
+              </div>
+
+              {(!localApp.contacts || localApp.contacts.length === 0) ? (
+                <div className="py-12 border-2 border-dashed border-line/60 rounded-2xl flex flex-col items-center justify-center text-center p-4">
+                  <p className="text-xs text-ink-3">No contacts recorded yet.</p>
+                  <p className="text-[11px] text-ink-4 mt-1">Keep track of recruiters, hiring managers, and interviewers.</p>
+                </div>
+              ) : (
+                localApp.contacts.map((cnt, idx) => (
+                  <div key={cnt.id} className="rounded-2xl border border-line bg-surface-2/40 p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <input
+                        type="text"
+                        value={cnt.name}
+                        onChange={(e) => {
+                          const updatedList = [...(localApp.contacts || [])];
+                          updatedList[idx] = { ...cnt, name: e.target.value };
+                          handleFieldChange({ contacts: updatedList });
+                        }}
+                        className="h-7 px-2 rounded-lg border border-line bg-surface text-ink text-xs font-bold flex-1 min-w-0"
+                      />
+                      <select
+                        value={cnt.role}
+                        onChange={(e) => {
+                          const updatedList = [...(localApp.contacts || [])];
+                          updatedList[idx] = {
+                            ...cnt,
+                            role: e.target.value as CareerContact['role'],
+                          };
+                          handleFieldChange({ contacts: updatedList });
+                        }}
+                        className="h-7 px-2 rounded-lg border border-line bg-surface text-ink text-[11px] capitalize cursor-pointer shrink-0"
                       >
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-xs text-ink">{cnt.name}</span>
-                            <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-surface border border-line text-ink-3 capitalize">
-                              {cnt.role}
-                            </span>
-                          </div>
-                          {cnt.email && (
-                            <p className="text-xs text-ink-3 font-mono">{cnt.email}</p>
-                          )}
-                        </div>
+                        <option value="recruiter">Recruiter</option>
+                        <option value="hiring_manager">Hiring Manager</option>
+                        <option value="peer">Peer</option>
+                        <option value="executive">Executive</option>
+                        <option value="referral">Referral</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updatedList = (localApp.contacts || []).filter((_, i) => i !== idx);
+                          handleFieldChange({ contacts: updatedList });
+                        }}
+                        className="size-7 rounded-lg text-ink-3 hover:text-rose-500 hover:bg-rose-500/10 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                        title="Delete contact"
+                      >
+                        <Trash2 className="size-3" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="email"
+                          value={cnt.email || ''}
+                          onChange={(e) => {
+                            const updatedList = [...(localApp.contacts || [])];
+                            updatedList[idx] = { ...cnt, email: e.target.value };
+                            handleFieldChange({ contacts: updatedList });
+                          }}
+                          placeholder="Email address"
+                          className="h-7 px-2 rounded-lg border border-line bg-surface text-ink text-xs font-mono w-full"
+                        />
+                        {cnt.email && (
+                          <a
+                            href={`mailto:${cnt.email}`}
+                            className="size-7 rounded-lg border border-line bg-surface flex items-center justify-center text-ink-3 hover:text-ink shrink-0"
+                            title="Send email"
+                          >
+                            <ExternalLink className="size-3" />
+                          </a>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="url"
+                          value={cnt.linkedin || ''}
+                          onChange={(e) => {
+                            const updatedList = [...(localApp.contacts || [])];
+                            updatedList[idx] = { ...cnt, linkedin: e.target.value };
+                            handleFieldChange({ contacts: updatedList });
+                          }}
+                          placeholder="LinkedIn URL"
+                          className="h-7 px-2 rounded-lg border border-line bg-surface text-ink text-xs w-full"
+                        />
                         {cnt.linkedin && (
                           <a
                             href={cnt.linkedin}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="btn btn-secondary h-8 px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1"
+                            className="size-7 rounded-lg border border-line bg-surface flex items-center justify-center text-ink-3 hover:text-ink shrink-0"
+                            title="Open LinkedIn"
                           >
-                            <span>LinkedIn</span>
                             <ExternalLink className="size-3" />
                           </a>
                         )}
                       </div>
-                    ))
-                  )}
-                </div>
-              )}
-
-              {detailTab === 'email' && (
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {(
-                        [
-                          { id: 'follow_up', label: 'Proactive Follow-up' },
-                          { id: 'thank_you', label: 'Post-Interview Thank You' },
-                          { id: 'negotiation', label: 'Offer Negotiation' },
-                          { id: 'status_inquiry', label: 'Status Inquiry' },
-                        ] as const
-                      ).map((t) => (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => setEmailTemplateType(t.id)}
-                          className={`text-xs px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
-                            emailTemplateType === t.id
-                              ? 'bg-indigo-500/15 border-indigo-500/30 text-indigo-600 dark:text-indigo-400 font-bold'
-                              : 'bg-surface-2 border-line text-ink-3 hover:text-ink'
-                          }`}
-                        >
-                          {t.label}
-                        </button>
-                      ))}
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={copyEmailText}
-                      className="btn btn-primary h-8 px-3 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
-                    >
-                      {copiedEmail ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-                      <span>{copiedEmail ? 'Copied!' : 'Copy Template'}</span>
-                    </button>
                   </div>
-
-                  <textarea
-                    rows={10}
-                    readOnly
-                    value={generatedEmail}
-                    className="w-full p-4 rounded-2xl bg-surface-2 border border-line text-xs font-sans text-ink leading-relaxed resize-none focus:outline-hidden"
-                  />
-                </div>
+                ))
               )}
             </div>
+          )}
 
-            {/* Modal Footer with Delete Option */}
-            <div className="p-4 border-t border-line bg-surface-2/40 flex items-center justify-between shrink-0">
-              <button
-                type="button"
-                onClick={() => handleDeleteApplication(activeDetailApp.id)}
-                className="text-xs text-rose-600 dark:text-rose-400 hover:underline font-semibold inline-flex items-center gap-1 cursor-pointer"
-              >
-                <Trash2 className="size-3.5" />
-                <span>Delete Application</span>
-              </button>
+          {/* TAB 4: EMAILS */}
+          {activeTab === 'emails' && (
+            <div className="space-y-3 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1">
+                  {(
+                    [
+                      { id: 'follow_up', label: 'Follow-up' },
+                      { id: 'thank_you', label: 'Thank You' },
+                      { id: 'negotiation', label: 'Negotiation' },
+                      { id: 'status_inquiry', label: 'Status' },
+                    ] as const
+                  ).map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setEmailTemplate(t.id)}
+                      className={`text-xs px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                        emailTemplate === t.id
+                          ? 'bg-indigo-500/15 border-indigo-500/30 text-indigo-600 dark:text-indigo-400 font-bold'
+                          : 'bg-surface-2 border-line text-ink-3 hover:text-ink'
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
 
-              <button
-                type="button"
-                onClick={() => setActiveDetailApp(null)}
-                className="btn btn-secondary h-8 px-4 rounded-xl text-xs font-semibold cursor-pointer"
-              >
-                Done
-              </button>
+                <button
+                  type="button"
+                  onClick={copyEmail}
+                  className="btn btn-primary h-7 px-2.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
+                >
+                  {copiedEmail ? <Check className="size-3" /> : <Copy className="size-3" />}
+                  <span>{copiedEmail ? 'Copied!' : 'Copy'}</span>
+                </button>
+              </div>
+
+              <textarea
+                rows={12}
+                readOnly
+                value={generatedEmailText}
+                className="w-full p-3.5 rounded-2xl bg-surface-2/60 border border-line text-xs font-sans text-ink leading-relaxed resize-none focus:outline-hidden"
+              />
             </div>
-          </div>
+          )}
         </div>
-      )}
-    </div>
+      </aside>
+    </>
   );
 };
 
