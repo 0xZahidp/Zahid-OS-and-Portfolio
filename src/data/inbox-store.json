@@ -1,6 +1,38 @@
 {
-  "updatedAt": "2026-11-04T06:27:37.135Z",
+  "updatedAt": "2026-11-05T06:23:41.432Z",
   "messages": [
+    {
+      "id": "msg_resend_724ab7ca-847c-428b-8fd6-c0f2d679f9f0",
+      "folder": "trash",
+      "from": {
+        "name": "Md Zahid Hasan Patwary",
+        "email": "mdzahidexchange@gmail.com"
+      },
+      "to": [
+        {
+          "name": "Md Zahid Hasan",
+          "email": "tmp_kr06c0@aromacurtains.com"
+        }
+      ],
+      "replyTo": "mdzahidexchange@gmail.com",
+      "subject": "Your Aroma Curtains Verification Code",
+      "body": "Hello,\n\nWe received a request to verify your email address for your Aroma Curtains\naccount.\n\nYour One-Time Password (OTP) is:\n739 281\n\nThis verification code will expire in 5 minutes.\n\nIf you did not request this code, you can safely ignore this email.\n\n*Security Notice:* Never share your verification code with anyone.\n\nBest regards,\nAroma Curtains Team\nhttps://aromacurtains.com/\n",
+      "textBody": "Hello,\n\nWe received a request to verify your email address for your Aroma Curtains\naccount.\n\nYour One-Time Password (OTP) is:\n739 281\n\nThis verification code will expire in 5 minutes.\n\nIf you did not request this code, you can safely ignore this email.\n\n*Security Notice:* Never share your verification code with anyone.\n\nBest regards,\nAroma Curtains Team\nhttps://aromacurtains.com/\n",
+      "snippet": "Hello, We received a request to verify your email address for your Aroma Curtains account. Your One-Time Password (OTP) ",
+      "createdAt": "2026-11-05T06:23:38.816425+00:00",
+      "receivedAt": "2026-11-05T06:23:38.816425+00:00",
+      "isRead": false,
+      "isStarred": false,
+      "isTrashed": true,
+      "isArchived": false,
+      "label": "inbox",
+      "direction": "inbound",
+      "attachments": [],
+      "headers": {},
+      "tags": [
+        "Inquiry"
+      ]
+    },
     {
       "id": "msg_resend_a65f5890-249b-459e-b347-89dcd0c3afb7",
       "folder": "trash",

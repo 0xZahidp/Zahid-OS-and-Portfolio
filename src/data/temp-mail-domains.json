@@ -4,7 +4,7 @@
     "domain": "zahidp.com",
     "status": "verified",
     "createdAt": "2026-11-03T16:49:14.928Z",
-    "isDefault": true,
+    "isDefault": false,
     "updatedAt": "2026-11-04T06:12:41.916Z",
     "dnsRecords": [
       {
@@ -172,6 +172,61 @@
     "updatedAt": "2026-11-04T06:46:26.847Z",
     "dnsRecords": [
       {
+        "ttl": "Auto",
+        "name": "@",
+        "type": "MX",
+        "value": "receive-apne1.forge.rmta.net",
+        "record": "Receiving",
+        "status": "verified",
+        "priority": 10
+      },
+      {
+        "ttl": "Auto",
+        "name": "resend._domainkey",
+        "type": "TXT",
+        "value": "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDblKf2mAFhqlKtSuJ5M1htzvIlUERPmSVhrwVs65r1lWx0KYX30+6ZnNk53OLVPQiMG/8RbqLXQio0dmqYuUujPrg6QPCK3kZLo7k04qlETsXuWKp40OS0sW0EFUtMHqSZ0+Vay6Y2P2mPyBPlQbAy4OTK+NWod/kxdYXofqrFYQIDAQAB",
+        "record": "DKIM",
+        "status": "verified"
+      },
+      {
+        "ttl": "Auto",
+        "name": "rsend",
+        "type": "CNAME",
+        "value": "rsend-apne1.forge.rmta.net",
+        "record": "SPF",
+        "status": "verified"
+      },
+      {
+        "ttl": "Auto",
+        "name": "send",
+        "type": "CNAME",
+        "value": "send.forge.rmta.net",
+        "record": "SPF",
+        "status": "verified"
+      },
+      {
+        "ttl": "Auto",
+        "name": "reply",
+        "type": "CNAME",
+        "value": "links2.resend-dns.com",
+        "record": "Tracking",
+        "status": "verified"
+      }
+    ],
+    "hasCustomKey": true,
+    "resendDomainId": "8a8f6594-ef4f-471d-baf4-55463e424e67",
+    "isReceivingReady": true,
+    "resendApiKeyMasked": "re_f1...UHFs"
+  },
+  {
+    "id": "dom_1793859652930_bwym",
+    "domain": "aromacurtains.com",
+    "status": "verified",
+    "resendDomainId": "985cecc3-ccc5-442e-a243-edfc8689ddef",
+    "resendApiKeyMasked": "re_ZD...wq2E",
+    "hasCustomKey": true,
+    "dnsRecords": [
+      {
         "record": "Receiving",
         "name": "@",
         "value": "receive-apne1.forge.rmta.net",
@@ -183,7 +238,7 @@
       {
         "record": "DKIM",
         "name": "resend._domainkey",
-        "value": "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDblKf2mAFhqlKtSuJ5M1htzvIlUERPmSVhrwVs65r1lWx0KYX30+6ZnNk53OLVPQiMG/8RbqLXQio0dmqYuUujPrg6QPCK3kZLo7k04qlETsXuWKp40OS0sW0EFUtMHqSZ0+Vay6Y2P2mPyBPlQbAy4OTK+NWod/kxdYXofqrFYQIDAQAB",
+        "value": "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDYoT1lBZ2OY7QINViUlKK4nyQdOOf6h/Z1rAalkcElR8eVKdoQRlzxLJzMCSmEapYlgwSAJrT1sTVTjLKYkdOPYUdS04H/AldnMkTN6e3ZiwdbWxZG/nAk5aspHpBT8P6OEUUPf47/HEyQfzJFZuhd56NgcUAJ3bLjtiXKp6t4QQIDAQAB",
         "type": "TXT",
         "status": "verified",
         "ttl": "Auto"
@@ -194,7 +249,7 @@
         "value": "rsend-apne1.forge.rmta.net",
         "type": "CNAME",
         "status": "verified",
-        "ttl": "Auto"
+        "ttl": "60"
       },
       {
         "record": "SPF",
@@ -202,20 +257,12 @@
         "value": "send.forge.rmta.net",
         "type": "CNAME",
         "status": "verified",
-        "ttl": "Auto"
-      },
-      {
-        "record": "Tracking",
-        "type": "CNAME",
-        "name": "reply",
-        "value": "links2.resend-dns.com",
-        "ttl": "Auto",
-        "status": "verified"
+        "ttl": "60"
       }
     ],
-    "hasCustomKey": true,
-    "resendDomainId": "8a8f6594-ef4f-471d-baf4-55463e424e67",
     "isReceivingReady": true,
-    "resendApiKeyMasked": "re_f1...UHFs"
+    "isDefault": true,
+    "createdAt": "2026-11-05T06:20:52.930Z",
+    "updatedAt": "2026-11-05T06:20:57.884Z"
   }
 ]

@@ -14,6 +14,7 @@ import { ProjectsSection } from '@/components/sections/ProjectsSection';
 import { PeopleSection } from '@/components/sections/PeopleSection';
 import { ContactSection } from '@/components/sections/ContactSection';
 import { LibrarySection } from '@/components/sections/LibrarySection';
+import { FocusSection } from '@/components/sections/FocusSection';
 import { WorkTabContent } from '@/components/sections/WorkTabContent';
 import {
   GitHubIcon,
@@ -173,6 +174,18 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
             <div className="px-6 py-8 lg:px-8">
               <LibrarySection />
+              {renderFooter()}
+            </div>
+          </div>
+        ) : activeSection === 'focus' ? (
+          <div>
+            {/* Sticky Header for Focus View */}
+            <header className="sticky top-0 z-30 flex h-[4.375rem] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
+              <h1 className="text-xl font-bold tracking-tight text-ink">Focus</h1>
+            </header>
+
+            <div className="px-6 py-8 lg:px-8">
+              <FocusSection />
               {renderFooter()}
             </div>
           </div>

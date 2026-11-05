@@ -6,6 +6,7 @@ import {
   TablerBox,
   TablerUsers,
   TablerBooks,
+  TablerHeadphones,
 } from '@/components/ui/Icons';
 
 interface MobileBottomBarProps {
@@ -22,6 +23,7 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
     { id: 'projects', label: 'Projects', icon: TablerBox },
     { id: 'people', label: 'People', icon: TablerUsers },
     { id: 'library', label: 'Library', icon: TablerBooks },
+    { id: 'focus', label: 'Focus', icon: TablerHeadphones },
   ];
 
   return (
