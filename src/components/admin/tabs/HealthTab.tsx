@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   HeartPulse,
   ShieldCheck,
@@ -14,8 +14,21 @@ import {
   AlertCircle,
   Loader2,
   RefreshCw,
+  BellRing,
+  Check,
+  Clock,
+  HardDrive,
+  AlertTriangle,
 } from 'lucide-react';
-import { HealthData, HealthStorageUsage } from '@/types/health';
+import {
+  HealthData,
+  HealthProfile,
+  Medication,
+  Reminder,
+  HealthStorageUsage,
+} from '@/types/health';
+import { EmergencyCard } from '@/components/admin/health/EmergencyCard';
+import { MedicationsSubTab } from '@/components/admin/health/MedicationsSubTab';
 
 export type HealthSubTab = 'overview' | 'medications' | 'documents' | 'visits' | 'vitals';
 
@@ -29,8 +42,8 @@ interface SubTabConfig {
 export const HealthTab: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<HealthSubTab>('overview');
   const [loading, setLoading] = useState<boolean>(true);
-  const [isSaving] = useState<boolean>(false);
-  const [saveStatus] = useState<string>('All changes encrypted & saved');
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveStatus, setSaveStatus] = useState<string>('All changes encrypted & saved');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showShortcutsModal, setShowShortcutsModal] = useState<boolean>(false);
 
@@ -50,7 +63,7 @@ export const HealthTab: React.FC = () => {
     reminders: [],
   });
 
-  const [, setStorageUsage] = useState<HealthStorageUsage>({
+  const [storageUsage, setStorageUsage] = useState<HealthStorageUsage>({
     totalBytes: 0,
     fileCount: 0,
     limitBytes: 1024 * 1024 * 1024,
@@ -143,6 +156,215 @@ export const HealthTab: React.FC = () => {
     }
   };
 
+  // Profile Save
+  const handleSaveProfile = async (updated: HealthProfile) => {
+    setIsSaving(true);
+    setSaveStatus('Saving profile...');
+    try {
+      const res = await fetch('/api/admin/health', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': 'folioframe_admin',
+        },
+        body: JSON.stringify({
+          collection: 'profile',
+          item: updated,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+      setHealthData((prev) => ({ ...prev, profile: updated }));
+      setSaveStatus('All changes encrypted & saved');
+    } catch {
+      setSaveStatus('Failed to save profile');
+      throw new Error('Failed to save profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Medication Save (Create or Update)
+  const handleSaveMedication = async (med: Medication) => {
+    setIsSaving(true);
+    setSaveStatus('Saving medication...');
+    try {
+      const isExisting = healthData.medications.some((m) => m.id === med.id);
+      const res = await fetch('/api/admin/health', {
+        method: isExisting ? 'PATCH' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': 'folioframe_admin',
+        },
+        body: JSON.stringify({
+          collection: 'medications',
+          item: med,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+      setHealthData((prev) => {
+        const nextList = isExisting
+          ? prev.medications.map((m) => (m.id === med.id ? med : m))
+          : [med, ...prev.medications];
+        return { ...prev, medications: nextList };
+      });
+      setSaveStatus('All changes encrypted & saved');
+    } catch {
+      setSaveStatus('Save error');
+      throw new Error();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Medication Delete
+  const handleDeleteMedication = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/health?collection=medications&id=${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-key': 'folioframe_admin' },
+      });
+      if (!res.ok) throw new Error();
+      setHealthData((prev) => ({
+        ...prev,
+        medications: prev.medications.filter((m) => m.id !== id),
+      }));
+    } catch {
+      throw new Error();
+    }
+  };
+
+  // Sync Refill Reminder
+  const handleSyncRefillReminder = async (med: Medication, removed?: boolean) => {
+    const existing = healthData.reminders.find(
+      (r) => r.relatedId === med.id && r.kind === 'refill'
+    );
+
+    try {
+      if (removed || !med.active || !med.refillDate) {
+        if (existing) {
+          await fetch(`/api/admin/health?collection=reminders&id=${existing.id}`, {
+            method: 'DELETE',
+            headers: { 'x-admin-key': 'folioframe_admin' },
+          });
+          setHealthData((prev) => ({
+            ...prev,
+            reminders: prev.reminders.filter((r) => r.id !== existing.id),
+          }));
+        }
+      } else {
+        const reminderItem: Reminder = {
+          id: existing ? existing.id : crypto.randomUUID(),
+          title: `Refill: ${med.name}`,
+          dueDate: med.refillDate,
+          kind: 'refill',
+          relatedId: med.id,
+          done: false,
+          updatedAt: new Date().toISOString(),
+        };
+
+        const res = await fetch('/api/admin/health', {
+          method: existing ? 'PATCH' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-key': 'folioframe_admin',
+          },
+          body: JSON.stringify({
+            collection: 'reminders',
+            item: reminderItem,
+          }),
+        });
+
+        if (res.ok) {
+          setHealthData((prev) => {
+            const nextReminders = existing
+              ? prev.reminders.map((r) => (r.id === existing.id ? reminderItem : r))
+              : [reminderItem, ...prev.reminders];
+            return { ...prev, reminders: nextReminders };
+          });
+        }
+      }
+    } catch {
+      // background sync fail safe
+    }
+  };
+
+  // Toggle Reminder Done
+  const handleToggleReminderDone = async (reminder: Reminder) => {
+    const updated: Reminder = {
+      ...reminder,
+      done: !reminder.done,
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      const res = await fetch('/api/admin/health', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': 'folioframe_admin',
+        },
+        body: JSON.stringify({
+          collection: 'reminders',
+          item: updated,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+      setHealthData((prev) => ({
+        ...prev,
+        reminders: prev.reminders.map((r) => (r.id === reminder.id ? updated : r)),
+      }));
+      showToast(updated.done ? '✓ Reminder completed' : '✓ Reminder reopened');
+    } catch {
+      showToast('✕ Failed to update reminder');
+    }
+  };
+
+  // Upcoming reminders categorized
+  const activeReminders = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+
+    const upcomingLimit = new Date();
+    upcomingLimit.setDate(todayDate.getDate() + 14);
+
+    return healthData.reminders
+      .filter((r) => !r.done)
+      .map((r) => {
+        let status: 'overdue' | 'today' | 'upcoming' = 'upcoming';
+        if (r.dueDate < today) {
+          status = 'overdue';
+        } else if (r.dueDate === today) {
+          status = 'today';
+        }
+        return { ...r, status };
+      })
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  }, [healthData.reminders]);
+
+  // Active routine medications
+  const activeMedications = useMemo(() => {
+    return healthData.medications.filter((m) => m.active);
+  }, [healthData.medications]);
+
+  // Last backup status
+  const lastBackupStatus = useMemo(() => {
+    const lastDate = healthData.lastBackupDate;
+    if (!lastDate) {
+      return { isWarning: true, label: 'No backup downloaded yet' };
+    }
+    const diffDays = Math.ceil(
+      (Date.now() - new Date(lastDate).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (diffDays > 30) {
+      return { isWarning: true, label: `Last backup ${diffDays} days ago (>30d recommended)` };
+    }
+    return { isWarning: false, label: `Backed up ${diffDays}d ago` };
+  }, [healthData.lastBackupDate]);
+
   // Keyboard shortcuts (N, U, 1-5, Esc, ?)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -191,13 +413,13 @@ export const HealthTab: React.FC = () => {
       id: 'overview',
       label: 'Emergency & Overview',
       icon: ShieldCheck,
-      count: healthData.reminders.filter((r) => !r.done).length,
+      count: activeReminders.length,
     },
     {
       id: 'medications',
       label: 'Medications',
       icon: Pill,
-      count: healthData.medications.filter((m) => m.active).length,
+      count: activeMedications.length,
     },
     {
       id: 'documents',
@@ -348,50 +570,170 @@ export const HealthTab: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-6">
+          {/* OVERVIEW SUB-TAB */}
           {activeSubTab === 'overview' && (
-            <div className="p-8 rounded-2xl bg-surface-2/40 border border-line text-center text-ink-3">
-              <ShieldCheck className="size-8 mx-auto text-rose-500 mb-2" />
-              <h3 className="text-sm font-bold text-ink">Emergency & Health Overview Shell</h3>
-              <p className="text-xs text-ink-4 mt-1 max-w-md mx-auto">
-                Phase 3 will render the complete Emergency Card with one-click print, Canvas export, and reminder strips.
-              </p>
+            <div className="space-y-6">
+              {/* Emergency ID Card Component */}
+              <EmergencyCard
+                profile={healthData.profile}
+                activeMedications={activeMedications}
+                onSaveProfile={handleSaveProfile}
+                showToast={showToast}
+              />
+
+              {/* Upcoming Reminders Strip (Due today, Overdue, Next 14 days) */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-surface/80 border border-line space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BellRing className="size-4 text-blue-500" />
+                    <h3 className="text-xs sm:text-sm font-bold text-ink">
+                      Active Medical & Refill Reminders
+                    </h3>
+                  </div>
+                  <span className="text-[11px] font-mono text-ink-4">
+                    {activeReminders.length} pending
+                  </span>
+                </div>
+
+                {activeReminders.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                    {activeReminders.map((reminder) => (
+                      <div
+                        key={reminder.id}
+                        className={`p-3 rounded-xl border flex items-center justify-between gap-2.5 text-xs ${
+                          reminder.status === 'overdue'
+                            ? 'bg-rose-500/10 border-rose-500/30 text-rose-900 dark:text-rose-200'
+                            : reminder.status === 'today'
+                              ? 'bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-200'
+                              : 'bg-surface-2/60 border-line text-ink'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <div className="font-bold truncate">{reminder.title}</div>
+                          <div className="text-[11px] opacity-75 font-mono flex items-center gap-1 mt-0.5">
+                            <Clock className="size-3" />
+                            <span>
+                              {reminder.status === 'overdue' && 'Overdue: '}
+                              {reminder.status === 'today' && 'Today: '}
+                              {reminder.dueDate}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Complete Reminder Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleReminderDone(reminder)}
+                          className="size-7 grid place-items-center rounded-lg bg-surface/90 hover:bg-surface text-ink-3 hover:text-emerald-500 border border-line/60 cursor-pointer shrink-0 transition-colors"
+                          title="Mark reminder as completed"
+                        >
+                          <Check className="size-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-ink-3 italic py-2">
+                    No pending medication refills or doctor follow-ups.
+                  </p>
+                )}
+              </div>
+
+              {/* Free-Tier Safety Note Card & Last Backup Indicator */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Storage & Privacy Note */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-surface/80 border border-line space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-ink">
+                    <HardDrive className="size-4 text-emerald-500" />
+                    <span>Free-Tier Storage Security</span>
+                  </div>
+                  <p className="text-xs text-ink-3 leading-relaxed">
+                    Documents are encrypted and stored in your private Supabase bucket (
+                    <code className="text-ink font-mono text-[11px]">health-private</code>). All previews use 60-second expiring signed URLs.
+                  </p>
+                  <div className="pt-2 flex items-center justify-between text-[11px] font-mono text-ink-4">
+                    <span>
+                      {(storageUsage.totalBytes / (1024 * 1024)).toFixed(1)} MB / 1,024 MB used
+                    </span>
+                    <span>{storageUsage.fileCount} confidential files</span>
+                  </div>
+                </div>
+
+                {/* Backup Status */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-surface/80 border border-line space-y-2 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-xs font-bold text-ink">
+                      <Download className="size-4 text-indigo-500" />
+                      <span>Data Sovereignty & Backups</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      {lastBackupStatus.isWarning ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                          <AlertTriangle className="size-3" />
+                          <span>{lastBackupStatus.label}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          <CheckCircle2 className="size-3" />
+                          <span>{lastBackupStatus.label}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={handleExportBackup}
+                      className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 text-ink cursor-pointer"
+                    >
+                      <Download className="size-3.5" />
+                      <span>Download Latest Backup JSON</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
+          {/* MEDICATIONS SUB-TAB */}
           {activeSubTab === 'medications' && (
-            <div className="p-8 rounded-2xl bg-surface-2/40 border border-line text-center text-ink-3">
-              <Pill className="size-8 mx-auto text-blue-500 mb-2" />
-              <h3 className="text-sm font-bold text-ink">Medications & Prescriptions Shell</h3>
-              <p className="text-xs text-ink-4 mt-1 max-w-md mx-auto">
-                Phase 3 will render active/past medications list, slide-over editor, and refill tracking.
-              </p>
-            </div>
+            <MedicationsSubTab
+              medications={healthData.medications}
+              onSaveMedication={handleSaveMedication}
+              onDeleteMedication={handleDeleteMedication}
+              onSyncRefillReminder={handleSyncRefillReminder}
+              showToast={showToast}
+            />
           )}
 
+          {/* DOCUMENTS SUB-TAB */}
           {activeSubTab === 'documents' && (
             <div className="p-8 rounded-2xl bg-surface-2/40 border border-line text-center text-ink-3">
               <FileText className="size-8 mx-auto text-emerald-500 mb-2" />
-              <h3 className="text-sm font-bold text-ink">Documents & Storage Shell</h3>
+              <h3 className="text-sm font-bold text-ink">Documents & Storage</h3>
               <p className="text-xs text-ink-4 mt-1 max-w-md mx-auto">
-                Phase 4 will render storage meter, client-side Canvas compression upload, and 60s signed preview URLs.
+                Next phase will render storage meter, client-side Canvas compression upload, and 60s signed preview URLs.
               </p>
             </div>
           )}
 
+          {/* VISITS SUB-TAB */}
           {activeSubTab === 'visits' && (
             <div className="p-8 rounded-2xl bg-surface-2/40 border border-line text-center text-ink-3">
               <Stethoscope className="size-8 mx-auto text-purple-500 mb-2" />
-              <h3 className="text-sm font-bold text-ink">Doctor Visits Shell</h3>
+              <h3 className="text-sm font-bold text-ink">Doctor Visits & Timeline</h3>
               <p className="text-xs text-ink-4 mt-1 max-w-md mx-auto">
                 Phase 5 will render visits timeline, follow-up sync, and slide-over consultation editor.
               </p>
             </div>
           )}
 
+          {/* VITALS SUB-TAB */}
           {activeSubTab === 'vitals' && (
             <div className="p-8 rounded-2xl bg-surface-2/40 border border-line text-center text-ink-3">
               <Activity className="size-8 mx-auto text-amber-500 mb-2" />
-              <h3 className="text-sm font-bold text-ink">Vitals & Trend Analytics Shell</h3>
+              <h3 className="text-sm font-bold text-ink">Vitals & Trend Analytics</h3>
               <p className="text-xs text-ink-4 mt-1 max-w-md mx-auto">
                 Phase 5 will render inline-SVG vitals chart with 30d/90d/1y ranges, BP tracking, and vaccinations.
               </p>
