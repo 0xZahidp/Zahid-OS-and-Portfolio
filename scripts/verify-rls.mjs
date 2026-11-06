@@ -1,16 +1,24 @@
 // scripts/verify-rls.mjs
-// Automated Supabase Row-Level Security (RLS) & Zero-Trust Verification Test Runner
+// Automated Supabase Zero-Trust RLS & Permission Verification Test Runner
+//
+// Rules:
+// 1. Reads Supabase URL and ANON key from environment / .env.local without logging them.
+// 2. Dynamically discovers tables from CREATE TABLE statements in supabase/**/*.sql.
+// 3. For each table, attempts SELECT, INSERT, UPDATE, and DELETE via PostgREST with anon key.
+// 4. PASS only on error: HTTP 401/403 or Postgres code 42501 (insufficient_privilege).
+//    FAIL on any 200/201/204 (including empty array / 0 rows affected).
+// 5. Tests Storage bucket health-private: list, /object/health-private/<path>, /object/public/health-private/<path>.
+// 6. Prints PASS/FAIL per check, summary count, and exits non-zero on any FAIL.
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createClient } from '@supabase/supabase-js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 
-// Load environment variables safely from .env.local or .env without printing secrets
+// Load environment variables safely without printing secret values
 function loadEnv() {
   const envFiles = ['.env.local', '.env'];
   for (const file of envFiles) {
@@ -42,140 +50,288 @@ loadEnv();
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-const TABLES_TO_CHECK = [
-  'profiles',
-  'bio_paragraphs',
-  'experiences',
-  'projects',
-  'skills',
-  'languages',
-  'social_links',
-  'suggested_people',
-  'site_settings',
-  'portfolio_content',
-  'app_settings',
-  'inbox_messages',
-  'os_short_links',
-  'os_settings',
-  'os_snippets',
-  'os_notes',
-  'os_travel_districts',
-  'os_travel_memories',
-  'os_temp_inboxes',
-  'os_temp_messages',
-  'os_api_saved_requests',
-  'career_applications',
-  'career_interviews',
-  'career_contacts'
-];
+// Discover tables from CREATE TABLE statements in supabase/**/*.sql
+function discoverPublicTables() {
+  const tables = new Set();
+  const supabaseDir = path.join(ROOT_DIR, 'supabase');
 
-async function runRlsVerification() {
-  console.log('='.repeat(70));
-  console.log('  SUPABASE ZERO-TRUST RLS VERIFICATION TEST RUNNER');
-  console.log('='.repeat(70));
+  function scan(dir) {
+    if (!fs.existsSync(dir)) return;
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory() && entry.name !== 'node_modules' && entry.name !== '.temp') {
+        scan(fullPath);
+      } else if (entry.isFile() && entry.name.endsWith('.sql')) {
+        const content = fs.readFileSync(fullPath, 'utf-8');
+        const regex = /CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+(?:public\.)?([a-zA-Z0-9_]+)/gi;
+        let m;
+        while ((m = regex.exec(content)) !== null) {
+          const t = m[1].toLowerCase();
+          if (!['objects', 'buckets', 'migrations'].includes(t)) {
+            tables.add(t);
+          }
+        }
+      }
+    }
+  }
+
+  scan(supabaseDir);
+  return Array.from(tables).sort();
+}
+
+// Helper to determine if an HTTP response or payload represents an access rejection
+function isAccessDenied(status, payload) {
+  // HTTP 401 Unauthorized or HTTP 403 Forbidden
+  if (status === 401 || status === 403) return true;
+
+  // PostgREST / Postgres permission error (code 42501)
+  if (payload && typeof payload === 'object') {
+    if (payload.code === '42501' || payload.code === 'PGRST301') return true;
+    const msg = (payload.message || payload.error || '').toLowerCase();
+    if (msg.includes('permission denied') || msg.includes('violates row-level security')) {
+      return true;
+    }
+  }
+
+  // Any 200, 201, 204 or empty response is considered NOT denied (FAIL)
+  return false;
+}
+
+async function main() {
+  console.log('='.repeat(78));
+  console.log('  SUPABASE ZERO-TRUST RLS & PERMISSION AUDIT TEST SUITE');
+  console.log('='.repeat(78));
 
   if (!supabaseUrl || !anonKey || supabaseUrl.includes('placeholder')) {
-    console.log('\n[NOTICE] NEXT_PUBLIC_SUPABASE_URL or anon key is unset/placeholder.');
-    console.log('Skipping live network probe. Supabase client calls will fail safely.');
-    console.log('To run against a live Supabase instance:');
-    console.log('  NEXT_PUBLIC_SUPABASE_URL=https://... NEXT_PUBLIC_SUPABASE_ANON_KEY=... node scripts/verify-rls.mjs\n');
-    return;
+    console.error('\n[-] ERROR: NEXT_PUBLIC_SUPABASE_URL or anon key is missing or set to placeholder.');
+    console.error('    Please configure live credentials in .env.local to run verification.\n');
+    process.exit(1);
   }
 
   const maskedUrl = supabaseUrl.replace(/^(https?:\/\/[^.]+).*/, '$1.***');
-  console.log(`Connecting to: ${maskedUrl} using public ANON key...\n`);
+  console.log(`\n[+] Target Supabase Endpoint: ${maskedUrl}`);
+  console.log('[+] Authentication: Using Public ANON Key Only\n');
 
-  const supabase = createClient(supabaseUrl, anonKey, {
-    auth: { persistSession: false }
-  });
+  const tables = discoverPublicTables();
+  console.log(`[+] Discovered ${tables.length} public tables from supabase/**/*.sql:`);
+  console.log(`    ${tables.join(', ')}\n`);
 
-  let passCount = 0;
-  let failCount = 0;
-  let skipCount = 0;
+  let totalChecks = 0;
+  let passedChecks = 0;
+  let failedChecks = 0;
+  const failureList = [];
 
-  console.log('--- Checking Public ANON Access to Database Tables ---');
+  const headers = {
+    apikey: anonKey,
+    Authorization: `Bearer ${anonKey}`,
+    'Content-Type': 'application/json',
+  };
 
-  for (const table of TABLES_TO_CHECK) {
+  console.log('-'.repeat(78));
+  console.log('SECTION 1: DATABASE TABLE CHECKS (SELECT, INSERT, UPDATE, DELETE)');
+  console.log('-'.repeat(78));
+
+  for (const table of tables) {
+    const tableUrl = `${supabaseUrl}/rest/v1/${table}`;
+
+    // 1. Attempt SELECT
+    totalChecks++;
     try {
-      const { data, error } = await supabase.from(table).select('*').limit(5);
+      const res = await fetch(`${tableUrl}?select=*&limit=1`, {
+        method: 'GET',
+        headers,
+      });
+      const data = await res.json().catch(() => null);
 
-      if (error) {
-        // Permission denied, RLS rejection, or schema not found
-        if (
-          error.code === '42501' || // insufficient_privilege
-          error.code === 'PGRST301' ||
-          error.message?.toLowerCase().includes('permission denied') ||
-          error.message?.toLowerCase().includes('row-level security') ||
-          error.message?.toLowerCase().includes('not found') ||
-          error.code === '42P01' || // undefined_table
-          error.code === 'PGRST204' ||
-          error.code === 'PGRST200'
-        ) {
-          console.log(`  ✔ PASS [${table}]: Access blocked (${error.code || 'denied'}: ${error.message?.slice(0, 50)})`);
-          passCount++;
-        } else {
-          console.log(`  ✔ PASS [${table}]: Query rejected with: ${error.message?.slice(0, 60)}`);
-          passCount++;
-        }
-      } else if (!data || data.length === 0) {
-        // RLS filtered out 100% of rows (default-deny)
-        console.log(`  ✔ PASS [${table}]: 0 rows returned (RLS filtered / default-deny active)`);
-        passCount++;
+      if (isAccessDenied(res.status, data)) {
+        passedChecks++;
+        console.log(`  ✔ PASS [${table}] SELECT: Denied (HTTP ${res.status}${data?.code ? ` code ${data.code}` : ''})`);
       } else {
-        // DATA LEAK!
-        console.error(`  ✖ FAIL [${table}]: LEAK! Anon key read ${data.length} row(s) from table!`);
-        failCount++;
+        // Any 200/204, including empty array [], is a FAIL
+        failedChecks++;
+        const detail = res.status === 200 ? (Array.isArray(data) ? `HTTP 200 returned array (length: ${data.length})` : 'HTTP 200 OK') : `HTTP ${res.status}`;
+        console.error(`  ✖ FAIL [${table}] SELECT: Allowed (${detail})`);
+        failureList.push(`${table} [SELECT]: Expected denial (401/403/42501), got ${detail}`);
       }
     } catch (err) {
-      if (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED' || err.message?.includes('fetch failed')) {
-        console.log(`  - SKIP [${table}]: Network unreachable (${err.message})`);
-        skipCount++;
+      failedChecks++;
+      console.error(`  ✖ FAIL [${table}] SELECT: Network/fetch error (${err.message})`);
+      failureList.push(`${table} [SELECT]: Network error ${err.message}`);
+    }
+
+    // 2. Attempt INSERT
+    totalChecks++;
+    try {
+      const res = await fetch(tableUrl, {
+        method: 'POST',
+        headers: { ...headers, Prefer: 'return=minimal' },
+        body: JSON.stringify([{ __sec_probe__: 'unauthorized_probe' }]),
+      });
+      const data = await res.json().catch(() => null);
+
+      if (isAccessDenied(res.status, data)) {
+        passedChecks++;
+        console.log(`  ✔ PASS [${table}] INSERT: Denied (HTTP ${res.status}${data?.code ? ` code ${data.code}` : ''})`);
       } else {
-        console.log(`  ✔ PASS [${table}]: Access rejected with exception (${err.message})`);
-        passCount++;
+        failedChecks++;
+        const detail = `HTTP ${res.status}`;
+        console.error(`  ✖ FAIL [${table}] INSERT: Allowed (${detail})`);
+        failureList.push(`${table} [INSERT]: Expected denial (401/403/42501), got ${detail}`);
       }
+    } catch (err) {
+      failedChecks++;
+      console.error(`  ✖ FAIL [${table}] INSERT: Network/fetch error (${err.message})`);
+      failureList.push(`${table} [INSERT]: Network error ${err.message}`);
+    }
+
+    // 3. Attempt UPDATE
+    totalChecks++;
+    try {
+      const res = await fetch(`${tableUrl}?id=eq.__sec_probe__`, {
+        method: 'PATCH',
+        headers: { ...headers, Prefer: 'return=minimal' },
+        body: JSON.stringify({ __sec_probe__: 'unauthorized_update' }),
+      });
+      const data = await res.json().catch(() => null);
+
+      if (isAccessDenied(res.status, data)) {
+        passedChecks++;
+        console.log(`  ✔ PASS [${table}] UPDATE: Denied (HTTP ${res.status}${data?.code ? ` code ${data.code}` : ''})`);
+      } else {
+        failedChecks++;
+        const detail = `HTTP ${res.status}`;
+        console.error(`  ✖ FAIL [${table}] UPDATE: Allowed (${detail})`);
+        failureList.push(`${table} [UPDATE]: Expected denial (401/403/42501), got ${detail}`);
+      }
+    } catch (err) {
+      failedChecks++;
+      console.error(`  ✖ FAIL [${table}] UPDATE: Network/fetch error (${err.message})`);
+      failureList.push(`${table} [UPDATE]: Network error ${err.message}`);
+    }
+
+    // 4. Attempt DELETE
+    totalChecks++;
+    try {
+      const res = await fetch(`${tableUrl}?id=eq.__sec_probe__`, {
+        method: 'DELETE',
+        headers: { ...headers, Prefer: 'return=minimal' },
+      });
+      const data = await res.json().catch(() => null);
+
+      if (isAccessDenied(res.status, data)) {
+        passedChecks++;
+        console.log(`  ✔ PASS [${table}] DELETE: Denied (HTTP ${res.status}${data?.code ? ` code ${data.code}` : ''})`);
+      } else {
+        failedChecks++;
+        const detail = `HTTP ${res.status}`;
+        console.error(`  ✖ FAIL [${table}] DELETE: Allowed (${detail})`);
+        failureList.push(`${table} [DELETE]: Expected denial (401/403/42501), got ${detail}`);
+      }
+    } catch (err) {
+      failedChecks++;
+      console.error(`  ✖ FAIL [${table}] DELETE: Network/fetch error (${err.message})`);
+      failureList.push(`${table} [DELETE]: Network error ${err.message}`);
     }
   }
 
-  console.log('\n--- Checking Public ANON Access to health-private Storage Bucket ---');
-  try {
-    const { data, error } = await supabase.storage.from('health-private').list();
-    if (error || !data || data.length === 0) {
-      console.log(`  ✔ PASS [health-private]: Bucket list access blocked/empty (${error?.message || '0 items'})`);
-      passCount++;
-    } else {
-      console.error(`  ✖ FAIL [health-private]: Storage leak! Anon key listed ${data.length} files in private bucket!`);
-      failCount++;
-    }
+  console.log('\n' + '-'.repeat(78));
+  console.log('SECTION 2: STORAGE BUCKET CHECKS (health-private)');
+  console.log('-'.repeat(78));
 
-    const { error: downloadError } = await supabase.storage.from('health-private').download('test-probe.pdf');
-    if (downloadError) {
-      console.log(`  ✔ PASS [health-private]: Download probe rejected (${downloadError.message})`);
-      passCount++;
+  const randomPath = `probe-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.pdf`;
+
+  // Storage Check 1: List files in health-private bucket
+  totalChecks++;
+  try {
+    const listRes = await fetch(`${supabaseUrl}/storage/v1/object/list/health-private`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ prefix: '', limit: 100 }),
+    });
+    const listData = await listRes.json().catch(() => null);
+
+    if (isAccessDenied(listRes.status, listData) || (listRes.status !== 200 && listRes.status !== 204)) {
+      passedChecks++;
+      console.log(`  ✔ PASS [Storage list health-private]: Denied (HTTP ${listRes.status})`);
     } else {
-      console.error('  ✖ FAIL [health-private]: Download probe succeeded for anon user!');
-      failCount++;
+      failedChecks++;
+      console.error(`  ✖ FAIL [Storage list health-private]: Allowed (HTTP ${listRes.status})`);
+      failureList.push(`Storage list health-private: Expected denial, got HTTP ${listRes.status}`);
     }
   } catch (err) {
-    console.log(`  ✔ PASS [health-private]: Access rejected (${err.message})`);
-    passCount++;
+    failedChecks++;
+    console.error(`  ✖ FAIL [Storage list health-private]: Error (${err.message})`);
+    failureList.push(`Storage list health-private: ${err.message}`);
   }
 
-  console.log('\n' + '='.repeat(70));
-  console.log(`VERIFICATION SUMMARY: ${passCount} Passed, ${failCount} Failed, ${skipCount} Skipped`);
-  console.log('='.repeat(70));
+  // Storage Check 2: GET /object/health-private/<random path>
+  totalChecks++;
+  try {
+    const getRes = await fetch(`${supabaseUrl}/storage/v1/object/health-private/${randomPath}`, {
+      method: 'GET',
+      headers,
+    });
+    const getData = await getRes.json().catch(() => null);
 
-  if (failCount > 0) {
-    console.error('\n✖ SECURITY AUDIT FAILED: Anon key has unauthorized access to tables or storage!');
+    if (isAccessDenied(getRes.status, getData) || getRes.status === 400 || getRes.status === 404 || getRes.status === 403 || getRes.status === 401) {
+      passedChecks++;
+      console.log(`  ✔ PASS [Storage GET /object/health-private/...]: Denied (HTTP ${getRes.status})`);
+    } else {
+      failedChecks++;
+      console.error(`  ✖ FAIL [Storage GET /object/health-private/...]: Allowed (HTTP ${getRes.status})`);
+      failureList.push(`Storage GET /object/health-private/...: Expected denial, got HTTP ${getRes.status}`);
+    }
+  } catch (err) {
+    failedChecks++;
+    console.error(`  ✖ FAIL [Storage GET /object/health-private/...]: Error (${err.message})`);
+    failureList.push(`Storage GET /object/health-private/...: ${err.message}`);
+  }
+
+  // Storage Check 3: GET /object/public/health-private/<random path>
+  totalChecks++;
+  try {
+    const pubRes = await fetch(`${supabaseUrl}/storage/v1/object/public/health-private/${randomPath}`, {
+      method: 'GET',
+    });
+    const pubData = await pubRes.json().catch(() => null);
+
+    // Should return 400 (Bucket not found / not public) or 404/403/401
+    if (pubRes.status >= 400 || isAccessDenied(pubRes.status, pubData)) {
+      passedChecks++;
+      console.log(`  ✔ PASS [Storage GET /object/public/health-private/...]: Denied (HTTP ${pubRes.status})`);
+    } else {
+      failedChecks++;
+      console.error(`  ✖ FAIL [Storage GET /object/public/health-private/...]: Allowed (HTTP ${pubRes.status})`);
+      failureList.push(`Storage GET /object/public/health-private/...: Expected denial, got HTTP ${pubRes.status}`);
+    }
+  } catch (err) {
+    failedChecks++;
+    console.error(`  ✖ FAIL [Storage GET /object/public/health-private/...]: Error (${err.message})`);
+    failureList.push(`Storage GET /object/public/health-private/...: ${err.message}`);
+  }
+
+  console.log('\n' + '='.repeat(78));
+  console.log('AUDIT SUMMARY RESULTS');
+  console.log('='.repeat(78));
+  console.log(`Total Security Probes Executed: ${totalChecks}`);
+  console.log(`Passed (Strictly Denied):     ${passedChecks}`);
+  console.log(`Failed (Vulnerable / Allowed): ${failedChecks}`);
+
+  if (failedChecks > 0) {
+    console.error('\n✖ SECURITY AUDIT FAILED: Anon key was granted permissions on one or more resources!');
     console.error('👉 ACTION REQUIRED: Run `supabase/migrations/20261106030000_security_hardening.sql` in your Supabase SQL Editor.');
-    console.error('   Then re-run this script to verify all permissions and tables are sealed.');
+    console.error('   This migration revokes all privileges and enforces zero-trust default-deny across the public schema.\n');
+    console.error('Failures detected:');
+    failureList.forEach((f) => console.error(`  - ${f}`));
     process.exit(1);
   } else {
-    console.log('\n✔ ZERO-TRUST COMPLIANT: All anon access attempts successfully blocked.');
+    console.log('\n✔ ZERO-TRUST VERIFIED: 100% of probes were denied. No permissions leaked to anon role.\n');
+    process.exit(0);
   }
 }
 
-runRlsVerification().catch((err) => {
-  console.error('Unexpected error running verification:', err.message);
+main().catch((err) => {
+  console.error('Fatal error during RLS verification:', err.message);
   process.exit(1);
 });
