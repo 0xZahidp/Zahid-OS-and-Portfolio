@@ -20,7 +20,7 @@ All searches were conducted across all historical commits and branches using `gi
   - Note: Security remediation commit that removed previously hardcoded secret seeds from generator and schema files.
 * **`ede5f2bf7104c0ae1d281779bf4aa9d4ff213e14`**
   - Paths: `scripts/generate-relational-schema.js`, `supabase/schema_relational.sql`
-  - Note: Introduction of the dynamic secrets generator containing seed secrets (now scrubbed in `defca07`).
+  - Note: Real Resend API key was committed in seed SQL.
 
 ---
 
@@ -31,7 +31,7 @@ All searches were conducted across all historical commits and branches using `gi
   - Note: Security remediation commit scrubbing 64-character hex strings from generator and SQL schema files.
 * **`ede5f2bf7104c0ae1d281779bf4aa9d4ff213e14`**
   - Paths: `scripts/generate-relational-schema.js`, `supabase/schema_relational.sql`
-  - Note: Initial addition of seed secret row.
+  - Note: Real rate-limit secret was committed in seed SQL.
 
 ---
 
@@ -50,9 +50,31 @@ All searches were conducted across all historical commits and branches using `gi
 
 ---
 
-## Visibility & Risk Assessment
+## Leak Confirmation & Exposure Assessment
 
-1. **Repository Access**: The remote GitHub repository is confirmed **PRIVATE** via authenticated API inspection (`gh repo view 0xZahidp/0xzahidp`).
-2. **Current State**: All tracked working tree files (`scripts/generate-relational-schema.js`, `supabase/schema_relational.sql`, `.env.example`) have been completely scrubbed of live secrets.
-3. **Recommendation**: As a standard best practice following any historical discovery, ensure the Resend API key and any live GitHub tokens referenced during local development are rotated in their respective provider consoles.
+> [!CAUTION]
+> **Confirmed Leak in Git History**: Real Resend API key and rate-limit secret values were committed in commit `ede5f2bf7104c0ae1d281779bf4aa9d4ff213e14` (`scripts/generate-relational-schema.js`, `supabase/schema_relational.sql`) and scrubbed in commit `defca0774da8bd9bb0f773edf1a910c107662781`. Even though the remote GitHub repository is confirmed **PRIVATE**, any secrets that appeared in git history must be treated as compromised and rotated immediately.
 
+---
+
+## Secret Rotation Checklist
+
+1. [ ] **Resend API Key**:
+   - Go to Resend Dashboard -> API Keys.
+   - Delete the existing API key that was committed in commit `ede5f2b`.
+   - Generate a new restricted API key for sending only.
+   - Update your production environment variables (e.g., Vercel / `.env.local`).
+
+2. [ ] **`CONTACT_RATE_LIMIT_SECRET`**:
+   - Generate a fresh 64-character random hex string (`openssl rand -hex 32`).
+   - Update in Vercel project environment variables and `.env.local`.
+
+3. [ ] **GitHub Personal Access Token**:
+   - Revoke any Personal Access Token generated or tested during development in GitHub Settings -> Developer Settings -> Personal access tokens.
+   - Generate a new fine-grained token with read-only permissions for public contributions if needed.
+
+4. [ ] **Env-Vault Entries (`app_settings` / `site_settings`)**:
+   - In Supabase SQL Editor or CMS Studio Vault, clear out any historical secret rows from `app_settings` or `site_settings` that were initialized with real values.
+
+5. [ ] **Supabase Service Role Key**:
+   - *Conditional*: Rotate this in Supabase Project Settings -> API **only** if the service role key was ever manually pasted into the `.env` vault in CMS Studio or stored into the `app_settings` table. (It was never committed to git history).
