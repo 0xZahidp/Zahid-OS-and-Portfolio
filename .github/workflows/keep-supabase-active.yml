@@ -8,64 +8,51 @@ on:
 
 jobs:
   ping-supabase:
-    name: Ping Supabase Database & REST API
+    name: Ping Application Health & Keep Supabase Active
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
-      - name: Ping Supabase API to keep project alive
+      - name: Ping Application Health Ping Endpoint (/api/health-ping)
         env:
+          SITE_URL: ${{ secrets.SITE_URL || secrets.APP_URL || secrets.NEXT_PUBLIC_APP_URL || 'https://zahidp.com' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://txrnbazpdyoaazszkwwq.supabase.co' }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           echo "============================================="
           echo "  Supabase Keep-Alive Scheduled Heartbeat"
           echo "============================================="
-          echo "Target URL: $SUPABASE_URL"
+          echo "Target Health URL: $SITE_URL/api/health-ping"
           echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%SZ")"
           echo ""
 
-          if [ -z "$SUPABASE_KEY" ]; then
-            echo "::warning::SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY is not set in GitHub Secrets."
-            echo "Pinging public health endpoint without authentication..."
-            
-            HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$SUPABASE_URL/rest/v1/")
-            echo "Public REST endpoint response: $HEALTH_STATUS"
-            
+          # 1. Ping the secure application health-ping endpoint
+          echo "1. Pinging application /api/health-ping (service role DB query)..."
+          PING_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "$SITE_URL/api/health-ping")
+          HTTP_STATUS=$(echo "$PING_RESPONSE" | grep "HTTP_STATUS:" | cut -d':' -f2)
+          BODY=$(echo "$PING_RESPONSE" | grep -v "HTTP_STATUS:")
+
+          echo "HTTP Status: $HTTP_STATUS"
+          echo "Body: $BODY"
+
+          # 2. If service role key is in GitHub secrets, also directly touch PostgREST root as secondary heartbeat
+          if [ -n "$SERVICE_KEY" ]; then
             echo ""
-            echo "To enable full database query keep-alive, please add SUPABASE_ANON_KEY to your GitHub Secrets:"
-            echo "👉 https://github.com/${{ github.repository }}/settings/secrets/actions"
-            exit 0
+            echo "2. Sending authenticated service-role ping to Supabase REST root..."
+            REST_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              -X GET \
+              -H "apikey: $SERVICE_KEY" \
+              -H "Authorization: Bearer $SERVICE_KEY" \
+              "$SUPABASE_URL/rest/v1/")
+            echo "Supabase REST Status: $REST_STATUS"
           fi
 
-          # 1. Ping database through PostgREST table query
-          echo "1. Querying PostgreSQL table endpoint (/rest/v1/portfolio_content)..."
-          DB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X GET \
-            -H "apikey: $SUPABASE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_KEY" \
-            "$SUPABASE_URL/rest/v1/portfolio_content?select=id&limit=1")
-          
-          echo "Table Query HTTP Status: $DB_STATUS"
-
-          # 2. Ping OpenAPI / PostgREST root endpoint
           echo ""
-          echo "2. Sending authenticated ping to PostgREST root (/rest/v1/)..."
-          REST_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X GET \
-            -H "apikey: $SUPABASE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_KEY" \
-            "$SUPABASE_URL/rest/v1/")
-          
-          echo "PostgREST Root HTTP Status: $REST_STATUS"
-
-          echo ""
-          if [ "$DB_STATUS" -eq 200 ] || [ "$DB_STATUS" -eq 206 ] || [ "$REST_STATUS" -eq 200 ]; then
+          if [ "$HTTP_STATUS" -eq 200 ]; then
             echo "============================================="
-            echo "  ✓ Supabase project is active and alive!"
+            echo "  ✓ Supabase keep-alive ping successful!"
             echo "  7-day inactivity pause successfully prevented."
             echo "============================================="
           else
-            echo "::warning::Unexpected response (DB: $DB_STATUS, REST: $REST_STATUS). Check project status."
+            echo "::warning::Health ping returned HTTP $HTTP_STATUS. Verify deployment and domain configuration."
           fi
-

@@ -165,6 +165,7 @@ async function main() {
       stdio: 'pipe',
       env: {
         ...process.env,
+        NEXT_DIST_DIR: process.env.NEXT_DIST_DIR || (fs.existsSync(path.join(ROOT_DIR, '.next-prod')) ? '.next-prod' : undefined),
         RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET || 'whsec_verification_test_secret_32bytes',
       },
     });
@@ -239,6 +240,24 @@ async function main() {
               failedTests++;
               console.log(`FAIL (Unsigned: ${res.status}, BadSignature: ${badlySignedRes.status})`);
               failureDetails.push(`${endpointLabel}: Expected 401 on unsigned/badly signed webhook, got unsigned=${res.status}, badSig=${badlySignedRes.status}`);
+            }
+          } else if (route.apiPath === '/api/health-ping') {
+            // Must return 200 with strictly {"ok":true} and no data leaked
+            try {
+              const json = JSON.parse(res.data);
+              const keys = Object.keys(json);
+              if (res.status === 200 && keys.length === 1 && json.ok === true) {
+                passedTests++;
+                console.log(`PASS (Status 200 - Returns strictly {"ok":true})`);
+              } else {
+                failedTests++;
+                console.log(`FAIL (Unexpected body or status: ${res.status} ${res.data})`);
+                failureDetails.push(`${endpointLabel}: Expected 200 and {"ok":true}, got status=${res.status}, body=${res.data}`);
+              }
+            } catch (err) {
+              failedTests++;
+              console.log(`FAIL (Invalid JSON: ${res.data})`);
+              failureDetails.push(`${endpointLabel}: Invalid JSON returned: ${err.message}`);
             }
           } else if (res.status === 401 || res.status === 403) {
             failedTests++;

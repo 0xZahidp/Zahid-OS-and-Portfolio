@@ -69,6 +69,11 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
     path: '/api/auth/reset-password',
     reason: 'Admin password reset endpoint. Validates Supabase recovery token and verifies user.id === ADMIN_USER_ID.',
   },
+  {
+    method: 'GET',
+    path: '/api/health-ping',
+    reason: 'Public keep-alive ping for Supabase. Executes minimal service-role query, rate-limited, returns no data.',
+  },
 ];
 
 /**
