@@ -151,7 +151,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setUser(data.session.user);
           setIsLocalBypass(false);
           if (typeof document !== 'undefined') {
-            document.cookie = `sb-access-token=${encodeURIComponent(data.session.access_token)}; path=/; SameSite=Lax; max-age=3600`;
+            const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
+            document.cookie = `sb-access-token=${encodeURIComponent(data.session.access_token)}; path=/; SameSite=Lax; max-age=3600${isSecure}`;
           }
           checkMfaLevel().catch(() => {});
         }
@@ -178,13 +179,15 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (currentSession) {
         setIsLocalBypass(false);
         if (typeof document !== 'undefined') {
-          document.cookie = `sb-access-token=${encodeURIComponent(currentSession.access_token)}; path=/; SameSite=Lax; max-age=3600`;
+          const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
+          document.cookie = `sb-access-token=${encodeURIComponent(currentSession.access_token)}; path=/; SameSite=Lax; max-age=3600${isSecure}`;
         }
         checkMfaLevel().catch(() => {});
       } else {
         setMfaLevel(null);
         if (typeof document !== 'undefined') {
-          document.cookie = `sb-access-token=; path=/; SameSite=Lax; max-age=0`;
+          const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
+          document.cookie = `sb-access-token=; path=/; SameSite=Lax; max-age=0${isSecure}`;
         }
       }
     });

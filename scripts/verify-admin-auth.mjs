@@ -163,6 +163,10 @@ async function main() {
       cwd: ROOT_DIR,
       shell: true,
       stdio: 'pipe',
+      env: {
+        ...process.env,
+        RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET || 'whsec_verification_test_secret_32bytes',
+      },
     });
 
     const ready = await waitForServer(30, 1000);
@@ -195,18 +199,46 @@ async function main() {
 
       try {
         if (isPublic) {
-          // Public Route Test: No credentials should NOT return 401 or 403
-          // Exception: /api/auth/reset-password is in public allowlist for middleware (AAL1 recovery token),
-          // but its handler strictly enforces a valid recovery token, returning 401 if missing.
+          // Public Route Test:
+          // Treat ANY 5xx response on a public route as FAIL
           const res = await sendRequest(method, route.apiPath, {}, testBody);
-          if (route.apiPath === '/api/auth/reset-password') {
+          if (res.status >= 500) {
+            failedTests++;
+            console.log(`FAIL (Unexpected ${res.status} server error on public route)`);
+            failureDetails.push(`${endpointLabel}: Returned server error status ${res.status}`);
+          } else if (route.apiPath === '/api/auth/reset-password') {
+            // Password reset requires valid recovery Bearer token; 401 without token is expected
             if (res.status === 401) {
               passedTests++;
-              console.log(`PASS (Status 401 - Handler requires recovery token)`);
+              console.log(`PASS (Status 401 - Enforces recovery token verification)`);
             } else {
               failedTests++;
               console.log(`FAIL (Unexpected ${res.status})`);
               failureDetails.push(`${endpointLabel}: Expected 401 without recovery token, got ${res.status}`);
+            }
+          } else if (route.apiPath === '/api/webhooks/resend') {
+            // Unsigned webhook request must return 401 (not 500)
+            const badlySignedRes = await sendRequest(
+              'POST',
+              route.apiPath,
+              {
+                'svix-id': 'msg_fake123',
+                'svix-timestamp': '12345678',
+                'svix-signature': 'v1,fake_signature_hash',
+              },
+              testBody
+            );
+
+            const unsignedPassed = res.status === 401;
+            const badSignaturePassed = badlySignedRes.status === 401;
+
+            if (unsignedPassed && badSignaturePassed) {
+              passedTests++;
+              console.log(`PASS (Unsigned: ${res.status}, BadSignature: ${badlySignedRes.status})`);
+            } else {
+              failedTests++;
+              console.log(`FAIL (Unsigned: ${res.status}, BadSignature: ${badlySignedRes.status})`);
+              failureDetails.push(`${endpointLabel}: Expected 401 on unsigned/badly signed webhook, got unsigned=${res.status}, badSig=${badlySignedRes.status}`);
             }
           } else if (res.status === 401 || res.status === 403) {
             failedTests++;
@@ -257,6 +289,94 @@ async function main() {
         failureDetails.push(`${endpointLabel}: Error making request: ${err.message}`);
       }
     }
+  }
+
+  // --- Specialized Verification: Temp Mail Token Access Controls ---
+  console.log('\n' + '-'.repeat(78));
+  console.log('SPECIALIZED TEST: TEMP MAIL INBOX TOKEN PROTECTION');
+  console.log('-'.repeat(78));
+
+  // Test 1: GET /api/os/temp-mail with inbox query but WITHOUT token
+  process.stdout.write('Testing: GET /api/os/temp-mail?inbox=test@zahidp.com (no token) ... ');
+  try {
+    const noTokenRes = await sendRequest('GET', '/api/os/temp-mail?inbox=test%40zahidp.com');
+    let parsedData = {};
+    try { parsedData = JSON.parse(noTokenRes.data); } catch {}
+    const hasNoInboxData = !parsedData.inbox && !parsedData.messages;
+    const isRejected = (noTokenRes.status === 400 || noTokenRes.status === 401) && hasNoInboxData;
+
+    if (isRejected) {
+      passedTests++;
+      console.log(`PASS (Status ${noTokenRes.status}, no inbox data exposed)`);
+    } else {
+      failedTests++;
+      console.log(`FAIL (Status ${noTokenRes.status}, data exposed: ${Boolean(parsedData.inbox)})`);
+      failureDetails.push(`GET /api/os/temp-mail without token must return 400/401 with no inbox data; got ${noTokenRes.status}`);
+    }
+  } catch (err) {
+    failedTests++;
+    console.log(`ERROR (${err.message})`);
+    failureDetails.push(`GET /api/os/temp-mail without token error: ${err.message}`);
+  }
+
+  // Test 2: GET /api/os/temp-mail with inbox query and WRONG token
+  process.stdout.write('Testing: GET /api/os/temp-mail?inbox=test@zahidp.com&token=wrong-token ... ');
+  try {
+    const wrongTokenRes = await sendRequest('GET', '/api/os/temp-mail?inbox=test%40zahidp.com&token=invalid-wrong-token-999');
+    let parsedData = {};
+    try { parsedData = JSON.parse(wrongTokenRes.data); } catch {}
+    const hasNoInboxData = !parsedData.inbox && !parsedData.messages;
+    const isRejected = (wrongTokenRes.status === 400 || wrongTokenRes.status === 401) && hasNoInboxData;
+
+    if (isRejected) {
+      passedTests++;
+      console.log(`PASS (Status ${wrongTokenRes.status}, no inbox data exposed)`);
+    } else {
+      failedTests++;
+      console.log(`FAIL (Status ${wrongTokenRes.status}, data exposed: ${Boolean(parsedData.inbox)})`);
+      failureDetails.push(`GET /api/os/temp-mail with wrong token must return 400/401 with no inbox data; got ${wrongTokenRes.status}`);
+    }
+  } catch (err) {
+    failedTests++;
+    console.log(`ERROR (${err.message})`);
+    failureDetails.push(`GET /api/os/temp-mail with wrong token error: ${err.message}`);
+  }
+
+  // --- Optional Authenticated Section ---
+  console.log('\n' + '-'.repeat(78));
+  console.log('AUTHENTICATED ADMIN ENDPOINT VERIFICATION');
+  console.log('-'.repeat(78));
+
+  const adminTestToken = process.env.ADMIN_TEST_TOKEN;
+  if (adminTestToken) {
+    console.log('[+] ADMIN_TEST_TOKEN detected in environment. Running positive authorization assertions...');
+    const authedEndpoints = [
+      '/api/admin/career',
+      '/api/admin/health',
+      '/api/mail/messages',
+    ];
+
+    for (const ep of authedEndpoints) {
+      process.stdout.write(`Testing: GET ${ep.padEnd(35)} (Authenticated Bearer) ... `);
+      try {
+        const authRes = await sendRequest('GET', ep, { Authorization: `Bearer ${adminTestToken}` });
+        if (authRes.status === 200) {
+          passedTests++;
+          console.log('PASS (Status 200)');
+        } else {
+          failedTests++;
+          console.log(`FAIL (Expected 200, got ${authRes.status})`);
+          failureDetails.push(`GET ${ep}: Authenticated request failed with status ${authRes.status}`);
+        }
+      } catch (err) {
+        failedTests++;
+        console.log(`ERROR (${err.message})`);
+        failureDetails.push(`GET ${ep}: Authenticated request error: ${err.message}`);
+      }
+    }
+  } else {
+    console.log('[i] NOTICE: ADMIN_TEST_TOKEN is unset in environment.');
+    console.log('    Skipping positive authenticated checks (GET /api/admin/career, /api/admin/health, /api/mail/messages).');
   }
 
   // Cleanup

@@ -21,6 +21,11 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   },
   {
     method: 'GET',
+    path: '/api/github',
+    reason: 'Public GitHub contribution calendar and public pinned repositories. Cached for 1 hour. Never exposes token or private data.',
+  },
+  {
+    method: 'GET',
     path: '/api/os/settings',
     reason: 'Public Zahid OS configuration (desktop layout, wallpaper, enabled micro-apps).',
   },

@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/admin-auth';
+import { NextResponse } from 'next/server';
 
 export const revalidate = 3600; // Cache for 1 hour
 
@@ -127,10 +126,7 @@ async function getGitHubToken(): Promise<string | null> {
   return token || null;
 }
 
-export async function GET(req: NextRequest) {
-  const authError = await requireAdmin(req);
-  if (authError) return authError;
-
+export async function GET() {
   try {
     const token = await getGitHubToken();
 
@@ -281,7 +277,7 @@ export async function GET(req: NextRequest) {
 
     // Process contribution weeks
     const weeks: { date: string; count: number; level: number }[][] = [];
-    let totalContributions = 102;
+    let totalContributions = 0;
 
     if (contribData?.contributions && Array.isArray(contribData.contributions)) {
       const publicDays = contribData.contributions as PublicDayItem[];
@@ -350,9 +346,13 @@ export async function GET(req: NextRequest) {
       {
         success: false,
         error: message,
+        contributions: {
+          total: 0,
+          weeks: undefined,
+        },
         repositories: DEFAULT_REPOS,
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }

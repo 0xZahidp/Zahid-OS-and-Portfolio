@@ -24,6 +24,9 @@
 # misc
 .DS_Store
 *.pem
+*.rar
+*.zip
+*.tar*
 scratch/
 /career/
 /health/

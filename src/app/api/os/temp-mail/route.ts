@@ -153,14 +153,13 @@ export async function GET(req: NextRequest) {
 
     // If inbox expired or invalid token
     if (!result.inbox) {
-      return NextResponse.json({
-        success: false,
-        error: 'Inbox has expired or does not exist.',
-        expired: true,
-        domain: resolvedDomain,
-        domains,
-        defaultDomain,
-      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized: Invalid token or expired inbox.',
+        },
+        { status: 401 }
+      );
     }
 
     const existingIds = new Set(result.messages.map((m) => m.resend_id).filter(Boolean) as string[]);

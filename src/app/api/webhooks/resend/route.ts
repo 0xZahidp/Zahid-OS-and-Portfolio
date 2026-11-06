@@ -7,6 +7,8 @@ import { EmailAttachment } from '@/types/mail';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+let hasLoggedWebhookSecretMissing = false;
+
 export async function POST(req: NextRequest) {
   try {
     // 1. Read raw body text for signature verification
@@ -16,35 +18,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Empty request body' }, { status: 400 });
     }
 
-    // 2. Fetch API key and Webhook Secret
-    const apiKey = (await getAppSecret('RESEND_API_KEY')) || process.env.RESEND_API_KEY;
-    const webhookSecret =
-      (await getAppSecret('RESEND_WEBHOOK_SECRET')) || process.env.RESEND_WEBHOOK_SECRET;
-
-    if (!apiKey) {
-      console.error('[Resend Webhook] RESEND_API_KEY is not configured');
-      return NextResponse.json({ error: 'RESEND_API_KEY missing' }, { status: 500 });
-    }
-
-    const resend = new Resend(apiKey);
-
-    // 3. Verify webhook signature (fail closed: requires RESEND_WEBHOOK_SECRET)
-    if (!webhookSecret) {
-      console.error('[Resend Webhook] RESEND_WEBHOOK_SECRET is not configured. Rejecting request.');
-      return NextResponse.json({ error: 'RESEND_WEBHOOK_SECRET missing' }, { status: 500 });
-    }
-
+    // 2. Unsigned requests must return 401
     const svixId = req.headers.get('svix-id') || req.headers.get('webhook-id') || '';
     const svixTimestamp = req.headers.get('svix-timestamp') || req.headers.get('webhook-timestamp') || '';
     const svixSignature = req.headers.get('svix-signature') || req.headers.get('webhook-signature') || '';
 
     if (!svixId || !svixTimestamp || !svixSignature) {
-      console.error('[Resend Webhook] Missing svix signature headers');
       return NextResponse.json(
-        { error: 'Missing svix signature headers (svix-id, svix-timestamp, svix-signature)' },
-        { status: 400 }
+        { error: 'Unauthorized: Missing signature headers' },
+        { status: 401 }
       );
     }
+
+    // 3. Fetch Webhook Secret (if missing when signed request arrives, log warning once and return 503)
+    const webhookSecret =
+      (await getAppSecret('RESEND_WEBHOOK_SECRET')) || process.env.RESEND_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      if (!hasLoggedWebhookSecretMissing) {
+        hasLoggedWebhookSecretMissing = true;
+        console.warn(
+          '[Resend Webhook] RESEND_WEBHOOK_SECRET is not configured in environment or database. Webhook endpoint unavailable.'
+        );
+      }
+      return NextResponse.json({ error: 'Webhook service unavailable' }, { status: 503 });
+    }
+
+    // 4. Badly signed requests must return 401
+    const apiKey = (await getAppSecret('RESEND_API_KEY')) || process.env.RESEND_API_KEY;
+    const resend = new Resend(apiKey || 're_webhook_verifier');
 
     try {
       resend.webhooks.verify({
@@ -56,10 +58,13 @@ export async function POST(req: NextRequest) {
           signature: svixSignature,
         },
       });
-    } catch (verifyErr: unknown) {
-      const msg = verifyErr instanceof Error ? verifyErr.message : 'Signature verification failed';
-      console.error('[Resend Webhook] Invalid signature:', msg);
-      return NextResponse.json({ error: 'Invalid webhook signature', details: msg }, { status: 400 });
+    } catch {
+      return NextResponse.json({ error: 'Unauthorized: Invalid webhook signature' }, { status: 401 });
+    }
+
+    if (!apiKey) {
+      console.error('[Resend Webhook] RESEND_API_KEY is not configured');
+      return NextResponse.json({ error: 'RESEND_API_KEY missing' }, { status: 500 });
     }
 
     // 4. Parse JSON payload

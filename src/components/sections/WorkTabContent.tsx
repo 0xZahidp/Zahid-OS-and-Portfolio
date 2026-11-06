@@ -95,7 +95,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
 }) => {
   const { content } = usePortfolio();
   const projectsData = content.projects;
-  const [totalContributions, setTotalContributions] = useState<number>(102);
+  const [totalContributions, setTotalContributions] = useState<number>(0);
   const [totalRepos, setTotalRepos] = useState<number>(26);
   const [followersCount, setFollowersCount] = useState<number>(6);
   const [pinnedRepos, setPinnedRepos] = useState<PinnedRepo[]>(DEFAULT_PINNED_REPOS);
@@ -152,18 +152,12 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
     };
   }, []);
 
-  // Generate realistic 53-week GitHub contribution heatmap fallback with dates
+  // 53-week neutral empty grid when live data is loading or unavailable
   const fallbackContributionWeeks = useMemo<ContributionDay[][]>(() => {
     const weeks: ContributionDay[][] = [];
     const today = new Date();
     const start = new Date(today);
     start.setDate(today.getDate() - (52 * 7 + today.getDay()));
-
-    let seed = 42;
-    const seededRandom = () => {
-      seed = (seed * 9301 + 49297) % 233280;
-      return seed / 233280;
-    };
 
     for (let w = 0; w < 53; w++) {
       const days: ContributionDay[] = [];
@@ -171,31 +165,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
         const curDate = new Date(start);
         curDate.setDate(start.getDate() + (w * 7 + d));
         const dateStr = curDate.toISOString().split('T')[0];
-
-        const rand = seededRandom();
-        let level = 0;
-        let count = 0;
-        const intensityBoost = w > 36 ? 0.35 : w > 20 ? 0.2 : 0;
-        const adjusted = rand - intensityBoost;
-
-        if (adjusted < 0.2) {
-          level = 4;
-          count = Math.floor(rand * 10) + 14;
-        } else if (adjusted < 0.4) {
-          level = 3;
-          count = Math.floor(rand * 6) + 7;
-        } else if (adjusted < 0.65) {
-          level = 2;
-          count = Math.floor(rand * 3) + 3;
-        } else if (adjusted < 0.85) {
-          level = 1;
-          count = Math.floor(rand * 2) + 1;
-        } else {
-          level = 0;
-          count = 0;
-        }
-
-        days.push({ date: dateStr, count, level });
+        days.push({ date: dateStr, count: 0, level: 0 });
       }
       weeks.push(days);
     }
@@ -413,8 +383,14 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
         </div>
 
         {/* Summary text - Muted gray with uniform weight */}
-        <p className="mt-2 mb-4 text-body text-ink-3 font-normal">
-          {effectiveContributions.toLocaleString()} contributions in the last year
+        <p className="mt-2 mb-4 text-body text-ink-3 font-normal flex items-center gap-2">
+          {effectiveContributions > 0 ? (
+            <span>{effectiveContributions.toLocaleString()} contributions in the last year</span>
+          ) : liveWeeks && liveWeeks.length > 0 ? (
+            <span>0 contributions in the last year</span>
+          ) : (
+            <span className="text-ink-4 italic">Live contribution activity is currently loading or unavailable</span>
+          )}
         </p>
 
         {/* Heatmap Card Wrapper (.card-raised) */}
