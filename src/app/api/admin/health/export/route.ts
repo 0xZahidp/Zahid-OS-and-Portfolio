@@ -20,7 +20,13 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch {
-    return NextResponse.json({ error: 'Failed to export health records' }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Database service unavailable' },
+      {
+        status: 503,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+      }
+    );
   }
 }
 

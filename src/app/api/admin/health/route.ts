@@ -45,7 +45,13 @@ export async function GET(req: NextRequest) {
     const fullData = await getHealthData();
     return NextResponse.json({ success: true, data: fullData });
   } catch {
-    return NextResponse.json({ error: 'Failed to read health records' }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Database service unavailable' },
+      {
+        status: 503,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+      }
+    );
   }
 }
 

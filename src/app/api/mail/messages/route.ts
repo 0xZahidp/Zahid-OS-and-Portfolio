@@ -75,9 +75,14 @@ export async function GET(req: NextRequest) {
         },
       }
     );
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Failed to retrieve messages';
-    return NextResponse.json({ success: false, error: msg }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      { success: false, error: 'Database service unavailable' },
+      {
+        status: 503,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+      }
+    );
   }
 }
 

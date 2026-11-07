@@ -167,6 +167,18 @@ export async function deleteAppSecret(key: string): Promise<{ success: boolean; 
   }
 }
 
+async function withTimeout<T>(promise: PromiseLike<T>, timeoutMs = 4000): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Supabase query timed out')), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timer!);
+  }
+}
+
 /**
  * List all configured secrets & environment variables for CMS display.
  * Secrets have their values safely masked (e.g. `re_ZDp••••••••••••`).
@@ -231,9 +243,13 @@ export async function listAppSecrets(): Promise<EnvVaultItem[]> {
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
-      const { data, error } = await supabase.from('app_settings').select('*');
+      const { data, error } = await withTimeout(supabase.from('app_settings').select('*'));
 
-      if (!error && Array.isArray(data)) {
+      if (error) {
+        throw new Error(`Failed to read app settings: ${error.message}`);
+      }
+
+      if (Array.isArray(data)) {
         for (const row of data) {
           const rawVal = row.value || '';
           const isSecret = Boolean(row.is_secret);
@@ -251,8 +267,10 @@ export async function listAppSecrets(): Promise<EnvVaultItem[]> {
           });
         }
       }
-    } catch {
-      // Supabase unavailable or table pending
+    } catch (err) {
+      if (process.env.VERCEL || supabaseUrl) {
+        throw err;
+      }
     }
   }
 

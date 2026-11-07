@@ -15,9 +15,14 @@ export async function GET(req: NextRequest) {
   try {
     const data = await getCareerApplications();
     return NextResponse.json({ success: true, ...data });
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Failed to fetch career applications';
-    return NextResponse.json({ success: false, error: msg }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      { success: false, error: 'Database service unavailable' },
+      {
+        status: 503,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+      }
+    );
   }
 }
 

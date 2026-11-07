@@ -53,6 +53,18 @@ interface CacheEntry {
 const memoryCache: Partial<Record<HealthCollectionKey, CacheEntry>> = {};
 const CACHE_TTL_MS = 10000; // 10s TTL
 
+async function withTimeout<T>(promise: PromiseLike<T>, timeoutMs = 4000): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Supabase query timed out')), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timer!);
+  }
+}
+
 export function clearHealthCache(collection?: HealthCollectionKey): void {
   if (collection) {
     delete memoryCache[collection];
@@ -81,37 +93,52 @@ export async function getHealthCollection<K extends HealthCollectionKey>(
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('key', settingKey)
-        .maybeSingle();
+      const { data, error } = await withTimeout(
+        supabase
+          .from('site_settings')
+          .select('value')
+          .eq('key', settingKey)
+          .maybeSingle()
+      );
 
-      if (!error && data?.value) {
-        let value = data.value;
-        if (collection === 'profile') {
-          value = { ...DEFAULT_PROFILE, ...(value as HealthProfile) };
-        } else if (!Array.isArray(value)) {
-          value = [];
-        }
-
-        memoryCache[collection] = { data: value, timestamp: Date.now() };
-
-        // Asynchronously mirror to local gitignored file (ignore in read-only envs, skip on Vercel)
-        if (!process.env.VERCEL) {
-          fs.writeFile(FILE_PATHS[collection], JSON.stringify(value, null, 2), 'utf-8').catch(
-            () => {}
-          );
-        }
-
-        return value as HealthCollections[K];
+      if (error) {
+        throw new Error(`Failed to read health collection ${collection}: ${error.message}`);
       }
-    } catch {
-      // Safe fallback without logging medical contents
+
+      let value: HealthCollections[K];
+      if (data && data.value) {
+        let rawVal = data.value;
+        if (typeof rawVal === 'object' && rawVal !== null && 'data' in rawVal && !Array.isArray(rawVal)) {
+          rawVal = (rawVal as { data: unknown }).data;
+        }
+
+        if (collection === 'profile') {
+          value = { ...DEFAULT_PROFILE, ...(rawVal as HealthProfile) } as HealthCollections[K];
+        } else if (!Array.isArray(rawVal)) {
+          value = [] as unknown as HealthCollections[K];
+        } else {
+          value = rawVal as HealthCollections[K];
+        }
+      } else {
+        // Key does not exist in DB yet
+        value = (collection === 'profile' ? DEFAULT_PROFILE : []) as HealthCollections[K];
+      }
+
+      memoryCache[collection] = { data: value, timestamp: Date.now() };
+
+      if (!process.env.VERCEL) {
+        fs.writeFile(FILE_PATHS[collection], JSON.stringify(value, null, 2), 'utf-8').catch(() => {});
+      }
+
+      return value;
+    } catch (err) {
+      if (process.env.VERCEL || supabaseUrl) {
+        throw err;
+      }
     }
   }
 
-  // 2. Fallback: Local gitignored JSON file
+  // 2. Fallback: Local gitignored JSON file (offline local dev without Supabase only)
   try {
     const raw = await fs.readFile(FILE_PATHS[collection], 'utf-8');
     const parsed = JSON.parse(raw);

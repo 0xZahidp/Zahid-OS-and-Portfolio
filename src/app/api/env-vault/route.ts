@@ -19,9 +19,14 @@ export async function GET(req: NextRequest) {
       vaultConfigured,
       vaultWarning,
     });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to list secrets';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      { success: false, error: 'Database service unavailable' },
+      {
+        status: 503,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+      }
+    );
   }
 }
 

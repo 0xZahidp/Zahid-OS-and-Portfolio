@@ -184,6 +184,18 @@ export function normalizeMessage(item: Record<string, unknown>): MailMessage {
   };
 }
 
+async function withTimeout<T>(promise: PromiseLike<T>, timeoutMs = 4000): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Supabase query timed out')), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timer!);
+  }
+}
+
 export async function readMailStore(): Promise<MailStoreData> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
@@ -191,23 +203,31 @@ export async function readMailStore(): Promise<MailStoreData> {
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
-      const { data, error } = await supabase
-        .from('inbox_messages')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await withTimeout(
+        supabase
+          .from('inbox_messages')
+          .select('*')
+          .order('created_at', { ascending: false })
+      );
 
-      if (!error && Array.isArray(data) && data.length > 0) {
+      if (error) {
+        throw new Error(`Failed to read inbox messages: ${error.message}`);
+      }
+
+      if (Array.isArray(data)) {
         return {
           updatedAt: new Date().toISOString(),
           messages: data.map((d) => normalizeMessage(d as Record<string, unknown>)),
         };
       }
-    } catch {
-      // Fall through to local file
+    } catch (err) {
+      if (process.env.VERCEL || supabaseUrl) {
+        throw err;
+      }
     }
   }
 
-  // 2. Read local JSON store file
+  // 2. Read local JSON store file (offline local dev without Supabase only)
   try {
     const raw = await fs.readFile(STORE_PATH, 'utf-8');
     const parsed = JSON.parse(raw);

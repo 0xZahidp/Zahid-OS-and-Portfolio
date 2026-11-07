@@ -50,9 +50,14 @@ export async function GET(req: NextRequest) {
       defaultSender: configuredSender,
       unreadCount,
     });
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Status check failed';
-    return NextResponse.json({ configured: false, error: msg }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      { configured: false, error: 'Database service unavailable' },
+      {
+        status: 503,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+      }
+    );
   }
 }
 

@@ -8,6 +8,18 @@ const CAREER_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'career-applica
 let memoryCache: { applications: CareerApplication[]; timestamp: number } | null = null;
 const CACHE_TTL_MS = 10000;
 
+async function withTimeout<T>(promise: PromiseLike<T>, timeoutMs = 4000): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Supabase query timed out')), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timer!);
+  }
+}
+
 export async function getCareerApplications(): Promise<{
   applications: CareerApplication[];
   metrics: CareerMetrics;
@@ -26,31 +38,56 @@ export async function getCareerApplications(): Promise<{
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('key', 'career_applications')
-        .maybeSingle();
+      const { data, error } = await withTimeout(
+        supabase
+          .from('site_settings')
+          .select('value')
+          .eq('key', 'career_applications')
+          .maybeSingle()
+      );
 
-      if (!error && data?.value && Array.isArray(data.value)) {
-        list = data.value as CareerApplication[];
+      if (error) {
+        throw new Error(`Failed to read career applications from database: ${error.message}`);
       }
+
+      // If data is null or empty, key does not exist yet (return empty list)
+      if (data && data.value) {
+        if (Array.isArray(data.value)) {
+          list = data.value as CareerApplication[];
+        } else if (typeof data.value === 'object' && Array.isArray((data.value as { data?: unknown }).data)) {
+          list = (data.value as { data: CareerApplication[] }).data;
+        } else {
+          list = [];
+        }
+      } else {
+        list = [];
+      }
+
+      memoryCache = {
+        applications: list,
+        timestamp: Date.now(),
+      };
+
+      return {
+        applications: list,
+        metrics: calculateMetrics(list),
+      };
     } catch (err) {
-      console.warn('[CareerStore] Supabase read fallback:', err);
+      if (process.env.VERCEL || supabaseUrl) {
+        throw err;
+      }
     }
   }
 
-  // 2. Fallback to local JSON file
-  if (list.length === 0) {
-    try {
-      const raw = await fs.readFile(CAREER_FILE_PATH, 'utf-8');
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        list = parsed;
-      }
-    } catch {
-      list = [];
+  // 2. Fallback to local JSON file (offline local dev without Supabase only)
+  try {
+    const raw = await fs.readFile(CAREER_FILE_PATH, 'utf-8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      list = parsed;
     }
+  } catch {
+    list = [];
   }
 
   memoryCache = {
