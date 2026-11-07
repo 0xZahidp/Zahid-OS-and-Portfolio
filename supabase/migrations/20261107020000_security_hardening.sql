@@ -1,8 +1,9 @@
 -- ==============================================================================
--- Migration: 20261106030000_security_hardening.sql
+-- Migration: 20261107020000_security_hardening.sql
 -- Description: Zero-Trust Supabase Security Hardening & Complete Access Lockdown
 -- 
--- Summary of Actions:
+-- IMPORTANT: Always run this file last, after any new migration.
+-- ==============================================================================
 -- 1. Strip ALL table, sequence, routine, and function privileges from `anon` & `authenticated`.
 -- 2. Revoke default privileges on future tables/sequences/routines/functions.
 -- 3. Grant full privileges strictly to `service_role` (used by backend server routes).
