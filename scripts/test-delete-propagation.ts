@@ -1,17 +1,261 @@
 export {};
 
-// Set test environment variables (never uses live DB)
-process.env.VERCEL = '1';
-process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://127.0.0.1:9';
-process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-dummy-service-role-key-never-leaked';
-process.env.ADMIN_USER_ID = 'test-admin-user-id';
-
+import { createClient } from '@supabase/supabase-js';
 import { defaultPortfolioContent } from '../src/data/default-content';
-import { PortfolioContent } from '../src/types/cms';
+import { PortfolioContent, LoadedCollectionIds } from '../src/types/cms';
 import { LanguageSkill } from '../src/types/profile';
 
-// In-Memory Test Fixture mimicking the exact relational table schema and route operations
-class MockRelationalDb {
+// Dual-Mode Environment Configuration & Production Guard
+const rawTestUrl = process.env.SUPABASE_TEST_URL?.trim();
+const rawTestKey = process.env.SUPABASE_TEST_SERVICE_KEY?.trim();
+const rawProdUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
+
+if (rawTestUrl) {
+  // CRITICAL SAFETY GUARD: Refuse to execute against production or live cloud Supabase
+  const isProdUrlMatch = rawProdUrl && (rawTestUrl === rawProdUrl || rawTestUrl.toLowerCase() === rawProdUrl.toLowerCase());
+  const isProdHostMatch = rawTestUrl.includes('supabase.co') && !rawTestUrl.includes('localhost') && !rawTestUrl.includes('127.0.0.1');
+
+  if (isProdUrlMatch || isProdHostMatch) {
+    console.error('\n================================================================');
+    console.error('[SAFETY REFUSAL] Refusing to run tests against production Supabase URL!');
+    console.error(`Target test URL: ${rawTestUrl}`);
+    console.error('The test suite only permits running against local Supabase (e.g. http://127.0.0.1:54321) or an in-memory fixture.');
+    console.error('================================================================\n');
+    process.exit(1);
+  }
+}
+
+// Fallback dummy environment variables for in-memory mode
+if (!rawTestUrl || !rawTestKey) {
+  process.env.VERCEL = '1';
+  process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://127.0.0.1:9';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-dummy-service-role-key-never-leaked';
+  process.env.ADMIN_USER_ID = 'test-admin-user-id';
+}
+
+export interface ITestDb {
+  tables: any;
+  reset(): Promise<void> | void;
+  getContent(): Promise<PortfolioContent>;
+  saveContent(payload: PortfolioContent & { clientLoaded?: boolean; confirmDelete?: boolean; expectedVersion?: number }): Promise<{
+    status: number;
+    body: {
+      success: boolean;
+      conflict?: boolean;
+      deletionsSkipped?: boolean;
+      error?: string;
+      requiresConfirmation?: boolean;
+      version?: number;
+      content?: PortfolioContent;
+      loadedIds?: LoadedCollectionIds;
+      deletedCount?: number;
+      totalCount?: number;
+    };
+  }>;
+  cleanup?(): Promise<void>;
+}
+
+// Real Supabase Runner (Used when SUPABASE_TEST_URL and SUPABASE_TEST_SERVICE_KEY are supplied)
+class RealSupabaseDb implements ITestDb {
+  private client: any;
+  tables: { languages: any[] } = { languages: [] };
+
+  constructor(url: string, key: string) {
+    this.client = createClient(url, key, { auth: { persistSession: false } });
+  }
+
+  async reset() {
+    await this.client.from('languages').delete().neq('id', '');
+    await this.client.from('site_settings').delete().eq('key', 'content_version');
+    this.tables.languages = [];
+  }
+
+  async getContent(): Promise<PortfolioContent> {
+    const { data: profileRow } = await this.client
+      .from('profiles')
+      .select('*')
+      .limit(1)
+      .maybeSingle();
+
+    const [langRes, setRes] = await Promise.all([
+      this.client.from('languages').select('*').order('sort_order', { ascending: true }),
+      this.client.from('site_settings').select('value').eq('key', 'content_version').maybeSingle(),
+    ]);
+
+    const rawVersion = setRes.data?.value;
+    const version = typeof rawVersion === 'number' ? rawVersion : 0;
+    const langRows = (langRes.data || []) as any[];
+    this.tables.languages = langRows;
+
+    return {
+      profile: profileRow || defaultPortfolioContent.profile,
+      bioParagraphs: defaultPortfolioContent.bioParagraphs,
+      experience: defaultPortfolioContent.experience,
+      projects: defaultPortfolioContent.projects,
+      skills: defaultPortfolioContent.skills,
+      languages: langRows.map((l: any) => ({
+        id: l.id,
+        name: l.name,
+        proficiency: l.proficiency,
+        rating: l.rating ?? 5,
+        note: l.note || '',
+        has_voice: l.has_voice !== false,
+        hasVoice: l.has_voice !== false,
+        sort_order: l.sort_order ?? 0,
+      })),
+      socialLinks: defaultPortfolioContent.socialLinks,
+      suggestedPeople: defaultPortfolioContent.suggestedPeople,
+      worksSettings: defaultPortfolioContent.worksSettings,
+      basedInSettings: defaultPortfolioContent.basedInSettings,
+      githubSettings: defaultPortfolioContent.githubSettings,
+      libraryData: defaultPortfolioContent.libraryData,
+      updatedAt: profileRow?.updated_at || new Date().toISOString(),
+      version,
+      loadedIds: {
+        languages: langRows.map((l: any) => l.id),
+      },
+    };
+  }
+
+  async saveContent(payload: PortfolioContent & { clientLoaded?: boolean; confirmDelete?: boolean; expectedVersion?: number }) {
+    const isClientLoaded = payload.clientLoaded === true;
+    const isConfirmDelete = payload.confirmDelete === true;
+
+    // Check concurrency version
+    const { data: vRow } = await this.client
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'content_version')
+      .maybeSingle();
+
+    let currentVersion = 0;
+    if (vRow?.value !== undefined && typeof vRow.value === 'number') {
+      currentVersion = vRow.value;
+    }
+
+    const expectedVersion =
+      typeof payload.expectedVersion === 'number'
+        ? payload.expectedVersion
+        : typeof payload.version === 'number'
+        ? payload.version
+        : undefined;
+
+    if (expectedVersion !== undefined && expectedVersion !== currentVersion) {
+      return {
+        status: 409,
+        body: {
+          success: false,
+          conflict: true,
+          error: 'This data changed elsewhere, reload before saving',
+          currentVersion,
+        },
+      };
+    }
+
+    const { data: existingLangs } = await this.client.from('languages').select('id, name');
+    const existingLangRows = (existingLangs || []) as any[];
+    const existingLangIds = existingLangRows.map((r) => r.id);
+
+    const langRows = (payload.languages || []).map((lang, idx) => {
+      let langId = lang.id;
+      if (!langId) {
+        const existingByName = existingLangRows.find(
+          (r) => r.name.toLowerCase() === lang.name.toLowerCase()
+        );
+        langId = existingByName
+          ? existingByName.id
+          : `lang_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      }
+      return {
+        id: langId,
+        name: lang.name,
+        proficiency: lang.proficiency,
+        rating: lang.rating || 5,
+        note: lang.note || '',
+        has_voice: lang.hasVoice !== false && lang.has_voice !== false,
+        sort_order: idx,
+        updated_at: new Date().toISOString(),
+      };
+    });
+
+    const incomingLangIds = langRows.map((r) => r.id);
+    const clientLoadedIds = payload.loadedIds;
+    const candidateLangIds = clientLoadedIds?.languages
+      ? existingLangIds.filter((id) => clientLoadedIds.languages!.includes(id))
+      : existingLangIds;
+    const deletedLangIds = candidateLangIds.filter((id) => !incomingLangIds.includes(id));
+
+    if (isClientLoaded && existingLangIds.length > 8 && deletedLangIds.length > 3) {
+      const ratio = deletedLangIds.length / existingLangIds.length;
+      if (ratio > 0.5 && !isConfirmDelete) {
+        return {
+          status: 400,
+          body: {
+            success: false,
+            error: `Mass deletion guard: deleting ${deletedLangIds.length} of ${existingLangIds.length} items (>50%) in languages requires explicit confirmation.`,
+            requiresConfirmation: true,
+            deletedCount: deletedLangIds.length,
+            totalCount: existingLangIds.length,
+          },
+        };
+      }
+    }
+
+    if (langRows.length > 0) {
+      await this.client.from('languages').upsert(langRows);
+    }
+    if (isClientLoaded && deletedLangIds.length > 0) {
+      await this.client.from('languages').delete().in('id', deletedLangIds);
+    }
+
+    const { data: refreshedLangs } = await this.client.from('languages').select('*');
+    this.tables.languages = refreshedLangs || [];
+
+    const nextVersion = currentVersion + 1;
+    await this.client.from('site_settings').upsert({
+      key: 'content_version',
+      value: nextVersion,
+      updated_at: new Date().toISOString(),
+    });
+
+    const sanitized: PortfolioContent = {
+      ...payload,
+      languages: langRows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        proficiency: r.proficiency,
+        rating: r.rating,
+        note: r.note,
+        has_voice: r.has_voice,
+        hasVoice: r.has_voice,
+        sort_order: r.sort_order,
+      })),
+      version: nextVersion,
+      updatedAt: new Date().toISOString(),
+      loadedIds: {
+        languages: langRows.map((r) => r.id as string),
+      },
+    };
+
+    return {
+      status: 200,
+      body: {
+        success: true,
+        version: nextVersion,
+        content: sanitized,
+        loadedIds: sanitized.loadedIds,
+        deletionsSkipped: !isClientLoaded ? true : undefined,
+      },
+    };
+  }
+
+  async cleanup() {
+    await this.reset();
+  }
+}
+
+// In-Memory Test Fixture mimicking the exact relational table schema and route operations (Default Mode)
+class MockRelationalDb implements ITestDb {
   tables: {
     profiles: any[];
     bio_paragraphs: any[];
@@ -248,7 +492,18 @@ async function runTests() {
   console.log('         DELETION PROPAGATION & CONCURRENCY TEST SUITE          ');
   console.log('================================================================\n');
 
-  const db = new MockRelationalDb();
+  const isRealSupabase = Boolean(rawTestUrl && rawTestKey);
+  console.log(`[TEST RUNNER MODE]: ${isRealSupabase ? 'Real Supabase (Local/Throwaway)' : 'In-Memory Relational Fixture (Default Fast Mode)'}`);
+  if (isRealSupabase) {
+    console.log(`[TARGET URL]:        ${rawTestUrl}\n`);
+  } else {
+    console.log('[INFO]:              Running offline mock tests. Set SUPABASE_TEST_URL and SUPABASE_TEST_SERVICE_KEY to test real Supabase.\n');
+  }
+
+  const db: ITestDb = isRealSupabase
+    ? new RealSupabaseDb(rawTestUrl!, rawTestKey!)
+    : new MockRelationalDb();
+
   let passed = 0;
   let failed = 0;
 
@@ -687,6 +942,10 @@ async function runTests() {
 
   const finalDbState = await db.getContent();
   assert(finalDbState.languages.length === 3, 'Final state contains all 3 languages safely merged');
+
+  if (db.cleanup) {
+    await db.cleanup();
+  }
 
   // ---------------------------------------------------------------------------
   // SUMMARY
