@@ -114,16 +114,23 @@ export async function GET() {
               roles: profileRow.roles || [],
             },
             bioParagraphs: (bioRes.data || []).map((b) => b.content),
-            experience: (expRes.data && expRes.data.length > 0) ? expRes.data : defaultPortfolioContent.experience,
-            projects: (projRes.data && projRes.data.length > 0) ? projRes.data : defaultPortfolioContent.projects,
-            skills: (skillRes.data && skillRes.data.length > 0) ? skillRes.data : defaultPortfolioContent.skills,
-            languages: (langRes.data && langRes.data.length > 0) ? langRes.data : defaultPortfolioContent.languages,
-            socialLinks: (socRes.data && socRes.data.length > 0) ? socRes.data : defaultPortfolioContent.socialLinks,
-            suggestedPeople: (Array.isArray(richPeopleSetting) && richPeopleSetting.length > 0)
+            experience: expRes.data || [],
+            projects: projRes.data || [],
+            skills: skillRes.data || [],
+            languages: (langRes.data || []).map((l) => ({
+              id: l.id,
+              name: l.name,
+              proficiency: l.proficiency,
+              rating: l.rating ?? 5,
+              note: l.note || '',
+              has_voice: l.has_voice !== false,
+              hasVoice: l.has_voice !== false,
+              sort_order: l.sort_order ?? 0,
+            })),
+            socialLinks: socRes.data || [],
+            suggestedPeople: Array.isArray(richPeopleSetting)
               ? richPeopleSetting
-              : (peepRes.data && peepRes.data.length > 0)
-              ? peepRes.data
-              : defaultPortfolioContent.suggestedPeople,
+              : (peepRes.data || []),
             worksSettings: worksSetting || defaultPortfolioContent.worksSettings,
             basedInSettings: basedInSetting || defaultPortfolioContent.basedInSettings,
             githubSettings: githubSetting as unknown as typeof defaultPortfolioContent.githubSettings,
