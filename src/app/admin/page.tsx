@@ -371,7 +371,9 @@ function AdminDashboardInner() {
             className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border text-xs font-semibold flex items-center gap-2.5 backdrop-blur-md ${
               toastMessage.startsWith('✕')
                 ? 'bg-rose-500/90 text-white border-rose-600 shadow-rose-500/20'
-                : 'bg-emerald-600/90 text-white border-emerald-700 shadow-emerald-500/20'
+                : toastMessage.includes('removals were not applied')
+                  ? 'bg-amber-600/90 text-white border-amber-700 shadow-amber-500/20'
+                  : 'bg-emerald-600/90 text-white border-emerald-700 shadow-emerald-500/20'
             }`}
           >
             <span>{toastMessage}</span>

@@ -72,5 +72,6 @@ export interface CmsSaveResponse {
   loadedIds?: LoadedCollectionIds;
   version?: number;
   conflict?: boolean;
+  deletionsSkipped?: boolean;
 }
 

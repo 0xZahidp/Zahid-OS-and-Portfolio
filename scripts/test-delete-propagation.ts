@@ -237,6 +237,7 @@ class MockRelationalDb {
         version: this.version,
         content: sanitized,
         loadedIds: sanitized.loadedIds,
+        deletionsSkipped: !isClientLoaded ? true : undefined,
       },
     };
   }
@@ -423,6 +424,10 @@ async function runTests() {
   });
 
   assert(failedLoadRes.status === 200, 'Save with clientLoaded=false does not crash');
+  assert(
+    failedLoadRes.body.deletionsSkipped === true,
+    'Response returns deletionsSkipped: true when clientLoaded is false'
+  );
   assert(
     db.tables.languages.length === 3,
     'CRITICAL: No rows deleted when clientLoaded=false (prevented accidental data wipe)'

@@ -666,6 +666,7 @@ export async function POST(req: NextRequest) {
           ? 'Saved to local file. (Run SQL schema in Supabase to enable cloud tables)'
           : 'Content received.',
       version: sanitizedContent.version,
+      deletionsSkipped: !isClientLoaded ? true : undefined,
     };
 
     // Revalidate public pages and cache tags
