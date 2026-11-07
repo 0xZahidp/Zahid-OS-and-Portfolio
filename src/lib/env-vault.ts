@@ -27,9 +27,22 @@ const cache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 30_000;
 
 /**
+ * Evaluates whether a secret or environment variable is considered unset.
+ * Returns true if value is missing, empty, or a placeholder starting with "your-".
+ */
+export function isValueUnset(val?: string | null): boolean {
+  if (val === undefined || val === null) return true;
+  const trimmed = String(val).trim();
+  if (trimmed === '') return true;
+  if (trimmed.toLowerCase().startsWith('your-')) return true;
+  return false;
+}
+
+/**
  * Get an environment variable or secret dynamically.
  * Prioritizes Supabase `app_settings` table (NO Vercel redeployment required!).
  * Falls back to process.env if not found in Supabase.
+ * Empty values and placeholders starting with "your-" are treated as unset.
  */
 export async function getAppSecret(
   key: string,
@@ -53,10 +66,12 @@ export async function getAppSecret(
         .eq('key', key)
         .maybeSingle();
 
-      if (!error && data?.value !== undefined && data.value !== null && data.value !== '') {
+      if (!error && data?.value !== undefined && data.value !== null) {
         const decrypted = decryptVaultValue(data.value);
-        cache.set(key, { value: decrypted, timestamp: now });
-        return decrypted;
+        if (!isValueUnset(decrypted)) {
+          cache.set(key, { value: decrypted, timestamp: now });
+          return decrypted;
+        }
       }
     } catch {
       // Supabase unavailable or table pending
@@ -64,10 +79,16 @@ export async function getAppSecret(
   }
 
   // 2. Fallback to process.env
-  const fallbackVal = process.env[fallbackEnvName || key];
+  const rawFallback = process.env[fallbackEnvName || key];
+  const fallbackVal = isValueUnset(rawFallback) ? undefined : rawFallback?.trim();
   cache.set(key, { value: fallbackVal, timestamp: now });
   return fallbackVal;
 }
+
+/**
+ * Alias for getAppSecret
+ */
+export const getSecret = getAppSecret;
 
 /**
  * Save or update an environment variable / secret directly in Supabase `app_settings`.
@@ -194,12 +215,13 @@ export async function listAppSecrets(): Promise<EnvVaultItem[]> {
   // 1. Initialize with standard system keys and check process.env
   for (const item of commonSystemKeys) {
     const envVal = process.env[item.key];
+    const isUnset = isValueUnset(envVal);
     resultsMap.set(item.key, {
       key: item.key,
-      hasValue: Boolean(envVal),
+      hasValue: !isUnset,
       isSecret: item.isSecret,
-      source: envVal ? 'env_file' : 'none',
-      maskedValue: envVal ? maskSecretValue(envVal, item.isSecret) : undefined,
+      source: !isUnset ? 'env_file' : 'none',
+      maskedValue: !isUnset ? maskSecretValue(envVal, item.isSecret) : undefined,
       description: item.description,
     });
   }
@@ -213,16 +235,17 @@ export async function listAppSecrets(): Promise<EnvVaultItem[]> {
 
       if (!error && Array.isArray(data)) {
         for (const row of data) {
-          const val = row.value || '';
+          const rawVal = row.value || '';
           const isSecret = Boolean(row.is_secret);
-          const clearVal = isSecret ? decryptVaultValue(val) : val;
+          const clearVal = isSecret ? decryptVaultValue(rawVal) : rawVal;
+          const isUnset = isValueUnset(clearVal);
           resultsMap.set(row.key, {
             key: row.key,
-            hasValue: Boolean(val),
+            hasValue: !isUnset,
             isSecret,
             source: 'supabase',
-            maskedValue: maskSecretValue(clearVal, isSecret),
-            value: isSecret ? undefined : val, // Only send plaintext value if not a secret
+            maskedValue: !isUnset ? maskSecretValue(clearVal, isSecret) : undefined,
+            value: isSecret || isUnset ? undefined : clearVal, // Only send plaintext value if not a secret
             description: row.description || resultsMap.get(row.key)?.description || '',
             updatedAt: row.updated_at,
           });

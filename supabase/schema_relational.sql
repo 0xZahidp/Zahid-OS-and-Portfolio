@@ -1395,12 +1395,3 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO public.site_settings (key, value) VALUES ('works_settings', '{"heading":"Remote-first","description":"Comfortable working with teams in any time zone, from the Americas to Europe to Asia-Pacific.","chips":["Remote","Async-friendly","US hours","EU hours","Flexible schedule"]}'::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
 INSERT INTO public.site_settings (key, value) VALUES ('based_in_settings', '{"city":"Dhaka","country":"Bangladesh","timezone":"Asia/Dhaka","timeString":"8:29 PM","gmtOffset":"GMT+6"}'::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
 INSERT INTO public.site_settings (key, value) VALUES ('github_settings', '{"username":"0xZahidp","followersCount":6,"totalContributions":1378,"totalRepos":92}'::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
-
-INSERT INTO public.app_settings (key, value, is_secret, description)
-VALUES 
-  ('RESEND_API_KEY', 'your-resend-api-key', TRUE, 'Resend API key for inbox communications and contact form dispatches'),
-  ('CONTACT_RATE_LIMIT_SECRET', 'your-contact-rate-limit-secret', TRUE, 'HMAC secret token used for public rate limiting'),
-  ('CONTACT_TO_EMAIL', 'hello@zahidp.com', FALSE, 'Destination email for portfolio contact form inquiries'),
-  ('CONTACT_FROM_EMAIL', 'Md Zahid Hasan <hello@zahidp.com>', FALSE, 'Default sender identity for outbound emails'),
-  ('NEXT_PUBLIC_SITE_URL', 'https://zahidp.com', FALSE, 'Canonical domain for OpenGraph meta tags and SEO')
-ON CONFLICT (key) DO NOTHING;
