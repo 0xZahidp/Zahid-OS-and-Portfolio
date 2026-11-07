@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { supabaseServer } from '@/lib/supabase/server';
 import { defaultPortfolioContent } from '@/data/default-content';
 import { PortfolioContent, CmsSaveResponse } from '@/types/cms';
-import { requireAdmin } from '@/lib/auth/admin-auth';
+import { requireAdmin, isAdminRequest } from '@/lib/auth/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +33,16 @@ async function writeLocalContent(content: PortfolioContent): Promise<boolean> {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const isAdmin = await isAdminRequest(req);
+  const responseHeaders = new Headers();
+  if (isAdmin) {
+    responseHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    responseHeaders.set('Pragma', 'no-cache');
+  } else {
+    responseHeaders.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+  }
+
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
@@ -138,11 +148,14 @@ export async function GET() {
             updatedAt: profileRow.updated_at || new Date().toISOString(),
           };
 
-          return NextResponse.json({
-            success: true,
-            source: 'supabase_relational',
-            content: assembled,
-          });
+          return NextResponse.json(
+            {
+              success: true,
+              source: 'supabase_relational',
+              content: assembled,
+            },
+            { headers: responseHeaders }
+          );
         }
 
         // 2. Fallback to monolithic portfolio_content table if relational schema not yet migrated
@@ -160,11 +173,14 @@ export async function GET() {
               ? { ...legacyObj.githubSettings, token: undefined }
               : defaultPortfolioContent.githubSettings,
           };
-          return NextResponse.json({
-            success: true,
-            source: 'supabase_legacy',
-            content: sanitizedLegacy,
-          });
+          return NextResponse.json(
+            {
+              success: true,
+              source: 'supabase_legacy',
+              content: sanitizedLegacy,
+            },
+            { headers: responseHeaders }
+          );
         }
       } catch (err) {
         console.warn('Supabase query failed, falling back to local file:', err);
@@ -180,19 +196,25 @@ export async function GET() {
           ? { ...localContent.githubSettings, token: undefined }
           : defaultPortfolioContent.githubSettings,
       };
-      return NextResponse.json({
-        success: true,
-        source: 'local_file',
-        content: sanitizedLocal,
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          source: 'local_file',
+          content: sanitizedLocal,
+        },
+        { headers: responseHeaders }
+      );
     }
 
     // 4. Fallback to Default Content
-    return NextResponse.json({
-      success: true,
-      source: 'default',
-      content: defaultPortfolioContent,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        source: 'default',
+        content: defaultPortfolioContent,
+      },
+      { headers: responseHeaders }
+    );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
@@ -202,7 +224,7 @@ export async function GET() {
         error: message,
         content: defaultPortfolioContent,
       },
-      { status: 500 }
+      { status: 500, headers: responseHeaders }
     );
   }
 }
@@ -537,6 +559,16 @@ export async function POST(req: NextRequest) {
           ? 'Saved to local file. (Run SQL schema in Supabase to enable cloud tables)'
           : 'Content received.',
     };
+
+    // Revalidate public pages and cache tags
+    try {
+      revalidatePath('/');
+      revalidatePath('/admin');
+      revalidatePath('/focus');
+      revalidateTag('portfolio_content');
+    } catch (revalErr) {
+      console.warn('Next.js cache revalidation failed:', revalErr);
+    }
 
     return NextResponse.json({ ...response, supabaseStatus, content: sanitizedContent });
   } catch (error: unknown) {
