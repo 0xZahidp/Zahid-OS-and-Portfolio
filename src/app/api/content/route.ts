@@ -95,6 +95,7 @@ export async function GET(req: NextRequest) {
                 'github_settings',
                 'suggested_people_rich',
                 'library_data',
+                'content_version',
               ]),
           ]);
 
@@ -103,6 +104,8 @@ export async function GET(req: NextRequest) {
           const rawGithubSetting = setRes.data?.find((s) => s.key === 'github_settings')?.value as Record<string, unknown> | undefined;
           const richPeopleSetting = setRes.data?.find((s) => s.key === 'suggested_people_rich')?.value;
           const librarySetting = setRes.data?.find((s) => s.key === 'library_data')?.value;
+          const rawVersion = setRes.data?.find((s) => s.key === 'content_version')?.value;
+          const contentVersion = typeof rawVersion === 'number' ? rawVersion : 0;
 
           // Never expose tokens or private fields
           const githubSetting = rawGithubSetting
@@ -156,6 +159,7 @@ export async function GET(req: NextRequest) {
             githubSettings: githubSetting as unknown as typeof defaultPortfolioContent.githubSettings,
             libraryData: librarySetting || defaultPortfolioContent.libraryData,
             updatedAt: profileRow.updated_at || new Date().toISOString(),
+            version: contentVersion,
             loadedIds,
           };
 
@@ -164,6 +168,7 @@ export async function GET(req: NextRequest) {
               success: true,
               source: 'supabase_relational',
               content: assembled,
+              version: contentVersion,
               loadedIds,
             },
             { headers: responseHeaders }
@@ -179,8 +184,10 @@ export async function GET(req: NextRequest) {
 
         if (!legacyErr && legacyData?.data) {
           const legacyObj = legacyData.data as PortfolioContent;
+          const legacyVersion = typeof legacyObj.version === 'number' ? legacyObj.version : 0;
           const sanitizedLegacy: PortfolioContent = {
             ...legacyObj,
+            version: legacyVersion,
             githubSettings: legacyObj.githubSettings
               ? { ...legacyObj.githubSettings, token: undefined }
               : defaultPortfolioContent.githubSettings,
@@ -190,6 +197,7 @@ export async function GET(req: NextRequest) {
               success: true,
               source: 'supabase_legacy',
               content: sanitizedLegacy,
+              version: legacyVersion,
             },
             { headers: responseHeaders }
           );
@@ -202,8 +210,10 @@ export async function GET(req: NextRequest) {
     // 3. Try Local File
     const localContent = await readLocalContent();
     if (localContent) {
+      const localVersion = typeof localContent.version === 'number' ? localContent.version : 0;
       const sanitizedLocal: PortfolioContent = {
         ...localContent,
+        version: localVersion,
         githubSettings: localContent.githubSettings
           ? { ...localContent.githubSettings, token: undefined }
           : defaultPortfolioContent.githubSettings,
@@ -213,6 +223,7 @@ export async function GET(req: NextRequest) {
           success: true,
           source: 'local_file',
           content: sanitizedLocal,
+          version: localVersion,
         },
         { headers: responseHeaders }
       );
@@ -223,7 +234,8 @@ export async function GET(req: NextRequest) {
       {
         success: true,
         source: 'default',
-        content: defaultPortfolioContent,
+        content: { ...defaultPortfolioContent, version: 0 },
+        version: 0,
       },
       { headers: responseHeaders }
     );
@@ -281,12 +293,19 @@ export async function POST(req: NextRequest) {
     let supabaseStatus = 'not_configured';
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
+    const expectedVersion =
+      typeof body.expectedVersion === 'number'
+        ? body.expectedVersion
+        : typeof body.version === 'number'
+        ? body.version
+        : undefined;
+
     if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
       try {
         const supabase = supabaseServer();
         const p = sanitizedContent.profile;
 
-        // Fetch existing IDs for all list tables to track deletions
+        // Fetch existing IDs for all list tables and current content_version
         const [
           existingBioRes,
           existingExpRes,
@@ -295,6 +314,7 @@ export async function POST(req: NextRequest) {
           existingLangRes,
           existingSocRes,
           existingPeepRes,
+          versionRes,
         ] = await Promise.all([
           supabase.from('bio_paragraphs').select('id, sort_order'),
           supabase.from('experiences').select('id'),
@@ -303,7 +323,31 @@ export async function POST(req: NextRequest) {
           supabase.from('languages').select('id, name'),
           supabase.from('social_links').select('id'),
           supabase.from('suggested_people').select('id'),
+          supabase.from('site_settings').select('value').eq('key', 'content_version').maybeSingle(),
         ]);
+
+        let currentVersion = 0;
+        const vRow = versionRes?.data;
+        if (vRow?.value !== undefined && typeof vRow.value === 'number') {
+          currentVersion = vRow.value;
+        } else if (vRow?.value && typeof (vRow.value as { version?: unknown })?.version === 'number') {
+          currentVersion = (vRow.value as { version: number }).version;
+        }
+
+        if (expectedVersion !== undefined && expectedVersion !== currentVersion) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'This data changed elsewhere, reload before saving',
+              conflict: true,
+              currentVersion,
+            },
+            { status: 409 }
+          );
+        }
+
+        const nextVersion = currentVersion + 1;
+        sanitizedContent.version = nextVersion;
 
         const existingBioRows = existingBioRes.data || [];
         const existingBioIds = existingBioRows.map((b) => b.id);
@@ -517,6 +561,7 @@ export async function POST(req: NextRequest) {
           { key: 'github_settings', value: sanitizedContent.githubSettings, updated_at: new Date().toISOString() },
           { key: 'suggested_people_rich', value: sanitizedContent.suggestedPeople, updated_at: new Date().toISOString() },
           { key: 'library_data', value: sanitizedContent.libraryData, updated_at: new Date().toISOString() },
+          { key: 'content_version', value: sanitizedContent.version, updated_at: new Date().toISOString() },
         ];
         const setPromise = supabase.from('site_settings').upsert(settingsRows);
 
@@ -588,6 +633,21 @@ export async function POST(req: NextRequest) {
         const errMessage = err instanceof Error ? err.message : 'Supabase sync failed';
         supabaseStatus = `error: ${errMessage}`;
       }
+    } else {
+      const local = await readLocalContent();
+      const currentVersion = typeof local?.version === 'number' ? local.version : 0;
+      if (expectedVersion !== undefined && expectedVersion !== currentVersion) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'This data changed elsewhere, reload before saving',
+            conflict: true,
+            currentVersion,
+          },
+          { status: 409 }
+        );
+      }
+      sanitizedContent.version = currentVersion + 1;
     }
 
     // Write to local file (ensures zero downtime & offline dev fallback)
@@ -605,6 +665,7 @@ export async function POST(req: NextRequest) {
         : destinations.includes('local_file')
           ? 'Saved to local file. (Run SQL schema in Supabase to enable cloud tables)'
           : 'Content received.',
+      version: sanitizedContent.version,
     };
 
     // Revalidate public pages and cache tags
@@ -622,6 +683,7 @@ export async function POST(req: NextRequest) {
       supabaseStatus,
       content: sanitizedContent,
       loadedIds: sanitizedContent.loadedIds,
+      version: sanitizedContent.version,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to save content';

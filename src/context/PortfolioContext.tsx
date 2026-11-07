@@ -14,6 +14,14 @@ import {
 import { LibraryContent } from '@/types/library';
 import { defaultPortfolioContent } from '@/data/default-content';
 
+export interface SaveResult {
+  success: boolean;
+  conflict?: boolean;
+  deletionsSkipped?: boolean;
+  error?: string;
+  version?: number;
+}
+
 interface PortfolioContextType {
   content: PortfolioContent;
   isDirty: boolean;
@@ -33,7 +41,8 @@ interface PortfolioContextType {
   updateSocialLinks: (socials: SocialLink[]) => void;
   updateSuggestedPeople: (people: FollowerRecommendation[]) => void;
   updateLibraryData: (library: LibraryContent) => void;
-  saveContent: (confirmDelete?: boolean) => Promise<boolean>;
+  saveContent: (confirmDelete?: boolean) => Promise<SaveResult>;
+  reloadContent: () => Promise<void>;
   resetToDefault: () => void;
   exportJson: () => void;
   importJson: (jsonString: string) => boolean;
@@ -51,29 +60,27 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Fetch or reload content from API
+  const fetchContent = useCallback(async () => {
+    try {
+      const res = await fetch('/api/content');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.content) {
+        setContent(data.content);
+        setLoadedIds(data.loadedIds || data.content.loadedIds);
+        setHasLoaded(true);
+        setIsDirty(false);
+      }
+    } catch (err) {
+      console.error('Failed to load portfolio content:', err);
+    }
+  }, []);
+
   // Fetch initial content from API on mount
   useEffect(() => {
-    let isMounted = true;
-    const fetchContent = async () => {
-      try {
-        const res = await fetch('/api/content');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (isMounted && data.content) {
-          setContent(data.content);
-          setLoadedIds(data.loadedIds || data.content.loadedIds);
-          setHasLoaded(true);
-        }
-      } catch (err) {
-        console.error('Failed to load portfolio content:', err);
-      }
-    };
-
     fetchContent();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  }, [fetchContent]);
 
   const updateProfile = useCallback((profileUpdates: Partial<Profile>) => {
     setContent((prev) => ({
@@ -159,7 +166,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setSaveStatus('idle');
   }, []);
 
-  const saveContent = useCallback(async (confirmDelete?: boolean): Promise<boolean> => {
+  const saveContent = useCallback(async (confirmDelete?: boolean): Promise<SaveResult> => {
     setIsSaving(true);
     setSaveStatus('saving');
     setErrorMessage(null);
@@ -170,6 +177,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         clientLoaded: hasLoaded,
         loadedIds,
         confirmDelete: Boolean(confirmDelete),
+        version: content.version ?? 0,
+        expectedVersion: content.version ?? 0,
       };
 
       const res = await fetch('/api/content', {
@@ -181,6 +190,17 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const data = await res.json();
 
       if (!res.ok) {
+        if (res.status === 409 || data.conflict) {
+          const conflictMsg = data.error || 'This data changed elsewhere, reload before saving';
+          await fetchContent();
+          setSaveStatus('error');
+          setErrorMessage(conflictMsg);
+          return {
+            success: false,
+            conflict: true,
+            error: conflictMsg,
+          };
+        }
         if (data.requiresConfirmation && !confirmDelete && typeof window !== 'undefined') {
           const userConfirmed = window.confirm(
             `${data.error || 'Mass deletion guard: deleting more than 50% of a collection requires confirmation.'}\n\nDo you want to proceed with deleting these items?`
@@ -205,7 +225,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setSaveStatus('saved');
         setLastSaved(new Date().toLocaleTimeString());
         setTimeout(() => setSaveStatus('idle'), 4000);
-        return true;
+        return {
+          success: true,
+          version: data.version ?? data.content?.version,
+          deletionsSkipped: Boolean(data.deletionsSkipped),
+        };
       } else {
         throw new Error(data.error || 'Failed to save');
       }
@@ -213,11 +237,14 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const msg = err instanceof Error ? err.message : 'Error saving content';
       setSaveStatus('error');
       setErrorMessage(msg);
-      return false;
+      return {
+        success: false,
+        error: msg,
+      };
     } finally {
       setIsSaving(false);
     }
-  }, [content, hasLoaded, loadedIds]);
+  }, [content, hasLoaded, loadedIds, fetchContent]);
 
   const resetToDefault = useCallback(() => {
     setContent(defaultPortfolioContent);
@@ -273,6 +300,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updateSuggestedPeople,
         updateLibraryData,
         saveContent,
+        reloadContent: fetchContent,
         resetToDefault,
         exportJson,
         importJson,

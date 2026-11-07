@@ -44,6 +44,8 @@ class MockRelationalDb {
     portfolio_content: [],
   };
 
+  version: number = 0;
+
   reset() {
     this.tables.languages = [];
     this.tables.skills = [];
@@ -54,6 +56,7 @@ class MockRelationalDb {
     this.tables.bio_paragraphs = [];
     this.tables.site_settings = [];
     this.tables.portfolio_content = [];
+    this.version = 0;
   }
 
   // Exact simulation of GET /api/content logic
@@ -94,6 +97,7 @@ class MockRelationalDb {
       githubSettings: defaultPortfolioContent.githubSettings,
       libraryData: defaultPortfolioContent.libraryData,
       updatedAt: profileRow.updated_at,
+      version: this.version,
       loadedIds: {
         languages: langRows.map((l) => l.id),
         skills: skillRows.map((s) => s.id),
@@ -110,6 +114,25 @@ class MockRelationalDb {
   async saveContent(payload: PortfolioContent & { clientLoaded?: boolean; confirmDelete?: boolean }) {
     const isClientLoaded = payload.clientLoaded === true;
     const isConfirmDelete = payload.confirmDelete === true;
+
+    const expectedVersion =
+      typeof payload.expectedVersion === 'number'
+        ? payload.expectedVersion
+        : typeof payload.version === 'number'
+        ? payload.version
+        : undefined;
+
+    if (expectedVersion !== undefined && expectedVersion !== this.version) {
+      return {
+        status: 409,
+        body: {
+          success: false,
+          conflict: true,
+          error: 'This data changed elsewhere, reload before saving',
+          currentVersion: this.version,
+        },
+      };
+    }
 
     // Existing rows in table
     const existingLangs = [...this.tables.languages];
@@ -201,6 +224,9 @@ class MockRelationalDb {
       },
     };
 
+    this.version += 1;
+    sanitized.version = this.version;
+
     // Mirror to legacy table
     this.tables.portfolio_content = [{ id: 'current', data: sanitized }];
 
@@ -208,6 +234,7 @@ class MockRelationalDb {
       status: 200,
       body: {
         success: true,
+        version: this.version,
         content: sanitized,
         loadedIds: sanitized.loadedIds,
       },
@@ -378,6 +405,7 @@ async function runTests() {
   // ---------------------------------------------------------------------------
   console.log('\n--- Suite 2: Client Load Protection (Failed Load Safety) ---');
 
+  db.reset();
   // Seed with 3 languages
   await db.saveContent({
     ...baseContent,
@@ -547,6 +575,8 @@ async function runTests() {
     ...clientALoaded,
     languages: clientALoaded.languages.filter((l) => l.id === 'lang-en'),
     loadedIds: clientALoadedIds,
+    expectedVersion: undefined,
+    version: undefined,
     clientLoaded: true,
   });
 
@@ -569,6 +599,89 @@ async function runTests() {
     finalContent.languages.length === 2,
     'Database correctly has 2 languages: English and German'
   );
+
+  // ---------------------------------------------------------------------------
+  // SUITE 6: Optimistic Concurrency & 409 Conflict Protection
+  // ---------------------------------------------------------------------------
+  console.log('\n--- Suite 6: Optimistic Concurrency & 409 Conflict Protection ---');
+
+  db.reset();
+  // Initialize with initial data at version 0
+  await db.saveContent({
+    ...baseContent,
+    languages: [{ id: 'lang-en', name: 'English', proficiency: 'Native', rating: 5, hasVoice: true }],
+    clientLoaded: true,
+  });
+
+  const state0 = await db.getContent();
+  assert(state0.version === 1, 'Initial save set version to 1');
+
+  // Client A and Client B both load version 1 concurrently
+  const clientAView = await db.getContent();
+  const clientBView = await db.getContent();
+  assert(clientAView.version === 1 && clientBView.version === 1, 'Both clients loaded version 1');
+
+  // Client A modifies data and saves with expectedVersion 1
+  const clientASave = await db.saveContent({
+    ...clientAView,
+    languages: [
+      ...clientAView.languages,
+      { id: 'lang-fr', name: 'French', proficiency: 'Fluent', rating: 4, hasVoice: true },
+    ],
+    expectedVersion: clientAView.version,
+    clientLoaded: true,
+  });
+  assert(clientASave.status === 200, 'Client A save succeeded with status 200');
+  assert(clientASave.body.version === 2, 'Version incremented to 2');
+
+  // Client B attempts to save with stale expectedVersion 1
+  const clientBSave = await db.saveContent({
+    ...clientBView,
+    languages: [
+      ...clientBView.languages,
+      { id: 'lang-de', name: 'German', proficiency: 'Basic', rating: 2, hasVoice: true },
+    ],
+    expectedVersion: clientBView.version, // stale: 1, current is 2
+    clientLoaded: true,
+  });
+  assert(clientBSave.status === 409, 'Client B stale save rejected with 409 Conflict');
+  assert(
+    clientBSave.body.error === 'This data changed elsewhere, reload before saving',
+    'Error message matches "This data changed elsewhere, reload before saving"'
+  );
+  assert(clientBSave.body.conflict === true, 'Conflict flag is true');
+
+  // Verify database was NOT modified by Client B's rejected save
+  const dbAfterConflict = await db.getContent();
+  assert(
+    !dbAfterConflict.languages.some((l) => l.name === 'German'),
+    'Client B modifications were NOT applied (overwriting prevented)'
+  );
+  assert(
+    dbAfterConflict.languages.some((l) => l.name === 'French'),
+    'Client A modifications preserved'
+  );
+
+  // Client B reloads data to receive version 2
+  const clientBReloaded = await db.getContent();
+  assert(clientBReloaded.version === 2, 'Client B reloaded fresh version 2');
+  assert(clientBReloaded.languages.length === 2, 'Client B sees Client A French change');
+
+  // Client B now applies change and saves with expectedVersion 2
+  const clientBRetry = await db.saveContent({
+    ...clientBReloaded,
+    languages: [
+      ...clientBReloaded.languages,
+      { id: 'lang-de', name: 'German', proficiency: 'Basic', rating: 2, hasVoice: true },
+    ],
+    expectedVersion: clientBReloaded.version,
+    clientLoaded: true,
+  });
+  assert(clientBRetry.status === 200, 'Client B retry succeeded after reload with status 200');
+  assert(clientBRetry.body.version === 3, 'Version incremented to 3');
+
+  const finalDbState = await db.getContent();
+  assert(finalDbState.languages.length === 3, 'Final state contains all 3 languages safely merged');
 
   // ---------------------------------------------------------------------------
   // SUMMARY

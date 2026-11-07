@@ -58,6 +58,8 @@ export interface PortfolioContent {
   clientLoaded?: boolean;
   confirmDelete?: boolean;
   loadedIds?: LoadedCollectionIds;
+  version?: number;
+  expectedVersion?: number;
 }
 
 export interface CmsSaveResponse {
@@ -68,5 +70,7 @@ export interface CmsSaveResponse {
   error?: string;
   content?: PortfolioContent;
   loadedIds?: LoadedCollectionIds;
+  version?: number;
+  conflict?: boolean;
 }
 

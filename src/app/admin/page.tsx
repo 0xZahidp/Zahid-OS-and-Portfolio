@@ -154,12 +154,20 @@ function AdminDashboardInner() {
   };
 
   const handleSave = useCallback(async () => {
-    const success = await saveContent();
-    if (success) {
-      showToast('✓ All changes saved successfully to disk and Supabase!');
+    const res = await saveContent();
+    if (res.success) {
+      if (res.deletionsSkipped) {
+        showToast('Saved, but removals were not applied. Reload and try again');
+      } else {
+        showToast('✓ All changes saved successfully to disk and Supabase!');
+      }
       checkSupabase();
     } else {
-      showToast(`✕ Failed to save: ${errorMessage || 'Check server logs or console.'}`);
+      if (res.conflict) {
+        showToast('✕ This data changed elsewhere, reload before saving');
+      } else {
+        showToast(`✕ Failed to save: ${res.error || errorMessage || 'Check server logs or console.'}`);
+      }
     }
   }, [saveContent, errorMessage]);
 
