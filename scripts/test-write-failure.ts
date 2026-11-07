@@ -1,3 +1,5 @@
+export {};
+
 // Set environment variables BEFORE any imports
 process.env.VERCEL = '1';
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://127.0.0.1:9';
