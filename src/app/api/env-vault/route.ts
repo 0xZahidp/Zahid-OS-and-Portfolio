@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listAppSecrets, setAppSecret, deleteAppSecret } from '@/lib/env-vault';
+import { isVaultKeyConfigured, getVaultWarning } from '@/lib/crypto/vault';
 import { requireAdmin } from '@/lib/auth/admin-auth';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +11,14 @@ export async function GET(req: NextRequest) {
 
   try {
     const items = await listAppSecrets();
-    return NextResponse.json({ success: true, items });
+    const vaultConfigured = isVaultKeyConfigured();
+    const vaultWarning = getVaultWarning();
+    return NextResponse.json({
+      success: true,
+      items,
+      vaultConfigured,
+      vaultWarning,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to list secrets';
     return NextResponse.json({ success: false, error: message }, { status: 500 });

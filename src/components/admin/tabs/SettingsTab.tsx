@@ -117,6 +117,7 @@ export const SettingsTab: React.FC = () => {
 
   // Env Vault State
   const [envItems, setEnvItems] = useState<EnvVaultItem[]>([]);
+  const [vaultWarning, setVaultWarning] = useState<string | null>(null);
   const [isLoadingEnv, setIsLoadingEnv] = useState(false);
   const [envKey, setEnvKey] = useState('');
   const [envValue, setEnvValue] = useState('');
@@ -137,6 +138,7 @@ export const SettingsTab: React.FC = () => {
         if (data.items) {
           setEnvItems(data.items);
         }
+        setVaultWarning(data.vaultWarning || null);
       }
     } catch {
       // ignore
@@ -1450,6 +1452,17 @@ export const SettingsTab: React.FC = () => {
                 <span>Refresh</span>
               </button>
             </div>
+
+            {/* Vault Storage Warning Banner */}
+            {vaultWarning && (
+              <div className="p-3.5 rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs flex items-start gap-2.5">
+                <AlertTriangle className="size-4 shrink-0 text-amber-500 mt-0.5" />
+                <div className="space-y-0.5">
+                  <p className="font-semibold">Encryption At Rest Warning</p>
+                  <p className="text-amber-600/90 dark:text-amber-400/90">{vaultWarning}</p>
+                </div>
+              </div>
+            )}
 
             {/* Quick Presets */}
             <div className="space-y-2 pt-2 border-t border-line">
