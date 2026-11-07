@@ -19,14 +19,14 @@ WHERE schemaname = 'public'
   AND NOT rowsecurity;
 
 -- ------------------------------------------------------------------------------
--- CHECK 1B: Verify expected public table count (Expectation: exactly 25 tables)
+-- CHECK 1B: Verify expected public table count (Expectation: exactly 22 tables)
 -- ------------------------------------------------------------------------------
 SELECT 
     COUNT(*) AS total_public_tables,
-    25 AS expected_tables,
+    22 AS expected_tables,
     CASE 
-        WHEN COUNT(*) = 25 THEN 'PASS (Expected 25 tables present)'
-        ELSE 'FAIL (Expected 25 tables, got ' || COUNT(*) || ')'
+        WHEN COUNT(*) = 22 THEN 'PASS (Expected 22 tables present)'
+        ELSE 'FAIL (Expected 22 tables, got ' || COUNT(*) || ')'
     END AS status
 FROM pg_tables
 WHERE schemaname = 'public';
@@ -135,3 +135,45 @@ SELECT
 FROM checks
 WHERE has_privilege = true
 ORDER BY tablename, role, privilege;
+
+-- ------------------------------------------------------------------------------
+-- CHECK 6: Function-Access Check (Executable by anon or authenticated)
+-- Expectation: 0 rows returned (no public routines executable by unprivileged roles)
+-- ------------------------------------------------------------------------------
+SELECT 
+    n.nspname AS schema_name,
+    p.proname AS function_name,
+    pg_get_function_identity_arguments(p.oid) AS arguments,
+    r.rolname AS executable_by_role,
+    'VULNERABLE: Function executable by unprivileged role' AS security_issue
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+CROSS JOIN (VALUES ('anon'), ('authenticated')) AS r(rolname)
+WHERE n.nspname = 'public'
+  AND has_function_privilege(r.rolname, p.oid, 'EXECUTE')
+ORDER BY function_name, executable_by_role;
+
+-- ------------------------------------------------------------------------------
+-- CHECK 7: Service Role Sanity Check (service_role must have SELECT on every public table)
+-- Expectation: 0 rows returned (zero tables missing SELECT permission)
+-- ------------------------------------------------------------------------------
+SELECT 
+    t.tablename,
+    has_table_privilege('service_role', 'public.' || quote_ident(t.tablename), 'SELECT') AS has_select,
+    'FAIL: service_role lacks SELECT privilege on public table' AS security_issue
+FROM pg_tables t
+WHERE t.schemaname = 'public'
+  AND NOT has_table_privilege('service_role', 'public.' || quote_ident(t.tablename), 'SELECT')
+ORDER BY t.tablename;
+
+-- 7B. Service role coverage summary
+SELECT 
+    COUNT(*) AS total_public_tables,
+    COUNT(*) FILTER (WHERE has_table_privilege('service_role', 'public.' || quote_ident(t.tablename), 'SELECT')) AS tables_with_select,
+    CASE 
+        WHEN COUNT(*) = COUNT(*) FILTER (WHERE has_table_privilege('service_role', 'public.' || quote_ident(t.tablename), 'SELECT'))
+        THEN 'PASS (service_role has SELECT on 100% of public tables)'
+        ELSE 'FAIL (service_role is missing SELECT on ' || (COUNT(*) - COUNT(*) FILTER (WHERE has_table_privilege('service_role', 'public.' || quote_ident(t.tablename), 'SELECT'))) || ' table(s))'
+    END AS status
+FROM pg_tables t
+WHERE t.schemaname = 'public';
