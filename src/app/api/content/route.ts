@@ -671,9 +671,7 @@ export async function POST(req: NextRequest) {
 
     // Revalidate public pages and cache tags
     try {
-      revalidatePath('/');
-      revalidatePath('/admin');
-      revalidatePath('/focus');
+      revalidatePath('/', 'layout');
       revalidateTag('portfolio_content');
     } catch (revalErr) {
       console.warn('Next.js cache revalidation failed:', revalErr);
