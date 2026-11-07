@@ -124,6 +124,7 @@ export interface HealthData {
   vaccinations: Vaccination[];
   reminders: Reminder[];
   lastBackupDate?: string;
+  versions?: Record<HealthCollectionKey, number>;
 }
 
 export type HealthCollectionKey =

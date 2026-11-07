@@ -47,6 +47,7 @@ const DEFAULT_PROFILE: HealthProfile = {
 
 interface CacheEntry {
   data: HealthCollections[HealthCollectionKey];
+  version: number;
   timestamp: number;
 }
 
@@ -76,14 +77,14 @@ export function clearHealthCache(collection?: HealthCollectionKey): void {
 }
 
 /**
- * Fetch a single health collection from Supabase site_settings with local JSON fallback
+ * Fetch a single health collection with version from Supabase site_settings with local JSON fallback
  */
-export async function getHealthCollection<K extends HealthCollectionKey>(
+export async function getHealthCollectionWithVersion<K extends HealthCollectionKey>(
   collection: K
-): Promise<HealthCollections[K]> {
+): Promise<{ data: HealthCollections[K]; version: number }> {
   const cached = memoryCache[collection];
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-    return cached.data as HealthCollections[K];
+    return { data: cached.data as HealthCollections[K], version: cached.version };
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -106,8 +107,15 @@ export async function getHealthCollection<K extends HealthCollectionKey>(
       }
 
       let value: HealthCollections[K];
+      let version = 0;
       if (data && data.value) {
         let rawVal = data.value;
+        if (typeof rawVal === 'object' && rawVal !== null && 'version' in rawVal) {
+          version =
+            typeof (rawVal as { version?: unknown }).version === 'number'
+              ? (rawVal as { version: number }).version
+              : 0;
+        }
         if (typeof rawVal === 'object' && rawVal !== null && 'data' in rawVal && !Array.isArray(rawVal)) {
           rawVal = (rawVal as { data: unknown }).data;
         }
@@ -122,15 +130,16 @@ export async function getHealthCollection<K extends HealthCollectionKey>(
       } else {
         // Key does not exist in DB yet
         value = (collection === 'profile' ? DEFAULT_PROFILE : []) as HealthCollections[K];
+        version = 0;
       }
 
-      memoryCache[collection] = { data: value, timestamp: Date.now() };
+      memoryCache[collection] = { data: value, version, timestamp: Date.now() };
 
       if (!process.env.VERCEL) {
-        fs.writeFile(FILE_PATHS[collection], JSON.stringify(value, null, 2), 'utf-8').catch(() => {});
+        fs.writeFile(FILE_PATHS[collection], JSON.stringify({ version, data: value }, null, 2), 'utf-8').catch(() => {});
       }
 
-      return value;
+      return { data: value, version };
     } catch (err) {
       if (process.env.VERCEL || supabaseUrl) {
         throw err;
@@ -141,7 +150,12 @@ export async function getHealthCollection<K extends HealthCollectionKey>(
   // 2. Fallback: Local gitignored JSON file (offline local dev without Supabase only)
   try {
     const raw = await fs.readFile(FILE_PATHS[collection], 'utf-8');
-    const parsed = JSON.parse(raw);
+    let parsed = JSON.parse(raw);
+    let version = 0;
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && 'data' in parsed) {
+      version = typeof parsed.version === 'number' ? parsed.version : 0;
+      parsed = parsed.data;
+    }
     let value = parsed;
     if (collection === 'profile') {
       value = { ...DEFAULT_PROFILE, ...(parsed as HealthProfile) };
@@ -149,14 +163,24 @@ export async function getHealthCollection<K extends HealthCollectionKey>(
       value = [];
     }
 
-    memoryCache[collection] = { data: value, timestamp: Date.now() };
-    return value as HealthCollections[K];
+    memoryCache[collection] = { data: value, version, timestamp: Date.now() };
+    return { data: value as HealthCollections[K], version };
   } catch {
     // Return empty default
     const defaultValue = (collection === 'profile' ? DEFAULT_PROFILE : []) as HealthCollections[K];
-    memoryCache[collection] = { data: defaultValue, timestamp: Date.now() };
-    return defaultValue;
+    memoryCache[collection] = { data: defaultValue, version: 0, timestamp: Date.now() };
+    return { data: defaultValue, version: 0 };
   }
+}
+
+/**
+ * Fetch a single health collection from Supabase site_settings with local JSON fallback
+ */
+export async function getHealthCollection<K extends HealthCollectionKey>(
+  collection: K
+): Promise<HealthCollections[K]> {
+  const res = await getHealthCollectionWithVersion(collection);
+  return res.data;
 }
 
 /**
@@ -164,15 +188,61 @@ export async function getHealthCollection<K extends HealthCollectionKey>(
  */
 export async function saveHealthCollection<K extends HealthCollectionKey>(
   collection: K,
-  data: HealthCollections[K]
-): Promise<boolean> {
+  data: HealthCollections[K],
+  expectedVersion?: number
+): Promise<{ success: boolean; version: number }> {
+  let currentVersion = 0;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const settingKey = SITE_SETTING_KEYS[collection];
+
+  // Retrieve current version to check optimistic concurrency
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    try {
+      const supabase = supabaseServer();
+      const { data: row } = await withTimeout(
+        supabase
+          .from('site_settings')
+          .select('value')
+          .eq('key', settingKey)
+          .maybeSingle(),
+        3000
+      );
+      if (row?.value && typeof row.value === 'object' && 'version' in row.value) {
+        currentVersion =
+          typeof (row.value as { version?: unknown }).version === 'number'
+            ? (row.value as { version: number }).version
+            : 0;
+      }
+    } catch {
+      if (memoryCache[collection]) {
+        currentVersion = memoryCache[collection]?.version ?? 0;
+      }
+    }
+  } else if (memoryCache[collection]) {
+    currentVersion = memoryCache[collection]?.version ?? 0;
+  }
+
+  // Concurrency check: reject if stale
+  if (expectedVersion !== undefined && expectedVersion !== currentVersion) {
+    const err = new Error('This data changed elsewhere, reload before saving');
+    (err as unknown as { status: number; statusCode: number }).status = 409;
+    (err as unknown as { status: number; statusCode: number }).statusCode = 409;
+    throw err;
+  }
+
+  const newVersion = currentVersion + 1;
+  const payload = {
+    version: newVersion,
+    data,
+  };
+
   let supabaseSaved = false;
   let fileSaved = false;
 
   // 1. Local JSON write (gitignored file path, skip on Vercel)
   if (!process.env.VERCEL) {
     try {
-      await fs.writeFile(FILE_PATHS[collection], JSON.stringify(data, null, 2), 'utf-8');
+      await fs.writeFile(FILE_PATHS[collection], JSON.stringify(payload, null, 2), 'utf-8');
       fileSaved = true;
     } catch {
       // EROFS in read-only serverless environment is normal
@@ -180,14 +250,13 @@ export async function saveHealthCollection<K extends HealthCollectionKey>(
   }
 
   // 2. Supabase site_settings
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
       const { error } = await supabase.from('site_settings').upsert(
         {
-          key: SITE_SETTING_KEYS[collection],
-          value: data,
+          key: settingKey,
+          value: payload,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'key' }
@@ -205,35 +274,44 @@ export async function saveHealthCollection<K extends HealthCollectionKey>(
     throw new Error(`Failed to save health collection: ${collection}`);
   }
 
-  memoryCache[collection] = { data, timestamp: Date.now() };
+  memoryCache[collection] = { data, version: newVersion, timestamp: Date.now() };
 
-  return true;
+  return { success: true, version: newVersion };
 }
 
 /**
  * Retrieve the full aggregated Health data object
  */
 export async function getHealthData(): Promise<HealthData> {
-  const [profile, medications, documents, visits, vitals, vaccinations, reminders] =
+  const [profRes, medRes, docRes, visRes, vitRes, vacRes, remRes] =
     await Promise.all([
-      getHealthCollection('profile'),
-      getHealthCollection('medications'),
-      getHealthCollection('documents'),
-      getHealthCollection('visits'),
-      getHealthCollection('vitals'),
-      getHealthCollection('vaccinations'),
-      getHealthCollection('reminders'),
+      getHealthCollectionWithVersion('profile'),
+      getHealthCollectionWithVersion('medications'),
+      getHealthCollectionWithVersion('documents'),
+      getHealthCollectionWithVersion('visits'),
+      getHealthCollectionWithVersion('vitals'),
+      getHealthCollectionWithVersion('vaccinations'),
+      getHealthCollectionWithVersion('reminders'),
     ]);
 
   return {
-    profile,
-    medications,
-    documents,
-    visits,
-    vitals,
-    vaccinations,
-    reminders,
+    profile: profRes.data,
+    medications: medRes.data,
+    documents: docRes.data,
+    visits: visRes.data,
+    vitals: vitRes.data,
+    vaccinations: vacRes.data,
+    reminders: remRes.data,
     lastBackupDate: new Date().toISOString(),
+    versions: {
+      profile: profRes.version,
+      medications: medRes.version,
+      documents: docRes.version,
+      visits: visRes.version,
+      vitals: vitRes.version,
+      vaccinations: vacRes.version,
+      reminders: remRes.version,
+    },
   };
 }
 

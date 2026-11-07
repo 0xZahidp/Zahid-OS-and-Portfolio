@@ -31,6 +31,7 @@ import {
   Vaccination,
   Reminder,
   HealthStorageUsage,
+  HealthCollectionKey,
 } from '@/types/health';
 import { EmergencyCard } from '@/components/admin/health/EmergencyCard';
 import { MedicationsSubTab } from '@/components/admin/health/MedicationsSubTab';
@@ -90,6 +91,16 @@ export const HealthTab: React.FC = () => {
     limitBytes: 1024 * 1024 * 1024,
   });
 
+  const [collectionVersions, setCollectionVersions] = useState<Record<HealthCollectionKey, number>>({
+    profile: 0,
+    medications: 0,
+    documents: 0,
+    visits: 0,
+    vitals: 0,
+    vaccinations: 0,
+    reminders: 0,
+  });
+
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
@@ -140,6 +151,11 @@ export const HealthTab: React.FC = () => {
       const json = await resData.json();
       if (json.data) {
         setHealthData(json.data);
+        if (json.data.versions) {
+          setCollectionVersions(json.data.versions);
+        } else if (json.versions) {
+          setCollectionVersions(json.versions);
+        }
       }
       setLoadError(false);
 
@@ -255,10 +271,22 @@ export const HealthTab: React.FC = () => {
         body: JSON.stringify({
           collection: 'profile',
           item: updated,
+          expectedVersion: collectionVersions.profile,
         }),
       });
 
+      if (res.status === 409) {
+        setSaveStatus('This data changed elsewhere, reload before saving');
+        showToast('✕ This data changed elsewhere, reload before saving');
+        loadData();
+        return;
+      }
+
       if (!res.ok) throw new Error();
+      const json = await res.json();
+      if (typeof json.version === 'number') {
+        setCollectionVersions((prev) => ({ ...prev, profile: json.version }));
+      }
       setHealthData((prev) => ({ ...prev, profile: updated }));
       setSaveStatus('All changes encrypted & saved');
     } catch {
@@ -285,10 +313,22 @@ export const HealthTab: React.FC = () => {
         body: JSON.stringify({
           collection: 'medications',
           item: med,
+          expectedVersion: collectionVersions.medications,
         }),
       });
 
+      if (res.status === 409) {
+        setSaveStatus('This data changed elsewhere, reload before saving');
+        showToast('✕ This data changed elsewhere, reload before saving');
+        loadData();
+        return;
+      }
+
       if (!res.ok) throw new Error();
+      const json = await res.json();
+      if (typeof json.version === 'number') {
+        setCollectionVersions((prev) => ({ ...prev, medications: json.version }));
+      }
       setHealthData((prev) => {
         const nextList = isExisting
           ? prev.medications.map((m) => (m.id === med.id ? med : m))
@@ -311,11 +351,20 @@ export const HealthTab: React.FC = () => {
       return;
     }
     try {
-      const res = await fetch(`/api/admin/health?collection=medications&id=${id}`, {
+      const res = await fetch(`/api/admin/health?collection=medications&id=${id}&expectedVersion=${collectionVersions.medications}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
+      if (res.status === 409) {
+        showToast('✕ This data changed elsewhere, reload before saving');
+        loadData();
+        return;
+      }
       if (!res.ok) throw new Error();
+      const json = await res.json();
+      if (typeof json.version === 'number') {
+        setCollectionVersions((prev) => ({ ...prev, medications: json.version }));
+      }
       setHealthData((prev) => ({
         ...prev,
         medications: prev.medications.filter((m) => m.id !== id),
@@ -335,14 +384,24 @@ export const HealthTab: React.FC = () => {
     try {
       if (removed || !med.active || !med.refillDate) {
         if (existing) {
-          await fetch(`/api/admin/health?collection=reminders&id=${existing.id}`, {
+          const res = await fetch(`/api/admin/health?collection=reminders&id=${existing.id}&expectedVersion=${collectionVersions.reminders}`, {
             method: 'DELETE',
             headers: getAuthHeaders(),
           });
-          setHealthData((prev) => ({
-            ...prev,
-            reminders: prev.reminders.filter((r) => r.id !== existing.id),
-          }));
+          if (res.status === 409) {
+            loadData();
+            return;
+          }
+          if (res.ok) {
+            const json = await res.json();
+            if (typeof json.version === 'number') {
+              setCollectionVersions((prev) => ({ ...prev, reminders: json.version }));
+            }
+            setHealthData((prev) => ({
+              ...prev,
+              reminders: prev.reminders.filter((r) => r.id !== existing.id),
+            }));
+          }
         }
       } else {
         const reminderItem: Reminder = {
@@ -361,10 +420,20 @@ export const HealthTab: React.FC = () => {
           body: JSON.stringify({
             collection: 'reminders',
             item: reminderItem,
+            expectedVersion: collectionVersions.reminders,
           }),
         });
 
+        if (res.status === 409) {
+          loadData();
+          return;
+        }
+
         if (res.ok) {
+          const json = await res.json();
+          if (typeof json.version === 'number') {
+            setCollectionVersions((prev) => ({ ...prev, reminders: json.version }));
+          }
           setHealthData((prev) => {
             const nextReminders = existing
               ? prev.reminders.map((r) => (r.id === existing.id ? reminderItem : r))
@@ -397,10 +466,21 @@ export const HealthTab: React.FC = () => {
         body: JSON.stringify({
           collection: 'reminders',
           item: updated,
+          expectedVersion: collectionVersions.reminders,
         }),
       });
 
+      if (res.status === 409) {
+        showToast('✕ This data changed elsewhere, reload before saving');
+        loadData();
+        return;
+      }
+
       if (!res.ok) throw new Error();
+      const json = await res.json();
+      if (typeof json.version === 'number') {
+        setCollectionVersions((prev) => ({ ...prev, reminders: json.version }));
+      }
       setHealthData((prev) => ({
         ...prev,
         reminders: prev.reminders.map((r) => (r.id === reminder.id ? updated : r)),
@@ -427,10 +507,22 @@ export const HealthTab: React.FC = () => {
         body: JSON.stringify({
           collection: 'visits',
           item: visit,
+          expectedVersion: collectionVersions.visits,
         }),
       });
 
+      if (res.status === 409) {
+        setSaveStatus('This data changed elsewhere, reload before saving');
+        showToast('✕ This data changed elsewhere, reload before saving');
+        loadData();
+        return;
+      }
+
       if (!res.ok) throw new Error();
+      const json = await res.json();
+      if (typeof json.version === 'number') {
+        setCollectionVersions((prev) => ({ ...prev, visits: json.version }));
+      }
       setHealthData((prev) => {
         const nextList = isExisting
           ? prev.visits.map((v) => (v.id === visit.id ? visit : v))
@@ -452,11 +544,20 @@ export const HealthTab: React.FC = () => {
       return;
     }
     try {
-      const res = await fetch(`/api/admin/health?collection=visits&id=${id}`, {
+      const res = await fetch(`/api/admin/health?collection=visits&id=${id}&expectedVersion=${collectionVersions.visits}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
+      if (res.status === 409) {
+        showToast('✕ This data changed elsewhere, reload before saving');
+        loadData();
+        return;
+      }
       if (!res.ok) throw new Error();
+      const json = await res.json();
+      if (typeof json.version === 'number') {
+        setCollectionVersions((prev) => ({ ...prev, visits: json.version }));
+      }
       setHealthData((prev) => ({
         ...prev,
         visits: prev.visits.filter((v) => v.id !== id),
@@ -475,14 +576,24 @@ export const HealthTab: React.FC = () => {
     try {
       if (removed || !visit.followUpDate) {
         if (existing) {
-          await fetch(`/api/admin/health?collection=reminders&id=${existing.id}`, {
+          const res = await fetch(`/api/admin/health?collection=reminders&id=${existing.id}&expectedVersion=${collectionVersions.reminders}`, {
             method: 'DELETE',
             headers: getAuthHeaders(),
           });
-          setHealthData((prev) => ({
-            ...prev,
-            reminders: prev.reminders.filter((r) => r.id !== existing.id),
-          }));
+          if (res.status === 409) {
+            loadData();
+            return;
+          }
+          if (res.ok) {
+            const json = await res.json();
+            if (typeof json.version === 'number') {
+              setCollectionVersions((prev) => ({ ...prev, reminders: json.version }));
+            }
+            setHealthData((prev) => ({
+              ...prev,
+              reminders: prev.reminders.filter((r) => r.id !== existing.id),
+            }));
+          }
         }
       } else {
         const reminderItem: Reminder = {
@@ -501,10 +612,20 @@ export const HealthTab: React.FC = () => {
           body: JSON.stringify({
             collection: 'reminders',
             item: reminderItem,
+            expectedVersion: collectionVersions.reminders,
           }),
         });
 
+        if (res.status === 409) {
+          loadData();
+          return;
+        }
+
         if (res.ok) {
+          const json = await res.json();
+          if (typeof json.version === 'number') {
+            setCollectionVersions((prev) => ({ ...prev, reminders: json.version }));
+          }
           setHealthData((prev) => {
             const nextReminders = existing
               ? prev.reminders.map((r) => (r.id === existing.id ? reminderItem : r))
@@ -531,10 +652,21 @@ export const HealthTab: React.FC = () => {
         body: JSON.stringify({
           collection: 'vitals',
           item: vital,
+          expectedVersion: collectionVersions.vitals,
         }),
       });
 
+      if (res.status === 409) {
+        showToast('✕ This data changed elsewhere, reload before saving');
+        loadData();
+        return;
+      }
+
       if (!res.ok) throw new Error();
+      const json = await res.json();
+      if (typeof json.version === 'number') {
+        setCollectionVersions((prev) => ({ ...prev, vitals: json.version }));
+      }
       setHealthData((prev) => ({
         ...prev,
         vitals: [vital, ...prev.vitals],
@@ -550,11 +682,20 @@ export const HealthTab: React.FC = () => {
       return;
     }
     try {
-      const res = await fetch(`/api/admin/health?collection=vitals&id=${id}`, {
+      const res = await fetch(`/api/admin/health?collection=vitals&id=${id}&expectedVersion=${collectionVersions.vitals}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
+      if (res.status === 409) {
+        showToast('✕ This data changed elsewhere, reload before saving');
+        loadData();
+        return;
+      }
       if (!res.ok) throw new Error();
+      const json = await res.json();
+      if (typeof json.version === 'number') {
+        setCollectionVersions((prev) => ({ ...prev, vitals: json.version }));
+      }
       setHealthData((prev) => ({
         ...prev,
         vitals: prev.vitals.filter((v) => v.id !== id),
@@ -578,10 +719,21 @@ export const HealthTab: React.FC = () => {
         body: JSON.stringify({
           collection: 'vaccinations',
           item: vac,
+          expectedVersion: collectionVersions.vaccinations,
         }),
       });
 
+      if (res.status === 409) {
+        showToast('✕ This data changed elsewhere, reload before saving');
+        loadData();
+        return;
+      }
+
       if (!res.ok) throw new Error();
+      const json = await res.json();
+      if (typeof json.version === 'number') {
+        setCollectionVersions((prev) => ({ ...prev, vaccinations: json.version }));
+      }
       setHealthData((prev) => {
         const nextList = isExisting
           ? prev.vaccinations.map((v) => (v.id === vac.id ? vac : v))
@@ -599,11 +751,20 @@ export const HealthTab: React.FC = () => {
       return;
     }
     try {
-      const res = await fetch(`/api/admin/health?collection=vaccinations&id=${id}`, {
+      const res = await fetch(`/api/admin/health?collection=vaccinations&id=${id}&expectedVersion=${collectionVersions.vaccinations}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
+      if (res.status === 409) {
+        showToast('✕ This data changed elsewhere, reload before saving');
+        loadData();
+        return;
+      }
       if (!res.ok) throw new Error();
+      const json = await res.json();
+      if (typeof json.version === 'number') {
+        setCollectionVersions((prev) => ({ ...prev, vaccinations: json.version }));
+      }
       setHealthData((prev) => ({
         ...prev,
         vaccinations: prev.vaccinations.filter((v) => v.id !== id),
@@ -622,14 +783,24 @@ export const HealthTab: React.FC = () => {
     try {
       if (removed || !vac.nextDueDate) {
         if (existing) {
-          await fetch(`/api/admin/health?collection=reminders&id=${existing.id}`, {
+          const res = await fetch(`/api/admin/health?collection=reminders&id=${existing.id}&expectedVersion=${collectionVersions.reminders}`, {
             method: 'DELETE',
             headers: getAuthHeaders(),
           });
-          setHealthData((prev) => ({
-            ...prev,
-            reminders: prev.reminders.filter((r) => r.id !== existing.id),
-          }));
+          if (res.status === 409) {
+            loadData();
+            return;
+          }
+          if (res.ok) {
+            const json = await res.json();
+            if (typeof json.version === 'number') {
+              setCollectionVersions((prev) => ({ ...prev, reminders: json.version }));
+            }
+            setHealthData((prev) => ({
+              ...prev,
+              reminders: prev.reminders.filter((r) => r.id !== existing.id),
+            }));
+          }
         }
       } else {
         const reminderItem: Reminder = {
@@ -648,10 +819,20 @@ export const HealthTab: React.FC = () => {
           body: JSON.stringify({
             collection: 'reminders',
             item: reminderItem,
+            expectedVersion: collectionVersions.reminders,
           }),
         });
 
+        if (res.status === 409) {
+          loadData();
+          return;
+        }
+
         if (res.ok) {
+          const json = await res.json();
+          if (typeof json.version === 'number') {
+            setCollectionVersions((prev) => ({ ...prev, reminders: json.version }));
+          }
           setHealthData((prev) => {
             const nextReminders = existing
               ? prev.reminders.map((r) => (r.id === existing.id ? reminderItem : r))

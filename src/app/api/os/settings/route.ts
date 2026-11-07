@@ -27,7 +27,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const updated = await saveOsSettings(body);
+    const expectedVersion =
+      typeof body.expectedVersion === 'number'
+        ? body.expectedVersion
+        : typeof body.version === 'number'
+        ? body.version
+        : undefined;
+    const updated = await saveOsSettings(body, expectedVersion);
     return NextResponse.json(
       {
         success: true,
@@ -41,6 +47,15 @@ export async function POST(req: NextRequest) {
       }
     );
   } catch (err: unknown) {
+    const isConflict =
+      (err as { status?: number })?.status === 409 ||
+      (err instanceof Error && err.message.includes('changed elsewhere'));
+    if (isConflict) {
+      return NextResponse.json(
+        { success: false, error: 'This data changed elsewhere, reload before saving' },
+        { status: 409 }
+      );
+    }
     const message = err instanceof Error ? err.message : 'Failed to save OS settings';
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }

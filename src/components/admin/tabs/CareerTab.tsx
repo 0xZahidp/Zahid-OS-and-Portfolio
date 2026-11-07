@@ -451,6 +451,7 @@ export const CareerTab: React.FC = () => {
   const [showArchived, setShowArchived] = useState<boolean>(false);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [loadError, setLoadError] = useState<boolean>(false);
+  const [careerVersion, setCareerVersion] = useState<number>(0);
 
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
@@ -561,11 +562,14 @@ export const CareerTab: React.FC = () => {
       const res = await fetch('/api/admin/career', {
         method: 'PATCH',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ id: draggedId, status: targetStatus }),
+        body: JSON.stringify({ id: draggedId, status: targetStatus, expectedVersion: careerVersion }),
       });
 
       if (res.ok) {
         const data = await res.json();
+        if (typeof data.version === 'number') {
+          setCareerVersion(data.version);
+        }
         setApplications((prev) =>
           prev.map((a) => (a.id === draggedId ? data.application : a))
         );
@@ -577,6 +581,11 @@ export const CareerTab: React.FC = () => {
         const stageName =
           KANBAN_STAGES.find((s) => s.id === targetStatus)?.title || targetStatus;
         showToast(`Moved ${draggedApp.company_name} to ${stageName}`);
+      } else if (res.status === 409) {
+        setApplications(previousApps);
+        setSaveState('error');
+        showToast('This data changed elsewhere, reload before saving');
+        fetchApplications();
       } else {
         setApplications(previousApps);
         setSaveState('error');
@@ -599,6 +608,7 @@ export const CareerTab: React.FC = () => {
         const data = await res.json();
         setApplications(data.applications || []);
         if (data.metrics) setMetrics(data.metrics);
+        setCareerVersion(typeof data.version === 'number' ? data.version : 0);
         setLoadError(false);
       } else {
         setLoadError(true);
@@ -804,11 +814,15 @@ export const CareerTab: React.FC = () => {
     if (!confirm('Are you sure you want to delete this application record?')) return;
     try {
       setSaveState('saving');
-      const res = await fetch(`/api/admin/career?id=${appId}`, {
+      const res = await fetch(`/api/admin/career?id=${appId}&expectedVersion=${careerVersion}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
       if (res.ok) {
+        const data = await res.json();
+        if (typeof data.version === 'number') {
+          setCareerVersion(data.version);
+        }
         setApplications((prev) => prev.filter((a) => a.id !== appId));
         if (activeDetailApp?.id === appId) {
           setActiveDetailApp(null);
@@ -816,6 +830,10 @@ export const CareerTab: React.FC = () => {
         setSaveState('saved');
         setTimeout(() => setSaveState('idle'), 2000);
         showToast('Application deleted');
+      } else if (res.status === 409) {
+        setSaveState('error');
+        showToast('This data changed elsewhere, reload before saving');
+        fetchApplications();
       } else {
         setSaveState('error');
         showToast('Error deleting application');
@@ -1823,6 +1841,13 @@ export const CareerTab: React.FC = () => {
       {isCreateModalOpen && (
         <CreateApplicationModal
           onClose={() => setIsCreateModalOpen(false)}
+          expectedVersion={careerVersion}
+          onVersionUpdate={(v) => setCareerVersion(v)}
+          onConflict={() => {
+            showToast('This data changed elsewhere, reload before saving');
+            fetchApplications();
+            setIsCreateModalOpen(false);
+          }}
           onCreated={(newApp) => {
             setApplications((prev) => [newApp, ...prev]);
             setIsCreateModalOpen(false);
@@ -1902,6 +1927,12 @@ export const CareerTab: React.FC = () => {
         <CareerSlideOver
           app={activeDetailApp}
           onClose={handleCloseDetail}
+          expectedVersion={careerVersion}
+          onVersionUpdate={(v) => setCareerVersion(v)}
+          onConflict={() => {
+            showToast('This data changed elsewhere, reload before saving');
+            fetchApplications();
+          }}
           onUpdate={(updated) => {
             setApplications((prev) =>
               prev.map((a) => (a.id === updated.id ? updated : a))
@@ -1930,6 +1961,9 @@ interface CareerSlideOverProps {
   saveState: 'idle' | 'saving' | 'saved' | 'error';
   setSaveState: (s: 'idle' | 'saving' | 'saved' | 'error') => void;
   disabled?: boolean;
+  expectedVersion?: number;
+  onVersionUpdate?: (version: number) => void;
+  onConflict?: () => void;
 }
 
 const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
@@ -1940,6 +1974,9 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
   saveState,
   setSaveState,
   disabled = false,
+  expectedVersion,
+  onVersionUpdate,
+  onConflict,
 }) => {
   const { session } = useAdminAuth();
   const [localApp, setLocalApp] = useState<CareerApplication>(app);
@@ -1970,14 +2007,20 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
             'Content-Type': 'application/json',
             ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify({ ...data, expectedVersion }),
         });
         if (res.ok) {
           const json = await res.json();
+          if (typeof json.version === 'number') {
+            onVersionUpdate?.(json.version);
+          }
           onUpdate(json.application);
           setSaveState('saved');
           setHasUnsaved(false);
           setTimeout(() => setSaveState('idle'), 2000);
+        } else if (res.status === 409) {
+          setSaveState('error');
+          onConflict?.();
         } else {
           setSaveState('error');
         }
@@ -1985,7 +2028,7 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
         setSaveState('error');
       }
     },
-    [disabled, onUpdate, setSaveState, session?.access_token]
+    [disabled, onUpdate, setSaveState, session?.access_token, expectedVersion, onVersionUpdate, onConflict]
   );
 
   // Debounced field change (600ms)
@@ -2824,7 +2867,10 @@ Md Zahid Hasan Patwary`;
 const CreateApplicationModal: React.FC<{
   onClose: () => void;
   onCreated: (app: CareerApplication) => void;
-}> = ({ onClose, onCreated }) => {
+  expectedVersion?: number;
+  onVersionUpdate?: (version: number) => void;
+  onConflict?: () => void;
+}> = ({ onClose, onCreated, expectedVersion, onVersionUpdate, onConflict }) => {
   const { session } = useAdminAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companyName, setCompanyName] = useState('');
@@ -2861,12 +2907,18 @@ const CreateApplicationModal: React.FC<{
           salary_min: Number(salaryMin) || undefined,
           salary_max: Number(salaryMax) || undefined,
           notes,
+          expectedVersion,
         }),
       });
 
       if (res.ok) {
         const data = await res.json();
+        if (typeof data.version === 'number') {
+          onVersionUpdate?.(data.version);
+        }
         onCreated(data.application);
+      } else if (res.status === 409) {
+        onConflict?.();
       }
     } catch (err) {
       console.error('Failed to create application:', err);

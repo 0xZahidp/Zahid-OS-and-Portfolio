@@ -130,6 +130,7 @@ export const ZahidOsTab: React.FC = () => {
   });
   const [isSavingSettings, setIsSavingSettings] = useState<boolean>(false);
   const [settingsSaveState, setSettingsSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [settingsErrorMessage, setSettingsErrorMessage] = useState<string | null>(null);
 
   // Clock ticker
   useEffect(() => {
@@ -415,25 +416,38 @@ export const ZahidOsTab: React.FC = () => {
   const handleSaveSettings = async () => {
     setIsSavingSettings(true);
     setSettingsSaveState('saving');
+    setSettingsErrorMessage(null);
     try {
       const res = await fetch('/api/os/settings', {
         method: 'POST',
         headers: getAdminHeaders(),
-        body: JSON.stringify(osSettings),
+        body: JSON.stringify({
+          ...osSettings,
+          expectedVersion: osSettings.version,
+        }),
       });
+      if (res.status === 409) {
+        setSettingsSaveState('error');
+        setSettingsErrorMessage('This data changed elsewhere, reload before saving');
+        loadData();
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         if (data.settings) {
           setOsSettings(data.settings);
         }
         setSettingsSaveState('saved');
+        setSettingsErrorMessage(null);
         setTimeout(() => setSettingsSaveState('idle'), 3000);
       } else {
         setSettingsSaveState('error');
+        setSettingsErrorMessage('Save failed, retry');
       }
     } catch (err) {
       console.warn('Failed to save OS settings:', err);
       setSettingsSaveState('error');
+      setSettingsErrorMessage('Save failed, retry');
     } finally {
       setIsSavingSettings(false);
     }
@@ -1064,7 +1078,7 @@ export const ZahidOsTab: React.FC = () => {
                   {settingsSaveState === 'saved'
                     ? 'Saved ✓'
                     : settingsSaveState === 'error'
-                    ? 'Save failed, retry'
+                    ? settingsErrorMessage || 'Save failed, retry'
                     : isSavingSettings
                     ? 'Saving...'
                     : 'Save Settings'}
@@ -1258,13 +1272,22 @@ export const ZahidOsTab: React.FC = () => {
                         const updated = {
                           ...osSettings,
                           wallpaper: wp.id,
+                          expectedVersion: osSettings.version,
                         };
                         setOsSettings(updated);
                         fetch('/api/os/settings', {
                           method: 'POST',
                           headers: getAdminHeaders(),
                           body: JSON.stringify(updated),
-                        }).catch((err) => console.warn('Auto-save wallpaper error:', err));
+                        })
+                          .then((res) => {
+                            if (res.status === 409) {
+                              setSettingsSaveState('error');
+                              setSettingsErrorMessage('This data changed elsewhere, reload before saving');
+                              loadData();
+                            }
+                          })
+                          .catch((err) => console.warn('Auto-save wallpaper error:', err));
                       }}
                       className={`group relative p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col gap-2 ${
                         isActive

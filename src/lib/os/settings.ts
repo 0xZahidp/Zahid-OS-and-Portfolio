@@ -70,7 +70,22 @@ export async function getOsSettings(): Promise<ZahidOsSettings> {
         .maybeSingle();
 
       if (!error && data?.value && typeof data.value === 'object') {
-        const settings = normalizeOsSettings(data.value);
+        let version = 0;
+        let rawVal = data.value;
+        if ('version' in data.value && typeof (data.value as { version?: unknown }).version === 'number') {
+          version = (data.value as { version: number }).version;
+        }
+        if (
+          'data' in data.value &&
+          (data.value as { data?: unknown }).data &&
+          typeof (data.value as { data?: unknown }).data === 'object'
+        ) {
+          rawVal = (data.value as { data: Record<string, unknown> }).data;
+        }
+        const settings = {
+          ...normalizeOsSettings(rawVal),
+          version,
+        };
         memorySettingsCache = { settings, timestamp: Date.now() };
         return settings;
       }
@@ -88,7 +103,10 @@ export async function getOsSettings(): Promise<ZahidOsSettings> {
         .maybeSingle();
 
       if (!error && data && typeof data === 'object') {
-        const settings = normalizeOsSettings(data);
+        const settings = {
+          ...normalizeOsSettings(data),
+          version: 0,
+        };
         memorySettingsCache = { settings, timestamp: Date.now() };
         return settings;
       }
@@ -100,15 +118,27 @@ export async function getOsSettings(): Promise<ZahidOsSettings> {
   // 2. Try Local File fallback
   try {
     const content = await fs.readFile(SETTINGS_FILE_PATH, 'utf-8');
-    const parsed = JSON.parse(content);
-    const settings = normalizeOsSettings(parsed);
+    let parsed = JSON.parse(content);
+    let version = 0;
+    if (parsed && typeof parsed === 'object') {
+      if ('version' in parsed && typeof parsed.version === 'number') {
+        version = parsed.version;
+      }
+      if ('data' in parsed && parsed.data && typeof parsed.data === 'object') {
+        parsed = parsed.data;
+      }
+    }
+    const settings = {
+      ...normalizeOsSettings(parsed),
+      version,
+    };
     memorySettingsCache = { settings, timestamp: Date.now() };
     return settings;
   } catch (err) {
     console.warn('[getOsSettings] Failed to read os-settings.json, using defaults:', err);
   }
 
-  return defaultOsSettings;
+  return { ...defaultOsSettings, version: 0 };
 }
 
 /**
@@ -118,12 +148,67 @@ export async function getOsSettings(): Promise<ZahidOsSettings> {
  * 3. Supabase dedicated table 'os_settings' (if exists)
  * 4. Local JSON file (offline / dev fallback)
  */
-export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promise<ZahidOsSettings> {
+export async function saveOsSettings(
+  settings: Partial<ZahidOsSettings>,
+  expectedVersion?: number
+): Promise<ZahidOsSettings> {
+  let currentVersion = 0;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  // Retrieve current version to check optimistic concurrency
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    try {
+      const supabase = supabaseServer();
+      const { data: row } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'zahid_os_settings')
+        .maybeSingle();
+      if (row?.value && typeof row.value === 'object') {
+        if (typeof (row.value as { version?: unknown }).version === 'number') {
+          currentVersion = (row.value as { version: number }).version;
+        } else if (
+          'data' in row.value &&
+          typeof (row.value as { data?: { version?: unknown } }).data?.version === 'number'
+        ) {
+          currentVersion = (row.value as { data: { version: number } }).data.version;
+        }
+      }
+    } catch {
+      if (memorySettingsCache) {
+        currentVersion = memorySettingsCache.settings.version ?? 0;
+      }
+    }
+  } else if (memorySettingsCache) {
+    currentVersion = memorySettingsCache.settings.version ?? 0;
+  }
+
+  const targetExpectedVersion =
+    expectedVersion !== undefined
+      ? expectedVersion
+      : typeof settings.version === 'number'
+      ? settings.version
+      : undefined;
+
+  if (targetExpectedVersion !== undefined && targetExpectedVersion !== currentVersion) {
+    const err = new Error('This data changed elsewhere, reload before saving');
+    (err as unknown as { status: number; statusCode: number }).status = 409;
+    (err as unknown as { status: number; statusCode: number }).statusCode = 409;
+    throw err;
+  }
+
+  const newVersion = currentVersion + 1;
   const current = await getOsSettings();
   const merged: ZahidOsSettings = {
     ...current,
     ...settings,
+    version: newVersion,
     updated_at: new Date().toISOString(),
+  };
+
+  const payload = {
+    version: newVersion,
+    data: merged,
   };
 
   let fileSaved = false;
@@ -132,7 +217,7 @@ export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promis
   // 1. Save to local file (safely ignore EROFS in read-only / Vercel environments, skip on Vercel)
   if (!process.env.VERCEL) {
     try {
-      await fs.writeFile(SETTINGS_FILE_PATH, JSON.stringify(merged, null, 2), 'utf-8');
+      await fs.writeFile(SETTINGS_FILE_PATH, JSON.stringify(payload, null, 2), 'utf-8');
       fileSaved = true;
     } catch (err) {
       console.warn('[saveOsSettings] Local file write skipped (read-only environment):', err);
@@ -140,7 +225,6 @@ export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promis
   }
 
   // 2. Sync to Supabase
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
@@ -149,7 +233,7 @@ export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promis
       const { error: settingsError } = await supabase.from('site_settings').upsert(
         {
           key: 'zahid_os_settings',
-          value: merged,
+          value: payload,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'key' }

@@ -54,6 +54,7 @@ export type ZahidOsWallpaper =
   | 'cupertino-blue';
 
 export interface ZahidOsSettings {
+  version?: number;
   is_public_enabled: boolean;
   allow_public_link_creation?: boolean;
   public_hero_title: string;

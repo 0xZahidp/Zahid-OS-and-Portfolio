@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    const expectedVersion = typeof body.expectedVersion === 'number' ? body.expectedVersion : undefined;
     const { applications } = await getCareerApplications();
 
     const newApp: CareerApplication = {
@@ -72,10 +73,19 @@ export async function POST(req: NextRequest) {
     };
 
     const updated = [newApp, ...applications];
-    await saveCareerApplications(updated);
+    const { version: newVersion } = await saveCareerApplications(updated, expectedVersion);
 
-    return NextResponse.json({ success: true, application: newApp });
+    return NextResponse.json({ success: true, application: newApp, version: newVersion });
   } catch (err: unknown) {
+    const isConflict =
+      (err as { status?: number })?.status === 409 ||
+      (err instanceof Error && err.message.includes('changed elsewhere'));
+    if (isConflict) {
+      return NextResponse.json(
+        { success: false, error: 'This data changed elsewhere, reload before saving' },
+        { status: 409 }
+      );
+    }
     const msg = err instanceof Error ? err.message : 'Failed to create application';
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
@@ -91,6 +101,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Application ID is required' }, { status: 400 });
     }
 
+    const expectedVersion = typeof body.expectedVersion === 'number' ? body.expectedVersion : undefined;
     const { applications } = await getCareerApplications();
     const index = applications.findIndex((a) => a.id === body.id);
 
@@ -112,10 +123,19 @@ export async function PATCH(req: NextRequest) {
     };
 
     applications[index] = updatedApp;
-    await saveCareerApplications(applications);
+    const { version: newVersion } = await saveCareerApplications(applications, expectedVersion);
 
-    return NextResponse.json({ success: true, application: updatedApp });
+    return NextResponse.json({ success: true, application: updatedApp, version: newVersion });
   } catch (err: unknown) {
+    const isConflict =
+      (err as { status?: number })?.status === 409 ||
+      (err instanceof Error && err.message.includes('changed elsewhere'));
+    if (isConflict) {
+      return NextResponse.json(
+        { success: false, error: 'This data changed elsewhere, reload before saving' },
+        { status: 409 }
+      );
+    }
     const msg = err instanceof Error ? err.message : 'Failed to update application';
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
@@ -128,6 +148,9 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
+    const expectedVersion = searchParams.get('expectedVersion')
+      ? Number(searchParams.get('expectedVersion'))
+      : undefined;
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'ID is required' }, { status: 400 });
@@ -136,10 +159,45 @@ export async function DELETE(req: NextRequest) {
     const { applications } = await getCareerApplications();
     const filtered = applications.filter((a) => a.id !== id);
 
-    await saveCareerApplications(filtered);
-    return NextResponse.json({ success: true });
+    const { version: newVersion } = await saveCareerApplications(filtered, expectedVersion);
+    return NextResponse.json({ success: true, version: newVersion });
   } catch (err: unknown) {
+    const isConflict =
+      (err as { status?: number })?.status === 409 ||
+      (err instanceof Error && err.message.includes('changed elsewhere'));
+    if (isConflict) {
+      return NextResponse.json(
+        { success: false, error: 'This data changed elsewhere, reload before saving' },
+        { status: 409 }
+      );
+    }
     const msg = err instanceof Error ? err.message : 'Failed to delete application';
+    return NextResponse.json({ success: false, error: msg }, { status: 500 });
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
+  try {
+    const body = await req.json();
+    const applications = Array.isArray(body.applications) ? body.applications : [];
+    const expectedVersion = typeof body.expectedVersion === 'number' ? body.expectedVersion : undefined;
+
+    const { version: newVersion } = await saveCareerApplications(applications, expectedVersion);
+    return NextResponse.json({ success: true, version: newVersion });
+  } catch (err: unknown) {
+    const isConflict =
+      (err as { status?: number })?.status === 409 ||
+      (err instanceof Error && err.message.includes('changed elsewhere'));
+    if (isConflict) {
+      return NextResponse.json(
+        { success: false, error: 'This data changed elsewhere, reload before saving' },
+        { status: 409 }
+      );
+    }
+    const msg = err instanceof Error ? err.message : 'Failed to save applications';
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
 }

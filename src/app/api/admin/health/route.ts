@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth/admin-auth';
 import {
   getHealthCollection,
+  getHealthCollectionWithVersion,
   saveHealthCollection,
   getHealthData,
 } from '@/lib/health/health-store';
@@ -38,12 +39,12 @@ export async function GET(req: NextRequest) {
       if (!VALID_COLLECTIONS.includes(collection)) {
         return NextResponse.json({ error: 'Invalid collection' }, { status: 400 });
       }
-      const data = await getHealthCollection(collection);
-      return NextResponse.json({ success: true, data });
+      const { data, version } = await getHealthCollectionWithVersion(collection);
+      return NextResponse.json({ success: true, data, version });
     }
 
     const fullData = await getHealthData();
-    return NextResponse.json({ success: true, data: fullData });
+    return NextResponse.json({ success: true, data: fullData, versions: fullData.versions });
   } catch {
     return NextResponse.json(
       { success: false, error: 'Database service unavailable' },
@@ -61,9 +62,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { collection, item } = body as {
+    const { collection, item, expectedVersion } = body as {
       collection: HealthCollectionKey;
       item: Record<string, unknown>;
+      expectedVersion?: number;
     };
 
     if (!collection || !VALID_COLLECTIONS.includes(collection)) {
@@ -77,8 +79,8 @@ export async function POST(req: NextRequest) {
         ...(item as unknown as HealthProfile),
         updatedAt: now,
       };
-      await saveHealthCollection('profile', updatedProfile);
-      return NextResponse.json({ success: true, item: updatedProfile });
+      const res = await saveHealthCollection('profile', updatedProfile, expectedVersion);
+      return NextResponse.json({ success: true, item: updatedProfile, version: res.version });
     }
 
     const currentList = (await getHealthCollection(collection)) as Array<{
@@ -95,31 +97,41 @@ export async function POST(req: NextRequest) {
     };
 
     const nextList = [newItem, ...currentList];
+    let saveResult: { success: boolean; version: number };
 
     // Specialized typing dispatch
     switch (collection) {
       case 'medications':
-        await saveHealthCollection('medications', nextList as Medication[]);
+        saveResult = await saveHealthCollection('medications', nextList as Medication[], expectedVersion);
         break;
       case 'documents':
-        await saveHealthCollection('documents', nextList as HealthDocument[]);
+        saveResult = await saveHealthCollection('documents', nextList as HealthDocument[], expectedVersion);
         break;
       case 'visits':
-        await saveHealthCollection('visits', nextList as Visit[]);
+        saveResult = await saveHealthCollection('visits', nextList as Visit[], expectedVersion);
         break;
       case 'vitals':
-        await saveHealthCollection('vitals', nextList as Vital[]);
+        saveResult = await saveHealthCollection('vitals', nextList as Vital[], expectedVersion);
         break;
       case 'vaccinations':
-        await saveHealthCollection('vaccinations', nextList as Vaccination[]);
+        saveResult = await saveHealthCollection('vaccinations', nextList as Vaccination[], expectedVersion);
         break;
       case 'reminders':
-        await saveHealthCollection('reminders', nextList as Reminder[]);
+        saveResult = await saveHealthCollection('reminders', nextList as Reminder[], expectedVersion);
         break;
     }
 
-    return NextResponse.json({ success: true, item: newItem });
-  } catch {
+    return NextResponse.json({ success: true, item: newItem, version: saveResult.version });
+  } catch (err: unknown) {
+    const isConflict =
+      (err as { status?: number })?.status === 409 ||
+      (err instanceof Error && err.message.includes('changed elsewhere'));
+    if (isConflict) {
+      return NextResponse.json(
+        { success: false, error: 'This data changed elsewhere, reload before saving' },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: 'Failed to create health record' }, { status: 500 });
   }
 }
@@ -130,9 +142,10 @@ export async function PATCH(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { collection, item } = body as {
+    const { collection, item, expectedVersion } = body as {
       collection: HealthCollectionKey;
       item: Record<string, unknown> & { id?: string };
+      expectedVersion?: number;
     };
 
     if (!collection || !VALID_COLLECTIONS.includes(collection)) {
@@ -148,8 +161,8 @@ export async function PATCH(req: NextRequest) {
         ...(item as unknown as Partial<HealthProfile>),
         updatedAt: now,
       };
-      await saveHealthCollection('profile', merged);
-      return NextResponse.json({ success: true, item: merged });
+      const res = await saveHealthCollection('profile', merged, expectedVersion);
+      return NextResponse.json({ success: true, item: merged, version: res.version });
     }
 
     if (!item.id) {
@@ -175,30 +188,40 @@ export async function PATCH(req: NextRequest) {
 
     const nextList = [...currentList];
     nextList[index] = updatedItem;
+    let saveResult: { success: boolean; version: number };
 
     switch (collection) {
       case 'medications':
-        await saveHealthCollection('medications', nextList as Medication[]);
+        saveResult = await saveHealthCollection('medications', nextList as Medication[], expectedVersion);
         break;
       case 'documents':
-        await saveHealthCollection('documents', nextList as HealthDocument[]);
+        saveResult = await saveHealthCollection('documents', nextList as HealthDocument[], expectedVersion);
         break;
       case 'visits':
-        await saveHealthCollection('visits', nextList as Visit[]);
+        saveResult = await saveHealthCollection('visits', nextList as Visit[], expectedVersion);
         break;
       case 'vitals':
-        await saveHealthCollection('vitals', nextList as Vital[]);
+        saveResult = await saveHealthCollection('vitals', nextList as Vital[], expectedVersion);
         break;
       case 'vaccinations':
-        await saveHealthCollection('vaccinations', nextList as Vaccination[]);
+        saveResult = await saveHealthCollection('vaccinations', nextList as Vaccination[], expectedVersion);
         break;
       case 'reminders':
-        await saveHealthCollection('reminders', nextList as Reminder[]);
+        saveResult = await saveHealthCollection('reminders', nextList as Reminder[], expectedVersion);
         break;
     }
 
-    return NextResponse.json({ success: true, item: updatedItem });
-  } catch {
+    return NextResponse.json({ success: true, item: updatedItem, version: saveResult.version });
+  } catch (err: unknown) {
+    const isConflict =
+      (err as { status?: number })?.status === 409 ||
+      (err instanceof Error && err.message.includes('changed elsewhere'));
+    if (isConflict) {
+      return NextResponse.json(
+        { success: false, error: 'This data changed elsewhere, reload before saving' },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: 'Failed to update health record' }, { status: 500 });
   }
 }
@@ -211,6 +234,9 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const collection = searchParams.get('collection') as HealthCollectionKey | null;
     const id = searchParams.get('id');
+    const expectedVersion = searchParams.get('expectedVersion')
+      ? Number(searchParams.get('expectedVersion'))
+      : undefined;
 
     if (!collection || !VALID_COLLECTIONS.includes(collection)) {
       return NextResponse.json({ error: 'Invalid collection' }, { status: 400 });
@@ -226,30 +252,40 @@ export async function DELETE(req: NextRequest) {
 
     const currentList = (await getHealthCollection(collection)) as Array<{ id: string }>;
     const nextList = currentList.filter((item) => item.id !== id);
+    let saveResult: { success: boolean; version: number };
 
     switch (collection) {
       case 'medications':
-        await saveHealthCollection('medications', nextList as Medication[]);
+        saveResult = await saveHealthCollection('medications', nextList as Medication[], expectedVersion);
         break;
       case 'documents':
-        await saveHealthCollection('documents', nextList as HealthDocument[]);
+        saveResult = await saveHealthCollection('documents', nextList as HealthDocument[], expectedVersion);
         break;
       case 'visits':
-        await saveHealthCollection('visits', nextList as Visit[]);
+        saveResult = await saveHealthCollection('visits', nextList as Visit[], expectedVersion);
         break;
       case 'vitals':
-        await saveHealthCollection('vitals', nextList as Vital[]);
+        saveResult = await saveHealthCollection('vitals', nextList as Vital[], expectedVersion);
         break;
       case 'vaccinations':
-        await saveHealthCollection('vaccinations', nextList as Vaccination[]);
+        saveResult = await saveHealthCollection('vaccinations', nextList as Vaccination[], expectedVersion);
         break;
       case 'reminders':
-        await saveHealthCollection('reminders', nextList as Reminder[]);
+        saveResult = await saveHealthCollection('reminders', nextList as Reminder[], expectedVersion);
         break;
     }
 
-    return NextResponse.json({ success: true, deletedId: id });
-  } catch {
+    return NextResponse.json({ success: true, deletedId: id, version: saveResult.version });
+  } catch (err: unknown) {
+    const isConflict =
+      (err as { status?: number })?.status === 409 ||
+      (err instanceof Error && err.message.includes('changed elsewhere'));
+    if (isConflict) {
+      return NextResponse.json(
+        { success: false, error: 'This data changed elsewhere, reload before saving' },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: 'Failed to delete health record' }, { status: 500 });
   }
 }
