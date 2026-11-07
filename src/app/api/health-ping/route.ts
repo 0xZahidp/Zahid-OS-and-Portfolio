@@ -61,12 +61,30 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // 2. Minimal service-role query to keep database active
+  // 2. Minimal service-role query to keep database active with 3s timeout
   try {
     const supabase = supabaseServer();
-    await supabase.from('site_settings').select('key').limit(1);
+    const queryPromise = supabase.from('site_settings').select('key').limit(1);
+
+    const timeoutPromise = new Promise<{ data: null; error: Error }>((_, reject) =>
+      setTimeout(() => reject(new Error('Query timeout')), 3000)
+    );
+
+    const res = await Promise.race([queryPromise, timeoutPromise]);
+    if (res.error) {
+      throw res.error;
+    }
   } catch {
-    // Fail silently without exposing database connection errors
+    // If Supabase query fails or times out, return HTTP 503 {"ok":false} with Cache-Control: no-store
+    return NextResponse.json(
+      { ok: false },
+      {
+        status: 503,
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
+    );
   }
 
   // 3. Return strictly {"ok":true} with Cache-Control: no-store
