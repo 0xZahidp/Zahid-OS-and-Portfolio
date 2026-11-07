@@ -1,4 +1,11 @@
 import { supabaseServer } from '@/lib/supabase/server';
+import {
+  encryptVaultValue,
+  decryptVaultValue,
+  maskSecretValue,
+} from '@/lib/crypto/vault';
+
+export { maskSecretValue } from '@/lib/crypto/vault';
 
 export interface EnvVaultItem {
   key: string;
@@ -47,8 +54,9 @@ export async function getAppSecret(
         .maybeSingle();
 
       if (!error && data?.value !== undefined && data.value !== null && data.value !== '') {
-        cache.set(key, { value: data.value, timestamp: now });
-        return data.value;
+        const decrypted = decryptVaultValue(data.value);
+        cache.set(key, { value: decrypted, timestamp: now });
+        return decrypted;
       }
     } catch {
       // Supabase unavailable or table pending
@@ -79,9 +87,10 @@ export async function setAppSecret(
 
   try {
     const supabase = supabaseServer();
+    const storedValue = isSecret ? encryptVaultValue(value) : value;
     const payloadWithDesc: Record<string, unknown> = {
       key,
-      value,
+      value: storedValue,
       is_secret: isSecret,
       description: description || '',
       updated_at: new Date().toISOString(),
@@ -93,7 +102,7 @@ export async function setAppSecret(
     if (error && error.message && error.message.includes('description')) {
       const payloadWithoutDesc: Record<string, unknown> = {
         key,
-        value,
+        value: storedValue,
         is_secret: isSecret,
         updated_at: new Date().toISOString(),
       };
@@ -206,12 +215,13 @@ export async function listAppSecrets(): Promise<EnvVaultItem[]> {
         for (const row of data) {
           const val = row.value || '';
           const isSecret = Boolean(row.is_secret);
+          const clearVal = isSecret ? decryptVaultValue(val) : val;
           resultsMap.set(row.key, {
             key: row.key,
             hasValue: Boolean(val),
             isSecret,
             source: 'supabase',
-            maskedValue: maskSecretValue(val, isSecret),
+            maskedValue: maskSecretValue(clearVal, isSecret),
             value: isSecret ? undefined : val, // Only send plaintext value if not a secret
             description: row.description || resultsMap.get(row.key)?.description || '',
             updatedAt: row.updated_at,
@@ -224,14 +234,4 @@ export async function listAppSecrets(): Promise<EnvVaultItem[]> {
   }
 
   return Array.from(resultsMap.values());
-}
-
-/**
- * Mask secret values for safe UI display
- */
-export function maskSecretValue(val: string, isSecret: boolean): string {
-  if (!val) return '';
-  if (!isSecret) return val;
-  if (val.length <= 4) return '••••••••';
-  return `••••••••••••${val.slice(-4)}`;
 }

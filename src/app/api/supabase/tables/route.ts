@@ -96,7 +96,8 @@ export async function GET(req: NextRequest) {
       let grantHint: string | undefined;
 
       try {
-        const countRes = await fetch(`${supabaseUrl}/rest/v1/${name}?select=*`, {
+        const filter = name === 'app_settings' ? '&key=not.like.RESEND_KEY_*' : '';
+        const countRes = await fetch(`${supabaseUrl}/rest/v1/${name}?select=*${filter}`, {
           method: 'HEAD',
           headers: {
             apikey: serviceKey,
@@ -115,7 +116,7 @@ export async function GET(req: NextRequest) {
           }
         } else {
           // Check JSON error response
-          const errRes = await fetch(`${supabaseUrl}/rest/v1/${name}?select=*&limit=1`, {
+          const errRes = await fetch(`${supabaseUrl}/rest/v1/${name}?select=*${filter}&limit=1`, {
             headers: {
               apikey: serviceKey,
               Authorization: `Bearer ${serviceKey}`,
@@ -123,7 +124,7 @@ export async function GET(req: NextRequest) {
           });
           const errData = await errRes.json();
           permissionError = errData?.message || `HTTP ${countRes.status}`;
-          grantHint = errData?.hint || `GRANT ALL ON TABLE public.${name} TO anon, authenticated, service_role;`;
+          grantHint = errData?.hint || `GRANT ALL ON TABLE public.${name} TO service_role;`;
         }
       } catch (err: unknown) {
         permissionError = err instanceof Error ? err.message : 'Network error checking table';

@@ -2,7 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { Resend } from 'resend';
 import { supabaseServer } from '@/lib/supabase/server';
-import { getAppSecret, setAppSecret } from '@/lib/env-vault';
+import { getAppSecret, setAppSecret, deleteAppSecret } from '@/lib/env-vault';
 
 export interface TempMailDnsRecord {
   record: string;
@@ -37,6 +37,12 @@ const CACHE_TTL_MS = 15000; // 15s cache
 function maskApiKey(key: string): string {
   if (!key || key.length < 4) return '••••••••';
   return `••••••••••••${key.slice(-4)}`;
+}
+
+function sanitizeMaskedKey(masked?: string): string | undefined {
+  if (!masked) return undefined;
+  const last4 = masked.slice(-4);
+  return `••••••••••••${last4}`;
 }
 
 /**
@@ -134,6 +140,7 @@ export async function getTempMailDomains(): Promise<{
   const sanitizedList = list.map((d) => ({
     ...d,
     resendApiKey: undefined,
+    resendApiKeyMasked: d.hasCustomKey ? sanitizeMaskedKey(d.resendApiKeyMasked) : undefined,
   }));
 
   return { domains: sanitizedList, defaultDomain };
@@ -154,7 +161,11 @@ async function saveDomainsToStore(domains: TempMailDomainRecord[]): Promise<bool
   const sanitized = domains.map((d) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { resendApiKey, ...clean } = d;
-    return clean as TempMailDomainRecord;
+    return {
+      ...clean,
+      resendApiKey: undefined,
+      resendApiKeyMasked: clean.hasCustomKey ? sanitizeMaskedKey(clean.resendApiKeyMasked) : undefined,
+    } as TempMailDomainRecord;
   });
 
   // 1. Local file (safely ignore EROFS on read-only environments)
@@ -351,7 +362,7 @@ export async function addTempMailDomain(params: {
     domain: cleanDomain,
     status: isDomainVerified ? 'verified' : domainStatus,
     resendDomainId,
-    resendApiKey: hasCustomKey ? apiKey : undefined,
+    resendApiKey: undefined,
     resendApiKeyMasked: hasCustomKey ? maskApiKey(apiKey) : undefined,
     hasCustomKey,
     dnsRecords,
@@ -464,6 +475,7 @@ export async function syncDomainFromResend(domainOrId: string): Promise<{
 export async function removeTempMailDomain(idOrDomain: string): Promise<boolean> {
   const { domains } = await getTempMailDomains();
   const lower = idOrDomain.toLowerCase().trim();
+  const target = domains.find((d) => d.id === idOrDomain || d.domain.toLowerCase() === lower);
   const filtered = domains.filter((d) => d.id !== idOrDomain && d.domain.toLowerCase() !== lower);
 
   if (filtered.length === domains.length) {
@@ -473,6 +485,14 @@ export async function removeTempMailDomain(idOrDomain: string): Promise<boolean>
   // Ensure there is always at least one default if domains remain
   if (filtered.length > 0 && !filtered.some((d) => d.isDefault)) {
     filtered[0].isDefault = true;
+  }
+
+  if (target?.domain) {
+    try {
+      await deleteAppSecret(`RESEND_KEY_${target.domain.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`);
+    } catch {
+      // ignore
+    }
   }
 
   return saveDomainsToStore(filtered);

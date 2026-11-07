@@ -22,6 +22,43 @@ const CONTENT_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'portfolio-con
 const INBOX_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'inbox-store.json');
 
 /**
+ * Sanitize backup export data:
+ * Exclude per-domain Resend keys and secrets from app_settings,
+ * and strip raw keys from site_settings temp_mail_domains.
+ */
+function sanitizeBackupRows(tableName: string, rows: Record<string, unknown>[]): Record<string, unknown>[] {
+  if (tableName === 'app_settings') {
+    return rows.filter((row) => {
+      const key = String(row.key || '').toUpperCase();
+      return !key.startsWith('RESEND_KEY_') && !row.is_secret;
+    });
+  }
+
+  if (tableName === 'site_settings') {
+    return rows.map((row) => {
+      if (row.key === 'temp_mail_domains' && Array.isArray(row.value)) {
+        return {
+          ...row,
+          value: row.value.map((d: Record<string, unknown>) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { resendApiKey, ...clean } = d;
+            return {
+              ...clean,
+              resendApiKeyMasked: clean.resendApiKeyMasked
+                ? `••••••••••••${String(clean.resendApiKeyMasked).slice(-4)}`
+                : undefined,
+            };
+          }),
+        };
+      }
+      return row;
+    });
+  }
+
+  return rows;
+}
+
+/**
  * Read all data for a specific table (from Supabase if available, else from local JSON)
  */
 export async function getTableRows(tableName: string): Promise<Record<string, unknown>[]> {
@@ -33,7 +70,7 @@ export async function getTableRows(tableName: string): Promise<Record<string, un
       const supabase = supabaseServer();
       const { data, error } = await supabase.from(tableName).select('*');
       if (!error && Array.isArray(data)) {
-        return data as Record<string, unknown>[];
+        return sanitizeBackupRows(tableName, data as Record<string, unknown>[]);
       }
     } catch {
       // Fallback
@@ -41,7 +78,7 @@ export async function getTableRows(tableName: string): Promise<Record<string, un
   }
 
   // 2. Fallback to local files
-  return getLocalTableRows(tableName);
+  return sanitizeBackupRows(tableName, await getLocalTableRows(tableName));
 }
 
 /**
@@ -125,6 +162,15 @@ export async function saveTableRows(
     return { success: true, count: 0 };
   }
 
+  // Filter out any secret keys from being restored/overwritten via backup import
+  let safeRows = rows;
+  if (tableName === 'app_settings') {
+    safeRows = rows.filter((r) => {
+      const key = String(r.key || '').toUpperCase();
+      return !key.startsWith('RESEND_KEY_');
+    });
+  }
+
   let supabaseSuccess = false;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
@@ -132,7 +178,7 @@ export async function saveTableRows(
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
-      const { error } = await supabase.from(tableName).upsert(rows);
+      const { error } = await supabase.from(tableName).upsert(safeRows);
       if (!error) {
         supabaseSuccess = true;
       } else {
@@ -144,11 +190,11 @@ export async function saveTableRows(
   }
 
   // 2. Synchronize to local files
-  await syncRowsToLocal(tableName, rows);
+  await syncRowsToLocal(tableName, safeRows);
 
   return {
     success: true,
-    count: rows.length,
+    count: safeRows.length,
     error: supabaseSuccess ? undefined : 'Saved locally (Supabase table pending or unavailable)',
   };
 }

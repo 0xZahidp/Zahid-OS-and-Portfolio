@@ -106,7 +106,7 @@
     "hasCustomKey": true,
     "resendDomainId": "a1486ef7-6a7e-4184-9e66-0bde15c627e8",
     "isReceivingReady": true,
-    "resendApiKeyMasked": "re_Ky...6J1V"
+    "resendApiKeyMasked": "••••••••••••6J1V"
   },
   {
     "id": "dom_1793773547199_lsf4",
@@ -161,7 +161,7 @@
     "hasCustomKey": true,
     "resendDomainId": "627d6c20-ef0b-4ffe-8d7a-77aef3a60667",
     "isReceivingReady": true,
-    "resendApiKeyMasked": "re_j8...Ca3N"
+    "resendApiKeyMasked": "••••••••••••Ca3N"
   },
   {
     "id": "dom_1793774704432_xws4",
@@ -216,14 +216,14 @@
     "hasCustomKey": true,
     "resendDomainId": "8a8f6594-ef4f-471d-baf4-55463e424e67",
     "isReceivingReady": true,
-    "resendApiKeyMasked": "re_f1...UHFs"
+    "resendApiKeyMasked": "••••••••••••UHFs"
   },
   {
     "id": "dom_1793859652930_bwym",
     "domain": "aromacurtains.com",
     "status": "verified",
     "resendDomainId": "985cecc3-ccc5-442e-a243-edfc8689ddef",
-    "resendApiKeyMasked": "re_ZD...wq2E",
+    "resendApiKeyMasked": "••••••••••••wq2E",
     "hasCustomKey": true,
     "dnsRecords": [
       {

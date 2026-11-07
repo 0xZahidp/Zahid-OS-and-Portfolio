@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (res.ok) {
-      const data = await res.json();
+      let data = await res.json();
       const contentRange = res.headers.get('content-range');
       let totalCount = Array.isArray(data) ? data.length : 0;
 
@@ -86,6 +86,34 @@ export async function GET(req: NextRequest) {
         const parts = contentRange.split('/');
         const parsed = parseInt(parts[1] || '0', 10);
         if (!isNaN(parsed)) totalCount = parsed;
+      }
+
+      // Security scrub: Exclude per-domain Resend keys and raw secrets from generic CRUD
+      if (table === 'app_settings' && Array.isArray(data)) {
+        data = data.filter((row: Record<string, unknown>) => {
+          const k = String(row.key || '').toUpperCase();
+          return !k.startsWith('RESEND_KEY_');
+        });
+        totalCount = data.length;
+      } else if (table === 'site_settings' && Array.isArray(data)) {
+        data = data.map((row: Record<string, unknown>) => {
+          if (row.key === 'temp_mail_domains' && Array.isArray(row.value)) {
+            return {
+              ...row,
+              value: row.value.map((d: Record<string, unknown>) => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { resendApiKey, ...clean } = d;
+                return {
+                  ...clean,
+                  resendApiKeyMasked: clean.resendApiKeyMasked
+                    ? `••••••••••••${String(clean.resendApiKeyMasked).slice(-4)}`
+                    : undefined,
+                };
+              }),
+            };
+          }
+          return row;
+        });
       }
 
       // In-memory search filter if search keyword is present
@@ -127,7 +155,7 @@ export async function GET(req: NextRequest) {
     // If permission denied (403), check error details and provide local fallback data
     const errData = await res.json().catch(() => ({}));
     const grantHint =
-      errData?.hint || `GRANT ALL ON TABLE public.${table} TO anon, authenticated, service_role;`;
+      errData?.hint || `GRANT ALL ON TABLE public.${table} TO service_role;`;
 
     // Attempt local fallback for portfolio_content or app_settings
     let fallbackRows: Record<string, unknown>[] = [];
@@ -203,6 +231,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Security check: Block direct insertion of per-domain Resend keys via generic CRUD
+    if (table === 'app_settings') {
+      const k = String((record as Record<string, unknown>).key || '').toUpperCase();
+      if (k.startsWith('RESEND_KEY_')) {
+        return NextResponse.json(
+          { success: false, error: 'Access denied: RESEND_KEY_* secrets cannot be managed via generic CRUD.' },
+          { status: 403 }
+        );
+      }
+    }
+
     const res = await fetch(`${supabaseUrl}/rest/v1/${encodeURIComponent(table)}`, {
       method: 'POST',
       headers: {
@@ -255,6 +294,18 @@ export async function PATCH(req: NextRequest) {
         { success: false, error: 'Table, pkColumn, pkValue, and updates are required.' },
         { status: 400 }
       );
+    }
+
+    // Security check: Block direct updating of per-domain Resend keys via generic CRUD
+    if (table === 'app_settings') {
+      const targetKey = String(pkValue || '').toUpperCase();
+      const updateKey = String((updates as Record<string, unknown>).key || '').toUpperCase();
+      if (targetKey.startsWith('RESEND_KEY_') || updateKey.startsWith('RESEND_KEY_')) {
+        return NextResponse.json(
+          { success: false, error: 'Access denied: RESEND_KEY_* secrets cannot be managed via generic CRUD.' },
+          { status: 403 }
+        );
+      }
     }
 
     const endpoint = `${supabaseUrl}/rest/v1/${encodeURIComponent(table)}?${encodeURIComponent(
@@ -315,6 +366,17 @@ export async function DELETE(req: NextRequest) {
         { success: false, error: 'Table, pkColumn, and pkValue are required parameters.' },
         { status: 400 }
       );
+    }
+
+    // Security check: Block direct deletion of per-domain Resend keys via generic CRUD
+    if (table === 'app_settings') {
+      const targetKey = String(pkValue || '').toUpperCase();
+      if (targetKey.startsWith('RESEND_KEY_')) {
+        return NextResponse.json(
+          { success: false, error: 'Access denied: RESEND_KEY_* secrets cannot be managed via generic CRUD.' },
+          { status: 403 }
+        );
+      }
     }
 
     const endpoint = `${supabaseUrl}/rest/v1/${encodeURIComponent(table)}?${encodeURIComponent(
