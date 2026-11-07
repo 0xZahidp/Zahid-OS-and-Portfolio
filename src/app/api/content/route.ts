@@ -238,11 +238,10 @@ export async function POST(req: NextRequest) {
 
     const destinations: string[] = [];
 
-    // 1. Write to local file (ensures zero downtime & offline dev)
-    const localSaved = await writeLocalContent(sanitizedContent);
-    if (localSaved) {
-      destinations.push('local_file');
-    }
+    // SINGLE SOURCE OF TRUTH STRATEGY:
+    // Relational tables in Supabase (profiles, languages, skills, projects, etc.) are the primary source of truth.
+    // The legacy monolithic portfolio_content table (id='current') and local JSON file are kept strictly in sync
+    // with the relational data as zero-downtime backwards-compatible mirrors. Reads strictly prefer relational tables.
 
     // 2. Write to Supabase Relational Tables
     let supabaseStatus = 'not_configured';
@@ -408,6 +407,24 @@ export async function POST(req: NextRequest) {
           }
         }
 
+        // Synchronize sanitizedContent with generated IDs and sort order
+        sanitizedContent.languages = langRows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          proficiency: r.proficiency,
+          rating: r.rating,
+          note: r.note,
+          has_voice: r.has_voice,
+          hasVoice: r.has_voice,
+          sort_order: r.sort_order,
+        }));
+        sanitizedContent.experience = expRows;
+        sanitizedContent.projects = projRows;
+        sanitizedContent.skills = skillRows;
+        sanitizedContent.socialLinks = socRows;
+        sanitizedContent.suggestedPeople = peepRows;
+        sanitizedContent.bioParagraphs = bioRows.map((r) => r.content);
+
         // Upsert Profiles table
         const profilePromise = supabase.from('profiles').upsert({
           id: p.id || 'usr_zahid',
@@ -434,7 +451,7 @@ export async function POST(req: NextRequest) {
         ];
         const setPromise = supabase.from('site_settings').upsert(settingsRows);
 
-        // Also upsert legacy monolithic portfolio_content if table exists
+        // Also upsert legacy monolithic portfolio_content with identical sanitized data to maintain single source of truth
         const legacyPromise = (async () => {
           try {
             await supabase.from('portfolio_content').upsert({
@@ -477,24 +494,6 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // Update sanitizedContent with persisted IDs and sort_order so response matches DB
-        sanitizedContent.languages = langRows.map((r) => ({
-          id: r.id,
-          name: r.name,
-          proficiency: r.proficiency,
-          rating: r.rating,
-          note: r.note,
-          has_voice: r.has_voice,
-          hasVoice: r.has_voice,
-          sort_order: r.sort_order,
-        }));
-        sanitizedContent.experience = expRows;
-        sanitizedContent.projects = projRows;
-        sanitizedContent.skills = skillRows;
-        sanitizedContent.socialLinks = socRows;
-        sanitizedContent.suggestedPeople = peepRows;
-        sanitizedContent.bioParagraphs = bioRows.map((r) => r.content);
-
         if (!profileRes.error) {
           destinations.push('supabase_relational');
           supabaseStatus = 'success';
@@ -520,6 +519,12 @@ export async function POST(req: NextRequest) {
         const errMessage = err instanceof Error ? err.message : 'Supabase sync failed';
         supabaseStatus = `error: ${errMessage}`;
       }
+    }
+
+    // Write to local file (ensures zero downtime & offline dev fallback)
+    const localSaved = await writeLocalContent(sanitizedContent);
+    if (localSaved) {
+      destinations.push('local_file');
     }
 
     const response: CmsSaveResponse = {
