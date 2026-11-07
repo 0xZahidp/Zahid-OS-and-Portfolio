@@ -4,9 +4,11 @@ const path = require('path');
 const content = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/data/portfolio-content.json'), 'utf8'));
 
 let sql = `-- ========================================================
--- FolioFrame Complete Relational Schema & Data Migration
--- Run this in your Supabase SQL Editor:
--- https://supabase.com/dashboard/project/txrnbazpdyoaazszkwwq/sql/new
+-- WARNING: THIS FILE MUST NEVER BE RUN DIRECTLY.
+-- This file is a legacy reference export of the relational schema.
+-- Running this file directly against a live Supabase database will
+-- bypass versioned migrations and zero-trust security postures.
+-- Always apply the versioned migrations in \`supabase/migrations/\`.
 -- ========================================================
 
 -- 1. PROFILES TABLE
@@ -144,11 +146,6 @@ CREATE TABLE IF NOT EXISTS public.app_settings (
 );
 ALTER TABLE IF EXISTS public.app_settings ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
 
--- 12. GRANT PERMISSIONS (Essential for Supabase anon & service_role access)
-GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
 
 -- ========================================================
 -- SEED INITIAL REAL DATA

@@ -1,7 +1,9 @@
 -- ========================================================
--- FolioFrame Complete Relational Schema & Data Migration
--- Run this in your Supabase SQL Editor:
--- https://supabase.com/dashboard/project/txrnbazpdyoaazszkwwq/sql/new
+-- WARNING: THIS FILE MUST NEVER BE RUN DIRECTLY.
+-- This file is a legacy reference export of the relational schema.
+-- Running this file directly against a live Supabase database will
+-- bypass versioned migrations and zero-trust security postures.
+-- Always apply the versioned migrations in `supabase/migrations/`.
 -- ========================================================
 
 -- 1. PROFILES TABLE
@@ -222,11 +224,6 @@ CREATE TABLE IF NOT EXISTS public.os_notes (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 13. GRANT PERMISSIONS (Essential for Supabase anon & service_role access)
-GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
 
 -- ========================================================
 -- SEED INITIAL REAL DATA
