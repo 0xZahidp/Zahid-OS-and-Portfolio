@@ -149,13 +149,9 @@ export async function getTempMailDomains(): Promise<{
 /**
  * Persist domains to Supabase site_settings and local JSON file
  */
-async function saveDomainsToStore(domains: TempMailDomainRecord[]): Promise<boolean> {
-  const defaultItem = domains.find((d) => d.isDefault) || domains[0];
-  memoryDomainsCache = {
-    domains,
-    defaultDomain: defaultItem?.domain || 'zahidp.com',
-    timestamp: Date.now(),
-  };
+export async function saveDomainsToStore(domains: TempMailDomainRecord[]): Promise<boolean> {
+  let fileSaved = false;
+  let supabaseSaved = false;
 
   // Strip raw API key from persisted JSON/settings (keys are stored safely in app_settings vault)
   const sanitized = domains.map((d) => {
@@ -172,6 +168,7 @@ async function saveDomainsToStore(domains: TempMailDomainRecord[]): Promise<bool
   if (!process.env.VERCEL) {
     try {
       await fs.writeFile(DOMAINS_FILE_PATH, JSON.stringify(sanitized, null, 2), 'utf-8');
+      fileSaved = true;
     } catch (err) {
       console.warn('[TempMailDomains] Local file write skipped (read-only environment):', err);
     }
@@ -182,7 +179,7 @@ async function saveDomainsToStore(domains: TempMailDomainRecord[]): Promise<bool
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
-      await supabase.from('site_settings').upsert(
+      const { error } = await supabase.from('site_settings').upsert(
         {
           key: 'temp_mail_domains',
           value: sanitized,
@@ -190,11 +187,26 @@ async function saveDomainsToStore(domains: TempMailDomainRecord[]): Promise<bool
         },
         { onConflict: 'key' }
       );
+      if (!error) {
+        supabaseSaved = true;
+      } else {
+        console.warn('[TempMailDomains] Supabase save error:', error.message);
+      }
     } catch (err) {
       console.warn('[TempMailDomains] Supabase save error:', err);
-      return false;
     }
   }
+
+  if (!fileSaved && !supabaseSaved) {
+    throw new Error('Failed to save temp mail domains to storage');
+  }
+
+  const defaultItem = domains.find((d) => d.isDefault) || domains[0];
+  memoryDomainsCache = {
+    domains,
+    defaultDomain: defaultItem?.domain || 'zahidp.com',
+    timestamp: Date.now(),
+  };
 
   return true;
 }

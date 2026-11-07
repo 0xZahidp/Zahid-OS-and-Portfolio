@@ -139,8 +139,6 @@ export async function saveHealthCollection<K extends HealthCollectionKey>(
   collection: K,
   data: HealthCollections[K]
 ): Promise<boolean> {
-  memoryCache[collection] = { data, timestamp: Date.now() };
-
   let supabaseSaved = false;
   let fileSaved = false;
 
@@ -176,7 +174,13 @@ export async function saveHealthCollection<K extends HealthCollectionKey>(
     }
   }
 
-  return supabaseSaved || fileSaved;
+  if (!supabaseSaved && !fileSaved) {
+    throw new Error(`Failed to save health collection: ${collection}`);
+  }
+
+  memoryCache[collection] = { data, timestamp: Date.now() };
+
+  return true;
 }
 
 /**

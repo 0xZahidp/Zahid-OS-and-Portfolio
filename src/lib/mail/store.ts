@@ -234,24 +234,52 @@ export async function readMailStore(): Promise<MailStoreData> {
 }
 
 export async function writeMailStore(data: MailStoreData): Promise<boolean> {
-  if (process.env.VERCEL) {
-    return true;
+  let fileSaved = false;
+  let supabaseSaved = false;
+
+  data.updatedAt = new Date().toISOString();
+  if (!Array.isArray(data.messages)) {
+    data.messages = [];
   }
-  try {
-    data.updatedAt = new Date().toISOString();
-    if (!Array.isArray(data.messages)) {
-      data.messages = [];
+
+  data.messages = data.messages.map((m) => normalizeMessage(m as unknown as Record<string, unknown>));
+
+  if (!process.env.VERCEL) {
+    try {
+      await fs.writeFile(STORE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+      fileSaved = true;
+    } catch (err) {
+      console.warn('[MailStore] Failed to write local mail store:', err);
     }
-
-    data.messages = data.messages.map((m) => normalizeMessage(m as unknown as Record<string, unknown>));
-
-    await fs.writeFile(STORE_PATH, JSON.stringify(data, null, 2), 'utf-8');
-
-    return true;
-  } catch (err) {
-    console.warn('[MailStore] Failed to write mail store:', err);
-    return false;
   }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    try {
+      const supabase = supabaseServer();
+      const { error } = await supabase.from('site_settings').upsert(
+        {
+          key: 'inbox_store',
+          value: data,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'key' }
+      );
+      if (!error) {
+        supabaseSaved = true;
+      } else {
+        console.warn('[MailStore] Supabase site_settings error in writeMailStore:', error.message);
+      }
+    } catch (err) {
+      console.warn('[MailStore] Supabase write error:', err);
+    }
+  }
+
+  if (!fileSaved && !supabaseSaved) {
+    throw new Error('Failed to save mail store to storage');
+  }
+
+  return true;
 }
 
 export function filterMailMessages(

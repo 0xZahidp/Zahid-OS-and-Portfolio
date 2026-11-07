@@ -210,7 +210,7 @@ export const EmergencyCard: React.FC<EmergencyCardProps> = ({
       setIsEditing(false);
       showToast('✓ Emergency card updated');
     } catch {
-      showToast('✕ Failed to save emergency card');
+      showToast('✕ Save failed, retry');
     } finally {
       setIsSaving(false);
     }

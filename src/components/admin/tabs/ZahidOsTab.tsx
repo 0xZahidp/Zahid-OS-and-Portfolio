@@ -36,6 +36,8 @@ import {
   Compass,
   Mail,
   Terminal,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { ShortLink, ZahidOsAppId, ZahidOsSettings } from '@/types/os';
 import { TravelWorkspace } from '@/components/os/travel/TravelWorkspace';
@@ -127,7 +129,7 @@ export const ZahidOsTab: React.FC = () => {
     },
   });
   const [isSavingSettings, setIsSavingSettings] = useState<boolean>(false);
-  const [settingsSaveSuccess, setSettingsSaveSuccess] = useState<boolean>(false);
+  const [settingsSaveState, setSettingsSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   // Clock ticker
   useEffect(() => {
@@ -367,7 +369,7 @@ export const ZahidOsTab: React.FC = () => {
       }
 
       if (!res.ok || !data?.success) {
-        setFormError(data?.error || 'Failed to save short link.');
+        setFormError(data?.error || 'Save failed, retry');
         setIsSubmittingLink(false);
         return;
       }
@@ -375,8 +377,8 @@ export const ZahidOsTab: React.FC = () => {
       setLinks(data.links || []);
       setIsModalOpen(false);
       setIsSubmittingLink(false);
-    } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : 'Network error saving link');
+    } catch {
+      setFormError('Save failed, retry');
       setIsSubmittingLink(false);
     }
   };
@@ -412,7 +414,7 @@ export const ZahidOsTab: React.FC = () => {
 
   const handleSaveSettings = async () => {
     setIsSavingSettings(true);
-    setSettingsSaveSuccess(false);
+    setSettingsSaveState('saving');
     try {
       const res = await fetch('/api/os/settings', {
         method: 'POST',
@@ -424,11 +426,14 @@ export const ZahidOsTab: React.FC = () => {
         if (data.settings) {
           setOsSettings(data.settings);
         }
-        setSettingsSaveSuccess(true);
-        setTimeout(() => setSettingsSaveSuccess(false), 3000);
+        setSettingsSaveState('saved');
+        setTimeout(() => setSettingsSaveState('idle'), 3000);
+      } else {
+        setSettingsSaveState('error');
       }
     } catch (err) {
       console.warn('Failed to save OS settings:', err);
+      setSettingsSaveState('error');
     } finally {
       setIsSavingSettings(false);
     }
@@ -1046,10 +1051,24 @@ export const ZahidOsTab: React.FC = () => {
                 type="button"
                 onClick={handleSaveSettings}
                 disabled={isSavingSettings}
-                className="h-9 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md disabled:opacity-50"
+                className={`h-9 px-4 rounded-xl font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md disabled:opacity-50 ${
+                  settingsSaveState === 'error'
+                    ? 'bg-rose-500 hover:bg-rose-600 text-white'
+                    : 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                }`}
               >
-                {settingsSaveSuccess ? <Check className="size-3.5" /> : null}
-                <span>{settingsSaveSuccess ? 'Saved!' : isSavingSettings ? 'Saving...' : 'Save Settings'}</span>
+                {settingsSaveState === 'saved' && <Check className="size-3.5" />}
+                {settingsSaveState === 'error' && <AlertCircle className="size-3.5" />}
+                {settingsSaveState === 'saving' && <Loader2 className="size-3.5 animate-spin" />}
+                <span>
+                  {settingsSaveState === 'saved'
+                    ? 'Saved ✓'
+                    : settingsSaveState === 'error'
+                    ? 'Save failed, retry'
+                    : isSavingSettings
+                    ? 'Saving...'
+                    : 'Save Settings'}
+                </span>
               </button>
             </div>
 

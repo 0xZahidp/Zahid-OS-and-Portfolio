@@ -135,7 +135,7 @@ export const MedicationsSubTab: React.FC<MedicationsSubTabProps> = ({
       showToast('✓ Medication saved');
       closeSlideOver();
     } catch {
-      showToast('✕ Failed to save medication');
+      showToast('✕ Save failed, retry');
     } finally {
       setIsSaving(false);
     }

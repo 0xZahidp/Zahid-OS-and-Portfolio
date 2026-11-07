@@ -231,7 +231,7 @@ export const VitalsSubTab: React.FC<VitalsSubTabProps> = ({
       setVitalValue2('');
       setVitalNote('');
     } catch {
-      showToast('✕ Failed to record measurement');
+      showToast('✕ Save failed, retry');
     } finally {
       setIsSavingVital(false);
     }
@@ -263,7 +263,7 @@ export const VitalsSubTab: React.FC<VitalsSubTabProps> = ({
       setVaccineDueDate('');
       setVaccineNotes('');
     } catch {
-      showToast('✕ Failed to save vaccination');
+      showToast('✕ Save failed, retry');
     } finally {
       setIsSavingVaccine(false);
     }

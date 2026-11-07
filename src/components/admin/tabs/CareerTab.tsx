@@ -2112,7 +2112,7 @@ Md Zahid Hasan Patwary`;
               </span>
             )}
             {saveState === 'error' && (
-              <span className="text-[10px] text-rose-500 font-semibold">Save failed</span>
+              <span className="text-[10px] text-rose-500 font-semibold">Save failed, retry</span>
             )}
 
             {/* Close Button */}

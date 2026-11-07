@@ -86,10 +86,10 @@ async function readLocalStore(): Promise<LocalTempStore> {
   }
 }
 
-async function writeLocalStore(store: LocalTempStore): Promise<void> {
+export async function writeLocalStore(store: LocalTempStore): Promise<boolean> {
   memoryTempStore = store;
   if (process.env.VERCEL) {
-    return;
+    throw new Error('Local file writes are disabled on Vercel');
   }
   try {
     // Purge expired records before saving
@@ -105,8 +105,10 @@ async function writeLocalStore(store: LocalTempStore): Promise<void> {
       JSON.stringify({ inboxes: activeInboxes, messages: activeMessages }, null, 2),
       'utf-8'
     );
+    return true;
   } catch (err) {
     console.warn('Failed to write temp-mail-store.json:', err);
+    throw err;
   }
 }
 
@@ -276,6 +278,9 @@ export async function createTempInbox(params: {
     is_active: true,
   };
 
+  let supabaseSaved = false;
+  let fileSaved = false;
+
   // 1. Try Supabase
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
@@ -320,33 +325,42 @@ export async function createTempInbox(params: {
       });
 
       if (!error) {
-        // Also sync to local file for offline resilience
-        const store = await readLocalStore();
-        store.inboxes.unshift(inboxRecord);
-        await writeLocalStore(store);
-        return inboxRecord;
+        supabaseSaved = true;
+      } else {
+        console.warn('Supabase createTempInbox error:', error.message);
       }
     } catch (err: unknown) {
-      console.warn('Supabase createTempInbox fallback to local file:', err);
+      console.warn('Supabase createTempInbox error:', err);
     }
   }
 
-  // 2. Local fallback
-  const store = await readLocalStore();
-  const nowIso = now.toISOString();
+  // 2. Local fallback / sync
+  if (!process.env.VERCEL) {
+    try {
+      const store = await readLocalStore();
+      const nowIso = now.toISOString();
 
-  // Prune expired inboxes and deduplicate
-  store.inboxes = store.inboxes.filter(
-    (i) => i.expires_at > nowIso && i.address.toLowerCase() !== address
-  );
+      // Prune expired inboxes and deduplicate
+      store.inboxes = store.inboxes.filter(
+        (i) => i.expires_at > nowIso && i.address.toLowerCase() !== address
+      );
 
-  // If local store has accumulated >= 15 inboxes, keep only the latest 14
-  if (store.inboxes.length >= 15) {
-    store.inboxes = store.inboxes.slice(0, 14);
+      // If local store has accumulated >= 15 inboxes, keep only the latest 14
+      if (store.inboxes.length >= 15) {
+        store.inboxes = store.inboxes.slice(0, 14);
+      }
+
+      store.inboxes.unshift(inboxRecord);
+      await writeLocalStore(store);
+      fileSaved = true;
+    } catch (err) {
+      console.warn('Local createTempInbox write error:', err);
+    }
   }
 
-  store.inboxes.unshift(inboxRecord);
-  await writeLocalStore(store);
+  if (!supabaseSaved && !fileSaved) {
+    throw new Error('Failed to create temp inbox in storage');
+  }
 
   return inboxRecord;
 }
@@ -576,6 +590,8 @@ export async function getTempInboxMessages(
  */
 export async function deleteTempInbox(inboxAddress: string, token?: string): Promise<boolean> {
   const cleanAddress = inboxAddress.toLowerCase().trim();
+  let supabaseSaved = false;
+  let fileSaved = false;
 
   // 1. Try Supabase
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -586,18 +602,32 @@ export async function deleteTempInbox(inboxAddress: string, token?: string): Pro
       if (token) {
         query = query.eq('token', token);
       }
-      await query;
-      await supabase.from('os_temp_messages').delete().eq('inbox_address', cleanAddress);
+      const { error: err1 } = await query;
+      const { error: err2 } = await supabase.from('os_temp_messages').delete().eq('inbox_address', cleanAddress);
+      if (!err1 && !err2) {
+        supabaseSaved = true;
+      }
     } catch {
       // fallback
     }
   }
 
   // 2. Local Fallback
-  const store = await readLocalStore();
-  store.inboxes = store.inboxes.filter((i) => i.address.toLowerCase() !== cleanAddress);
-  store.messages = store.messages.filter((m) => m.inbox_address.toLowerCase() !== cleanAddress);
-  await writeLocalStore(store);
+  if (!process.env.VERCEL) {
+    try {
+      const store = await readLocalStore();
+      store.inboxes = store.inboxes.filter((i) => i.address.toLowerCase() !== cleanAddress);
+      store.messages = store.messages.filter((m) => m.inbox_address.toLowerCase() !== cleanAddress);
+      await writeLocalStore(store);
+      fileSaved = true;
+    } catch {
+      fileSaved = false;
+    }
+  }
+
+  if (!supabaseSaved && !fileSaved) {
+    throw new Error('Failed to delete temp inbox from storage');
+  }
 
   return true;
 }

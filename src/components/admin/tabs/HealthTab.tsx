@@ -243,8 +243,8 @@ export const HealthTab: React.FC = () => {
       setHealthData((prev) => ({ ...prev, profile: updated }));
       setSaveStatus('All changes encrypted & saved');
     } catch {
-      setSaveStatus('Failed to save profile');
-      throw new Error('Failed to save profile');
+      setSaveStatus('Save failed, retry');
+      throw new Error('Save failed, retry');
     } finally {
       setIsSaving(false);
     }
@@ -274,7 +274,7 @@ export const HealthTab: React.FC = () => {
       });
       setSaveStatus('All changes encrypted & saved');
     } catch {
-      setSaveStatus('Save error');
+      setSaveStatus('Save failed, retry');
       throw new Error();
     } finally {
       setIsSaving(false);
@@ -403,7 +403,7 @@ export const HealthTab: React.FC = () => {
       });
       setSaveStatus('All changes encrypted & saved');
     } catch {
-      setSaveStatus('Save error');
+      setSaveStatus('Save failed, retry');
       throw new Error();
     } finally {
       setIsSaving(false);
@@ -772,6 +772,11 @@ export const HealthTab: React.FC = () => {
               <>
                 <Loader2 className="size-3 animate-spin text-brand-500" />
                 <span>Saving...</span>
+              </>
+            ) : saveStatus === 'Save failed, retry' ? (
+              <>
+                <AlertCircle className="size-3.5 text-rose-500" />
+                <span className="text-rose-500 font-medium">Save failed, retry</span>
               </>
             ) : (
               <>

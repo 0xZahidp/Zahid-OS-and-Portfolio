@@ -67,15 +67,14 @@ export async function getCareerApplications(): Promise<{
 export async function saveCareerApplications(
   applications: CareerApplication[]
 ): Promise<boolean> {
-  memoryCache = {
-    applications,
-    timestamp: Date.now(),
-  };
+  let fileSaved = false;
+  let supabaseSaved = false;
 
   // 1. Local JSON write (safely ignore EROFS in read-only production, skip on Vercel)
   if (!process.env.VERCEL) {
     try {
       await fs.writeFile(CAREER_FILE_PATH, JSON.stringify(applications, null, 2), 'utf-8');
+      fileSaved = true;
     } catch (err) {
       console.warn('[CareerStore] Local file write skipped (read-only environment):', err);
     }
@@ -86,7 +85,7 @@ export async function saveCareerApplications(
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
-      await supabase.from('site_settings').upsert(
+      const { error } = await supabase.from('site_settings').upsert(
         {
           key: 'career_applications',
           value: applications,
@@ -94,11 +93,24 @@ export async function saveCareerApplications(
         },
         { onConflict: 'key' }
       );
+      if (!error) {
+        supabaseSaved = true;
+      } else {
+        console.warn('[CareerStore] Supabase write error:', error.message);
+      }
     } catch (err) {
       console.warn('[CareerStore] Supabase write error:', err);
-      return false;
     }
   }
+
+  if (!fileSaved && !supabaseSaved) {
+    throw new Error('Failed to save career applications to storage');
+  }
+
+  memoryCache = {
+    applications,
+    timestamp: Date.now(),
+  };
 
   return true;
 }

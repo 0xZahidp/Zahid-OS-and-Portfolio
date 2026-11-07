@@ -172,6 +172,7 @@ export async function saveTableRows(
   }
 
   let supabaseSuccess = false;
+  let localSuccess = false;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   // 1. Try Supabase Upsert
@@ -190,7 +191,18 @@ export async function saveTableRows(
   }
 
   // 2. Synchronize to local files
-  await syncRowsToLocal(tableName, safeRows);
+  if (!process.env.VERCEL) {
+    try {
+      await syncRowsToLocal(tableName, safeRows);
+      localSuccess = true;
+    } catch (err) {
+      console.warn(`Local sync error on ${tableName}:`, err);
+    }
+  }
+
+  if (!supabaseSuccess && !localSuccess) {
+    throw new Error(`Failed to save table rows for ${tableName}`);
+  }
 
   return {
     success: true,
@@ -202,14 +214,14 @@ export async function saveTableRows(
 /**
  * Synchronize table rows into local JSON files so local offline dev and SSR remain 100% in sync
  */
-async function syncRowsToLocal(tableName: string, rows: Record<string, unknown>[]) {
+export async function syncRowsToLocal(tableName: string, rows: Record<string, unknown>[]): Promise<boolean> {
   if (process.env.VERCEL) {
-    return;
+    throw new Error('Local file writes are disabled on Vercel');
   }
   try {
     if (tableName === 'inbox_messages') {
       await fs.writeFile(INBOX_FILE_PATH, JSON.stringify(rows, null, 2), 'utf-8');
-      return;
+      return true;
     }
 
     const contentRaw = await fs.readFile(CONTENT_FILE_PATH, 'utf-8');
@@ -255,7 +267,9 @@ async function syncRowsToLocal(tableName: string, rows: Record<string, unknown>[
 
     content.updatedAt = new Date().toISOString();
     await fs.writeFile(CONTENT_FILE_PATH, JSON.stringify(content, null, 2), 'utf-8');
+    return true;
   } catch (err) {
     console.error('Failed to sync rows to local storage:', err);
+    throw err;
   }
 }

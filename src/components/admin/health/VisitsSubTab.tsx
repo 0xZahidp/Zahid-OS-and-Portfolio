@@ -121,7 +121,7 @@ export const VisitsSubTab: React.FC<VisitsSubTabProps> = ({
       showToast('✓ Doctor visit saved');
       closeSlideOver();
     } catch {
-      showToast('✕ Failed to save doctor visit');
+      showToast('✕ Save failed, retry');
     } finally {
       setIsSaving(false);
     }

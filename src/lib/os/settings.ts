@@ -126,13 +126,14 @@ export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promis
     updated_at: new Date().toISOString(),
   };
 
-  // Immediate in-memory cache update
-  memorySettingsCache = { settings: merged, timestamp: Date.now() };
+  let fileSaved = false;
+  let supabaseSaved = false;
 
   // 1. Save to local file (safely ignore EROFS in read-only / Vercel environments, skip on Vercel)
   if (!process.env.VERCEL) {
     try {
       await fs.writeFile(SETTINGS_FILE_PATH, JSON.stringify(merged, null, 2), 'utf-8');
+      fileSaved = true;
     } catch (err) {
       console.warn('[saveOsSettings] Local file write skipped (read-only environment):', err);
     }
@@ -141,11 +142,11 @@ export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promis
   // 2. Sync to Supabase
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
-    const supabase = supabaseServer();
-
-    // 2a. Sync to site_settings (active JSON store)
     try {
-      await supabase.from('site_settings').upsert(
+      const supabase = supabaseServer();
+
+      // 2a. Sync to site_settings (active JSON store)
+      const { error: settingsError } = await supabase.from('site_settings').upsert(
         {
           key: 'zahid_os_settings',
           value: merged,
@@ -153,30 +154,42 @@ export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promis
         },
         { onConflict: 'key' }
       );
-    } catch (err) {
-      console.warn('[saveOsSettings] Error saving OS settings to site_settings:', err);
-    }
+      if (!settingsError) {
+        supabaseSaved = true;
+      } else {
+        console.warn('[saveOsSettings] Error saving OS settings to site_settings:', settingsError.message);
+      }
 
-    // 2b. Sync to dedicated table 'os_settings' if present
-    try {
-      await supabase.from('os_settings').upsert(
-        {
-          id: 'default',
-          is_public_enabled: merged.is_public_enabled,
-          allow_public_link_creation: merged.allow_public_link_creation ?? false,
-          public_hero_title: merged.public_hero_title,
-          public_hero_subtitle: merged.public_hero_subtitle,
-          wallpaper: merged.wallpaper,
-          sound_effects: merged.sound_effects,
-          app_permissions: merged.app_permissions,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'id' }
-      );
-    } catch {
-      // Table may not exist yet, site_settings already saved
+      // 2b. Sync to dedicated table 'os_settings' if present
+      try {
+        await supabase.from('os_settings').upsert(
+          {
+            id: 'default',
+            is_public_enabled: merged.is_public_enabled,
+            allow_public_link_creation: merged.allow_public_link_creation ?? false,
+            public_hero_title: merged.public_hero_title,
+            public_hero_subtitle: merged.public_hero_subtitle,
+            wallpaper: merged.wallpaper,
+            sound_effects: merged.sound_effects,
+            app_permissions: merged.app_permissions,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' }
+        );
+      } catch {
+        // Table may not exist yet, site_settings already saved
+      }
+    } catch (err) {
+      console.warn('[saveOsSettings] Error saving OS settings to Supabase:', err);
     }
   }
+
+  if (!fileSaved && !supabaseSaved) {
+    throw new Error('Failed to save OS settings to storage');
+  }
+
+  // Immediate in-memory cache update
+  memorySettingsCache = { settings: merged, timestamp: Date.now() };
 
   return merged;
 }

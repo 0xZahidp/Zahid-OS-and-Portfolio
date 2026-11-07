@@ -232,10 +232,13 @@ export async function saveShortLinks(links: ShortLink[]): Promise<boolean> {
     }
   }
 
+  if (!supabaseSaved && !fileSaved) {
+    throw new Error('Failed to save short links to storage');
+  }
+
   memoryLinksCache = { links, timestamp: Date.now() };
 
-  // True if saved to Supabase OR local file (or on Vercel where Supabase saved)
-  return supabaseSaved || fileSaved || Boolean(process.env.VERCEL && supabaseSaved);
+  return true;
 }
 
 /**

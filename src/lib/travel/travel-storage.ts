@@ -495,6 +495,7 @@ export async function getTravelData(): Promise<{
 export async function saveTravelData(districts: DistrictTravelData[]): Promise<boolean> {
   memoryTravelCache = null;
   let fileSaved = false;
+  let supabaseSaved = false;
 
   // 1. Save to local file (skip on Vercel)
   if (!process.env.VERCEL) {
@@ -568,7 +569,7 @@ export async function saveTravelData(districts: DistrictTravelData[]): Promise<b
       }
 
       // Also persist to site_settings as resilient backup
-      await supabase.from('site_settings').upsert(
+      const { error: settingsErr } = await supabase.from('site_settings').upsert(
         {
           key: 'zahid_os_travel_data',
           value: districts,
@@ -576,11 +577,18 @@ export async function saveTravelData(districts: DistrictTravelData[]): Promise<b
         },
         { onConflict: 'key' }
       );
+      if (!settingsErr) {
+        supabaseSaved = true;
+      }
     } catch (err) {
       console.warn('Error syncing travel data to Supabase:', err);
     }
   }
 
-  return fileSaved;
+  if (!fileSaved && !supabaseSaved) {
+    throw new Error('Failed to save travel data to storage');
+  }
+
+  return true;
 }
 

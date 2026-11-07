@@ -247,7 +247,7 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
       setCompressionStats(null);
       await onRefreshData();
     } catch {
-      showToast('✕ Failed to upload document');
+      showToast('✕ Save failed, retry');
     } finally {
       setIsUploading(false);
     }
