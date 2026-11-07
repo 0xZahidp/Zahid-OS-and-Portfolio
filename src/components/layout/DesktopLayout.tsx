@@ -179,12 +179,12 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           </div>
         ) : activeSection === 'focus' ? (
           <div>
-            {/* Sticky Header for Focus View */}
-            <header className="sticky top-0 z-30 flex h-[4.375rem] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
+            {/* Sticky Header for Focus View (No right-side Follow button, 1px bottom border) */}
+            <header className="sticky top-0 z-30 flex h-[4.375rem] items-center px-6 lg:px-10 border-b border-line bg-surface/85 backdrop-blur-md">
               <h1 className="text-xl font-bold tracking-tight text-ink">Focus</h1>
             </header>
 
-            <div className="px-6 py-8 lg:px-8">
+            <div className="max-w-[1070px] mx-auto px-6 sm:px-8 lg:px-10 py-8">
               <FocusSection />
               {renderFooter()}
             </div>
@@ -244,12 +244,14 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         )}
       </main>
 
-      {/* 3. Right Column (Sticky Follow & Socials Sidebar) */}
-      <RightSidebar
-        onContactClick={handleContactClick}
-        onNavigate={onNavigate}
-        activeSection={activeSection}
-      />
+      {/* 3. Right Column (Sticky Follow & Socials Sidebar - Omitted on Focus page) */}
+      {activeSection !== 'focus' && (
+        <RightSidebar
+          onContactClick={handleContactClick}
+          onNavigate={onNavigate}
+          activeSection={activeSection}
+        />
+      )}
 
       {/* Share Profile Modal */}
       <ShareModal

@@ -48,7 +48,7 @@ export const SoundCategoriesBar: React.FC<SoundCategoriesBarProps> = ({
             <button
               type="button"
               onClick={() => onSearchChange('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-3 hover:text-ink"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-3 hover:text-ink cursor-pointer"
             >
               Clear
             </button>
@@ -56,11 +56,11 @@ export const SoundCategoriesBar: React.FC<SoundCategoriesBarProps> = ({
         </div>
       </div>
 
-      {/* Horizontally Scrollable Category Chips with Right Arrow */}
+      {/* Horizontally Scrollable Category Chips with Right Fade & Arrow */}
       <div className="relative flex items-center">
         <div
           ref={scrollContainerRef}
-          className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 pr-12 w-full"
+          className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 pr-14 w-full"
         >
           {SOUND_CATEGORIES.map((cat: SoundCategory) => {
             const isSelected = activeCategoryId === cat.id;
@@ -87,6 +87,9 @@ export const SoundCategoriesBar: React.FC<SoundCategoriesBarProps> = ({
             );
           })}
         </div>
+
+        {/* Right fade mask gradient */}
+        <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-surface via-surface/85 to-transparent pointer-events-none z-5" />
 
         {/* Scroll Right Button */}
         <button

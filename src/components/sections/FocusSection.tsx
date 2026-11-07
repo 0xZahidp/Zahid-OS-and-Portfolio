@@ -6,6 +6,7 @@ import { useFocusAudio } from '@/lib/focus/useFocusAudio';
 import { FocusHero } from '@/components/focus/FocusHero';
 import { SoundCategoriesBar } from '@/components/focus/SoundCategoriesBar';
 import { SoundCard } from '@/components/focus/SoundCard';
+import { FocusMiniPlayer } from '@/components/focus/FocusMiniPlayer';
 import { YouTubeSection } from '@/components/focus/YouTubeSection';
 import { FocusCredits } from '@/components/focus/FocusCredits';
 import { FocusIcon } from '@/components/focus/FocusIcon';
@@ -16,10 +17,15 @@ export const FocusSection: React.FC = () => {
     activePreset,
     currentQuote,
     volumes,
+    masterVolume,
+    setMasterVolume,
     isPlaying,
     isFullscreen,
+    activeSounds,
+    activeSoundCount,
     setSoundVolume,
     togglePlay,
+    stopAll,
     applyPreset,
     shufflePreset,
     nextQuote,
@@ -63,8 +69,8 @@ export const FocusSection: React.FC = () => {
   };
 
   return (
-    <div className="w-full space-y-10 pb-16">
-      {/* 1. HERO SECTION (Screenshot 1) */}
+    <div className="w-full space-y-10 pb-28 sm:pb-32">
+      {/* 1. HERO SECTION */}
       <FocusHero
         heroRef={heroRef}
         activePreset={activePreset}
@@ -78,7 +84,7 @@ export const FocusSection: React.FC = () => {
         onSelectPreset={(preset: FocusPreset) => applyPreset(preset, isPlaying)}
       />
 
-      {/* 2. SOUNDS HEADING & CATEGORY CHIPS BAR (Screenshot 2) */}
+      {/* 2. SOUNDS HEADING & CATEGORY CHIPS BAR */}
       <SoundCategoriesBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -86,7 +92,7 @@ export const FocusSection: React.FC = () => {
         onSelectCategory={handleSelectCategory}
       />
 
-      {/* 3. CATEGORIES & 4-COLUMN GLASS SOUND CARDS (Screenshots 2 & 3) */}
+      {/* 3. CATEGORIES & 4-COLUMN SOUND CARDS (4 col desktop, 3 col tablet, 2 col mobile) */}
       <div className="space-y-8">
         {SOUND_CATEGORIES.map((category: SoundCategory) => {
           const sounds = filteredSoundsByCategory.get(category.id);
@@ -109,13 +115,14 @@ export const FocusSection: React.FC = () => {
               </div>
 
               {/* 4-Column Grid of Sound Glass Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-3.5">
                 {sounds.map((sound: Sound) => (
                   <SoundCard
                     key={sound.id}
                     sound={sound}
                     category={category}
                     volume={volumes[sound.id] || 0}
+                    isPlaying={isPlaying}
                     onVolumeChange={(vol: number) => setSoundVolume(sound.id, vol)}
                   />
                 ))}
@@ -132,11 +139,31 @@ export const FocusSection: React.FC = () => {
         )}
       </div>
 
-      {/* 4. YOUTUBE SECTION (Screenshot 4) */}
+      {/* 4. YOUTUBE SECTION */}
       <YouTubeSection />
 
-      {/* 5. CREDITS ACCORDION (Screenshot 5) */}
+      {/* 5. CREDITS ACCORDION */}
       <FocusCredits />
+
+      {/* 6. FLOATING MINI PLAYER (Visible when activeSoundCount > 0) */}
+      <FocusMiniPlayer
+        activePreset={activePreset}
+        activeSounds={activeSounds}
+        activeSoundCount={activeSoundCount}
+        isPlaying={isPlaying}
+        masterVolume={masterVolume}
+        onMasterVolumeChange={setMasterVolume}
+        onTogglePlay={togglePlay}
+        onStopAll={stopAll}
+        onToggleFullscreen={toggleFullscreen}
+        onScrollToTop={() => {
+          if (heroRef.current) {
+            heroRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else if (typeof window !== 'undefined') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }}
+      />
     </div>
   );
 };

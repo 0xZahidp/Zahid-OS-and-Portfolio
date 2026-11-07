@@ -5,14 +5,16 @@ import { Volume2, VolumeX } from 'lucide-react';
 
 interface SoundSliderProps {
   volume: number; // 0 - 100
+  isPlaying?: boolean;
   onChange: (val: number) => void;
   accentClass?: string;
 }
 
 export const SoundSlider: React.FC<SoundSliderProps> = ({
   volume,
+  isPlaying = false,
   onChange,
-  accentClass = 'bg-neutral-400/80 dark:bg-neutral-500/80',
+  accentClass,
 }) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const [lastNonZero, setLastNonZero] = useState<number>(50);
@@ -64,6 +66,22 @@ export const SoundSlider: React.FC<SoundSliderProps> = ({
     window.addEventListener('touchend', handleTouchEnd);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      onChange(Math.max(0, volume - 5));
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      onChange(Math.min(100, volume + 5));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      onChange(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      onChange(100);
+    }
+  };
+
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (volume > 0) {
@@ -76,50 +94,55 @@ export const SoundSlider: React.FC<SoundSliderProps> = ({
 
   const isMuted = volume === 0;
 
+  // Active color: brand green (#0E9F6E) when playing, neutral gray when paused, or custom accent
+  const fillColor = accentClass
+    ? accentClass
+    : isPlaying
+    ? 'bg-[#0E9F6E]'
+    : 'bg-[#9CA3AF] dark:bg-neutral-600';
+
   return (
     <div
       ref={trackRef}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
+      onKeyDown={handleKeyDown}
       role="slider"
+      tabIndex={0}
       aria-valuenow={volume}
       aria-valuemin={0}
       aria-valuemax={100}
-      className="group relative h-7.5 w-full cursor-pointer select-none rounded-full bg-white/70 dark:bg-black/25 border border-black/5 dark:border-white/10 overflow-hidden shadow-2xs transition-colors hover:border-black/10 dark:hover:border-white/20"
+      aria-label="Sound volume"
+      className="group relative h-[34px] w-full cursor-pointer select-none rounded-full bg-white/70 dark:bg-black/25 border border-black/5 dark:border-white/10 overflow-hidden shadow-2xs transition-colors hover:border-black/10 dark:hover:border-white/20 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30"
     >
       {/* Filled progress bar */}
       <div
-        className={`absolute inset-y-0 left-0 transition-[width] duration-75 ${
-          isMuted ? 'w-0' : accentClass
+        className={`absolute inset-y-0 left-0 transition-[width] duration-75 rounded-full ${
+          isMuted ? 'w-0' : fillColor
         }`}
         style={{ width: `${volume}%` }}
       />
 
-      {/* Speaker icon & volume percentage hint */}
-      <div className="relative z-10 flex h-full items-center justify-between px-2.5 pointer-events-none">
+      {/* Speaker icon inside on the left */}
+      <div className="absolute left-3 inset-y-0 z-10 flex items-center">
         <button
           type="button"
           onClick={toggleMute}
-          className="pointer-events-auto p-0.5 rounded-full transition-transform active:scale-90"
+          className="p-0.5 rounded-full transition-transform active:scale-90 cursor-pointer"
           aria-label={isMuted ? 'Unmute' : 'Mute'}
         >
           {isMuted ? (
             <VolumeX className="size-3.5 text-neutral-400 dark:text-neutral-500" />
           ) : (
-            <Volume2 className="size-3.5 text-neutral-700 dark:text-neutral-200" />
+            <Volume2
+              className={`size-3.5 transition-colors ${
+                volume > 15
+                  ? 'text-white'
+                  : 'text-neutral-600 dark:text-neutral-300'
+              }`}
+            />
           )}
         </button>
-
-        {/* Subtle volume number on hover or active */}
-        <span
-          className={`font-mono text-[10px] font-semibold transition-opacity duration-150 ${
-            volume > 0
-              ? 'text-neutral-700 dark:text-neutral-200 opacity-80 group-hover:opacity-100'
-              : 'text-neutral-400 dark:text-neutral-500 opacity-0 group-hover:opacity-60'
-          }`}
-        >
-          {volume}%
-        </span>
       </div>
     </div>
   );

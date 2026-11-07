@@ -101,7 +101,7 @@ export const FocusHero: React.FC<FocusHeroProps> = ({
             type="button"
             onClick={onTogglePlay}
             aria-label={isPlaying ? 'Pause focus sounds' : 'Play focus sounds'}
-            className="size-[72px] shrink-0 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
+            className="size-[72px] shrink-0 rounded-full bg-[#0E9F6E] hover:bg-[#0c8a5f] text-white shadow-lg shadow-emerald-600/30 flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
           >
             {isPlaying ? (
               <Pause className="size-8 fill-current" />

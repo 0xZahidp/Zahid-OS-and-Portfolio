@@ -3,8 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { YOUTUBE_PICKS } from '@/data/focus-data';
-import { YouTubeIcon } from '@/components/ui/Icons';
-import { Play, Volume2, VolumeX, ExternalLink, Trash2 } from 'lucide-react';
+import { Play, Volume2, ExternalLink, Trash2, SquarePlay, Video, VideoOff } from 'lucide-react';
 
 interface CustomLink {
   id: string;
@@ -32,6 +31,7 @@ export const YouTubeSection: React.FC = () => {
   const [customLinks, setCustomLinks] = useState<CustomLink[]>([]);
   const [ytVolume, setYtVolume] = useState<number>(80);
   const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [isVideoHidden, setIsVideoHidden] = useState<boolean>(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Load custom links from localStorage
@@ -57,6 +57,7 @@ export const YouTubeSection: React.FC = () => {
 
   const handlePlayVideo = (video: { id: string; title: string; sub?: string }) => {
     setCurrentVideo(video);
+    setIsVideoHidden(false);
   };
 
   const handleAddCustomLink = (e?: React.FormEvent) => {
@@ -95,42 +96,44 @@ export const YouTubeSection: React.FC = () => {
 
   return (
     <section className="space-y-6 pt-4" aria-labelledby="focus-youtube">
+      {/* Section Heading: Outlined square play icon + YouTube title */}
       <div className="flex items-center gap-2.5">
-        <div className="size-8 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 grid place-items-center">
-          <YouTubeIcon className="size-4" />
-        </div>
+        <SquarePlay className="size-5 text-ink" />
         <h2 id="focus-youtube" className="text-xl font-bold tracking-tight text-ink">
           YouTube
         </h2>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Player & Volume Bar */}
+        {/* Left Column: 16:9 Video Box & Controls underneath */}
         <div className="lg:col-span-6 space-y-3">
           <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-surface-2 border border-line shadow-xs flex items-center justify-center">
             {currentVideo ? (
-              <iframe
-                ref={iframeRef}
-                src={`https://www.youtube-nocookie.com/embed/${currentVideo.id}?autoplay=1&enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
-                title={currentVideo.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="size-full border-0"
-              />
+              <>
+                <iframe
+                  ref={iframeRef}
+                  src={`https://www.youtube-nocookie.com/embed/${currentVideo.id}?autoplay=1&enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
+                  title={currentVideo.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className={`size-full border-0 ${isVideoHidden ? 'opacity-0 pointer-events-none' : ''}`}
+                />
+                {isVideoHidden && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-surface-2 text-ink-3">
+                    <VideoOff className="size-8 text-ink-3/60" />
+                    <p className="text-xs text-ink-3">Video hidden · Audio only</p>
+                  </div>
+                )}
+              </>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-3 text-ink-3 p-6 text-center">
-                <div className="size-16 rounded-2xl bg-surface-3 grid place-items-center text-ink-3">
-                  <YouTubeIcon className="size-8 opacity-50" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-ink-2">No YouTube video playing</p>
-                  <p className="text-xs text-ink-3">Pick a track from the playlist or paste your own link</p>
-                </div>
+              /* Reference screenshot 3: Centered clean outline play rectangle */
+              <div className="size-16 rounded-2xl border-2 border-ink-3/30 flex items-center justify-center text-ink-3/50">
+                <Play className="size-7 ml-0.5 fill-current opacity-70" />
               </div>
             )}
           </div>
 
-          {/* Under player controls & status matching screenshot 4 */}
+          {/* Under player controls & status matching screenshot 3 */}
           <div className="flex items-center justify-between gap-4 pt-1">
             <div className="min-w-0 flex items-center gap-2">
               {currentVideo ? (
@@ -141,16 +144,16 @@ export const YouTubeSection: React.FC = () => {
                   </span>
                 </>
               ) : (
-                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                   Not playing
                 </span>
               )}
             </div>
 
-            {/* Volume green capsule + mute icon button */}
+            {/* Right side: Green volume pill + camera-off toggle button */}
             <div className="flex items-center gap-2 shrink-0">
-              <div className="flex items-center h-8 px-3 rounded-full bg-emerald-600 text-white gap-2 shadow-xs">
-                <Volume2 className="size-4 shrink-0" />
+              <div className="flex items-center h-8 px-3 rounded-full bg-[#0E9F6E] text-white gap-2 shadow-xs">
+                <Volume2 className="size-3.5 shrink-0" />
                 <input
                   type="range"
                   min="0"
@@ -161,27 +164,30 @@ export const YouTubeSection: React.FC = () => {
                     setYtVolume(val);
                     if (isMuted) setIsMuted(false);
                   }}
-                  className="w-20 h-1.5 rounded-full appearance-none bg-emerald-800/60 cursor-pointer accent-white"
+                  className="w-16 sm:w-20 h-1.5 rounded-full appearance-none bg-emerald-800/60 cursor-pointer accent-white"
+                  aria-label="YouTube volume"
                 />
               </div>
 
+              {/* Hide/Show Video button */}
               <button
                 type="button"
-                onClick={() => setIsMuted(!isMuted)}
+                onClick={() => setIsVideoHidden(!isVideoHidden)}
                 className="size-8 rounded-full border border-line bg-surface-2 hover:bg-surface-3 grid place-items-center text-ink-2 hover:text-ink transition-colors cursor-pointer"
-                title={isMuted ? 'Unmute' : 'Mute'}
+                title={isVideoHidden ? 'Show video' : 'Hide video'}
+                aria-label={isVideoHidden ? 'Show video' : 'Hide video'}
               >
-                {isMuted || ytVolume === 0 ? (
-                  <VolumeX className="size-4 text-ink-3" />
+                {isVideoHidden ? (
+                  <Video className="size-3.5 text-emerald-600" />
                 ) : (
-                  <Volume2 className="size-4 text-ink-2" />
+                  <VideoOff className="size-3.5 text-ink-2" />
                 )}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Right Column: "Your own video" & Playlist tabs */}
+        {/* Right Column: "Your own video" card & Segmented Playlist switcher */}
         <div className="lg:col-span-6 space-y-4">
           {/* Custom video adder box */}
           <div className="p-4 sm:p-5 rounded-2xl bg-surface-2 border border-line space-y-3.5">
@@ -189,9 +195,7 @@ export const YouTubeSection: React.FC = () => {
 
             <div className="space-y-1.5 text-xs text-ink-3">
               <div className="flex items-center gap-2">
-                <span className="size-4 rounded-full bg-surface-3 text-ink-2 font-mono text-[10px] font-bold grid place-items-center">
-                  1
-                </span>
+                <span className="text-ink-3 font-mono text-xs">1</span>
                 <a
                   href="https://www.youtube.com"
                   target="_blank"
@@ -203,15 +207,11 @@ export const YouTubeSection: React.FC = () => {
                 </a>
               </div>
               <div className="flex items-center gap-2">
-                <span className="size-4 rounded-full bg-surface-3 text-ink-2 font-mono text-[10px] font-bold grid place-items-center">
-                  2
-                </span>
+                <span className="text-ink-3 font-mono text-xs">2</span>
                 <span>Copy its link</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="size-4 rounded-full bg-surface-3 text-ink-2 font-mono text-[10px] font-bold grid place-items-center">
-                  3
-                </span>
+                <span className="text-ink-3 font-mono text-xs">3</span>
                 <span>Paste it below</span>
               </div>
             </div>
@@ -222,53 +222,47 @@ export const YouTubeSection: React.FC = () => {
                 value={inputUrl}
                 onChange={(e) => setInputUrl(e.target.value)}
                 placeholder="Paste a YouTube link"
-                className="flex-1 px-3.5 py-2.5 rounded-xl bg-surface border border-line text-xs text-ink placeholder:text-ink-4 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                className="flex-1 h-10 px-3.5 rounded-xl bg-surface border border-line text-xs text-ink placeholder:text-ink-4 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
               />
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-colors cursor-pointer shadow-xs"
+                className="h-10 px-6 rounded-xl bg-[#0E9F6E] hover:bg-[#0c8a5f] text-white font-semibold text-xs transition-colors cursor-pointer shadow-xs"
               >
                 Play
               </button>
             </form>
           </div>
 
-          {/* Playlist selector tabs */}
+          {/* Playlist selector segmented pill matching screenshot 3 */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="inline-flex items-center p-1 rounded-full bg-surface-2 border border-line gap-1">
               <button
                 type="button"
                 onClick={() => setActiveTab('picks')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                   activeTab === 'picks'
-                    ? 'bg-surface border border-line text-ink shadow-xs'
-                    : 'text-ink-3 hover:text-ink hover:bg-surface-2'
+                    ? 'bg-surface text-ink shadow-2xs'
+                    : 'text-ink-3 hover:text-ink'
                 }`}
               >
-                <span>My picks</span>
-                <span className="ml-1.5 px-1.5 py-0.2 rounded-md bg-surface-3 text-[10px] font-mono text-ink-2">
-                  {YOUTUBE_PICKS.length}
-                </span>
+                My picks {YOUTUBE_PICKS.length}
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab('custom')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                   activeTab === 'custom'
-                    ? 'bg-surface border border-line text-ink shadow-xs'
-                    : 'text-ink-3 hover:text-ink hover:bg-surface-2'
+                    ? 'bg-surface text-ink shadow-2xs'
+                    : 'text-ink-3 hover:text-ink'
                 }`}
               >
-                <span>Your links</span>
-                <span className="ml-1.5 px-1.5 py-0.2 rounded-md bg-surface-3 text-[10px] font-mono text-ink-2">
-                  {customLinks.length}
-                </span>
+                Your links {customLinks.length}
               </button>
             </div>
 
-            {/* Scrollable list */}
-            <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1">
+            {/* Scrollable list with larger thumbnails and no per-row play buttons */}
+            <div className="max-h-72 overflow-y-auto space-y-1 pr-1">
               {activeTab === 'picks' ? (
                 YOUTUBE_PICKS.map((pick) => {
                   const isCurrent = currentVideo?.id === pick.id;
@@ -279,18 +273,18 @@ export const YouTubeSection: React.FC = () => {
                       key={pick.id}
                       type="button"
                       onClick={() => handlePlayVideo(pick)}
-                      className={`group flex w-full cursor-pointer items-center gap-3 rounded-2xl p-2 text-left transition-colors ${
+                      className={`group flex w-full cursor-pointer items-center gap-3 rounded-xl p-2 text-left transition-colors ${
                         isCurrent
                           ? 'bg-surface-2 ring-1 ring-line'
                           : 'hover:bg-surface-2'
                       }`}
                     >
-                      <div className="relative aspect-video w-20 shrink-0 overflow-hidden rounded-lg bg-surface-3 ring-1 ring-line">
+                      <div className="relative aspect-video w-16 h-12 shrink-0 overflow-hidden rounded-xl bg-surface-3 ring-1 ring-line">
                         <Image
                           src={thumbUrl}
                           alt={pick.title}
                           fill
-                          sizes="80px"
+                          sizes="64px"
                           unoptimized
                           className="size-full object-cover"
                         />
@@ -306,18 +300,14 @@ export const YouTubeSection: React.FC = () => {
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <span
-                          className={`block truncate text-xs font-semibold ${
-                            isCurrent ? 'text-link' : 'text-ink'
+                        <p
+                          className={`truncate text-xs sm:text-sm font-semibold ${
+                            isCurrent ? 'text-emerald-600 dark:text-emerald-400' : 'text-ink'
                           }`}
                         >
                           {pick.title}
-                        </span>
-                        <span className="block truncate text-[11px] text-ink-3">{pick.sub}</span>
-                      </div>
-
-                      <div className="size-7 rounded-lg text-ink-3 group-hover:text-ink grid place-items-center transition-colors">
-                        <Play className="size-3.5 fill-current opacity-70 group-hover:opacity-100" />
+                        </p>
+                        <p className="truncate text-[11px] text-ink-3 mt-0.5">{pick.sub}</p>
                       </div>
                     </button>
                   );
@@ -335,32 +325,32 @@ export const YouTubeSection: React.FC = () => {
                     <div
                       key={link.id}
                       onClick={() => handlePlayVideo(link)}
-                      className={`group flex w-full cursor-pointer items-center gap-3 rounded-2xl p-2 text-left transition-colors ${
+                      className={`group flex w-full cursor-pointer items-center gap-3 rounded-xl p-2 text-left transition-colors ${
                         isCurrent
                           ? 'bg-surface-2 ring-1 ring-line'
                           : 'hover:bg-surface-2'
                       }`}
                     >
-                      <div className="relative aspect-video w-20 shrink-0 overflow-hidden rounded-lg bg-surface-3 ring-1 ring-line">
+                      <div className="relative aspect-video w-16 h-12 shrink-0 overflow-hidden rounded-xl bg-surface-3 ring-1 ring-line">
                         <Image
                           src={thumbUrl}
                           alt={link.title}
                           fill
-                          sizes="80px"
+                          sizes="64px"
                           unoptimized
                           className="size-full object-cover"
                         />
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <span
-                          className={`block truncate text-xs font-semibold ${
-                            isCurrent ? 'text-link' : 'text-ink'
+                        <p
+                          className={`truncate text-xs sm:text-sm font-semibold ${
+                            isCurrent ? 'text-emerald-600 dark:text-emerald-400' : 'text-ink'
                           }`}
                         >
                           {link.title}
-                        </span>
-                        <span className="block truncate text-[11px] text-ink-3 font-mono">{link.id}</span>
+                        </p>
+                        <p className="truncate text-[11px] text-ink-3 font-mono mt-0.5">{link.id}</p>
                       </div>
 
                       <button

@@ -17,6 +17,7 @@ export function useFocusAudio() {
     const forest = PRESETS.find((p) => p.id === 'forest-walk') || PRESETS[0];
     return { ...forest.sounds };
   });
+  const [masterVolume, setMasterVolumeState] = useState<number>(80);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [quoteIndex, setQuoteIndex] = useState<number>(0);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -96,6 +97,16 @@ export function useFocusAudio() {
     };
   }, []);
 
+  // Set master volume (scales all active sounds)
+  const setMasterVolume = useCallback((vol: number) => {
+    const clamped = Math.max(0, Math.min(100, Math.round(vol)));
+    setMasterVolumeState(clamped);
+    for (const [id, audio] of audioMapRef.current.entries()) {
+      const soundVol = volumes[id] || 0;
+      audio.volume = Math.max(0, Math.min(1, (soundVol / 100) * (clamped / 100)));
+    }
+  }, [volumes]);
+
   // Set single sound volume
   const setSoundVolume = useCallback(
     (id: string, volume: number) => {
@@ -111,7 +122,7 @@ export function useFocusAudio() {
       const audio = getAudio(id, sound.src);
 
       if (clamped > 0) {
-        audio.volume = clamped / 100;
+        audio.volume = Math.max(0, Math.min(1, (clamped / 100) * (masterVolume / 100)));
         // User interacted: if globally paused, start playing
         if (!isPlaying) {
           setIsPlaying(true);
@@ -122,7 +133,7 @@ export function useFocusAudio() {
         audio.currentTime = 0;
       }
     },
-    [getAudio, isPlaying]
+    [getAudio, isPlaying, masterVolume]
   );
 
   // Toggle master play/pause
@@ -155,7 +166,7 @@ export function useFocusAudio() {
           const sound = SOUNDS.find((s) => s.id === id);
           if (sound) {
             const audio = getAudio(id, sound.src);
-            audio.volume = Math.max(0, Math.min(1, vol / 100));
+            audio.volume = Math.max(0, Math.min(1, (vol / 100) * (masterVolume / 100)));
             audio.play().catch(() => {});
           }
         }
@@ -163,7 +174,7 @@ export function useFocusAudio() {
 
       setIsPlaying(true);
     }
-  }, [isPlaying, volumes, currentPresetId, getAudio]);
+  }, [isPlaying, volumes, currentPresetId, getAudio, masterVolume]);
 
   // Apply a preset
   const applyPreset = useCallback(
@@ -192,15 +203,29 @@ export function useFocusAudio() {
             const sound = SOUNDS.find((s) => s.id === id);
             if (sound) {
               const audio = getAudio(id, sound.src);
-              audio.volume = Math.max(0, Math.min(1, vol / 100));
+              audio.volume = Math.max(0, Math.min(1, (vol / 100) * (masterVolume / 100)));
               audio.play().catch(() => {});
             }
           }
         }
       }
     },
-    [isPlaying, getAudio]
+    [isPlaying, getAudio, masterVolume]
   );
+
+  // Stop all sounds & reset
+  const stopAll = useCallback(() => {
+    for (const [, audio] of audioMapRef.current.entries()) {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch {
+        // ignore
+      }
+    }
+    setVolumes({});
+    setIsPlaying(false);
+  }, []);
 
   // Shuffle random preset
   const shufflePreset = useCallback(() => {
@@ -231,8 +256,9 @@ export function useFocusAudio() {
   const activePreset = PRESETS.find((p) => p.id === currentPresetId) || PRESETS[0];
   const currentQuote = FOCUS_QUOTES[quoteIndex % FOCUS_QUOTES.length];
 
-  // Total active sound count
-  const activeSoundCount = Object.values(volumes).filter((v) => v > 0).length;
+  // Active sounds list and count
+  const activeSounds = SOUNDS.filter((s) => (volumes[s.id] || 0) > 0);
+  const activeSoundCount = activeSounds.length;
 
   return {
     heroRef,
@@ -240,11 +266,15 @@ export function useFocusAudio() {
     activePreset,
     currentQuote,
     volumes,
+    masterVolume,
+    setMasterVolume,
     isPlaying,
     isFullscreen,
+    activeSounds,
     activeSoundCount,
     setSoundVolume,
     togglePlay,
+    stopAll,
     applyPreset,
     shufflePreset,
     nextQuote,
