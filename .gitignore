@@ -31,6 +31,11 @@ scratch/
 /career/
 /health/
 src/data/health-*.json
+src/data/temp-mail-domains.json
+src/data/temp-mail-store.json
+src/data/inbox-store.json
+src/data/career-applications.json
+src/data/short-links.json
 
 # debug
 npm-debug.log*
