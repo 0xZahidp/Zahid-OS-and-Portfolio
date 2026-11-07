@@ -450,6 +450,7 @@ export const CareerTab: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<'all' | 'job' | 'scholarship'>('all');
   const [showArchived, setShowArchived] = useState<boolean>(false);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [loadError, setLoadError] = useState<boolean>(false);
 
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
@@ -504,6 +505,7 @@ export const CareerTab: React.FC = () => {
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    if (loadError) return;
     const { active, over } = event;
     setActiveDragId(null);
     if (!over) return;
@@ -597,9 +599,13 @@ export const CareerTab: React.FC = () => {
         const data = await res.json();
         setApplications(data.applications || []);
         if (data.metrics) setMetrics(data.metrics);
+        setLoadError(false);
+      } else {
+        setLoadError(true);
       }
     } catch (err) {
       console.error('Failed to load career applications:', err);
+      setLoadError(true);
     } finally {
       setIsLoading(false);
     }
@@ -609,8 +615,16 @@ export const CareerTab: React.FC = () => {
     fetchApplications();
   }, [fetchApplications]);
 
+  useEffect(() => {
+    if (loadError) {
+      setActiveDetailApp(null);
+      setIsCreateModalOpen(false);
+    }
+  }, [loadError]);
+
   // Open detail panel and sync URL hash
   const handleOpenDetail = (app: CareerApplication) => {
+    if (loadError) return;
     setActiveDetailApp(app);
     try {
       window.history.replaceState(null, '', `#career=${app.id}`);
@@ -757,7 +771,9 @@ export const CareerTab: React.FC = () => {
       const key = e.key.toLowerCase();
       if (key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
-        setIsCreateModalOpen(true);
+        if (!loadError && !isLoading) {
+          setIsCreateModalOpen(true);
+        }
       } else if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         searchInputRef.current?.focus();
@@ -775,7 +791,7 @@ export const CareerTab: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeDetailApp, isCreateModalOpen, isHelpModalOpen]);
+  }, [activeDetailApp, isCreateModalOpen, isHelpModalOpen, loadError, isLoading]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -784,6 +800,7 @@ export const CareerTab: React.FC = () => {
 
   // Delete Application
   const handleDeleteApplication = async (appId: string) => {
+    if (loadError) return;
     if (!confirm('Are you sure you want to delete this application record?')) return;
     try {
       setSaveState('saving');
@@ -1046,6 +1063,23 @@ export const CareerTab: React.FC = () => {
         </div>
       )}
 
+      {/* Initial load failure banner */}
+      {loadError && (
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between gap-3 text-rose-600 dark:text-rose-400">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="size-4 shrink-0 text-rose-500" />
+            <span className="text-xs sm:text-sm font-semibold">Couldn&apos;t load data, retry</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => fetchApplications()}
+            className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/15 cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* 1. Compact Single-Row Metrics Strip (56px tall) */}
       <div className="h-14 px-4 rounded-2xl border border-line bg-surface-2/40 flex items-center justify-between text-xs overflow-x-auto shrink-0 [scrollbar-width:thin]">
         <div className="flex items-center gap-6 divide-x divide-line/60">
@@ -1227,7 +1261,8 @@ export const CareerTab: React.FC = () => {
           <button
             type="button"
             onClick={handleExportData}
-            className="btn btn-secondary h-8.5 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+            disabled={loadError || isLoading}
+            className="btn btn-secondary h-8.5 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             title="Export JSON snapshot"
           >
             <Download className="size-3.5" />
@@ -1237,8 +1272,12 @@ export const CareerTab: React.FC = () => {
           {/* Primary New Application Button */}
           <button
             type="button"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="btn btn-primary h-8.5 px-3.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+            onClick={() => {
+              if (loadError) return;
+              setIsCreateModalOpen(true);
+            }}
+            disabled={loadError || isLoading}
+            className="btn btn-primary h-8.5 px-3.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="size-3.5" />
             <span>New Application</span>
@@ -1875,6 +1914,7 @@ export const CareerTab: React.FC = () => {
           }}
           saveState={saveState}
           setSaveState={setSaveState}
+          disabled={loadError}
         />
       )}
     </div>
@@ -1889,6 +1929,7 @@ interface CareerSlideOverProps {
   onDelete: (id: string) => void;
   saveState: 'idle' | 'saving' | 'saved' | 'error';
   setSaveState: (s: 'idle' | 'saving' | 'saved' | 'error') => void;
+  disabled?: boolean;
 }
 
 const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
@@ -1898,6 +1939,7 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
   onDelete,
   saveState,
   setSaveState,
+  disabled = false,
 }) => {
   const { session } = useAdminAuth();
   const [localApp, setLocalApp] = useState<CareerApplication>(app);
@@ -1919,6 +1961,7 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
   // Persist changes to backend
   const persistChanges = useCallback(
     async (data: CareerApplication) => {
+      if (disabled) return;
       setSaveState('saving');
       try {
         const res = await fetch('/api/admin/career', {
@@ -1942,11 +1985,12 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
         setSaveState('error');
       }
     },
-    [onUpdate, setSaveState, session?.access_token]
+    [disabled, onUpdate, setSaveState, session?.access_token]
   );
 
   // Debounced field change (600ms)
   const handleFieldChange = (updates: Partial<CareerApplication>) => {
+    if (disabled) return;
     const statusChanged = updates.status && updates.status !== localApp.status;
     const updated: CareerApplication = {
       ...localApp,
@@ -1965,7 +2009,7 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
 
   // Safe close that flushes pending edits
   const handleSafeClose = () => {
-    if (hasUnsaved) {
+    if (hasUnsaved && !disabled) {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       persistChanges(localApp);
     }
@@ -2371,11 +2415,13 @@ Md Zahid Hasan Patwary`;
                 <button
                   type="button"
                   onClick={() => {
+                    if (disabled) return;
                     if (confirm('Delete this application permanently?')) {
                       onDelete(localApp.id);
                     }
                   }}
-                  className="text-xs text-rose-500 hover:text-rose-600 font-semibold inline-flex items-center gap-1 cursor-pointer"
+                  disabled={disabled}
+                  className="text-xs text-rose-500 hover:text-rose-600 font-semibold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="size-3" />
                   <span>Delete Application</span>
@@ -2383,8 +2429,12 @@ Md Zahid Hasan Patwary`;
 
                 <button
                   type="button"
-                  onClick={() => handleFieldChange({ archived: !localApp.archived })}
-                  className="text-xs text-ink-3 hover:text-ink cursor-pointer"
+                  onClick={() => {
+                    if (disabled) return;
+                    handleFieldChange({ archived: !localApp.archived });
+                  }}
+                  disabled={disabled}
+                  className="text-xs text-ink-3 hover:text-ink cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {localApp.archived ? 'Unarchive' : 'Archive'}
                 </button>

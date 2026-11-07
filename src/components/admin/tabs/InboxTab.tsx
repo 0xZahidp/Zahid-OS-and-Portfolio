@@ -67,6 +67,7 @@ export const InboxTab: React.FC = () => {
     trash: 0,
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -124,6 +125,7 @@ export const InboxTab: React.FC = () => {
           if (data.counts) {
             setCounts(data.counts);
           }
+          setLoadError(false);
 
           // Auto select first message if none selected
           setSelectedMessageId((prevId) => {
@@ -131,9 +133,12 @@ export const InboxTab: React.FC = () => {
             if (prevId && !msgs.some((m) => m.id === prevId) && msgs.length > 0) return msgs[0].id;
             return prevId;
           });
+        } else {
+          setLoadError(true);
         }
       } catch (err) {
         console.error('Failed to load messages:', err);
+        setLoadError(true);
       } finally {
         setIsLoading(false);
       }
@@ -158,6 +163,7 @@ export const InboxTab: React.FC = () => {
 
   // Sync from Resend Receiving API
   const handleSyncResend = async () => {
+    if (loadError) return;
     setIsSyncing(true);
     setStatusMessage(null);
     try {
@@ -201,6 +207,7 @@ export const InboxTab: React.FC = () => {
   // Toggle Read
   const handleToggleRead = async (message: MailMessage, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (loadError) return;
     const newStatus = !message.isRead;
     try {
       const res = await fetch('/api/mail/messages', {
@@ -221,6 +228,7 @@ export const InboxTab: React.FC = () => {
   // Toggle Star
   const handleToggleStar = async (message: MailMessage, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (loadError) return;
     const newStarred = !message.isStarred;
     try {
       const res = await fetch('/api/mail/messages', {
@@ -243,6 +251,7 @@ export const InboxTab: React.FC = () => {
   // Toggle Archive
   const handleToggleArchive = async (message: MailMessage, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (loadError) return;
     const isCurrentlyArchived = message.folder === 'archive' || message.isArchived;
     const targetFolder = isCurrentlyArchived ? 'inbox' : 'archive';
     try {
@@ -277,6 +286,7 @@ export const InboxTab: React.FC = () => {
   // Move to Trash or Permanent Delete
   const handleMoveToTrash = async (message: MailMessage, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (loadError) return;
     const isAlreadyTrash = message.folder === 'trash' || message.isTrashed;
     try {
       if (isAlreadyTrash) {
@@ -314,6 +324,7 @@ export const InboxTab: React.FC = () => {
 
   // Empty Trash
   const handleEmptyTrash = async () => {
+    if (loadError) return;
     if (!window.confirm('Are you sure you want to permanently delete all messages in Trash?')) return;
     try {
       const res = await fetch('/api/mail/messages?emptyTrash=true', { method: 'DELETE' });
@@ -337,13 +348,14 @@ export const InboxTab: React.FC = () => {
   const handleSelectMessage = (msg: MailMessage) => {
     setSelectedMessageId(msg.id);
     setMobileView('message');
-    if (!msg.isRead) {
+    if (!msg.isRead && !loadError) {
       handleToggleRead(msg);
     }
   };
 
   // Save customized sender as system default in Supabase
   const handleSaveSenderAsDefault = async (senderToSave: string) => {
+    if (loadError) return;
     setIsSavingSenderDefault(true);
     try {
       const res = await fetch('/api/mail/status', {
@@ -368,6 +380,7 @@ export const InboxTab: React.FC = () => {
   // Quick Reply handler
   const handleSendQuickReply = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loadError) return;
     if (!selectedMessage || !quickReplyText.trim()) return;
 
     setIsSendingReply(true);
@@ -431,6 +444,7 @@ export const InboxTab: React.FC = () => {
   // Compose Send handler
   const handleSendCompose = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loadError) return;
     if (!composeTo.trim() || !composeSubject.trim() || !composeBody.trim()) return;
 
     setIsSendingCompose(true);
@@ -507,6 +521,23 @@ export const InboxTab: React.FC = () => {
         </div>
       )}
 
+      {/* Initial load failure banner */}
+      {loadError && (
+        <div className="px-4 py-2.5 bg-rose-500/10 border-b border-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-between gap-3 text-xs shrink-0">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="size-4 shrink-0 text-rose-500" />
+            <span className="font-semibold">Couldn&apos;t load data, retry</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => fetchMessages()}
+            className="btn btn-secondary h-7 px-2.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/15 cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Mobile/Tablet Folder Selector Bar (< lg) */}
       <div className="lg:hidden p-2.5 border-b border-line bg-surface flex items-center justify-between gap-2 overflow-x-auto shrink-0">
         <div className="flex items-center gap-1.5 shrink-0">
@@ -542,8 +573,12 @@ export const InboxTab: React.FC = () => {
 
         <button
           type="button"
-          onClick={() => setIsComposeOpen(true)}
-          className="h-7.5 px-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
+          onClick={() => {
+            if (loadError) return;
+            setIsComposeOpen(true);
+          }}
+          disabled={loadError || isLoading}
+          className="h-7.5 px-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="size-3.5" />
           <span className="hidden xs:inline">Compose</span>
@@ -558,8 +593,12 @@ export const InboxTab: React.FC = () => {
             {/* Compose Button */}
             <button
               type="button"
-              onClick={() => setIsComposeOpen(true)}
-              className="w-full h-10 px-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+              onClick={() => {
+                if (loadError) return;
+                setIsComposeOpen(true);
+              }}
+              disabled={loadError || isLoading}
+              className="w-full h-10 px-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="size-4" />
               <span>Compose Email</span>
@@ -721,8 +760,8 @@ export const InboxTab: React.FC = () => {
             <button
               type="button"
               onClick={handleSyncResend}
-              disabled={isSyncing}
-              className="w-full mt-1.5 h-7.5 px-2.5 rounded-lg border border-line bg-surface hover:bg-surface-2 text-ink-2 hover:text-ink text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              disabled={isSyncing || loadError}
+              className="w-full mt-1.5 h-7.5 px-2.5 rounded-lg border border-line bg-surface hover:bg-surface-2 text-ink-2 hover:text-ink text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw className={`size-3 ${isSyncing ? 'animate-spin text-brand-500' : ''}`} />
               <span>{isSyncing ? 'Syncing...' : 'Sync from Resend'}</span>
@@ -764,7 +803,8 @@ export const InboxTab: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleEmptyTrash}
-                  className="p-1.5 rounded-lg border border-rose-500/30 text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer shrink-0"
+                  disabled={loadError}
+                  className="p-1.5 rounded-lg border border-rose-500/30 text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Empty Trash"
                 >
                   <Trash2 className="size-3.5" />
@@ -1208,8 +1248,8 @@ export const InboxTab: React.FC = () => {
 
                       <button
                         type="submit"
-                        disabled={isSendingReply || !quickReplyText.trim()}
-                        className="btn btn-primary h-8 px-4 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        disabled={isSendingReply || !quickReplyText.trim() || loadError}
+                        className="btn btn-primary h-8 px-4 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isSendingReply ? (
                           <Loader2 className="size-3.5 animate-spin" />
@@ -1361,8 +1401,8 @@ export const InboxTab: React.FC = () => {
 
                   <button
                     type="submit"
-                    disabled={isSendingCompose || !composeTo || !composeSubject || !composeBody}
-                    className="btn btn-primary h-9 px-5 rounded-xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    disabled={isSendingCompose || !composeTo || !composeSubject || !composeBody || loadError}
+                    className="btn btn-primary h-9 px-5 rounded-xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSendingCompose ? (
                       <Loader2 className="size-3.5 animate-spin" />

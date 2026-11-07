@@ -36,6 +36,7 @@ interface DocumentsSubTabProps {
   storageUsage: HealthStorageUsage;
   onRefreshData: () => Promise<void>;
   showToast: (msg: string) => void;
+  disabled?: boolean;
 }
 
 const CATEGORY_CONFIG: Record<
@@ -79,6 +80,7 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
   storageUsage,
   onRefreshData,
   showToast,
+  disabled = false,
 }) => {
   const { session } = useAdminAuth();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -206,6 +208,7 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
 
   // Perform upload
   const handleUploadSubmit = async () => {
+    if (disabled) return;
     if (!selectedFile || !compressedFileBlob) {
       showToast('✕ No file selected');
       return;
@@ -276,6 +279,7 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
 
   // Delete Document
   const handleDeleteDocument = async (doc: HealthDocument) => {
+    if (disabled) return;
     if (!confirm(`Permanently delete confidential document "${doc.title}"?`)) return;
 
     try {
@@ -440,8 +444,12 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
             {/* Mobile Camera Snapshot */}
             <button
               type="button"
-              onClick={() => cameraInputRef.current?.click()}
-              className="btn btn-secondary size-8.5 grid place-items-center rounded-xl text-ink-2 hover:text-ink cursor-pointer"
+              onClick={() => {
+                if (disabled) return;
+                cameraInputRef.current?.click();
+              }}
+              disabled={disabled}
+              className="btn btn-secondary size-8.5 grid place-items-center rounded-xl text-ink-2 hover:text-ink cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               title="Capture prescription with camera"
             >
               <Camera className="size-4" />
@@ -450,8 +458,12 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
             {/* Upload File */}
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="btn btn-primary h-8.5 px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+              onClick={() => {
+                if (disabled) return;
+                fileInputRef.current?.click();
+              }}
+              disabled={disabled}
+              className="btn btn-primary h-8.5 px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Upload className="size-3.5" />
               <span>Upload Document</span>
@@ -577,7 +589,8 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
                     <button
                       type="button"
                       onClick={() => handleDeleteDocument(doc)}
-                      className="btn btn-secondary size-7 grid place-items-center rounded-lg text-ink-3 hover:text-rose-500 cursor-pointer"
+                      disabled={disabled}
+                      className="btn btn-secondary size-7 grid place-items-center rounded-lg text-ink-3 hover:text-rose-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Delete document"
                     >
                       <Trash2 className="size-3.5" />
@@ -642,7 +655,8 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
                   <button
                     type="button"
                     onClick={() => handleDeleteDocument(doc)}
-                    className="btn btn-secondary size-7 grid place-items-center rounded-lg text-ink-3 hover:text-rose-500 cursor-pointer"
+                    disabled={disabled}
+                    className="btn btn-secondary size-7 grid place-items-center rounded-lg text-ink-3 hover:text-rose-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Delete document"
                   >
                     <Trash2 className="size-3.5" />
@@ -801,8 +815,8 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
               <button
                 type="button"
                 onClick={handleUploadSubmit}
-                disabled={isUploading || isCompressing}
-                className="btn btn-primary h-8.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                disabled={isUploading || isCompressing || disabled}
+                className="btn btn-primary h-8.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUploading ? (
                   <>
@@ -900,7 +914,8 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
               <button
                 type="button"
                 onClick={() => handleDeleteDocument(previewDoc)}
-                className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-500/10 cursor-pointer inline-flex items-center gap-1.5"
+                disabled={disabled}
+                className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-500/10 cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Trash2 className="size-3.5" />
                 <span>Delete Document</span>

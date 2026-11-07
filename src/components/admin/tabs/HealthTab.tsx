@@ -58,6 +58,7 @@ export const HealthTab: React.FC = () => {
 
   const [activeSubTab, setActiveSubTab] = useState<HealthSubTab>('overview');
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<string>('All changes encrypted & saved');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -130,12 +131,17 @@ export const HealthTab: React.FC = () => {
         fetch('/api/admin/health/usage', { headers }),
       ]);
 
-      if (resData.ok) {
-        const json = await resData.json();
-        if (json.data) {
-          setHealthData(json.data);
-        }
+      if (!resData.ok) {
+        setLoadError(true);
+        showToast("✕ Couldn't load data, retry");
+        return;
       }
+
+      const json = await resData.json();
+      if (json.data) {
+        setHealthData(json.data);
+      }
+      setLoadError(false);
 
       if (resUsage.ok) {
         const jsonUsage = await resUsage.json();
@@ -144,7 +150,8 @@ export const HealthTab: React.FC = () => {
         }
       }
     } catch {
-      showToast('✕ Failed to load health records');
+      setLoadError(true);
+      showToast("✕ Couldn't load data, retry");
     } finally {
       setLoading(false);
     }
@@ -178,6 +185,10 @@ export const HealthTab: React.FC = () => {
 
   // Select restore JSON file
   const handleSelectRestoreFile = (file: File) => {
+    if (loadError) {
+      showToast("✕ Couldn't load data, retry");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -200,6 +211,10 @@ export const HealthTab: React.FC = () => {
 
   // Confirm restore
   const handleConfirmRestore = async () => {
+    if (loadError) {
+      showToast("✕ Couldn't load data, retry");
+      return;
+    }
     if (!restorePayload) return;
     setIsRestoring(true);
     try {
@@ -227,6 +242,10 @@ export const HealthTab: React.FC = () => {
 
   // Profile Save
   const handleSaveProfile = async (updated: HealthProfile) => {
+    if (loadError) {
+      showToast("✕ Couldn't load data, retry");
+      return;
+    }
     setIsSaving(true);
     setSaveStatus('Saving profile...');
     try {
@@ -252,6 +271,10 @@ export const HealthTab: React.FC = () => {
 
   // Medication Save (Create or Update)
   const handleSaveMedication = async (med: Medication) => {
+    if (loadError) {
+      showToast("✕ Couldn't load data, retry");
+      return;
+    }
     setIsSaving(true);
     setSaveStatus('Saving medication...');
     try {
@@ -283,6 +306,10 @@ export const HealthTab: React.FC = () => {
 
   // Medication Delete
   const handleDeleteMedication = async (id: string) => {
+    if (loadError) {
+      showToast("✕ Couldn't load data, retry");
+      return;
+    }
     try {
       const res = await fetch(`/api/admin/health?collection=medications&id=${id}`, {
         method: 'DELETE',
@@ -300,6 +327,7 @@ export const HealthTab: React.FC = () => {
 
   // Sync Refill Reminder
   const handleSyncRefillReminder = async (med: Medication, removed?: boolean) => {
+    if (loadError) return;
     const existing = healthData.reminders.find(
       (r) => r.relatedId === med.id && r.kind === 'refill'
     );
@@ -352,6 +380,10 @@ export const HealthTab: React.FC = () => {
 
   // Toggle Reminder Done
   const handleToggleReminderDone = async (reminder: Reminder) => {
+    if (loadError) {
+      showToast("✕ Couldn't load data, retry");
+      return;
+    }
     const updated: Reminder = {
       ...reminder,
       done: !reminder.done,
@@ -381,6 +413,10 @@ export const HealthTab: React.FC = () => {
 
   // Visit handlers
   const handleSaveVisit = async (visit: Visit) => {
+    if (loadError) {
+      showToast("✕ Couldn't load data, retry");
+      return;
+    }
     setIsSaving(true);
     setSaveStatus('Saving visit...');
     try {
@@ -411,6 +447,10 @@ export const HealthTab: React.FC = () => {
   };
 
   const handleDeleteVisit = async (id: string) => {
+    if (loadError) {
+      showToast("✕ Couldn't load data, retry");
+      return;
+    }
     try {
       const res = await fetch(`/api/admin/health?collection=visits&id=${id}`, {
         method: 'DELETE',
@@ -427,6 +467,7 @@ export const HealthTab: React.FC = () => {
   };
 
   const handleSyncFollowUpReminder = async (visit: Visit, removed?: boolean) => {
+    if (loadError) return;
     const existing = healthData.reminders.find(
       (r) => r.relatedId === visit.id && r.kind === 'followUp'
     );
@@ -479,6 +520,10 @@ export const HealthTab: React.FC = () => {
 
   // Vital handlers
   const handleSaveVital = async (vital: Vital) => {
+    if (loadError) {
+      showToast("✕ Couldn't load data, retry");
+      return;
+    }
     try {
       const res = await fetch('/api/admin/health', {
         method: 'POST',
@@ -500,6 +545,10 @@ export const HealthTab: React.FC = () => {
   };
 
   const handleDeleteVital = async (id: string) => {
+    if (loadError) {
+      showToast("✕ Couldn't load data, retry");
+      return;
+    }
     try {
       const res = await fetch(`/api/admin/health?collection=vitals&id=${id}`, {
         method: 'DELETE',
@@ -517,6 +566,10 @@ export const HealthTab: React.FC = () => {
 
   // Vaccination handlers
   const handleSaveVaccination = async (vac: Vaccination) => {
+    if (loadError) {
+      showToast("✕ Couldn't load data, retry");
+      return;
+    }
     try {
       const isExisting = healthData.vaccinations.some((v) => v.id === vac.id);
       const res = await fetch('/api/admin/health', {
@@ -541,6 +594,10 @@ export const HealthTab: React.FC = () => {
   };
 
   const handleDeleteVaccination = async (id: string) => {
+    if (loadError) {
+      showToast("✕ Couldn't load data, retry");
+      return;
+    }
     try {
       const res = await fetch(`/api/admin/health?collection=vaccinations&id=${id}`, {
         method: 'DELETE',
@@ -557,6 +614,7 @@ export const HealthTab: React.FC = () => {
   };
 
   const handleSyncVaccineReminder = async (vac: Vaccination, removed?: boolean) => {
+    if (loadError) return;
     const existing = healthData.reminders.find(
       (r) => r.relatedId === vac.id && r.kind === 'vaccination'
     );
@@ -743,6 +801,23 @@ export const HealthTab: React.FC = () => {
         </div>
       )}
 
+      {/* Initial load failure banner */}
+      {loadError && (
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between gap-3 text-rose-600 dark:text-rose-400">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="size-4 shrink-0 text-rose-500" />
+            <span className="text-xs sm:text-sm font-semibold">Couldn&apos;t load data, retry</span>
+          </div>
+          <button
+            type="button"
+            onClick={loadData}
+            className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/15 cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* 1. Header Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-4">
         <div className="flex items-center gap-3">
@@ -814,8 +889,15 @@ export const HealthTab: React.FC = () => {
           {/* Restore Backup Button */}
           <button
             type="button"
-            onClick={() => restoreFileRef.current?.click()}
-            className="btn btn-secondary h-8.5 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 text-ink-2 hover:text-ink cursor-pointer"
+            onClick={() => {
+              if (loadError) {
+                showToast("✕ Couldn't load data, retry");
+                return;
+              }
+              restoreFileRef.current?.click();
+            }}
+            disabled={loading || loadError}
+            className="btn btn-secondary h-8.5 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 text-ink-2 hover:text-ink cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             title="Restore and merge JSON health backup"
           >
             <Upload className="size-3.5" />
@@ -896,6 +978,7 @@ export const HealthTab: React.FC = () => {
                 activeMedications={activeMedications}
                 onSaveProfile={handleSaveProfile}
                 showToast={showToast}
+                disabled={loadError}
               />
 
               {/* Upcoming Reminders Strip (Due today, Overdue, Next 14 days) */}
@@ -940,8 +1023,12 @@ export const HealthTab: React.FC = () => {
                         {/* Complete Reminder Button */}
                         <button
                           type="button"
-                          onClick={() => handleToggleReminderDone(reminder)}
-                          className="size-7 grid place-items-center rounded-lg bg-surface/90 hover:bg-surface text-ink-3 hover:text-emerald-500 border border-line/60 cursor-pointer shrink-0 transition-colors"
+                          onClick={() => {
+                            if (loadError) return;
+                            handleToggleReminderDone(reminder);
+                          }}
+                          disabled={loadError}
+                          className="size-7 grid place-items-center rounded-lg bg-surface/90 hover:bg-surface text-ink-3 hover:text-emerald-500 border border-line/60 cursor-pointer shrink-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Mark reminder as completed"
                         >
                           <Check className="size-3.5" />
@@ -1021,6 +1108,7 @@ export const HealthTab: React.FC = () => {
               onDeleteMedication={handleDeleteMedication}
               onSyncRefillReminder={handleSyncRefillReminder}
               showToast={showToast}
+              disabled={loadError}
             />
           )}
 
@@ -1031,6 +1119,7 @@ export const HealthTab: React.FC = () => {
               storageUsage={storageUsage}
               onRefreshData={loadData}
               showToast={showToast}
+              disabled={loadError}
             />
           )}
 
@@ -1043,6 +1132,7 @@ export const HealthTab: React.FC = () => {
               onDeleteVisit={handleDeleteVisit}
               onSyncFollowUpReminder={handleSyncFollowUpReminder}
               showToast={showToast}
+              disabled={loadError}
             />
           )}
 
@@ -1057,6 +1147,7 @@ export const HealthTab: React.FC = () => {
               onDeleteVaccination={handleDeleteVaccination}
               onSyncVaccineReminder={handleSyncVaccineReminder}
               showToast={showToast}
+              disabled={loadError}
             />
           )}
         </div>

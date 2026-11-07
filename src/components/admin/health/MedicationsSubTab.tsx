@@ -22,6 +22,7 @@ interface MedicationsSubTabProps {
   onDeleteMedication: (id: string) => Promise<void>;
   onSyncRefillReminder: (med: Medication, removed?: boolean) => Promise<void>;
   showToast: (msg: string) => void;
+  disabled?: boolean;
 }
 
 export const MedicationsSubTab: React.FC<MedicationsSubTabProps> = ({
@@ -30,6 +31,7 @@ export const MedicationsSubTab: React.FC<MedicationsSubTabProps> = ({
   onDeleteMedication,
   onSyncRefillReminder,
   showToast,
+  disabled = false,
 }) => {
   const [filterMode, setFilterMode] = useState<'active' | 'past' | 'all'>('active');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -61,6 +63,7 @@ export const MedicationsSubTab: React.FC<MedicationsSubTabProps> = ({
   const pastCount = useMemo(() => medications.filter((m) => !m.active).length, [medications]);
 
   const openCreateModal = () => {
+    if (disabled) return;
     setEditingMed(null);
     setFormData({
       id: crypto.randomUUID(),
@@ -76,6 +79,7 @@ export const MedicationsSubTab: React.FC<MedicationsSubTabProps> = ({
   };
 
   const openEditModal = (med: Medication) => {
+    if (disabled) return;
     setEditingMed(med);
     setFormData({ ...med });
     setIsSlideOverOpen(true);
@@ -88,6 +92,7 @@ export const MedicationsSubTab: React.FC<MedicationsSubTabProps> = ({
 
   // Quick toggle active
   const toggleMedActive = async (med: Medication) => {
+    if (disabled) return;
     const updated: Medication = {
       ...med,
       active: !med.active,
@@ -104,6 +109,7 @@ export const MedicationsSubTab: React.FC<MedicationsSubTabProps> = ({
 
   // Save form
   const handleSaveForm = async () => {
+    if (disabled) return;
     if (!formData.name?.trim()) {
       showToast('✕ Medication name is required');
       return;
@@ -242,7 +248,8 @@ export const MedicationsSubTab: React.FC<MedicationsSubTabProps> = ({
           <button
             type="button"
             onClick={openCreateModal}
-            className="btn btn-primary h-8.5 px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0"
+            disabled={disabled}
+            className="btn btn-primary h-8.5 px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="size-3.5" />
             <span>Add Medication</span>
@@ -279,7 +286,8 @@ export const MedicationsSubTab: React.FC<MedicationsSubTabProps> = ({
               <button
                 type="button"
                 onClick={() => toggleMedActive(med)}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase transition-colors cursor-pointer ${
+                disabled={disabled}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                   med.active
                     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                     : 'bg-surface-3 text-ink-4'
@@ -320,7 +328,8 @@ export const MedicationsSubTab: React.FC<MedicationsSubTabProps> = ({
               <button
                 type="button"
                 onClick={() => openEditModal(med)}
-                className="btn btn-secondary size-7 grid place-items-center rounded-lg text-ink-3 hover:text-ink cursor-pointer"
+                disabled={disabled}
+                className="btn btn-secondary size-7 grid place-items-center rounded-lg text-ink-3 hover:text-ink cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Edit medication"
               >
                 <Edit3 className="size-3" />
@@ -328,13 +337,15 @@ export const MedicationsSubTab: React.FC<MedicationsSubTabProps> = ({
               <button
                 type="button"
                 onClick={async () => {
+                  if (disabled) return;
                   if (confirm(`Delete medication "${med.name}"?`)) {
                     await onDeleteMedication(med.id);
                     await onSyncRefillReminder(med, true);
                     showToast('✓ Medication deleted');
                   }
                 }}
-                className="btn btn-secondary size-7 grid place-items-center rounded-lg text-ink-3 hover:text-rose-500 cursor-pointer"
+                disabled={disabled}
+                className="btn btn-secondary size-7 grid place-items-center rounded-lg text-ink-3 hover:text-rose-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Delete medication"
               >
                 <Trash2 className="size-3" />
@@ -534,8 +545,8 @@ export const MedicationsSubTab: React.FC<MedicationsSubTabProps> = ({
               <button
                 type="button"
                 onClick={handleSaveForm}
-                disabled={isSaving}
-                className="btn btn-primary h-9 px-4 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                disabled={isSaving || disabled}
+                className="btn btn-primary h-9 px-4 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? 'Saving...' : 'Save Medication'}
               </button>

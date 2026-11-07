@@ -23,6 +23,7 @@ interface EmergencyCardProps {
   activeMedications: Medication[];
   onSaveProfile: (profile: HealthProfile) => Promise<void>;
   showToast: (msg: string) => void;
+  disabled?: boolean;
 }
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'];
@@ -32,6 +33,7 @@ export const EmergencyCard: React.FC<EmergencyCardProps> = ({
   activeMedications,
   onSaveProfile,
   showToast,
+  disabled = false,
 }) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -204,6 +206,7 @@ export const EmergencyCard: React.FC<EmergencyCardProps> = ({
   };
 
   const handleSave = async () => {
+    if (disabled) return;
     setIsSaving(true);
     try {
       await onSaveProfile(formData);
@@ -295,8 +298,8 @@ export const EmergencyCard: React.FC<EmergencyCardProps> = ({
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={isSaving}
-                className="btn btn-primary h-8 px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                disabled={isSaving || disabled}
+                className="btn btn-primary h-8 px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Check className="size-3.5" />
                 <span>{isSaving ? 'Saving...' : 'Save Card'}</span>
@@ -306,8 +309,12 @@ export const EmergencyCard: React.FC<EmergencyCardProps> = ({
             <>
               <button
                 type="button"
-                onClick={() => setIsEditing(true)}
-                className="btn btn-secondary h-8 px-2.5 sm:px-3 rounded-xl text-xs text-ink-2 hover:text-ink inline-flex items-center gap-1.5 cursor-pointer"
+                onClick={() => {
+                  if (disabled) return;
+                  setIsEditing(true);
+                }}
+                disabled={disabled}
+                className="btn btn-secondary h-8 px-2.5 sm:px-3 rounded-xl text-xs text-ink-2 hover:text-ink inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Edit emergency contact details"
               >
                 <Edit3 className="size-3.5" />

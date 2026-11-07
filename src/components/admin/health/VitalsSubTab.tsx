@@ -20,6 +20,7 @@ interface VitalsSubTabProps {
   onDeleteVaccination: (id: string) => Promise<void>;
   onSyncVaccineReminder: (vac: Vaccination, removed?: boolean) => Promise<void>;
   showToast: (msg: string) => void;
+  disabled?: boolean;
 }
 
 const METRIC_CONFIG: Record<
@@ -71,6 +72,7 @@ export const VitalsSubTab: React.FC<VitalsSubTabProps> = ({
   onDeleteVaccination,
   onSyncVaccineReminder,
   showToast,
+  disabled = false,
 }) => {
   const [activeMetric, setActiveMetric] = useState<VitalType>('bp');
   const [rangeMode, setRangeMode] = useState<'30d' | '90d' | '1y' | 'all'>('90d');
@@ -194,6 +196,7 @@ export const VitalsSubTab: React.FC<VitalsSubTabProps> = ({
 
   // Submit new vital measurement
   const handleSaveVitalSubmit = async () => {
+    if (disabled) return;
     const val = parseFloat(vitalValue);
     if (isNaN(val)) {
       showToast('✕ Valid numeric value is required');
@@ -239,6 +242,7 @@ export const VitalsSubTab: React.FC<VitalsSubTabProps> = ({
 
   // Submit new vaccination
   const handleSaveVaccineSubmit = async () => {
+    if (disabled) return;
     if (!vaccineName.trim()) {
       showToast('✕ Vaccine name is required');
       return;
@@ -311,11 +315,13 @@ export const VitalsSubTab: React.FC<VitalsSubTabProps> = ({
           <button
             type="button"
             onClick={() => {
+              if (disabled) return;
               setVitalType(activeMetric);
               setVitalUnit(METRIC_CONFIG[activeMetric].unit);
               setIsAddVitalOpen(true);
             }}
-            className="btn btn-primary h-8.5 px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+            disabled={disabled}
+            className="btn btn-primary h-8.5 px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="size-3.5" />
             <span>Add Measurement</span>
@@ -608,12 +614,14 @@ export const VitalsSubTab: React.FC<VitalsSubTabProps> = ({
               <button
                 type="button"
                 onClick={async () => {
+                  if (disabled) return;
                   if (confirm('Delete this measurement entry?')) {
                     await onDeleteVital(vital.id);
                     showToast('✓ Measurement removed');
                   }
                 }}
-                className="btn btn-secondary size-7 grid place-items-center rounded-lg text-ink-4 hover:text-rose-500 cursor-pointer"
+                disabled={disabled}
+                className="btn btn-secondary size-7 grid place-items-center rounded-lg text-ink-4 hover:text-rose-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Delete entry"
               >
                 <Trash2 className="size-3.5" />
@@ -638,8 +646,12 @@ export const VitalsSubTab: React.FC<VitalsSubTabProps> = ({
           </div>
           <button
             type="button"
-            onClick={() => setIsAddVaccineOpen(true)}
-            className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 text-ink cursor-pointer"
+            onClick={() => {
+              if (disabled) return;
+              setIsAddVaccineOpen(true);
+            }}
+            disabled={disabled}
+            className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 text-ink cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="size-3.5" />
             <span>Add Vaccine</span>
@@ -658,13 +670,15 @@ export const VitalsSubTab: React.FC<VitalsSubTabProps> = ({
                   <button
                     type="button"
                     onClick={async () => {
+                      if (disabled) return;
                       if (confirm(`Delete vaccine record "${vac.name}"?`)) {
                         await onDeleteVaccination(vac.id);
                         await onSyncVaccineReminder(vac, true);
                         showToast('✓ Vaccine record deleted');
                       }
                     }}
-                    className="text-ink-4 hover:text-rose-500 cursor-pointer"
+                    disabled={disabled}
+                    className="text-ink-4 hover:text-rose-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Trash2 className="size-3" />
                   </button>
@@ -839,8 +853,8 @@ export const VitalsSubTab: React.FC<VitalsSubTabProps> = ({
               <button
                 type="button"
                 onClick={handleSaveVitalSubmit}
-                disabled={isSavingVital}
-                className="btn btn-primary h-8.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                disabled={isSavingVital || disabled}
+                className="btn btn-primary h-8.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>{isSavingVital ? 'Saving...' : 'Save Measurement'}</span>
               </button>
@@ -931,8 +945,8 @@ export const VitalsSubTab: React.FC<VitalsSubTabProps> = ({
               <button
                 type="button"
                 onClick={handleSaveVaccineSubmit}
-                disabled={isSavingVaccine}
-                className="btn btn-primary h-8.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                disabled={isSavingVaccine || disabled}
+                className="btn btn-primary h-8.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>{isSavingVaccine ? 'Saving...' : 'Save Vaccine'}</span>
               </button>

@@ -21,6 +21,7 @@ interface VisitsSubTabProps {
   onDeleteVisit: (id: string) => Promise<void>;
   onSyncFollowUpReminder: (visit: Visit, removed?: boolean) => Promise<void>;
   showToast: (msg: string) => void;
+  disabled?: boolean;
 }
 
 export const VisitsSubTab: React.FC<VisitsSubTabProps> = ({
@@ -30,6 +31,7 @@ export const VisitsSubTab: React.FC<VisitsSubTabProps> = ({
   onDeleteVisit,
   onSyncFollowUpReminder,
   showToast,
+  disabled = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSlideOverOpen, setIsSlideOverOpen] = useState<boolean>(false);
@@ -54,6 +56,7 @@ export const VisitsSubTab: React.FC<VisitsSubTabProps> = ({
   }, [visits, searchQuery]);
 
   const openCreateModal = () => {
+    if (disabled) return;
     setEditingVisit(null);
     setFormData({
       id: crypto.randomUUID(),
@@ -69,6 +72,7 @@ export const VisitsSubTab: React.FC<VisitsSubTabProps> = ({
   };
 
   const openEditModal = (visit: Visit) => {
+    if (disabled) return;
     setEditingVisit(visit);
     setFormData({ ...visit, documentIds: visit.documentIds || [] });
     setIsSlideOverOpen(true);
@@ -89,6 +93,7 @@ export const VisitsSubTab: React.FC<VisitsSubTabProps> = ({
   };
 
   const handleSaveForm = async () => {
+    if (disabled) return;
     if (!formData.doctor?.trim()) {
       showToast('✕ Doctor name is required');
       return;
@@ -145,7 +150,8 @@ export const VisitsSubTab: React.FC<VisitsSubTabProps> = ({
         <button
           type="button"
           onClick={openCreateModal}
-          className="btn btn-primary h-8.5 px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0"
+          disabled={disabled}
+          className="btn btn-primary h-8.5 px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="size-3.5" />
           <span>Log Doctor Visit</span>
@@ -184,7 +190,8 @@ export const VisitsSubTab: React.FC<VisitsSubTabProps> = ({
                   <button
                     type="button"
                     onClick={() => openEditModal(visit)}
-                    className="btn btn-secondary size-7.5 grid place-items-center rounded-lg text-ink-3 hover:text-ink cursor-pointer"
+                    disabled={disabled}
+                    className="btn btn-secondary size-7.5 grid place-items-center rounded-lg text-ink-3 hover:text-ink cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Edit visit"
                   >
                     <Edit3 className="size-3.5" />
@@ -192,13 +199,15 @@ export const VisitsSubTab: React.FC<VisitsSubTabProps> = ({
                   <button
                     type="button"
                     onClick={async () => {
+                      if (disabled) return;
                       if (confirm(`Delete visit record for Dr. ${visit.doctor}?`)) {
                         await onDeleteVisit(visit.id);
                         await onSyncFollowUpReminder(visit, true);
                         showToast('✓ Visit record deleted');
                       }
                     }}
-                    className="btn btn-secondary size-7.5 grid place-items-center rounded-lg text-ink-3 hover:text-rose-500 cursor-pointer"
+                    disabled={disabled}
+                    className="btn btn-secondary size-7.5 grid place-items-center rounded-lg text-ink-3 hover:text-rose-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Delete visit"
                   >
                     <Trash2 className="size-3.5" />
@@ -405,8 +414,8 @@ export const VisitsSubTab: React.FC<VisitsSubTabProps> = ({
               <button
                 type="button"
                 onClick={handleSaveForm}
-                disabled={isSaving}
-                className="btn btn-primary h-8.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                disabled={isSaving || disabled}
+                className="btn btn-primary h-8.5 px-4 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>{isSaving ? 'Saving...' : 'Save Visit'}</span>
               </button>
