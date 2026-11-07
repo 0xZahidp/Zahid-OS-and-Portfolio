@@ -143,10 +143,13 @@ export interface DirectContactItem {
 }
 
 export interface LanguageSkill {
+  id?: string;
   name: string;
   proficiency: string;
   rating: number; // 1 to 5
   note?: string;
   hasVoice?: boolean;
+  has_voice?: boolean;
+  sort_order?: number;
 }
 

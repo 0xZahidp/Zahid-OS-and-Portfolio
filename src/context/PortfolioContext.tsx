@@ -33,7 +33,7 @@ interface PortfolioContextType {
   updateSocialLinks: (socials: SocialLink[]) => void;
   updateSuggestedPeople: (people: FollowerRecommendation[]) => void;
   updateLibraryData: (library: LibraryContent) => void;
-  saveContent: () => Promise<boolean>;
+  saveContent: (confirmDelete?: boolean) => Promise<boolean>;
   resetToDefault: () => void;
   exportJson: () => void;
   importJson: (jsonString: string) => boolean;
@@ -43,6 +43,7 @@ const PortfolioContext = createContext<PortfolioContextType | undefined>(undefin
 
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [content, setContent] = useState<PortfolioContent>(defaultPortfolioContent);
+  const [hasLoaded, setHasLoaded] = useState<boolean>(false);
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -59,6 +60,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const data = await res.json();
         if (isMounted && data.content) {
           setContent(data.content);
+          setHasLoaded(true);
         }
       } catch (err) {
         console.error('Failed to load portfolio content:', err);
@@ -155,24 +157,42 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setSaveStatus('idle');
   }, []);
 
-  const saveContent = useCallback(async (): Promise<boolean> => {
+  const saveContent = useCallback(async (confirmDelete?: boolean): Promise<boolean> => {
     setIsSaving(true);
     setSaveStatus('saving');
     setErrorMessage(null);
 
     try {
+      const payload: PortfolioContent = {
+        ...content,
+        clientLoaded: hasLoaded,
+        confirmDelete: Boolean(confirmDelete),
+      };
+
       const res = await fetch('/api/content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(content),
+        body: JSON.stringify(payload),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error(`Failed with HTTP status ${res.status}`);
+        if (data.requiresConfirmation && !confirmDelete && typeof window !== 'undefined') {
+          const userConfirmed = window.confirm(
+            `${data.error || 'Mass deletion guard: deleting more than 50% of a collection requires confirmation.'}\n\nDo you want to proceed with deleting these items?`
+          );
+          if (userConfirmed) {
+            return await saveContent(true);
+          }
+        }
+        throw new Error(data.error || `Failed with HTTP status ${res.status}`);
       }
 
-      const data = await res.json();
       if (data.success) {
+        if (data.content) {
+          setContent(data.content);
+        }
         setIsDirty(false);
         setSaveStatus('saved');
         setLastSaved(new Date().toLocaleTimeString());
@@ -189,7 +209,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       setIsSaving(false);
     }
-  }, [content]);
+  }, [content, hasLoaded]);
 
   const resetToDefault = useCallback(() => {
     setContent(defaultPortfolioContent);

@@ -45,6 +45,8 @@ export interface PortfolioContent {
   githubSettings: GitHubSettings;
   libraryData?: LibraryContent;
   updatedAt?: string;
+  clientLoaded?: boolean;
+  confirmDelete?: boolean;
 }
 
 export interface CmsSaveResponse {
@@ -53,5 +55,6 @@ export interface CmsSaveResponse {
   destination: string[];
   message?: string;
   error?: string;
+  content?: PortfolioContent;
 }
 

@@ -226,6 +226,9 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date().toISOString(),
     };
 
+    const isClientLoaded = body.clientLoaded === true;
+    const isConfirmDelete = body.confirmDelete === true;
+
     const destinations: string[] = [];
 
     // 1. Write to local file (ensures zero downtime & offline dev)
@@ -243,6 +246,161 @@ export async function POST(req: NextRequest) {
         const supabase = supabaseServer();
         const p = sanitizedContent.profile;
 
+        // Fetch existing IDs for all list tables to track deletions
+        const [
+          existingBioRes,
+          existingExpRes,
+          existingProjRes,
+          existingSkillRes,
+          existingLangRes,
+          existingSocRes,
+          existingPeepRes,
+        ] = await Promise.all([
+          supabase.from('bio_paragraphs').select('id, sort_order'),
+          supabase.from('experiences').select('id'),
+          supabase.from('projects').select('id'),
+          supabase.from('skills').select('id'),
+          supabase.from('languages').select('id, name'),
+          supabase.from('social_links').select('id'),
+          supabase.from('suggested_people').select('id'),
+        ]);
+
+        const existingBioRows = existingBioRes.data || [];
+        const existingBioIds = existingBioRows.map((b) => b.id);
+        const existingExpIds = (existingExpRes.data || []).map((r) => r.id);
+        const existingProjIds = (existingProjRes.data || []).map((r) => r.id);
+        const existingSkillIds = (existingSkillRes.data || []).map((r) => r.id);
+        const existingLangRows = existingLangRes.data || [];
+        const existingLangIds = existingLangRows.map((r) => r.id);
+        const existingSocIds = (existingSocRes.data || []).map((r) => r.id);
+        const existingPeepIds = (existingPeepRes.data || []).map((r) => r.id);
+
+        // Map incoming rows with IDs and sort_order
+        const bioRows = (sanitizedContent.bioParagraphs || []).map((content, idx) => {
+          const existing = existingBioRows.find((b) => b.sort_order === idx);
+          return {
+            id: existing ? existing.id : `bio-${idx + 1}`,
+            sort_order: idx,
+            content,
+            updated_at: new Date().toISOString(),
+          };
+        });
+        const incomingBioIds = bioRows.map((r) => r.id);
+        const deletedBioIds = existingBioIds.filter((id) => !incomingBioIds.includes(id));
+
+        const expRows = (sanitizedContent.experience || []).map((exp, idx) => ({
+          ...exp,
+          id: exp.id || `exp_${Date.now()}_${idx}`,
+          sort_order: idx,
+          updated_at: new Date().toISOString(),
+        }));
+        const incomingExpIds = expRows.map((r) => r.id);
+        const deletedExpIds = existingExpIds.filter((id) => !incomingExpIds.includes(id));
+
+        const projRows = (sanitizedContent.projects || []).map((proj, idx) => ({
+          id: proj.id || `proj_${Date.now()}_${idx}`,
+          title: proj.title,
+          description: proj.description || '',
+          tags: proj.tags || [],
+          image_url: proj.image_url || '',
+          project_url: proj.project_url || '',
+          repository_url: proj.repository_url || '',
+          stars: proj.stars || 0,
+          highlight_badge: proj.highlightBadge || '',
+          logo_type: proj.logoType || '',
+          sort_order: idx,
+          updated_at: new Date().toISOString(),
+        }));
+        const incomingProjIds = projRows.map((r) => r.id);
+        const deletedProjIds = existingProjIds.filter((id) => !incomingProjIds.includes(id));
+
+        const skillRows = (sanitizedContent.skills || []).map((skill, idx) => ({
+          id: skill.id || skill.name.toLowerCase().replace(/[^a-z0-9]/g, '-') || `skill_${Date.now()}_${idx}`,
+          name: skill.name,
+          category: skill.category || 'tech',
+          color: skill.color || '',
+          sort_order: idx,
+          updated_at: new Date().toISOString(),
+        }));
+        const incomingSkillIds = skillRows.map((r) => r.id);
+        const deletedSkillIds = existingSkillIds.filter((id) => !incomingSkillIds.includes(id));
+
+        const langRows = (sanitizedContent.languages || []).map((lang, idx) => {
+          let langId = lang.id;
+          if (!langId) {
+            const existingByName = existingLangRows.find((r) => r.name.toLowerCase() === lang.name.toLowerCase());
+            langId = existingByName ? existingByName.id : `lang_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+          }
+          return {
+            id: langId,
+            name: lang.name,
+            proficiency: lang.proficiency,
+            rating: lang.rating || 5,
+            note: lang.note || '',
+            has_voice: lang.hasVoice !== false && lang.has_voice !== false,
+            sort_order: idx,
+            updated_at: new Date().toISOString(),
+          };
+        });
+        const incomingLangIds = langRows.map((r) => r.id);
+        const deletedLangIds = existingLangIds.filter((id) => !incomingLangIds.includes(id));
+
+        const socRows = (sanitizedContent.socialLinks || []).map((soc, idx) => ({
+          ...soc,
+          id: soc.id || `soc_${Date.now()}_${idx}`,
+          sort_order: idx,
+          updated_at: new Date().toISOString(),
+        }));
+        const incomingSocIds = socRows.map((r) => r.id);
+        const deletedSocIds = existingSocIds.filter((id) => !incomingSocIds.includes(id));
+
+        const peepRows = (sanitizedContent.suggestedPeople || []).map((peep, idx) => ({
+          id: peep.id || `peep_${Date.now()}_${idx}`,
+          name: peep.name,
+          role: peep.role || '',
+          avatar_url: peep.avatar_url || '',
+          url: peep.primaryUrl || peep.url || '',
+          handle: peep.primaryHandle || peep.handle || '',
+          sort_order: idx,
+          updated_at: new Date().toISOString(),
+        }));
+        const incomingPeepIds = peepRows.map((r) => r.id);
+        const deletedPeepIds = existingPeepIds.filter((id) => !incomingPeepIds.includes(id));
+
+        // Mass Deletion Guard:
+        // Applied only to collections with > 8 items when deleting > 3 items.
+        // If deleting > 50% without confirmDelete flag, block with 400.
+        const collectionsToCheck = [
+          { name: 'bio_paragraphs', existing: existingBioIds, deleted: deletedBioIds },
+          { name: 'experiences', existing: existingExpIds, deleted: deletedExpIds },
+          { name: 'projects', existing: existingProjIds, deleted: deletedProjIds },
+          { name: 'skills', existing: existingSkillIds, deleted: deletedSkillIds },
+          { name: 'languages', existing: existingLangIds, deleted: deletedLangIds },
+          { name: 'social_links', existing: existingSocIds, deleted: deletedSocIds },
+          { name: 'suggested_people', existing: existingPeepIds, deleted: deletedPeepIds },
+        ];
+
+        if (isClientLoaded) {
+          for (const col of collectionsToCheck) {
+            if (col.existing.length > 8 && col.deleted.length > 3) {
+              const deleteRatio = col.deleted.length / col.existing.length;
+              if (deleteRatio > 0.5 && !isConfirmDelete) {
+                return NextResponse.json(
+                  {
+                    success: false,
+                    error: `Mass deletion guard: deleting ${col.deleted.length} of ${col.existing.length} items (>50%) in ${col.name} requires explicit confirmation.`,
+                    requiresConfirmation: true,
+                    collection: col.name,
+                    deletedCount: col.deleted.length,
+                    totalCount: col.existing.length,
+                  },
+                  { status: 400 }
+                );
+              }
+            }
+          }
+        }
+
         // Upsert Profiles table
         const profilePromise = supabase.from('profiles').upsert({
           id: p.id || 'usr_zahid',
@@ -258,85 +416,6 @@ export async function POST(req: NextRequest) {
           roles: p.roles || [],
           updated_at: new Date().toISOString(),
         });
-
-        // Upsert Bio Paragraphs
-        const bioRows = (sanitizedContent.bioParagraphs || []).map((content, idx) => ({
-          id: `bio-${idx + 1}`,
-          sort_order: idx,
-          content,
-          updated_at: new Date().toISOString(),
-        }));
-        const bioPromise = bioRows.length > 0 ? supabase.from('bio_paragraphs').upsert(bioRows) : Promise.resolve();
-
-        // Upsert Experiences
-        const expRows = (sanitizedContent.experience || []).map((exp, idx) => ({
-          ...exp,
-          sort_order: idx,
-          updated_at: new Date().toISOString(),
-        }));
-        const expPromise = expRows.length > 0 ? supabase.from('experiences').upsert(expRows) : Promise.resolve();
-
-        // Upsert Projects
-        const projRows = (sanitizedContent.projects || []).map((proj, idx) => ({
-          id: proj.id,
-          title: proj.title,
-          description: proj.description || '',
-          tags: proj.tags || [],
-          image_url: proj.image_url || '',
-          project_url: proj.project_url || '',
-          repository_url: proj.repository_url || '',
-          stars: proj.stars || 0,
-          highlight_badge: proj.highlightBadge || '',
-          logo_type: proj.logoType || '',
-          sort_order: idx,
-          updated_at: new Date().toISOString(),
-        }));
-        const projPromise = projRows.length > 0 ? supabase.from('projects').upsert(projRows) : Promise.resolve();
-
-        // Upsert Skills
-        const skillRows = (sanitizedContent.skills || []).map((skill, idx) => ({
-          id: skill.id || skill.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-          name: skill.name,
-          category: skill.category || 'tech',
-          color: skill.color || '',
-          sort_order: idx,
-          updated_at: new Date().toISOString(),
-        }));
-        const skillPromise = skillRows.length > 0 ? supabase.from('skills').upsert(skillRows) : Promise.resolve();
-
-        // Upsert Languages
-        const langRows = (sanitizedContent.languages || []).map((lang, idx) => ({
-          id: `lang-${lang.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
-          name: lang.name,
-          proficiency: lang.proficiency,
-          rating: lang.rating || 5,
-          note: lang.note || '',
-          has_voice: lang.hasVoice !== false,
-          sort_order: idx,
-          updated_at: new Date().toISOString(),
-        }));
-        const langPromise = langRows.length > 0 ? supabase.from('languages').upsert(langRows) : Promise.resolve();
-
-        // Upsert Social Links
-        const socRows = (sanitizedContent.socialLinks || []).map((soc, idx) => ({
-          ...soc,
-          sort_order: idx,
-          updated_at: new Date().toISOString(),
-        }));
-        const socPromise = socRows.length > 0 ? supabase.from('social_links').upsert(socRows) : Promise.resolve();
-
-        // Upsert Suggested People (safe columns for relational table)
-        const peepRows = (sanitizedContent.suggestedPeople || []).map((peep, idx) => ({
-          id: peep.id,
-          name: peep.name,
-          role: peep.role || '',
-          avatar_url: peep.avatar_url || '',
-          url: peep.primaryUrl || peep.url || '',
-          handle: peep.primaryHandle || peep.handle || '',
-          sort_order: idx,
-          updated_at: new Date().toISOString(),
-        }));
-        const peepPromise = peepRows.length > 0 ? supabase.from('suggested_people').upsert(peepRows) : Promise.resolve();
 
         // Upsert Site Settings (persisting rich people data with full quotes, platforms, tags, verified status)
         const settingsRows = [
@@ -361,25 +440,59 @@ export async function POST(req: NextRequest) {
           }
         })();
 
-        // Execute all promises
-        const [pRes] = await Promise.all([
+        // 1. Upsert incoming rows first
+        const [profileRes] = await Promise.all([
           profilePromise,
-          bioPromise,
-          expPromise,
-          projPromise,
-          skillPromise,
-          langPromise,
-          socPromise,
-          peepPromise,
+          bioRows.length > 0 ? supabase.from('bio_paragraphs').upsert(bioRows) : Promise.resolve(),
+          expRows.length > 0 ? supabase.from('experiences').upsert(expRows) : Promise.resolve(),
+          projRows.length > 0 ? supabase.from('projects').upsert(projRows) : Promise.resolve(),
+          skillRows.length > 0 ? supabase.from('skills').upsert(skillRows) : Promise.resolve(),
+          langRows.length > 0 ? supabase.from('languages').upsert(langRows) : Promise.resolve(),
+          socRows.length > 0 ? supabase.from('social_links').upsert(socRows) : Promise.resolve(),
+          peepRows.length > 0 ? supabase.from('suggested_people').upsert(peepRows) : Promise.resolve(),
           setPromise,
           legacyPromise,
         ]);
 
-        if (!pRes.error) {
+        // 2. Delete rows absent from payload (ONLY if client successfully loaded data)
+        if (isClientLoaded) {
+          const deletePromises: PromiseLike<unknown>[] = [];
+          if (deletedBioIds.length > 0) deletePromises.push(supabase.from('bio_paragraphs').delete().in('id', deletedBioIds));
+          if (deletedExpIds.length > 0) deletePromises.push(supabase.from('experiences').delete().in('id', deletedExpIds));
+          if (deletedProjIds.length > 0) deletePromises.push(supabase.from('projects').delete().in('id', deletedProjIds));
+          if (deletedSkillIds.length > 0) deletePromises.push(supabase.from('skills').delete().in('id', deletedSkillIds));
+          if (deletedLangIds.length > 0) deletePromises.push(supabase.from('languages').delete().in('id', deletedLangIds));
+          if (deletedSocIds.length > 0) deletePromises.push(supabase.from('social_links').delete().in('id', deletedSocIds));
+          if (deletedPeepIds.length > 0) deletePromises.push(supabase.from('suggested_people').delete().in('id', deletedPeepIds));
+
+          if (deletePromises.length > 0) {
+            await Promise.all(deletePromises);
+          }
+        }
+
+        // Update sanitizedContent with persisted IDs and sort_order so response matches DB
+        sanitizedContent.languages = langRows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          proficiency: r.proficiency,
+          rating: r.rating,
+          note: r.note,
+          has_voice: r.has_voice,
+          hasVoice: r.has_voice,
+          sort_order: r.sort_order,
+        }));
+        sanitizedContent.experience = expRows;
+        sanitizedContent.projects = projRows;
+        sanitizedContent.skills = skillRows;
+        sanitizedContent.socialLinks = socRows;
+        sanitizedContent.suggestedPeople = peepRows;
+        sanitizedContent.bioParagraphs = bioRows.map((r) => r.content);
+
+        if (!profileRes.error) {
           destinations.push('supabase_relational');
           supabaseStatus = 'success';
         } else {
-          supabaseStatus = `relational_error: ${pRes.error.message}`;
+          supabaseStatus = `relational_error: ${profileRes.error.message}`;
         }
 
         // Save secret GITHUB_TOKEN to app_settings if provided
@@ -413,7 +526,7 @@ export async function POST(req: NextRequest) {
           : 'Content received.',
     };
 
-    return NextResponse.json({ ...response, supabaseStatus });
+    return NextResponse.json({ ...response, supabaseStatus, content: sanitizedContent });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to save content';
     return NextResponse.json({ success: false, error: message }, { status: 500 });
