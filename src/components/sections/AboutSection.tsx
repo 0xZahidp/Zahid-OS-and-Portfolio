@@ -237,68 +237,82 @@ export const AboutSection: React.FC = () => {
             </ul>
           </div>
 
-          {/* Languages Card (Spans across 2 columns) */}
-          <div className="card-raised p-5 sm:col-span-2">
-            <p className="flex items-center gap-2 text-meta font-medium text-ink-2">
-              <Languages className="size-4 text-link" />
-              <span>Languages</span>
-            </p>
+          {/* Languages Card (Spans across 2 columns) - hidden when empty */}
+          {languagesData && languagesData.length > 0 && (
+            <div className="card-raised p-5 sm:col-span-2">
+              <p className="flex items-center gap-2 text-meta font-medium text-ink-2">
+                <Languages className="size-4 text-link" />
+                <span>Languages</span>
+              </p>
 
-            <ul className="mt-4 grid gap-5 sm:grid-cols-3">
-              {languagesData.map((lang) => (
-                <li key={lang.name} className="group" data-voice-item>
-                  <div className="flex h-7 items-center gap-2">
-                    <span className="text-body font-semibold text-ink">
-                      {lang.name}
-                    </span>
-                    <div className="relative inline-flex items-center">
-                      <button
-                        type="button"
-                        onMouseEnter={() => setTooltipLang(lang.name)}
-                        onMouseLeave={() => setTooltipLang(null)}
-                        aria-label={`${lang.name} voice note coming soon`}
-                        className="btn btn-secondary grid size-7 place-items-center rounded-full cursor-pointer hover:bg-surface-2"
-                      >
-                        <Volume2 className="size-3.5 text-ink-3" />
-                      </button>
+              <ul
+                className={`mt-4 grid gap-5 ${
+                  languagesData.length === 1
+                    ? 'grid-cols-1'
+                    : languagesData.length === 2
+                    ? 'grid-cols-1 sm:grid-cols-2'
+                    : languagesData.length === 3
+                    ? 'grid-cols-1 sm:grid-cols-3'
+                    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                }`}
+              >
+                {languagesData.map((lang, idx) => (
+                  <li key={lang.id || lang.name || idx} className="group" data-voice-item>
+                    <div className="flex h-7 items-center gap-2">
+                      <span className="text-body font-semibold text-ink">
+                        {lang.name}
+                      </span>
+                      {lang.hasVoice !== false && lang.has_voice !== false && (
+                        <div className="relative inline-flex items-center">
+                          <button
+                            type="button"
+                            onMouseEnter={() => setTooltipLang(lang.name)}
+                            onMouseLeave={() => setTooltipLang(null)}
+                            aria-label={`${lang.name} voice note coming soon`}
+                            className="btn btn-secondary grid size-7 place-items-center rounded-full cursor-pointer hover:bg-surface-2"
+                          >
+                            <Volume2 className="size-3.5 text-ink-3" />
+                          </button>
 
-                      {tooltipLang === lang.name && (
-                        <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded-md bg-ink px-2 py-0.5 text-micro font-medium whitespace-nowrap text-surface shadow-md">
-                          Recording soon
-                        </span>
+                          {tooltipLang === lang.name && (
+                            <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded-md bg-ink px-2 py-0.5 text-micro font-medium whitespace-nowrap text-surface shadow-md z-10">
+                              Recording soon
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
-                  </div>
 
-                  {/* 5-bar rating meter */}
-                  <div
-                    className="mt-2 flex gap-1"
-                    role="meter"
-                    aria-valuemin={0}
-                    aria-valuemax={5}
-                    aria-valuenow={lang.rating}
-                    aria-label={`${lang.name}: ${lang.proficiency}`}
-                  >
-                    {[1, 2, 3, 4, 5].map((idx) => (
-                      <span
-                        key={idx}
-                        className={`h-1.5 flex-1 rounded-full ${
-                          idx <= lang.rating
-                            ? 'bg-gradient-to-r from-brand-400 to-brand-600'
-                            : 'bg-line'
-                        }`}
-                      />
-                    ))}
-                  </div>
+                    {/* 5-bar rating meter */}
+                    <div
+                      className="mt-2 flex gap-1"
+                      role="meter"
+                      aria-valuemin={0}
+                      aria-valuemax={5}
+                      aria-valuenow={lang.rating || 5}
+                      aria-label={`${lang.name}: ${lang.proficiency}`}
+                    >
+                      {[1, 2, 3, 4, 5].map((dotIdx) => (
+                        <span
+                          key={dotIdx}
+                          className={`h-1.5 flex-1 rounded-full ${
+                            dotIdx <= (lang.rating || 5)
+                              ? 'bg-gradient-to-r from-brand-400 to-brand-600'
+                              : 'bg-line'
+                          }`}
+                        />
+                      ))}
+                    </div>
 
-                  <span className="badge mt-3">{lang.proficiency}</span>
-                  {lang.note && (
-                    <p className="mt-1.5 text-meta text-ink-3">{lang.note}</p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
+                    <span className="badge mt-3">{lang.proficiency}</span>
+                    {lang.note && (
+                      <p className="mt-1.5 text-meta text-ink-3">{lang.note}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </section>
