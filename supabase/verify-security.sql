@@ -19,6 +19,19 @@ WHERE schemaname = 'public'
   AND NOT rowsecurity;
 
 -- ------------------------------------------------------------------------------
+-- CHECK 1B: Verify expected public table count (Expectation: exactly 25 tables)
+-- ------------------------------------------------------------------------------
+SELECT 
+    COUNT(*) AS total_public_tables,
+    25 AS expected_tables,
+    CASE 
+        WHEN COUNT(*) = 25 THEN 'PASS (Expected 25 tables present)'
+        ELSE 'FAIL (Expected 25 tables, got ' || COUNT(*) || ')'
+    END AS status
+FROM pg_tables
+WHERE schemaname = 'public';
+
+-- ------------------------------------------------------------------------------
 -- CHECK 2: Ensure NO direct table grants exist for `anon` or `authenticated`
 -- Expectation: 0 rows returned
 -- ------------------------------------------------------------------------------
