@@ -88,6 +88,9 @@ async function readLocalStore(): Promise<LocalTempStore> {
 
 async function writeLocalStore(store: LocalTempStore): Promise<void> {
   memoryTempStore = store;
+  if (process.env.VERCEL) {
+    return;
+  }
   try {
     // Purge expired records before saving
     const now = new Date().toISOString();

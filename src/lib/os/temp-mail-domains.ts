@@ -168,11 +168,13 @@ async function saveDomainsToStore(domains: TempMailDomainRecord[]): Promise<bool
     } as TempMailDomainRecord;
   });
 
-  // 1. Local file (safely ignore EROFS on read-only environments)
-  try {
-    await fs.writeFile(DOMAINS_FILE_PATH, JSON.stringify(sanitized, null, 2), 'utf-8');
-  } catch (err) {
-    console.warn('[TempMailDomains] Local file write skipped (read-only environment):', err);
+  // 1. Local file (safely ignore EROFS on read-only environments, skip on Vercel)
+  if (!process.env.VERCEL) {
+    try {
+      await fs.writeFile(DOMAINS_FILE_PATH, JSON.stringify(sanitized, null, 2), 'utf-8');
+    } catch (err) {
+      console.warn('[TempMailDomains] Local file write skipped (read-only environment):', err);
+    }
   }
 
   // 2. Supabase site_settings

@@ -97,10 +97,12 @@ export async function getHealthCollection<K extends HealthCollectionKey>(
 
         memoryCache[collection] = { data: value, timestamp: Date.now() };
 
-        // Asynchronously mirror to local gitignored file (ignore in read-only envs)
-        fs.writeFile(FILE_PATHS[collection], JSON.stringify(value, null, 2), 'utf-8').catch(
-          () => {}
-        );
+        // Asynchronously mirror to local gitignored file (ignore in read-only envs, skip on Vercel)
+        if (!process.env.VERCEL) {
+          fs.writeFile(FILE_PATHS[collection], JSON.stringify(value, null, 2), 'utf-8').catch(
+            () => {}
+          );
+        }
 
         return value as HealthCollections[K];
       }
@@ -142,12 +144,14 @@ export async function saveHealthCollection<K extends HealthCollectionKey>(
   let supabaseSaved = false;
   let fileSaved = false;
 
-  // 1. Local JSON write (gitignored file path)
-  try {
-    await fs.writeFile(FILE_PATHS[collection], JSON.stringify(data, null, 2), 'utf-8');
-    fileSaved = true;
-  } catch {
-    // EROFS in read-only serverless environment is normal
+  // 1. Local JSON write (gitignored file path, skip on Vercel)
+  if (!process.env.VERCEL) {
+    try {
+      await fs.writeFile(FILE_PATHS[collection], JSON.stringify(data, null, 2), 'utf-8');
+      fileSaved = true;
+    } catch {
+      // EROFS in read-only serverless environment is normal
+    }
   }
 
   // 2. Supabase site_settings

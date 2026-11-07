@@ -473,11 +473,13 @@ export async function getTravelData(): Promise<{
   // 4. Fallback to default seed dataset
   if (!districts) {
     districts = getDefaultTravelData();
-    // Persist default seed locally so next reads are instant
-    try {
-      await fs.writeFile(TRAVEL_DATA_FILE, JSON.stringify(districts, null, 2), 'utf-8');
-    } catch (err) {
-      console.warn('Failed to write initial travel-data.json:', err);
+    // Persist default seed locally so next reads are instant (skip on Vercel)
+    if (!process.env.VERCEL) {
+      try {
+        await fs.writeFile(TRAVEL_DATA_FILE, JSON.stringify(districts, null, 2), 'utf-8');
+      } catch (err) {
+        console.warn('Failed to write initial travel-data.json:', err);
+      }
     }
   }
 
@@ -494,12 +496,14 @@ export async function saveTravelData(districts: DistrictTravelData[]): Promise<b
   memoryTravelCache = null;
   let fileSaved = false;
 
-  // 1. Save to local file
-  try {
-    await fs.writeFile(TRAVEL_DATA_FILE, JSON.stringify(districts, null, 2), 'utf-8');
-    fileSaved = true;
-  } catch (err) {
-    console.error('Error writing travel-data.json:', err);
+  // 1. Save to local file (skip on Vercel)
+  if (!process.env.VERCEL) {
+    try {
+      await fs.writeFile(TRAVEL_DATA_FILE, JSON.stringify(districts, null, 2), 'utf-8');
+      fileSaved = true;
+    } catch (err) {
+      console.warn('Error writing travel-data.json:', err);
+    }
   }
 
   // 2. Sync to Supabase

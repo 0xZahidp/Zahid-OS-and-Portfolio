@@ -50,10 +50,12 @@ export async function getShortLinks(): Promise<ShortLink[]> {
 
         memoryLinksCache = { links: formatted, timestamp: Date.now() };
 
-        // Asynchronously mirror to local backup file (safely ignore in read-only envs)
-        fs.writeFile(SHORT_LINKS_FILE_PATH, JSON.stringify(formatted, null, 2), 'utf-8').catch(
-          () => {}
-        );
+        // Asynchronously mirror to local backup file (safely ignore in read-only envs, skip on Vercel)
+        if (!process.env.VERCEL) {
+          fs.writeFile(SHORT_LINKS_FILE_PATH, JSON.stringify(formatted, null, 2), 'utf-8').catch(
+            () => {}
+          );
+        }
 
         return formatted;
       }
@@ -73,7 +75,9 @@ export async function getShortLinks(): Promise<ShortLink[]> {
       if (!error && data?.value && Array.isArray(data.value) && data.value.length > 0) {
         const list = data.value as ShortLink[];
         memoryLinksCache = { links: list, timestamp: Date.now() };
-        fs.writeFile(SHORT_LINKS_FILE_PATH, JSON.stringify(list, null, 2), 'utf-8').catch(() => {});
+        if (!process.env.VERCEL) {
+          fs.writeFile(SHORT_LINKS_FILE_PATH, JSON.stringify(list, null, 2), 'utf-8').catch(() => {});
+        }
         return list;
       }
     } catch (err) {
@@ -218,18 +222,20 @@ export async function saveShortLinks(links: ShortLink[]): Promise<boolean> {
     }
   }
 
-  // 2. Save to local JSON file (safely ignore EROFS in read-only / serverless)
-  try {
-    await fs.writeFile(SHORT_LINKS_FILE_PATH, JSON.stringify(links, null, 2), 'utf-8');
-    fileSaved = true;
-  } catch (err) {
-    console.warn('[ShortLinks] Local short-links.json write skipped (read-only environment):', err);
+  // 2. Save to local JSON file (safely ignore EROFS in read-only / serverless, skip on Vercel)
+  if (!process.env.VERCEL) {
+    try {
+      await fs.writeFile(SHORT_LINKS_FILE_PATH, JSON.stringify(links, null, 2), 'utf-8');
+      fileSaved = true;
+    } catch (err) {
+      console.warn('[ShortLinks] Local short-links.json write skipped (read-only environment):', err);
+    }
   }
 
   memoryLinksCache = { links, timestamp: Date.now() };
 
-  // True if saved to Supabase OR local file
-  return supabaseSaved || fileSaved;
+  // True if saved to Supabase OR local file (or on Vercel where Supabase saved)
+  return supabaseSaved || fileSaved || Boolean(process.env.VERCEL && supabaseSaved);
 }
 
 /**

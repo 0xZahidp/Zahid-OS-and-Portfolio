@@ -129,11 +129,13 @@ export async function saveOsSettings(settings: Partial<ZahidOsSettings>): Promis
   // Immediate in-memory cache update
   memorySettingsCache = { settings: merged, timestamp: Date.now() };
 
-  // 1. Save to local file (safely ignore EROFS in read-only / Vercel environments)
-  try {
-    await fs.writeFile(SETTINGS_FILE_PATH, JSON.stringify(merged, null, 2), 'utf-8');
-  } catch (err) {
-    console.warn('[saveOsSettings] Local file write skipped (read-only environment):', err);
+  // 1. Save to local file (safely ignore EROFS in read-only / Vercel environments, skip on Vercel)
+  if (!process.env.VERCEL) {
+    try {
+      await fs.writeFile(SETTINGS_FILE_PATH, JSON.stringify(merged, null, 2), 'utf-8');
+    } catch (err) {
+      console.warn('[saveOsSettings] Local file write skipped (read-only environment):', err);
+    }
   }
 
   // 2. Sync to Supabase

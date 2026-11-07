@@ -72,11 +72,13 @@ export async function saveCareerApplications(
     timestamp: Date.now(),
   };
 
-  // 1. Local JSON write (safely ignore EROFS in read-only production)
-  try {
-    await fs.writeFile(CAREER_FILE_PATH, JSON.stringify(applications, null, 2), 'utf-8');
-  } catch (err) {
-    console.warn('[CareerStore] Local file write skipped (read-only environment):', err);
+  // 1. Local JSON write (safely ignore EROFS in read-only production, skip on Vercel)
+  if (!process.env.VERCEL) {
+    try {
+      await fs.writeFile(CAREER_FILE_PATH, JSON.stringify(applications, null, 2), 'utf-8');
+    } catch (err) {
+      console.warn('[CareerStore] Local file write skipped (read-only environment):', err);
+    }
   }
 
   // 2. Supabase site_settings

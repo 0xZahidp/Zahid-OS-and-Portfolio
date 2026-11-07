@@ -234,6 +234,9 @@ export async function readMailStore(): Promise<MailStoreData> {
 }
 
 export async function writeMailStore(data: MailStoreData): Promise<boolean> {
+  if (process.env.VERCEL) {
+    return true;
+  }
   try {
     data.updatedAt = new Date().toISOString();
     if (!Array.isArray(data.messages)) {
@@ -246,7 +249,7 @@ export async function writeMailStore(data: MailStoreData): Promise<boolean> {
 
     return true;
   } catch (err) {
-    console.error('[MailStore] Failed to write mail store:', err);
+    console.warn('[MailStore] Failed to write mail store:', err);
     return false;
   }
 }

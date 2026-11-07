@@ -203,6 +203,9 @@ export async function saveTableRows(
  * Synchronize table rows into local JSON files so local offline dev and SSR remain 100% in sync
  */
 async function syncRowsToLocal(tableName: string, rows: Record<string, unknown>[]) {
+  if (process.env.VERCEL) {
+    return;
+  }
   try {
     if (tableName === 'inbox_messages') {
       await fs.writeFile(INBOX_FILE_PATH, JSON.stringify(rows, null, 2), 'utf-8');

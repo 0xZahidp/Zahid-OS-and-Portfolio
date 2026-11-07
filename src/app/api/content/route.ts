@@ -20,11 +20,14 @@ async function readLocalContent(): Promise<PortfolioContent | null> {
 }
 
 async function writeLocalContent(content: PortfolioContent): Promise<boolean> {
+  if (process.env.VERCEL) {
+    return true;
+  }
   try {
     await fs.writeFile(CONTENT_FILE_PATH, JSON.stringify(content, null, 2), 'utf-8');
     return true;
   } catch (err) {
-    console.error('Failed to write local content file:', err);
+    console.warn('Failed to write local content file:', err);
     return false;
   }
 }
