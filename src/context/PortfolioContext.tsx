@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { PortfolioContent, WorksSettings, BasedInSettings, GitHubSettings } from '@/types/cms';
+import { PortfolioContent, WorksSettings, BasedInSettings, GitHubSettings, LoadedCollectionIds } from '@/types/cms';
 import {
   Profile,
   Skill,
@@ -43,6 +43,7 @@ const PortfolioContext = createContext<PortfolioContextType | undefined>(undefin
 
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [content, setContent] = useState<PortfolioContent>(defaultPortfolioContent);
+  const [loadedIds, setLoadedIds] = useState<LoadedCollectionIds | undefined>(undefined);
   const [hasLoaded, setHasLoaded] = useState<boolean>(false);
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -60,6 +61,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const data = await res.json();
         if (isMounted && data.content) {
           setContent(data.content);
+          setLoadedIds(data.loadedIds || data.content.loadedIds);
           setHasLoaded(true);
         }
       } catch (err) {
@@ -166,6 +168,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const payload: PortfolioContent = {
         ...content,
         clientLoaded: hasLoaded,
+        loadedIds,
         confirmDelete: Boolean(confirmDelete),
       };
 
@@ -193,6 +196,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (data.content) {
           setContent(data.content);
         }
+        if (data.loadedIds) {
+          setLoadedIds(data.loadedIds);
+        } else if (data.content?.loadedIds) {
+          setLoadedIds(data.content.loadedIds);
+        }
         setIsDirty(false);
         setSaveStatus('saved');
         setLastSaved(new Date().toLocaleTimeString());
@@ -209,7 +217,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       setIsSaving(false);
     }
-  }, [content, hasLoaded]);
+  }, [content, hasLoaded, loadedIds]);
 
   const resetToDefault = useCallback(() => {
     setContent(defaultPortfolioContent);

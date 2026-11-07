@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
           const [bioRes, expRes, projRes, skillRes, langRes, socRes, peepRes, setRes] = await Promise.all([
             supabase
               .from('bio_paragraphs')
-              .select('sort_order, content')
+              .select('id, sort_order, content')
               .order('sort_order', { ascending: true }),
             supabase
               .from('experiences')
@@ -109,6 +109,16 @@ export async function GET(req: NextRequest) {
             ? { ...rawGithubSetting, token: undefined }
             : defaultPortfolioContent.githubSettings;
 
+          const loadedIds = {
+            languages: (langRes.data || []).map((l) => l.id),
+            skills: (skillRes.data || []).map((s) => s.id),
+            projects: (projRes.data || []).map((p) => p.id),
+            experience: (expRes.data || []).map((e) => e.id),
+            socialLinks: (socRes.data || []).map((s) => s.id),
+            suggestedPeople: (peepRes.data || []).map((p) => p.id),
+            bioParagraphs: (bioRes.data || []).map((b) => b.id),
+          };
+
           const assembled: PortfolioContent = {
             profile: {
               id: profileRow.id,
@@ -146,6 +156,7 @@ export async function GET(req: NextRequest) {
             githubSettings: githubSetting as unknown as typeof defaultPortfolioContent.githubSettings,
             libraryData: librarySetting || defaultPortfolioContent.libraryData,
             updatedAt: profileRow.updated_at || new Date().toISOString(),
+            loadedIds,
           };
 
           return NextResponse.json(
@@ -153,6 +164,7 @@ export async function GET(req: NextRequest) {
               success: true,
               source: 'supabase_relational',
               content: assembled,
+              loadedIds,
             },
             { headers: responseHeaders }
           );
@@ -303,6 +315,8 @@ export async function POST(req: NextRequest) {
         const existingSocIds = (existingSocRes.data || []).map((r) => r.id);
         const existingPeepIds = (existingPeepRes.data || []).map((r) => r.id);
 
+        const clientLoadedIds = body.loadedIds;
+
         // Map incoming rows with IDs and sort_order
         const bioRows = (sanitizedContent.bioParagraphs || []).map((content, idx) => {
           const existing = existingBioRows.find((b) => b.sort_order === idx);
@@ -314,7 +328,10 @@ export async function POST(req: NextRequest) {
           };
         });
         const incomingBioIds = bioRows.map((r) => r.id);
-        const deletedBioIds = existingBioIds.filter((id) => !incomingBioIds.includes(id));
+        const candidateBioIds = clientLoadedIds?.bioParagraphs
+          ? existingBioIds.filter((id) => clientLoadedIds.bioParagraphs!.includes(id))
+          : existingBioIds;
+        const deletedBioIds = candidateBioIds.filter((id) => !incomingBioIds.includes(id));
 
         const expRows = (sanitizedContent.experience || []).map((exp, idx) => ({
           ...exp,
@@ -323,7 +340,10 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         }));
         const incomingExpIds = expRows.map((r) => r.id);
-        const deletedExpIds = existingExpIds.filter((id) => !incomingExpIds.includes(id));
+        const candidateExpIds = clientLoadedIds?.experience
+          ? existingExpIds.filter((id) => clientLoadedIds.experience!.includes(id))
+          : existingExpIds;
+        const deletedExpIds = candidateExpIds.filter((id) => !incomingExpIds.includes(id));
 
         const projRows = (sanitizedContent.projects || []).map((proj, idx) => ({
           id: proj.id || `proj_${Date.now()}_${idx}`,
@@ -340,7 +360,10 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         }));
         const incomingProjIds = projRows.map((r) => r.id);
-        const deletedProjIds = existingProjIds.filter((id) => !incomingProjIds.includes(id));
+        const candidateProjIds = clientLoadedIds?.projects
+          ? existingProjIds.filter((id) => clientLoadedIds.projects!.includes(id))
+          : existingProjIds;
+        const deletedProjIds = candidateProjIds.filter((id) => !incomingProjIds.includes(id));
 
         const skillRows = (sanitizedContent.skills || []).map((skill, idx) => ({
           id: skill.id || skill.name.toLowerCase().replace(/[^a-z0-9]/g, '-') || `skill_${Date.now()}_${idx}`,
@@ -351,7 +374,10 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         }));
         const incomingSkillIds = skillRows.map((r) => r.id);
-        const deletedSkillIds = existingSkillIds.filter((id) => !incomingSkillIds.includes(id));
+        const candidateSkillIds = clientLoadedIds?.skills
+          ? existingSkillIds.filter((id) => clientLoadedIds.skills!.includes(id))
+          : existingSkillIds;
+        const deletedSkillIds = candidateSkillIds.filter((id) => !incomingSkillIds.includes(id));
 
         const langRows = (sanitizedContent.languages || []).map((lang, idx) => {
           let langId = lang.id;
@@ -371,7 +397,11 @@ export async function POST(req: NextRequest) {
           };
         });
         const incomingLangIds = langRows.map((r) => r.id);
-        const deletedLangIds = existingLangIds.filter((id) => !incomingLangIds.includes(id));
+        // Snapshot-based delete: only delete IDs that client received when loading
+        const candidateLangIds = clientLoadedIds?.languages
+          ? existingLangIds.filter((id) => clientLoadedIds.languages!.includes(id))
+          : existingLangIds;
+        const deletedLangIds = candidateLangIds.filter((id) => !incomingLangIds.includes(id));
 
         const socRows = (sanitizedContent.socialLinks || []).map((soc, idx) => ({
           ...soc,
@@ -380,7 +410,10 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         }));
         const incomingSocIds = socRows.map((r) => r.id);
-        const deletedSocIds = existingSocIds.filter((id) => !incomingSocIds.includes(id));
+        const candidateSocIds = clientLoadedIds?.socialLinks
+          ? existingSocIds.filter((id) => clientLoadedIds.socialLinks!.includes(id))
+          : existingSocIds;
+        const deletedSocIds = candidateSocIds.filter((id) => !incomingSocIds.includes(id));
 
         const peepRows = (sanitizedContent.suggestedPeople || []).map((peep, idx) => ({
           id: peep.id || `peep_${Date.now()}_${idx}`,
@@ -393,7 +426,10 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         }));
         const incomingPeepIds = peepRows.map((r) => r.id);
-        const deletedPeepIds = existingPeepIds.filter((id) => !incomingPeepIds.includes(id));
+        const candidatePeepIds = clientLoadedIds?.suggestedPeople
+          ? existingPeepIds.filter((id) => clientLoadedIds.suggestedPeople!.includes(id))
+          : existingPeepIds;
+        const deletedPeepIds = candidatePeepIds.filter((id) => !incomingPeepIds.includes(id));
 
         // Mass Deletion Guard:
         // Applied only to collections with > 8 items when deleting > 3 items.
@@ -446,6 +482,17 @@ export async function POST(req: NextRequest) {
         sanitizedContent.socialLinks = socRows;
         sanitizedContent.suggestedPeople = peepRows;
         sanitizedContent.bioParagraphs = bioRows.map((r) => r.content);
+
+        const currentLoadedIds = {
+          languages: langRows.map((r) => r.id as string),
+          skills: skillRows.map((r) => r.id as string),
+          projects: projRows.map((r) => r.id as string),
+          experience: expRows.map((r) => r.id as string),
+          socialLinks: socRows.map((r) => r.id as string),
+          suggestedPeople: peepRows.map((r) => r.id as string),
+          bioParagraphs: bioRows.map((r) => r.id as string),
+        };
+        sanitizedContent.loadedIds = currentLoadedIds;
 
         // Upsert Profiles table
         const profilePromise = supabase.from('profiles').upsert({
@@ -570,7 +617,12 @@ export async function POST(req: NextRequest) {
       console.warn('Next.js cache revalidation failed:', revalErr);
     }
 
-    return NextResponse.json({ ...response, supabaseStatus, content: sanitizedContent });
+    return NextResponse.json({
+      ...response,
+      supabaseStatus,
+      content: sanitizedContent,
+      loadedIds: sanitizedContent.loadedIds,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to save content';
     return NextResponse.json({ success: false, error: message }, { status: 500 });

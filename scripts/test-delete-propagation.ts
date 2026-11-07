@@ -94,6 +94,15 @@ class MockRelationalDb {
       githubSettings: defaultPortfolioContent.githubSettings,
       libraryData: defaultPortfolioContent.libraryData,
       updatedAt: profileRow.updated_at,
+      loadedIds: {
+        languages: langRows.map((l) => l.id),
+        skills: skillRows.map((s) => s.id),
+        projects: projRows.map((p) => p.id),
+        experience: expRows.map((e) => e.id),
+        socialLinks: socRows.map((s) => s.id),
+        suggestedPeople: peepRows.map((p) => p.id),
+        bioParagraphs: bioRows.map((b) => b.id),
+      },
     };
   }
 
@@ -130,7 +139,12 @@ class MockRelationalDb {
     });
 
     const incomingLangIds = langRows.map((r) => r.id);
-    const deletedLangIds = existingLangIds.filter((id) => !incomingLangIds.includes(id));
+    const clientLoadedIds = payload.loadedIds;
+    // Snapshot-based deletion: only delete IDs that client received when loading
+    const candidateLangIds = clientLoadedIds?.languages
+      ? existingLangIds.filter((id) => clientLoadedIds.languages!.includes(id))
+      : existingLangIds;
+    const deletedLangIds = candidateLangIds.filter((id) => !incomingLangIds.includes(id));
 
     // Mass Deletion Guard check
     if (isClientLoaded) {
@@ -182,6 +196,9 @@ class MockRelationalDb {
         sort_order: r.sort_order,
       })),
       updatedAt: new Date().toISOString(),
+      loadedIds: {
+        languages: langRows.map((r) => r.id as string),
+      },
     };
 
     // Mirror to legacy table
@@ -192,6 +209,7 @@ class MockRelationalDb {
       body: {
         success: true,
         content: sanitized,
+        loadedIds: sanitized.loadedIds,
       },
     };
   }
@@ -247,7 +265,7 @@ async function runTests() {
   // Step 2: Delete one (Spanish)
   const remaining2 = getRes1.languages.filter((l) => l.name !== 'Spanish');
   const res2 = await db.saveContent({
-    ...baseContent,
+    ...getRes1,
     languages: remaining2,
     clientLoaded: true,
   });
@@ -271,7 +289,7 @@ async function runTests() {
     { name: 'German', proficiency: 'Conversational', rating: 3, note: 'B1', hasVoice: true },
   ];
   const res3 = await db.saveContent({
-    ...baseContent,
+    ...getRes2,
     languages: added3,
     clientLoaded: true,
   });
@@ -287,7 +305,7 @@ async function runTests() {
   // Step 4: Reorder (swap German and English)
   const reordered3 = [getRes3.languages[2], getRes3.languages[1], getRes3.languages[0]];
   const res4 = await db.saveContent({
-    ...baseContent,
+    ...getRes3,
     languages: reordered3,
     clientLoaded: true,
   });
@@ -312,7 +330,7 @@ async function runTests() {
     { name: 'Japanese', proficiency: 'Conversational', rating: 3, note: '', hasVoice: true },
   ];
   const res5 = await db.saveContent({
-    ...baseContent,
+    ...getRes4,
     languages: expanded5,
     clientLoaded: true,
   });
@@ -328,7 +346,7 @@ async function runTests() {
   // Step 6: Reduce to size 1
   const reduced1 = [getRes5.languages[4]]; // Only Japanese
   const res6 = await db.saveContent({
-    ...baseContent,
+    ...getRes5,
     languages: reduced1,
     clientLoaded: true,
   });
@@ -340,7 +358,7 @@ async function runTests() {
 
   // Step 7: Reduce to size 0 (Empty Array [])
   const res7 = await db.saveContent({
-    ...baseContent,
+    ...getRes6,
     languages: [],
     clientLoaded: true,
   });
@@ -366,11 +384,12 @@ async function runTests() {
     languages: initial3,
     clientLoaded: true,
   });
+  const getResSuite2 = await db.getContent();
   assert(db.tables.languages.length === 3, 'Pre-condition: 3 languages seeded');
 
   // Attempt save with empty list when clientLoaded is false (e.g. initial load failed)
   const failedLoadRes = await db.saveContent({
-    ...baseContent,
+    ...getResSuite2,
     languages: [],
     clientLoaded: false,
   });
@@ -400,17 +419,19 @@ async function runTests() {
     hasVoice: true,
   }));
 
+  db.reset();
   await db.saveContent({
     ...baseContent,
     languages: bulk10,
     clientLoaded: true,
   });
+  const getResSuite3 = await db.getContent();
   assert(db.tables.languages.length === 10, 'Pre-condition: 10 languages seeded (>8 threshold)');
 
   // Attempt to delete 6 languages (60% deleted, >3 items) without confirmDelete
   const remaining4 = bulk10.slice(0, 4);
   const guardRes = await db.saveContent({
-    ...baseContent,
+    ...getResSuite3,
     languages: remaining4,
     clientLoaded: true,
     confirmDelete: false,
@@ -425,7 +446,7 @@ async function runTests() {
 
   // Retry with confirmDelete: true (user confirmed dialog)
   const confirmRes = await db.saveContent({
-    ...baseContent,
+    ...getResSuite3,
     languages: remaining4,
     clientLoaded: true,
     confirmDelete: true,
@@ -445,7 +466,7 @@ async function runTests() {
   // 4 items -> delete 3 (75% deleted, but collection <= 8 items)
   const remaining1 = getResConfirmed.languages.slice(0, 1);
   const smallColRes = await db.saveContent({
-    ...baseContent,
+    ...getResConfirmed,
     languages: remaining1,
     clientLoaded: true,
     confirmDelete: false, // No confirmation needed for small collection
@@ -458,17 +479,19 @@ async function runTests() {
   assert(db.tables.languages.length === 1, 'Small collection reduced to 1 item');
 
   // Case B: Large collection (> 8 items) deleting <= 3 items
+  db.reset();
   await db.saveContent({
     ...baseContent,
     languages: bulk10,
     clientLoaded: true,
   });
+  const getResSuite4 = await db.getContent();
   assert(db.tables.languages.length === 10, 'Re-seeded with 10 languages');
 
   // Delete 2 items (10 -> 8, deleting 2 <= 3 items)
   const remaining8 = bulk10.slice(0, 8);
   const minorDeleteRes = await db.saveContent({
-    ...baseContent,
+    ...getResSuite4,
     languages: remaining8,
     clientLoaded: true,
     confirmDelete: false, // No confirmation needed when deleting <= 3 items
@@ -479,6 +502,73 @@ async function runTests() {
     'Deleting <= 3 items in large collection exempt from 50% guard'
   );
   assert(db.tables.languages.length === 8, '8 items remain in database');
+
+  // ---------------------------------------------------------------------------
+  // SUITE 5: Snapshot-based Deletion (Stale Client Added Row Survival)
+  // ---------------------------------------------------------------------------
+  console.log('\n--- Suite 5: Snapshot-based Deletion (Added Row Survival) ---');
+
+  // Client A loads content when database has 2 languages: English and Spanish
+  db.reset();
+  await db.saveContent({
+    ...baseContent,
+    languages: [
+      { id: 'lang-en', name: 'English', proficiency: 'Native', rating: 5, hasVoice: true },
+      { id: 'lang-es', name: 'Spanish', proficiency: 'Conversational', rating: 3, hasVoice: true },
+    ],
+    clientLoaded: true,
+  });
+
+  const clientALoaded = await db.getContent();
+  assert(clientALoaded.languages.length === 2, 'Client A loaded 2 languages');
+  const clientALoadedIds = clientALoaded.loadedIds;
+  assert(
+    clientALoadedIds?.languages?.join(',') === 'lang-en,lang-es',
+    'Client A snapshot loadedIds = [lang-en, lang-es]'
+  );
+
+  // Concurrently, Client B adds German (id: lang-de) to the database
+  const currentDbContent = await db.getContent();
+  await db.saveContent({
+    ...currentDbContent,
+    languages: [
+      ...currentDbContent.languages,
+      { id: 'lang-de', name: 'German', proficiency: 'Fluent', rating: 4, hasVoice: true },
+    ],
+    clientLoaded: true,
+  });
+
+  const dbAfterClientB = await db.getContent();
+  assert(dbAfterClientB.languages.length === 3, 'Client B added German; DB now has 3 languages');
+
+  // Now, Client A deletes Spanish (so payload has only English), but Client A's snapshot never saw German.
+  // Client A submits: languages = [English], loadedIds = { languages: ['lang-en', 'lang-es'] }
+  const clientASaveRes = await db.saveContent({
+    ...clientALoaded,
+    languages: clientALoaded.languages.filter((l) => l.id === 'lang-en'),
+    loadedIds: clientALoadedIds,
+    clientLoaded: true,
+  });
+
+  assert(clientASaveRes.status === 200, 'Client A save returns 200 OK');
+  const finalContent = await db.getContent();
+
+  assert(
+    !finalContent.languages.some((l) => l.id === 'lang-es'),
+    'Spanish was deleted because it was in Client A loadedIds AND absent from payload'
+  );
+  assert(
+    finalContent.languages.some((l) => l.id === 'lang-de'),
+    'CRITICAL: German SURVIVED! (Client A never saw German, so server refused to delete it)'
+  );
+  assert(
+    finalContent.languages.some((l) => l.id === 'lang-en'),
+    'English was retained'
+  );
+  assert(
+    finalContent.languages.length === 2,
+    'Database correctly has 2 languages: English and German'
+  );
 
   // ---------------------------------------------------------------------------
   // SUMMARY
@@ -498,3 +588,4 @@ runTests().catch((err) => {
   console.error('Unhandled test runner error:', err);
   process.exit(1);
 });
+

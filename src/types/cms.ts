@@ -31,6 +31,16 @@ export interface GitHubSettings {
   totalRepos?: number;
 }
 
+export interface LoadedCollectionIds {
+  languages?: string[];
+  skills?: string[];
+  projects?: string[];
+  experience?: string[];
+  socialLinks?: string[];
+  suggestedPeople?: string[];
+  bioParagraphs?: string[];
+}
+
 export interface PortfolioContent {
   profile: Profile;
   bioParagraphs: string[];
@@ -47,6 +57,7 @@ export interface PortfolioContent {
   updatedAt?: string;
   clientLoaded?: boolean;
   confirmDelete?: boolean;
+  loadedIds?: LoadedCollectionIds;
 }
 
 export interface CmsSaveResponse {
@@ -56,5 +67,6 @@ export interface CmsSaveResponse {
   message?: string;
   error?: string;
   content?: PortfolioContent;
+  loadedIds?: LoadedCollectionIds;
 }
 
