@@ -1,10 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import { ContextMenu } from '@/components/ui/ContextMenu';
-import { ThemeManager } from '@/components/ui/ThemeManager';
-import { SoundManager } from '@/components/ui/SoundManager';
+import { AmbientProviders } from '@/components/ui/AmbientProviders';
 import { AuthRecoveryListener } from '@/components/auth/AuthRecoveryListener';
 import { PortfolioProvider } from '@/context/PortfolioContext';
+import { getCachedPortfolioContent } from '@/lib/content/server-content';
 import './globals.css';
 
 const geistSans = Geist({
@@ -77,11 +76,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialContent = await getCachedPortfolioContent();
+
   return (
     <html lang="en" className={`scroll-smooth ${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <head>
@@ -126,12 +127,10 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-dvh antialiased font-sans [scrollbar-gutter:stable]" suppressHydrationWarning>
-        <PortfolioProvider>
+        <PortfolioProvider initialContent={initialContent}>
           <AuthRecoveryListener />
-          <ThemeManager />
-          <SoundManager />
+          <AmbientProviders />
           {children}
-          <ContextMenu />
         </PortfolioProvider>
       </body>
     </html>

@@ -5,7 +5,7 @@ import { usePortfolio } from '@/context/PortfolioContext';
 import { DEFAULT_COMPANY_LOGO } from '@/lib/constants';
 
 export const ExperienceSection: React.FC = () => {
-  const { content } = usePortfolio();
+  const { content, isLoading } = usePortfolio();
   const experiencesData = content.experience || [];
   return (
     <section id="experience" aria-labelledby="experience-heading" className="mt-14 scroll-mt-20">
@@ -19,7 +19,23 @@ export const ExperienceSection: React.FC = () => {
         </h2>
       </div>
 
-      {experiencesData.length === 0 ? (
+      {isLoading ? (
+        <div className="relative space-y-6 animate-pulse" aria-hidden="true">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="relative flex gap-4 pb-6">
+              {i < 3 && (
+                <span className="absolute top-12 bottom-0 left-6 w-px -translate-x-1/2 bg-line/60" />
+              )}
+              <div className="size-12 rounded-xl bg-surface-2 ring-1 ring-line shrink-0" />
+              <div className="flex-1 space-y-2 pt-1">
+                <div className="h-4 w-48 bg-surface-2 rounded-md" />
+                <div className="h-3 w-32 bg-surface-2/70 rounded-md" />
+                <div className="h-12 w-full bg-surface-2/40 rounded-xl mt-3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : experiencesData.length === 0 ? (
         <div className="rounded-[24px] border border-dashed border-line bg-surface-2/40 p-8 sm:p-10 text-center">
           <div className="size-12 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 grid place-items-center mx-auto mb-3">
             <Briefcase className="size-5" />

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Profile } from '@/types/profile';
 import { MobileTopBar } from '@/components/navigation/MobileTopBar';
 import { MobileBottomBar } from '@/components/navigation/MobileBottomBar';
@@ -10,7 +11,6 @@ import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
 import { ProfileBadges } from '@/components/profile/ProfileBadges';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { VerifiedBadgeIcon, TablerShare } from '@/components/ui/Icons';
-import { ShareModal } from '@/components/ui/ShareModal';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { ExperienceSection } from '@/components/sections/ExperienceSection';
 import { SkillsSection } from '@/components/sections/SkillsSection';
@@ -20,6 +20,11 @@ import { ContactSection } from '@/components/sections/ContactSection';
 import { LibrarySection } from '@/components/sections/LibrarySection';
 import { FocusSection } from '@/components/sections/FocusSection';
 import { WorkTabContent } from '@/components/sections/WorkTabContent';
+
+const ShareModal = dynamic(
+  () => import('@/components/ui/ShareModal').then((m) => m.ShareModal),
+  { ssr: false }
+);
 import { Briefcase, MapPin } from 'lucide-react';
 import {
   GitHubIcon,

@@ -234,20 +234,27 @@ export async function GET() {
                   }))
                 : DEFAULT_REPOS;
 
-            return NextResponse.json({
-              success: true,
-              source: 'graphql',
-              user: {
-                username: USERNAME,
-                followers: u.followers?.totalCount ?? 6,
-                public_repos: u.repositories?.totalCount ?? 26,
+            return NextResponse.json(
+              {
+                success: true,
+                source: 'graphql',
+                user: {
+                  username: USERNAME,
+                  followers: u.followers?.totalCount ?? 6,
+                  public_repos: u.repositories?.totalCount ?? 26,
+                },
+                contributions: {
+                  total: calendar?.totalContributions ?? 102,
+                  weeks,
+                },
+                repositories,
               },
-              contributions: {
-                total: calendar?.totalContributions ?? 102,
-                weeks,
-              },
-              repositories,
-            });
+              {
+                headers: {
+                  'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+                },
+              }
+            );
           }
         }
       } catch (err) {
@@ -326,20 +333,27 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      source: 'public-rest',
-      user: {
-        username: USERNAME,
-        followers: userData?.followers ?? 6,
-        public_repos: userData?.public_repos ?? 26,
+    return NextResponse.json(
+      {
+        success: true,
+        source: 'public-rest',
+        user: {
+          username: USERNAME,
+          followers: userData?.followers ?? 6,
+          public_repos: userData?.public_repos ?? 26,
+        },
+        contributions: {
+          total: totalContributions,
+          weeks: weeks.length > 0 ? weeks : undefined,
+        },
+        repositories,
       },
-      contributions: {
-        total: totalContributions,
-        weeks: weeks.length > 0 ? weeks : undefined,
-      },
-      repositories,
-    });
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        },
+      }
+    );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch GitHub data';
     return NextResponse.json(

@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { supabaseServer } from '@/lib/supabase/server';
-import { defaultPortfolioContent } from '@/data/default-content';
+import { fetchPortfolioContentServer, getCachedPortfolioContent } from '@/lib/content/server-content';
 import { PortfolioContent, CmsSaveResponse } from '@/types/cms';
 import { requireAdmin, isAdminRequest } from '@/lib/auth/admin-auth';
 
@@ -40,216 +40,27 @@ export async function GET(req: NextRequest) {
     responseHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     responseHeaders.set('Pragma', 'no-cache');
   } else {
-    responseHeaders.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    responseHeaders.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400');
   }
 
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
-      try {
-        const supabase = supabaseServer();
+    const content = isAdmin
+      ? await fetchPortfolioContentServer()
+      : await getCachedPortfolioContent();
 
-        // 1. Try Relational Tables in Supabase (Explicit whitelisted columns & public site_settings keys only)
-        const { data: profileRow } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, headline, bio, avatar_url, location, timezone, availability, github_followers_count, roles, updated_at')
-          .limit(1)
-          .maybeSingle();
-
-        if (profileRow) {
-          const [bioRes, expRes, projRes, skillRes, langRes, socRes, peepRes, setRes] = await Promise.all([
-            supabase
-              .from('bio_paragraphs')
-              .select('id, sort_order, content')
-              .order('sort_order', { ascending: true }),
-            supabase
-              .from('experiences')
-              .select('id, company, company_url, company_logo, position, period, type, workplace_type, description, highlights, bullet_points, tags, is_current, sort_order')
-              .order('sort_order', { ascending: true }),
-            supabase
-              .from('projects')
-              .select('id, title, description, tags, image_url, project_url, repository_url, stars, highlight_badge, logo_type, sort_order')
-              .order('sort_order', { ascending: true }),
-            supabase
-              .from('skills')
-              .select('id, name, category, color, sort_order')
-              .order('sort_order', { ascending: true }),
-            supabase
-              .from('languages')
-              .select('id, name, proficiency, rating, note, has_voice, sort_order')
-              .order('sort_order', { ascending: true }),
-            supabase
-              .from('social_links')
-              .select('id, platform, url, handle, label, sort_order')
-              .order('sort_order', { ascending: true }),
-            supabase
-              .from('suggested_people')
-              .select('id, name, role, avatar_url, url, handle, sort_order')
-              .order('sort_order', { ascending: true }),
-            supabase
-              .from('site_settings')
-              .select('key, value')
-              .in('key', [
-                'works_settings',
-                'based_in_settings',
-                'github_settings',
-                'suggested_people_rich',
-                'library_data',
-                'content_version',
-              ]),
-          ]);
-
-          const worksSetting = setRes.data?.find((s) => s.key === 'works_settings')?.value;
-          const basedInSetting = setRes.data?.find((s) => s.key === 'based_in_settings')?.value;
-          const rawGithubSetting = setRes.data?.find((s) => s.key === 'github_settings')?.value as Record<string, unknown> | undefined;
-          const richPeopleSetting = setRes.data?.find((s) => s.key === 'suggested_people_rich')?.value;
-          const librarySetting = setRes.data?.find((s) => s.key === 'library_data')?.value;
-          const rawVersion = setRes.data?.find((s) => s.key === 'content_version')?.value;
-          const contentVersion = typeof rawVersion === 'number' ? rawVersion : 0;
-
-          // Never expose tokens or private fields
-          const githubSetting = rawGithubSetting
-            ? { ...rawGithubSetting, token: undefined }
-            : defaultPortfolioContent.githubSettings;
-
-          const loadedIds = {
-            languages: (langRes.data || []).map((l) => l.id),
-            skills: (skillRes.data || []).map((s) => s.id),
-            projects: (projRes.data || []).map((p) => p.id),
-            experience: (expRes.data || []).map((e) => e.id),
-            socialLinks: (socRes.data || []).map((s) => s.id),
-            suggestedPeople: (peepRes.data || []).map((p) => p.id),
-            bioParagraphs: (bioRes.data || []).map((b) => b.id),
-          };
-
-          const assembled: PortfolioContent = {
-            profile: {
-              id: profileRow.id,
-              username: profileRow.username,
-              full_name: profileRow.full_name,
-              headline: profileRow.headline,
-              bio: profileRow.bio,
-              avatar_url: profileRow.avatar_url,
-              location: profileRow.location,
-              timezone: profileRow.timezone,
-              availability: profileRow.availability,
-              github_followers_count: profileRow.github_followers_count,
-              roles: profileRow.roles || [],
-            },
-            bioParagraphs: (bioRes.data || []).map((b) => b.content),
-            experience: expRes.data || [],
-            projects: projRes.data || [],
-            skills: skillRes.data || [],
-            languages: (langRes.data || []).map((l) => ({
-              id: l.id,
-              name: l.name,
-              proficiency: l.proficiency,
-              rating: l.rating ?? 5,
-              note: l.note || '',
-              has_voice: l.has_voice !== false,
-              hasVoice: l.has_voice !== false,
-              sort_order: l.sort_order ?? 0,
-            })),
-            socialLinks: socRes.data || [],
-            suggestedPeople: Array.isArray(richPeopleSetting)
-              ? richPeopleSetting
-              : (peepRes.data || []),
-            worksSettings: worksSetting || defaultPortfolioContent.worksSettings,
-            basedInSettings: basedInSetting || defaultPortfolioContent.basedInSettings,
-            githubSettings: githubSetting as unknown as typeof defaultPortfolioContent.githubSettings,
-            libraryData: librarySetting || defaultPortfolioContent.libraryData,
-            updatedAt: profileRow.updated_at || new Date().toISOString(),
-            version: contentVersion,
-            loadedIds,
-          };
-
-          return NextResponse.json(
-            {
-              success: true,
-              source: 'supabase_relational',
-              content: assembled,
-              version: contentVersion,
-              loadedIds,
-            },
-            { headers: responseHeaders }
-          );
-        }
-
-        // 2. Fallback to monolithic portfolio_content table if relational schema not yet migrated
-        const { data: legacyData, error: legacyErr } = await supabase
-          .from('portfolio_content')
-          .select('data')
-          .eq('id', 'current')
-          .maybeSingle();
-
-        if (!legacyErr && legacyData?.data) {
-          const legacyObj = legacyData.data as PortfolioContent;
-          const legacyVersion = typeof legacyObj.version === 'number' ? legacyObj.version : 0;
-          const sanitizedLegacy: PortfolioContent = {
-            ...legacyObj,
-            version: legacyVersion,
-            githubSettings: legacyObj.githubSettings
-              ? { ...legacyObj.githubSettings, token: undefined }
-              : defaultPortfolioContent.githubSettings,
-          };
-          return NextResponse.json(
-            {
-              success: true,
-              source: 'supabase_legacy',
-              content: sanitizedLegacy,
-              version: legacyVersion,
-            },
-            { headers: responseHeaders }
-          );
-        }
-      } catch (err) {
-        console.warn('Supabase query failed, falling back to local file:', err);
-      }
-    }
-
-    // 3. Try Local File
-    const localContent = await readLocalContent();
-    if (localContent) {
-      const localVersion = typeof localContent.version === 'number' ? localContent.version : 0;
-      const sanitizedLocal: PortfolioContent = {
-        ...localContent,
-        version: localVersion,
-        githubSettings: localContent.githubSettings
-          ? { ...localContent.githubSettings, token: undefined }
-          : defaultPortfolioContent.githubSettings,
-      };
-      return NextResponse.json(
-        {
-          success: true,
-          source: 'local_file',
-          content: sanitizedLocal,
-          version: localVersion,
-        },
-        { headers: responseHeaders }
-      );
-    }
-
-    // 4. Fallback to Default Content
     return NextResponse.json(
       {
         success: true,
-        source: 'default',
-        content: { ...defaultPortfolioContent, version: 0 },
-        version: 0,
+        source: 'supabase_relational',
+        content,
+        version: content.version,
+        loadedIds: content.loadedIds,
       },
       { headers: responseHeaders }
     );
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json(
-      {
-        success: false,
-        source: 'error_fallback',
-        error: message,
-        content: defaultPortfolioContent,
-      },
-      { status: 500, headers: responseHeaders }
-    );
+    const message = error instanceof Error ? error.message : 'Failed to fetch content';
+    return NextResponse.json({ success: false, error: message }, { status: 500, headers: responseHeaders });
   }
 }
 

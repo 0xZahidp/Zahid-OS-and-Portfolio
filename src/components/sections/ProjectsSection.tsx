@@ -8,7 +8,7 @@ import { Layers } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 
 export const ProjectsSection: React.FC = () => {
-  const { content } = usePortfolio();
+  const { content, isLoading } = usePortfolio();
   const projectsData = content.projects || [];
   const openSourceProjects = projectsData.filter(
     (p) => p.tags?.some((t) => t.toLowerCase().includes('open source')) || p.repository_url
@@ -87,7 +87,17 @@ export const ProjectsSection: React.FC = () => {
   return (
     <div className="space-y-12">
       {/* Featured Projects Grid */}
-      {projectsData.length === 0 ? (
+      {isLoading ? (
+        <div className="grid gap-5 sm:grid-cols-2 animate-pulse" aria-hidden="true">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="rounded-[24px] border border-line bg-surface p-4 space-y-4">
+              <div className="h-44 sm:h-48 rounded-[20px] bg-surface-2" />
+              <div className="h-5 w-40 bg-surface-2 rounded-md" />
+              <div className="h-12 w-full bg-surface-2/60 rounded-md" />
+            </div>
+          ))}
+        </div>
+      ) : projectsData.length === 0 ? (
         <div className="rounded-[24px] border border-dashed border-line bg-surface-2/40 p-8 sm:p-10 text-center">
           <div className="size-12 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 grid place-items-center mx-auto mb-3">
             <Layers className="size-5" />

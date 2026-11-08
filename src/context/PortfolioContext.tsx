@@ -24,6 +24,7 @@ export interface SaveResult {
 
 interface PortfolioContextType {
   content: PortfolioContent;
+  isLoading: boolean;
   isDirty: boolean;
   isSaving: boolean;
   saveStatus: 'idle' | 'saving' | 'saved' | 'error';
@@ -50,19 +51,34 @@ interface PortfolioContextType {
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
-export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [content, setContent] = useState<PortfolioContent>(defaultPortfolioContent);
-  const [loadedIds, setLoadedIds] = useState<LoadedCollectionIds | undefined>(undefined);
-  const [hasLoaded, setHasLoaded] = useState<boolean>(false);
+export const PortfolioProvider: React.FC<{
+  children: React.ReactNode;
+  initialContent?: PortfolioContent;
+}> = ({ children, initialContent }) => {
+  const [content, setContent] = useState<PortfolioContent>(initialContent || defaultPortfolioContent);
+  const [loadedIds, setLoadedIds] = useState<LoadedCollectionIds | undefined>(initialContent?.loadedIds);
+  const [hasLoaded, setHasLoaded] = useState<boolean>(Boolean(initialContent));
+  const [isLoading, setIsLoading] = useState<boolean>(!initialContent);
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Sync state if initialContent changes on navigation / ISR update
+  useEffect(() => {
+    if (initialContent) {
+      setContent(initialContent);
+      setLoadedIds(initialContent.loadedIds);
+      setHasLoaded(true);
+      setIsLoading(false);
+    }
+  }, [initialContent]);
+
   // Fetch or reload content from API
   const fetchContent = useCallback(async () => {
     try {
+      setIsLoading(true);
       const res = await fetch('/api/content');
       if (!res.ok) return;
       const data = await res.json();
@@ -74,13 +90,17 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     } catch (err) {
       console.error('Failed to load portfolio content:', err);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
-  // Fetch initial content from API on mount
+  // Fetch initial content from API on mount ONLY if not provided by server
   useEffect(() => {
-    fetchContent();
-  }, [fetchContent]);
+    if (!initialContent) {
+      fetchContent();
+    }
+  }, [initialContent, fetchContent]);
 
   const updateProfile = useCallback((profileUpdates: Partial<Profile>) => {
     setContent((prev) => ({
@@ -282,6 +302,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     <PortfolioContext.Provider
       value={{
         content,
+        isLoading,
         isDirty,
         isSaving,
         saveStatus,

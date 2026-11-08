@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/Icons';
 
 export const SkillsSection: React.FC = () => {
-  const { content } = usePortfolio();
+  const { content, isLoading } = usePortfolio();
   const skills = content.skills || [];
 
   const aiSkills = skills.filter((s) => s.category === 'ai');
@@ -55,7 +55,16 @@ export const SkillsSection: React.FC = () => {
 
   return (
     <div id="skills" className="space-y-10 mt-10 scroll-mt-20">
-      {skills.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-6 animate-pulse" aria-hidden="true">
+          <div className="h-6 w-36 bg-surface-2 rounded-md" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="h-10 rounded-xl bg-surface-2 ring-1 ring-line/50" />
+            ))}
+          </div>
+        </div>
+      ) : skills.length === 0 ? (
         <div className="rounded-[24px] border border-dashed border-line bg-surface-2/40 p-8 sm:p-10 text-center">
           <div className="size-12 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 grid place-items-center mx-auto mb-3">
             <Target className="size-5" />

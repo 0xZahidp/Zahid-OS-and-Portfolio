@@ -31,7 +31,310 @@
     "My engineering stack centers around React 19, Next.js, TypeScript, Supabase, PostgreSQL, Tailwind CSS, TanStack Query, and offline-first IndexedDB storage. I also design lightweight automation systems and bots leveraging Python, Telegram Bot API, and Google Sheets.",
     "Whether you need a reliable product engineered from scratch, an offline-first architecture, or operational automation to streamline daily workflows, I own the technical roadmap, architecture, and user experience end to end."
   ],
-  "experience": [],
+  "experience": [
+    {
+      "id": "exp-twinforce",
+      "company": "TwinForce Solutions Limited",
+      "company_url": "https://twinforce.net/",
+      "company_logo": "https://txrnbazpdyoaazszkwwq.supabase.co/storage/v1/object/public/portfolio-public-assets/uploads/logo-twinforce-solutions-limited-1794129650796.png",
+      "position": "Intern Software Engineer (Salesforce)",
+      "period": "Aug 2026 – Present",
+      "type": "Internship",
+      "workplace_type": "Mirpur, Dhaka, Bangladesh",
+      "description": "Salesforce developer intern at TwinForce Solutions Limited, building and customizing solutions on the Salesforce platform and delivering 3 real-world projects.",
+      "highlights": [],
+      "bullet_points": [
+        "Worked as a Salesforce developer, building and customizing solutions on the Salesforce platform",
+        "Completed 03 real-world projects during the internship.",
+        "Contributed to related platform work alongside development, collaborating with the team on-site."
+      ],
+      "tags": [
+        "Salesforce"
+      ],
+      "is_current": true,
+      "sort_order": 0
+    },
+    {
+      "id": "exp-career-break",
+      "company": "Career break",
+      "company_url": null,
+      "company_logo": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB4PSIyIiB5PSIyIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHJ4PSIxNCIgZmlsbD0iIzE2MTgxZCIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDgpIiBzdHJva2Utd2lkdGg9IjEuNSIgLz4KICA8cGF0aCBkPSJNMTggMjJoMjRhMiAyIDAgMCAxIDIgMnYxMGExMCAxMCAwIDAgMS0xMCAxMEgyOEExMCAxMCAwIDAgMSAxOCAzNFYyNGEyIDIgMCAwIDEgMi0yeiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMTBiOTgxIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiAvPgogIDxwYXRoIGQ9Ik00NCAyNmg0YTMgMyAwIDAgMSAzIDN2NGEzIDMgMCAwIDEtMyAzaC00IiBmaWxsPSJub25lIiBzdHJva2U9IiMxMGI5ODEiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIC8+CiAgPHBhdGggZD0iTTI2IDE0djRNMzIgMTJ2Nk0zOCAxNHY0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNGQzOTkiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8+CiAgPGxpbmUgeDE9IjI0IiB5MT0iNDYiIHgyPSI0MCIgeTI9IjQ2IiBzdHJva2U9IiMzNGQzOTkiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8+Cjwvc3ZnPg==",
+      "position": "Personal goal pursuit",
+      "period": "Jan 2025 – Aug 2026",
+      "type": "Career break",
+      "workplace_type": "Dhaka, Bangladesh",
+      "description": "Focus: Personal Development & Career Growth. Stepped back from formal roles to focus on learning, travel and career planning.",
+      "highlights": [],
+      "bullet_points": [
+        "Learning & Upskilling: Explored software development and engineering fundamentals to strengthen technical knowledge alongside business background.",
+        "Travel & Exploration: Gained cross-cultural insights and an expanded global perspective, skills now brought into community-building and international partnerships.",
+        "Career Planning: Reflected on professional journey and prepared to transition into a Business Development / Growth Manager role with a stronger tech + business edge."
+      ],
+      "tags": [],
+      "is_current": false,
+      "sort_order": 1
+    },
+    {
+      "id": "exp-nexgami",
+      "company": "NexGami",
+      "company_url": "https://www.nexgami.com/",
+      "company_logo": "https://txrnbazpdyoaazszkwwq.supabase.co/storage/v1/object/public/portfolio-public-assets/uploads/logo-nexgami-1794129762034.png",
+      "position": "Marketing Team Lead",
+      "period": "Aug 2023 – Nov 2024",
+      "type": "Full-time",
+      "workplace_type": "Remote",
+      "description": "NexGami is a blockchain gaming platform where I led growth and partnership initiatives.",
+      "highlights": [
+        {
+          "icon": "rocket",
+          "label": "Fundraising",
+          "value": "$5M Contributed"
+        },
+        {
+          "icon": "code",
+          "label": "Partnerships",
+          "value": "100+ Global"
+        },
+        {
+          "icon": "mobile",
+          "label": "Community",
+          "value": "500K Members"
+        }
+      ],
+      "bullet_points": [
+        "Contributed to $5M fundraising and built 100+ global partnerships.",
+        "Drove 340% community growth, scaling to 500K members.",
+        "Designed and executed go-to-market campaigns across Web3 gaming ecosystems.",
+        "Led cross-functional remote team in brand strategy and growth hacking."
+      ],
+      "tags": [
+        "Building Business Partnerships",
+        "Brand Strategy",
+        "Growth Hacking",
+        "Web3 Gaming"
+      ],
+      "is_current": false,
+      "sort_order": 2
+    },
+    {
+      "id": "exp-hinox",
+      "company": "Hinox",
+      "company_url": "https://t.me/hinoxalert",
+      "company_logo": "https://txrnbazpdyoaazszkwwq.supabase.co/storage/v1/object/public/portfolio-public-assets/uploads/logo-hinox-1794129842456.png",
+      "position": "Market Research Analyst",
+      "period": "Feb 2023 – Feb 2024",
+      "type": "Part-time",
+      "workplace_type": "Remote",
+      "description": "Hinox is a blockchain incubator and launchpad, supporting Web3 projects.",
+      "highlights": [
+        {
+          "icon": "rocket",
+          "label": "Startups Analyzed",
+          "value": "10+ Blockchain"
+        }
+      ],
+      "bullet_points": [
+        "Conducted competitor & market analysis for 10+ blockchain startups.",
+        "Provided insights that shaped fundraising decks and tokenomics models.",
+        "Supported onboarding of projects into Hinox’s ecosystem.",
+        "Collaborated with marketing & BD teams to identify growth opportunities."
+      ],
+      "tags": [
+        "Building Business Partnerships",
+        "Business Research",
+        "Market Research",
+        "Tokenomics"
+      ],
+      "is_current": false,
+      "sort_order": 3
+    },
+    {
+      "id": "exp-metavirus",
+      "company": "MetaVirus Games",
+      "company_url": "https://www.metavirus.games/",
+      "company_logo": "https://txrnbazpdyoaazszkwwq.supabase.co/storage/v1/object/public/portfolio-public-assets/uploads/logo-metavirus-games-1794129885039.png",
+      "position": "Head of Marketing",
+      "period": "Nov 2022 – Aug 2023",
+      "type": "Full-time",
+      "workplace_type": "Remote",
+      "description": "MetaVirus is a Web3 pet RPG game integrating P2E mechanics, NFTs, and decentralized ownership. I led community growth and partnership initiatives to expand its global reach.",
+      "highlights": [
+        {
+          "icon": "rocket",
+          "label": "Fundraising",
+          "value": "$2M Secured"
+        },
+        {
+          "icon": "code",
+          "label": "Partners",
+          "value": "40+ Strategic"
+        },
+        {
+          "icon": "mobile",
+          "label": "Community",
+          "value": "100K+ Active Members"
+        }
+      ],
+      "bullet_points": [
+        "Secured $2M in fundraising through collaborations with 40+ strategic partners.",
+        "Drove 200% community growth, scaling the user base to over 100,000 active members.",
+        "Planned and executed community events and KOL campaigns to strengthen engagement and brand visibility.",
+        "Built and managed international partnerships within the blockchain gaming sector."
+      ],
+      "tags": [
+        "Building Business Partnerships",
+        "Brand Strategy",
+        "KOL Campaigns",
+        "Web3 Gaming"
+      ],
+      "is_current": false,
+      "sort_order": 4
+    },
+    {
+      "id": "exp-mojitoswap",
+      "company": "MojitoSwap",
+      "company_url": "https://www.mojitoswap.finance/",
+      "company_logo": "https://txrnbazpdyoaazszkwwq.supabase.co/storage/v1/object/public/portfolio-public-assets/uploads/logo-mojitoswap-1794129996998.png",
+      "position": "Community Manager (Discord)",
+      "period": "May 2022 – Apr 2023",
+      "type": "Part-time",
+      "workplace_type": "Remote",
+      "description": "MojitoSwap is a decentralized exchange (DEX) and liquidity platform built on KCC (KuCoin Community Chain). I managed Discord operations and drove community engagement to support product adoption.",
+      "highlights": [
+        {
+          "icon": "rocket",
+          "label": "Discord Community",
+          "value": "12,000+ Users"
+        },
+        {
+          "icon": "code",
+          "label": "Participation",
+          "value": "+180%"
+        }
+      ],
+      "bullet_points": [
+        "Grew and managed an active Discord community of 12,000+ DeFi users.",
+        "Launched community engagement programs (AMAs, quizzes, events) that boosted participation by 180%.",
+        "Collaborated with the marketing team to promote new features, liquidity pools, and token campaigns.",
+        "Collected and delivered user feedback to the product team, improving platform usability and retention."
+      ],
+      "tags": [
+        "KOL Management",
+        "Social Media Marketing",
+        "Discord",
+        "DeFi"
+      ],
+      "is_current": false,
+      "sort_order": 5
+    },
+    {
+      "id": "exp-happyrise",
+      "company": "Happy Rise",
+      "company_url": "https://t.me/happyriseglobal",
+      "company_logo": "https://txrnbazpdyoaazszkwwq.supabase.co/storage/v1/object/public/portfolio-public-assets/uploads/logo-happy-rise-1794130033072.png",
+      "position": "Head of Community",
+      "period": "Jun 2022 – Jan 2023",
+      "type": "Part-time",
+      "workplace_type": "Remote",
+      "description": "Happy Rise is a blockchain-based platform focused on building sustainable communities and investor networks. I led community strategy, engagement, and partnership initiatives.",
+      "highlights": [
+        {
+          "icon": "rocket",
+          "label": "Community",
+          "value": "20,000+ Members"
+        },
+        {
+          "icon": "code",
+          "label": "Participation",
+          "value": "+150% in 6 Months"
+        }
+      ],
+      "bullet_points": [
+        "Spearheaded community engagement initiatives, increasing active participation by 150% within 6 months.",
+        "Built and managed a community of 20,000+ members across multiple channels (Telegram, Discord, Twitter).",
+        "Forged strategic partnerships with influencers and KOLs to boost brand visibility.",
+        "Oversaw community operations and feedback loops, improving user retention and satisfaction."
+      ],
+      "tags": [
+        "Building Business Partnerships",
+        "Brand Strategy",
+        "Community Management",
+        "Telegram",
+        "Discord"
+      ],
+      "is_current": false,
+      "sort_order": 6
+    },
+    {
+      "id": "exp-metalist",
+      "company": "Metalist Game",
+      "company_url": "https://game.metalist.io/",
+      "company_logo": "https://txrnbazpdyoaazszkwwq.supabase.co/storage/v1/object/public/portfolio-public-assets/uploads/logo-metalist-game-1794130143724.png",
+      "position": "Community Assistant",
+      "period": "Jan 2022 – Dec 2022",
+      "type": "Part-time",
+      "workplace_type": "Remote",
+      "description": "Metalist Game is a blockchain gaming platform integrating NFTs and Web3 ecosystems. I supported community engagement, partnerships, and marketing initiatives to strengthen brand presence.",
+      "highlights": [
+        {
+          "icon": "rocket",
+          "label": "Community",
+          "value": "15,000+ Members"
+        },
+        {
+          "icon": "code",
+          "label": "Audience Reach",
+          "value": "+120%"
+        }
+      ],
+      "bullet_points": [
+        "Assisted in managing a community of 15,000+ members across Discord, Telegram, and Twitter.",
+        "Supported KOL campaigns and influencer partnerships, expanding audience reach by 120%.",
+        "Coordinated community events and feedback collection, improving user engagement and retention.",
+        "Collaborated with marketing and BD teams on go-to-market strategies for blockchain gaming projects."
+      ],
+      "tags": [
+        "Community Marketing",
+        "Digital Marketing Media",
+        "KOL Campaigns",
+        "Discord"
+      ],
+      "is_current": false,
+      "sort_order": 7
+    },
+    {
+      "id": "exp-coinhub",
+      "company": "Coinhub Wallet",
+      "company_url": "https://t.me/Coinhub_Announcement_EN",
+      "company_logo": "https://txrnbazpdyoaazszkwwq.supabase.co/storage/v1/object/public/portfolio-public-assets/uploads/logo-coinhub-wallet-1794130205258.png",
+      "position": "Head Of Strategic Marketing",
+      "period": "Sep 2021 – May 2022",
+      "type": "Part-time",
+      "workplace_type": "Remote",
+      "description": "Coinhub is a multi-chain Web3 wallet supporting decentralized finance (DeFi) and NFT ecosystems. I managed community channels, provided user support, and strengthened engagement across platforms.",
+      "highlights": [
+        {
+          "icon": "rocket",
+          "label": "Community",
+          "value": "10,000+ Wallet Users"
+        }
+      ],
+      "bullet_points": [
+        "Moderated and grew a community of 10,000+ wallet users across Telegram and Discord.",
+        "Provided real-time support and troubleshooting, improving user satisfaction and retention.",
+        "Assisted in onboarding campaigns, helping expand Coinhub’s user base in the Web3 ecosystem.",
+        "Ensured safe and compliant community operations by monitoring discussions and enforcing policies."
+      ],
+      "tags": [
+        "Influencer Marketing",
+        "KOL Management",
+        "Community Management",
+        "Telegram"
+      ],
+      "is_current": false,
+      "sort_order": 8
+    }
+  ],
   "projects": [
     {
       "id": "proj-sq",

@@ -1,7 +1,12 @@
 'use client';
 
 import React from 'react';
-import { WaterRippleMatrix } from './WaterRippleMatrix';
+import dynamic from 'next/dynamic';
+
+const WaterRippleMatrix = dynamic(
+  () => import('./WaterRippleMatrix').then((m) => m.WaterRippleMatrix),
+  { ssr: false }
+);
 
 export const ProfileBanner: React.FC = () => {
   return (
