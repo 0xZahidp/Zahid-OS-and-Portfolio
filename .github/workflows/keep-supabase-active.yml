@@ -24,7 +24,7 @@ jobs:
           echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%SZ")"
           echo ""
 
-          PING_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "$SITE_URL/api/health-ping")
+          PING_RESPONSE=$(curl -s -L -w "\nHTTP_STATUS:%{http_code}" "$SITE_URL/api/health-ping")
           HTTP_STATUS=$(echo "$PING_RESPONSE" | grep "HTTP_STATUS:" | cut -d':' -f2)
           BODY=$(echo "$PING_RESPONSE" | grep -v "HTTP_STATUS:")
 

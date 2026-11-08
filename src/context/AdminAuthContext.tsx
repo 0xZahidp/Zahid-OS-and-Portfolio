@@ -48,6 +48,14 @@ interface AdminAuthContextType {
   clearError: () => void;
 }
 
+function formatPasskeyError(rawMsg: string): string {
+  if (rawMsg.includes('RP ID') || rawMsg.toLowerCase().includes('relying party')) {
+    const domain = typeof window !== 'undefined' ? window.location.hostname : 'your domain';
+    return `The WebAuthn RP ID in your Supabase Dashboard is still set to "localhost". Change Relying Party ID to "${domain}" in Supabase Dashboard > Authentication > Passkeys.`;
+  }
+  return rawMsg;
+}
+
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -310,8 +318,9 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const { data, error: passkeyErr } = await supabase.auth.signInWithPasskey();
 
       if (passkeyErr) {
-        setError(passkeyErr.message);
-        return { success: false, error: passkeyErr.message };
+        const errorMsg = formatPasskeyError(passkeyErr.message);
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
       }
 
       if (data?.session) {
@@ -323,7 +332,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       return { success: true };
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Passkey ceremony failed';
+      const rawMsg = err instanceof Error ? err.message : 'Passkey ceremony failed';
+      const msg = formatPasskeyError(rawMsg);
       setError(msg);
       return { success: false, error: msg };
     }
@@ -455,8 +465,9 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (regErr.message?.includes('AAL2') || regErr.message?.includes('aal2')) {
           return { success: false, requiresAal2StepUp: true, error: regErr.message };
         }
-        setError(regErr.message);
-        return { success: false, error: regErr.message };
+        const errorMsg = formatPasskeyError(regErr.message);
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
       }
 
       if (name && data && 'id' in data && typeof data.id === 'string') {
@@ -472,7 +483,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       return { success: true };
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Passkey registration ceremony failed';
+      const rawMsg = err instanceof Error ? err.message : 'Passkey registration ceremony failed';
+      const msg = formatPasskeyError(rawMsg);
       setError(msg);
       return { success: false, error: msg };
     }
