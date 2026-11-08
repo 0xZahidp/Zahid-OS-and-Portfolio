@@ -28,7 +28,7 @@ export const profileData: Profile = {
       title: 'Product Developer',
       company: 'Dhakaiya Bites',
       company_url: 'https://db.zahidp.com',
-      company_logo: '/images/bidvers.webp',
+      company_logo: '',
     },
     {
       title: 'Lead Developer',

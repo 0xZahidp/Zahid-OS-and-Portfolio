@@ -2,10 +2,11 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Plus, Trash2, ChevronUp, ChevronDown, Briefcase, Sparkles } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, Briefcase, Sparkles, Rocket, Code, Smartphone } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { Experience } from '@/types/profile';
 import { CompanyLogoUploader } from '@/components/admin/CompanyLogoUploader';
+import { DEFAULT_COMPANY_LOGO } from '@/lib/constants';
 
 export const ExperienceTab: React.FC = () => {
   const { content, updateExperience } = usePortfolio();
@@ -23,7 +24,7 @@ export const ExperienceTab: React.FC = () => {
       position: 'Software Engineer',
       company: 'New Company',
       company_url: 'https://example.com',
-      company_logo: '/images/bidvers.webp',
+      company_logo: '',
       period: 'Jan 2025 – Present',
       type: 'Full-time',
       workplace_type: 'Remote',
@@ -72,6 +73,38 @@ export const ExperienceTab: React.FC = () => {
     const updated = [...experiences];
     const bullets = (updated[expIdx].bullet_points || []).filter((_, i) => i !== bIdx);
     updated[expIdx] = { ...updated[expIdx], bullet_points: bullets };
+    updateExperience(updated);
+  };
+
+  const handleAddHighlight = (expIdx: number) => {
+    const updated = [...experiences];
+    const currentHighlights = updated[expIdx].highlights || [];
+    updated[expIdx] = {
+      ...updated[expIdx],
+      highlights: [
+        ...currentHighlights,
+        { label: 'Highlight Label', value: 'Value', icon: 'rocket' },
+      ],
+    };
+    updateExperience(updated);
+  };
+
+  const handleUpdateHighlight = (
+    expIdx: number,
+    hIdx: number,
+    patch: Partial<{ label: string; value: string; icon: 'rocket' | 'code' | 'mobile' }>
+  ) => {
+    const updated = [...experiences];
+    const currentHighlights = [...(updated[expIdx].highlights || [])];
+    currentHighlights[hIdx] = { ...currentHighlights[hIdx], ...patch };
+    updated[expIdx] = { ...updated[expIdx], highlights: currentHighlights };
+    updateExperience(updated);
+  };
+
+  const handleRemoveHighlight = (expIdx: number, hIdx: number) => {
+    const updated = [...experiences];
+    const currentHighlights = (updated[expIdx].highlights || []).filter((_, i) => i !== hIdx);
+    updated[expIdx] = { ...updated[expIdx], highlights: currentHighlights };
     updateExperience(updated);
   };
 
@@ -135,12 +168,15 @@ export const ExperienceTab: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div className="relative size-10 rounded-xl overflow-hidden bg-surface border border-line shrink-0 flex items-center justify-center">
                     <Image
-                      src={exp.company_logo || '/images/bidvers.webp'}
+                      src={exp.company_logo?.trim() || DEFAULT_COMPANY_LOGO}
                       alt={exp.company}
                       fill
                       sizes="40px"
                       className="object-cover"
                       unoptimized
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = DEFAULT_COMPANY_LOGO;
+                      }}
                     />
                   </div>
                   <div>
@@ -269,6 +305,91 @@ export const ExperienceTab: React.FC = () => {
                   placeholder="Overview of your responsibilities and ownership..."
                   className="mt-1 w-full rounded-xl border border-line bg-surface p-3 text-xs leading-relaxed text-ink focus:outline-none resize-y"
                 />
+              </div>
+
+              {/* Stat Highlights (Callout Cards) */}
+              <div className="space-y-2 pt-2 border-t border-line/60">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-[11px] font-semibold text-ink-3">Stat Highlights / Metrics</label>
+                    <p className="text-[10px] text-ink-4">Callout cards displayed below the role summary (e.g. &quot;3 Real Projects&quot;, &quot;Salesforce&quot;)</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAddHighlight(idx)}
+                    className="text-[10px] font-medium text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="size-3" />
+                    <span>Add Highlight</span>
+                  </button>
+                </div>
+
+                {(exp.highlights || []).length === 0 ? (
+                  <p className="text-[11px] text-ink-4 italic">No highlights added yet (optional).</p>
+                ) : (
+                  <div className="grid gap-2.5 sm:grid-cols-3">
+                    {(exp.highlights || []).map((h, hIdx) => (
+                      <div
+                        key={hIdx}
+                        className="p-2.5 rounded-xl border border-line bg-surface space-y-2 relative"
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          {/* Icon Selector */}
+                          <div className="flex items-center gap-1">
+                            {(['rocket', 'code', 'mobile'] as const).map((ic) => (
+                              <button
+                                key={ic}
+                                type="button"
+                                onClick={() => handleUpdateHighlight(idx, hIdx, { icon: ic })}
+                                className={`size-6 rounded-md grid place-items-center text-xs transition-colors cursor-pointer ${
+                                  h.icon === ic
+                                    ? 'bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/30'
+                                    : 'text-ink-4 hover:text-ink hover:bg-surface-2'
+                                }`}
+                                title={`Icon: ${ic}`}
+                              >
+                                {ic === 'rocket' && <Rocket className="size-3" />}
+                                {ic === 'code' && <Code className="size-3" />}
+                                {ic === 'mobile' && <Smartphone className="size-3" />}
+                              </button>
+                            ))}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveHighlight(idx, hIdx)}
+                            className="p-1 rounded text-ink-4 hover:text-rose-500 transition-colors cursor-pointer"
+                            title="Remove highlight"
+                          >
+                            <Trash2 className="size-3" />
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="text-[9px] uppercase font-bold tracking-wider text-ink-4 block">Value</label>
+                          <input
+                            type="text"
+                            value={h.value}
+                            onChange={(e) => handleUpdateHighlight(idx, hIdx, { value: e.target.value })}
+                            placeholder="e.g. 3 Real Projects"
+                            className="w-full rounded-lg border border-line bg-surface-2 px-2 py-1 text-xs font-semibold text-ink focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[9px] uppercase font-bold tracking-wider text-ink-4 block">Label</label>
+                          <input
+                            type="text"
+                            value={h.label}
+                            onChange={(e) => handleUpdateHighlight(idx, hIdx, { label: e.target.value })}
+                            placeholder="e.g. Projects Completed"
+                            className="w-full rounded-lg border border-line bg-surface-2 px-2 py-1 text-xs text-ink focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Achievements / Bullet Points */}

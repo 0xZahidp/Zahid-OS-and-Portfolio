@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { optimizeCompanyIcon, OptimizedImageResult } from '@/lib/image-optimizer';
+import { DEFAULT_COMPANY_LOGO } from '@/lib/constants';
 
 interface CompanyLogoUploaderProps {
   currentLogo: string;
@@ -55,7 +56,7 @@ export const CompanyLogoUploader: React.FC<CompanyLogoUploaderProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           dataUrl: result.dataUrl,
-          filename: `${safePrefix}-${safeName}`,
+          filename: `${safePrefix}-${safeName}.png`,
         }),
       });
 
@@ -132,18 +133,17 @@ export const CompanyLogoUploader: React.FC<CompanyLogoUploaderProps> = ({
       >
         {/* Preview Thumbnail */}
         <div className="relative size-12 rounded-xl bg-surface-2 border border-line overflow-hidden shrink-0 grid place-items-center shadow-xs">
-          {currentLogo ? (
-            <Image
-              src={currentLogo}
-              alt={companyName || 'Company logo'}
-              width={48}
-              height={48}
-              className="size-10 object-contain"
-              unoptimized
-            />
-          ) : (
-            <ImageIcon className="size-5 text-ink-4" />
-          )}
+          <Image
+            src={currentLogo?.trim() || DEFAULT_COMPANY_LOGO}
+            alt={companyName || 'Company logo'}
+            width={48}
+            height={48}
+            className="size-10 object-contain"
+            unoptimized
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = DEFAULT_COMPANY_LOGO;
+            }}
+          />
 
           {isOptimizing && (
             <div className="absolute inset-0 bg-surface/80 backdrop-blur-xs flex items-center justify-center">
@@ -219,7 +219,7 @@ export const CompanyLogoUploader: React.FC<CompanyLogoUploaderProps> = ({
             type="text"
             value={currentLogo}
             onChange={(e) => onLogoChange(e.target.value)}
-            placeholder="e.g. /images/bidvers.webp or https://example.com/logo.png"
+            placeholder="e.g. /images/default-company.svg or https://example.com/logo.png"
             className="w-full h-8 px-3 rounded-lg border border-line bg-surface text-xs text-ink placeholder:text-ink-4 focus:outline-none focus:ring-1 focus:ring-brand-500 font-mono"
           />
         </div>

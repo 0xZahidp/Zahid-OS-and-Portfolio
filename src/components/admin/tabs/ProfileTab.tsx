@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Plus, Trash2, ChevronUp, ChevronDown, User, Building, Sparkles } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { CompanyLogoUploader } from '@/components/admin/CompanyLogoUploader';
+import { DEFAULT_COMPANY_LOGO } from '@/lib/constants';
 
 export const ProfileTab: React.FC = () => {
   const { content, updateProfile } = usePortfolio();
@@ -24,7 +25,7 @@ export const ProfileTab: React.FC = () => {
           title: 'New Position',
           company: 'Company Name',
           company_url: 'https://example.com',
-          company_logo: '/images/bidvers.webp',
+          company_logo: '',
         },
       ],
     });
@@ -208,12 +209,15 @@ export const ProfileTab: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div className="relative size-9 rounded-lg overflow-hidden bg-surface border border-line shrink-0 flex items-center justify-center">
                     <Image
-                      src={role.company_logo || '/images/bidvers.webp'}
+                      src={role.company_logo?.trim() || DEFAULT_COMPANY_LOGO}
                       alt={role.company}
                       fill
                       sizes="36px"
                       className="object-cover"
                       unoptimized
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = DEFAULT_COMPANY_LOGO;
+                      }}
                     />
                   </div>
                   <div>

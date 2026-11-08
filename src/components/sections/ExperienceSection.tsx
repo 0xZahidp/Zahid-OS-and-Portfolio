@@ -2,6 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Briefcase, Rocket, Code, Smartphone } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
+import { DEFAULT_COMPANY_LOGO } from '@/lib/constants';
 
 export const ExperienceSection: React.FC = () => {
   const { content } = usePortfolio();
@@ -46,12 +47,15 @@ export const ExperienceSection: React.FC = () => {
               {/* Logo with current role badge */}
               <div className="relative size-12 shrink-0">
                 <Image
-                  src={exp.company_logo || '/images/bidvers.webp'}
+                  src={exp.company_logo?.trim() || DEFAULT_COMPANY_LOGO}
                   alt={`${exp.company} logo`}
                   width={48}
                   height={48}
                   className="size-12 rounded-xl object-cover ring-1 ring-line"
                   unoptimized
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = DEFAULT_COMPANY_LOGO;
+                  }}
                 />
                 {exp.is_current && (
                   <span

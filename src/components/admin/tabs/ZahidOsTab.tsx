@@ -43,6 +43,7 @@ import { ShortLink, ZahidOsAppId, ZahidOsSettings } from '@/types/os';
 import { TravelWorkspace } from '@/components/os/travel/TravelWorkspace';
 import { ApiPlaygroundApp } from '@/components/os/api-playground';
 import { TempMailApp } from '@/components/os/temp-mail';
+import { TempMailDomainManager } from '@/components/admin/TempMailDomainManager';
 import { ZOS_WALLPAPERS, normalizeWallpaperId } from '@/lib/os/wallpapers';
 import { ZosWallpaper } from '@/components/os/ZosWallpaper';
 
@@ -1233,6 +1234,9 @@ export const ZahidOsTab: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* Inbound Custom Domains Management (Resend API) */}
+            <TempMailDomainManager adminHeaders={getAdminHeaders()} />
 
             {/* ZOS Desktop Wallpaper System */}
             <div className="space-y-3 pt-3 border-t border-white/5">

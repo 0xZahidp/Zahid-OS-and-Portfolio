@@ -20,7 +20,7 @@
     },
     "temp_mail": {
       "name": "Temp Mail",
-      "is_public": true
+      "is_public": false
     },
     "qr": {
       "name": "QR Studio",

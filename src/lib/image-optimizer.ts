@@ -32,30 +32,6 @@ export async function optimizeCompanyIcon(
     format = 'image/png',
   } = options;
 
-  // If already SVG vector, check if user wants to keep vector format
-  if (file.type === 'image/svg+xml') {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        const blob = new Blob([dataUrl], { type: 'image/svg+xml' });
-        resolve({
-          dataUrl,
-          blob,
-          originalWidth: targetWidth,
-          originalHeight: targetHeight,
-          optimizedWidth: targetWidth,
-          optimizedHeight: targetHeight,
-          originalSize: file.size,
-          optimizedSize: file.size,
-          aspectRatio: 1,
-        });
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
@@ -63,8 +39,8 @@ export async function optimizeCompanyIcon(
     img.onload = () => {
       URL.revokeObjectURL(objectUrl);
 
-      const originalWidth = img.naturalWidth || img.width;
-      const originalHeight = img.naturalHeight || img.height;
+      const originalWidth = img.naturalWidth || img.width || targetWidth;
+      const originalHeight = img.naturalHeight || img.height || targetHeight;
       const aspectRatio = originalWidth / originalHeight;
 
       // 1. Center crop to 1:1 square

@@ -10,6 +10,7 @@ import { ShareModal } from '@/components/ui/ShareModal';
 import { ProfileBanner } from './ProfileBanner';
 import { ProfileAvatar } from './ProfileAvatar';
 import { ProfileBadges } from './ProfileBadges';
+import { DEFAULT_COMPANY_LOGO } from '@/lib/constants';
 import { ProfileTabs } from './ProfileTabs';
 
 interface ProfileHeaderProps {
@@ -103,12 +104,15 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     >
                       {role.company_logo && (
                         <Image
-                          src={role.company_logo}
+                          src={role.company_logo.trim() || DEFAULT_COMPANY_LOGO}
                           alt={role.company || ''}
                           width={18}
                           height={18}
                           className="size-4.5 rounded-md ring-1 ring-line object-cover"
                           unoptimized
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = DEFAULT_COMPANY_LOGO;
+                          }}
                         />
                       )}
                       <span>{role.company}</span>

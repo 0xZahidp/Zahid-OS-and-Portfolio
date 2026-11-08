@@ -18,13 +18,8 @@ import {
   Code,
   Lock,
   Globe,
-  CheckCircle2,
-  AlertCircle,
-  Sparkles,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
-import { TempMailDomainRecord, TempMailDnsRecord } from '@/lib/os/temp-mail-domains';
+import { TempMailDomainRecord } from '@/lib/os/temp-mail-domains';
 
 const RESERVED_OFFICIAL_SLUGS = [
   'hello',
@@ -78,19 +73,6 @@ export const TempMailApp: React.FC = () => {
   // Domains system state
   const [availableDomains, setAvailableDomains] = useState<TempMailDomainRecord[]>([]);
   const [selectedDomain, setSelectedDomain] = useState<string>('');
-  const [isDomainModalOpen, setIsDomainModalOpen] = useState<boolean>(false);
-  const [newDomain, setNewDomain] = useState<string>('');
-  const [newDomainResendKey, setNewDomainResendKey] = useState<string>('');
-  const [newDomainIsDefault, setNewDomainIsDefault] = useState<boolean>(false);
-  const [isAddingDomain, setIsAddingDomain] = useState<boolean>(false);
-  const [domainFeedback, setDomainFeedback] = useState<{
-    type: 'success' | 'error';
-    message: string;
-    dnsRecords?: TempMailDnsRecord[];
-  } | null>(null);
-  const [copiedRecordKey, setCopiedRecordKey] = useState<string | null>(null);
-  const [expandedDomainDns, setExpandedDomainDns] = useState<string | null>(null);
-  const [verifyingDomain, setVerifyingDomain] = useState<string | null>(null);
 
   // Messages & viewer
   const [messages, setMessages] = useState<TempEmailMessage[]>([]);
@@ -312,108 +294,6 @@ export const TempMailApp: React.FC = () => {
     }
   };
 
-  // Add new domain with Resend API
-  const handleAddDomain = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!newDomain.trim()) return;
-
-    setIsAddingDomain(true);
-    setDomainFeedback(null);
-    try {
-      const res = await fetch('/api/os/temp-mail/domains', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          domain: newDomain.trim(),
-          resendApiKey: newDomainResendKey.trim() || undefined,
-          isDefault: newDomainIsDefault,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setDomainFeedback({
-          type: 'error',
-          message: data.error || 'Failed to register domain.',
-        });
-        return;
-      }
-
-      setDomainFeedback({
-        type: 'success',
-        message: data.message || `Domain '${data.domain?.domain}' registered successfully in Temp Mail!`,
-        dnsRecords: data.dnsRecords,
-      });
-
-      setNewDomain('');
-      setNewDomainResendKey('');
-      setNewDomainIsDefault(false);
-      await fetchDomains();
-
-      // Switch to this new domain immediately
-      if (data.domain?.domain) {
-        setSelectedDomain(data.domain.domain);
-        handleCreateInbox(undefined, selectedTtl, data.domain.domain);
-      }
-    } catch (err: unknown) {
-      setDomainFeedback({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Network error adding domain',
-      });
-    } finally {
-      setIsAddingDomain(false);
-    }
-  };
-
-  // Delete a domain
-  const handleDeleteDomain = async (domainName: string) => {
-    try {
-      const res = await fetch(`/api/os/temp-mail/domains?domain=${encodeURIComponent(domainName)}`, {
-        method: 'DELETE',
-      });
-      if (res.ok) {
-        await fetchDomains();
-      }
-    } catch (err) {
-      console.warn('Failed to remove domain:', err);
-    }
-  };
-
-  // Check & verify domain with Resend API
-  const handleVerifyDomain = async (domainName: string) => {
-    setVerifyingDomain(domainName);
-    try {
-      const res = await fetch('/api/os/temp-mail/domains', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          domain: domainName,
-          action: 'verify',
-        }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setDomainFeedback({
-          type: data.isReceivingReady ? 'success' : 'error',
-          message: data.message || `Status updated for ${domainName}`,
-          dnsRecords: data.dnsRecords,
-        });
-        await fetchDomains();
-      } else {
-        setDomainFeedback({
-          type: 'error',
-          message: data.error || 'Failed to verify domain with Resend.',
-        });
-      }
-    } catch (err: unknown) {
-      setDomainFeedback({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Verification request failed',
-      });
-    } finally {
-      setVerifyingDomain(null);
-    }
-  };
 
   // Restore cached inbox on mount or create fresh one
   useEffect(() => {
@@ -505,15 +385,6 @@ export const TempMailApp: React.FC = () => {
     }
   };
 
-  // Copy DNS Record value
-  const handleCopyDnsValue = (key: string, val: string) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(val).then(() => {
-        setCopiedRecordKey(key);
-        setTimeout(() => setCopiedRecordKey(null), 2000);
-      });
-    }
-  };
 
   // Destroy / delete current inbox
   const handleDeleteInbox = async () => {
@@ -558,63 +429,39 @@ export const TempMailApp: React.FC = () => {
   return (
     <div className="space-y-6 text-white max-w-7xl mx-auto p-2 sm:p-4 select-none">
       {/* Top Header Card */}
-      <div className="p-5 sm:p-7 rounded-3xl border border-white/10 bg-gradient-to-r from-zinc-950 via-zinc-900 to-amber-950/30 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
-
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-mono text-amber-300">
-              <Mail className="size-3.5 text-amber-400" />
-              <span>Zahid OS • Real Inbound Temp Mail Engine</span>
+      <div className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-gradient-to-r from-zinc-950 via-zinc-900 to-amber-950/20 backdrop-blur-2xl shadow-xl relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="size-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 grid place-items-center shrink-0">
+              <Mail className="size-4.5" />
             </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
                 <span>Disposable Mailbox</span>
+                <span className="inline-flex items-center gap-1 bg-amber-500/10 border border-amber-500/25 px-2.5 py-0.5 rounded-lg text-xs font-mono font-medium text-amber-300">
+                  <Globe className="size-3 text-amber-400" />
+                  <span>@{inboxDomain || 'zahidp.com'}</span>
+                </span>
               </h2>
-
-              {/* Active Domain Selector Pill */}
-              <div className="inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-xl text-xs font-mono font-bold text-amber-300">
-                <Globe className="size-3.5 text-amber-400" />
-                <span>@{inboxDomain || 'zahidp.com'}</span>
-              </div>
-
-              {/* Manage Domains Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  setDomainFeedback(null);
-                  setIsDomainModalOpen(true);
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs text-white/90 hover:text-white transition-all cursor-pointer font-medium"
-                title="Add and configure custom domains with Resend API"
-              >
-                <Plus className="size-3.5 text-amber-400" />
-                <span>Add / Manage Domains</span>
-              </button>
             </div>
-
-            <p className="text-xs text-white/60 leading-relaxed max-w-2xl">
-              Live inbound email router powered by Resend Webhooks & Receiving API. Receive OTP codes, test signups,
-              and auth verification emails on your custom domains with anti-flooding protection and instant delivery.
-            </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0 self-start lg:self-center">
-            <span className="px-3 py-1.5 rounded-xl bg-black/60 border border-white/10 text-xs font-mono text-emerald-400 flex items-center gap-2">
+          <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
+            <span className="px-2.5 py-1 rounded-lg bg-black/60 border border-white/10 text-[11px] font-mono text-emerald-400 flex items-center gap-1.5">
               <span className="relative flex size-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full size-2 bg-emerald-500" />
               </span>
-              <span>Live Inbound Radar</span>
+              <span>Live Radar</span>
             </span>
 
             <button
               type="button"
               onClick={() => fetchMessages(inboxAddress, inboxToken, false, true)}
               disabled={isRefreshing}
-              className="size-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white grid place-items-center cursor-pointer transition-colors"
-              title="Force sync newly arrived emails from Resend"
+              className="size-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white grid place-items-center cursor-pointer transition-colors"
+              title="Force sync newly arrived emails"
             >
               <RefreshCw className={`size-3.5 ${isRefreshing ? 'animate-spin text-amber-400' : ''}`} />
             </button>
@@ -1141,398 +988,6 @@ export const TempMailApp: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: Temp Mail Domains & Resend API System */}
-      {isDomainModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl p-6 sm:p-7 rounded-3xl bg-zinc-950 border border-white/15 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto [scrollbar-width:thin]">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2.5">
-                <div className="size-9 rounded-xl bg-amber-500/20 text-amber-300 grid place-items-center border border-amber-500/30">
-                  <Globe className="size-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-white flex items-center gap-2">
-                    <span>Temp Mail Domains & Resend API</span>
-                    <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 text-[10px] font-mono border border-amber-500/30">
-                      Multi-Domain Router
-                    </span>
-                  </h3>
-                  <p className="text-xs text-white/60 mt-0.5">
-                    Add custom domains and Resend API keys to receive temporary mail on any domain you own.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsDomainModalOpen(false)}
-                className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white grid place-items-center cursor-pointer transition-colors"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            {/* Add New Domain Form */}
-            <form onSubmit={handleAddDomain} className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 space-y-4">
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
-                <Plus className="size-3.5 text-amber-400" />
-                <span>Register New Domain</span>
-              </h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-white/80 block">Domain Name</label>
-                  <input
-                    type="text"
-                    value={newDomain}
-                    onChange={(e) => setNewDomain(e.target.value.toLowerCase().trim())}
-                    placeholder="e.g. mail.domain.com, tempmail.dev"
-                    required
-                    className="w-full h-10 px-3.5 rounded-xl border border-white/15 bg-black/60 text-xs font-mono text-white focus:border-amber-400 outline-hidden"
-                  />
-                  <p className="text-[10px] text-white/40">FQDN domain or subdomain configured with your DNS</p>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-white/80 block">
-                    Resend API Key <span className="text-white/40 font-normal">(Optional)</span>
-                  </label>
-                  <input
-                    type="password"
-                    value={newDomainResendKey}
-                    onChange={(e) => setNewDomainResendKey(e.target.value.trim())}
-                    placeholder="re_... (leave blank for system key)"
-                    className="w-full h-10 px-3.5 rounded-xl border border-white/15 bg-black/60 text-xs font-mono text-white focus:border-amber-400 outline-hidden"
-                  />
-                  <p className="text-[10px] text-white/40">Uses vault secret by default. Custom key is securely isolated.</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <label className="flex items-center gap-2 cursor-pointer text-xs text-white/70">
-                  <input
-                    type="checkbox"
-                    checked={newDomainIsDefault}
-                    onChange={(e) => setNewDomainIsDefault(e.target.checked)}
-                    className="rounded-md border-white/20 bg-black/40 text-amber-500 focus:ring-0"
-                  />
-                  <span>Set as default domain for new disposable mailboxes</span>
-                </label>
-
-                <button
-                  type="submit"
-                  disabled={isAddingDomain || !newDomain.trim()}
-                  className="h-9 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-md shrink-0"
-                >
-                  {isAddingDomain ? (
-                    <>
-                      <RefreshCw className="size-3.5 animate-spin" />
-                      <span>Verifying with Resend...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="size-3.5" />
-                      <span>Add Domain</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {domainFeedback && (
-                <div
-                  className={`p-3.5 rounded-xl border text-xs space-y-2 ${
-                    domainFeedback.type === 'success'
-                      ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-200'
-                      : 'bg-rose-950/60 border-rose-500/40 text-rose-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    {domainFeedback.type === 'success' ? (
-                      <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <AlertCircle className="size-4 text-rose-400 shrink-0" />
-                    )}
-                    <span className="font-medium">{domainFeedback.message}</span>
-                  </div>
-
-                  {domainFeedback.dnsRecords && domainFeedback.dnsRecords.length > 0 && (
-                    <div className="pt-2 border-t border-emerald-500/20 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase tracking-wider block text-emerald-400">
-                          Required DNS Records for Inbound Receiving:
-                        </span>
-                        <span className="text-[10px] text-amber-300 font-mono font-semibold">
-                          ⚠️ MX Record is REQUIRED to receive emails
-                        </span>
-                      </div>
-                      <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
-                        {domainFeedback.dnsRecords.map((r, idx) => {
-                          const recordKey = `fb_${r.type}_${r.name}_${idx}`;
-                          const isMx = r.type === 'MX';
-                          const hostDisplay = !r.name || r.name.trim() === '' ? '@' : r.name;
-                          return (
-                            <div
-                              key={recordKey}
-                              className={`p-2.5 rounded-xl border text-[11px] font-mono flex items-center justify-between gap-2 ${
-                                isMx
-                                  ? 'bg-amber-950/40 border-amber-500/40 text-amber-200 shadow-sm'
-                                  : 'bg-black/50 border-emerald-500/20 text-white/90'
-                              }`}
-                            >
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2 mb-0.5">
-                                  <span className={`font-bold px-1.5 py-0.2 rounded text-[10px] ${
-                                    isMx ? 'bg-amber-500 text-black font-extrabold' : 'bg-emerald-500/20 text-emerald-300'
-                                  }`}>
-                                    {r.type}
-                                  </span>
-                                  {isMx && (
-                                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-                                      ⭐ Receiving Endpoint
-                                    </span>
-                                  )}
-                                  <span className="text-white/60">Host:</span>
-                                  <span className="text-amber-300 font-bold">{hostDisplay}</span>
-                                  {r.priority !== undefined && (
-                                    <span className="text-white/50">Priority: <strong className="text-white">{r.priority}</strong></span>
-                                  )}
-                                  {r.status && (
-                                    <span className={`text-[10px] px-1.5 py-0.2 rounded ${
-                                      r.status === 'verified'
-                                        ? 'bg-emerald-500/20 text-emerald-300'
-                                        : 'bg-amber-500/20 text-amber-300'
-                                    }`}>
-                                      {r.status.toUpperCase()}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-emerald-300 truncate text-[10px]">
-                                  Target: {r.value}
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleCopyDnsValue(recordKey, r.value)}
-                                className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[10px] text-white cursor-pointer shrink-0 font-medium transition-colors"
-                              >
-                                {copiedRecordKey === recordKey ? 'Copied Value' : 'Copy Value'}
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </form>
-
-            {/* List of Registered Domains */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono flex items-center justify-between">
-                <span>Configured Domains ({availableDomains.length})</span>
-                <span className="text-[11px] text-white/40 normal-case font-sans">
-                  Click a domain to make it active or view DNS
-                </span>
-              </h4>
-
-              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-                {availableDomains.map((dom) => {
-                  const isCurrent = dom.domain === inboxDomain;
-                  const isExpanded = expandedDomainDns === dom.domain;
-                  const isVerifying = verifyingDomain === dom.domain;
-                  const mxRecord = dom.dnsRecords?.find((r) => r.type === 'MX');
-                  const isMxMissing = !mxRecord || mxRecord.status === 'pending' || dom.status === 'pending' || dom.isReceivingReady === false;
-
-                  return (
-                    <div
-                      key={dom.id}
-                      className={`p-3.5 rounded-2xl border transition-all space-y-3 ${
-                        isCurrent
-                          ? 'border-amber-500 bg-amber-500/10 shadow-sm'
-                          : 'border-white/10 bg-white/5 hover:border-white/20'
-                      }`}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div
-                            className={`size-8 rounded-xl grid place-items-center text-xs font-bold shrink-0 ${
-                              isCurrent
-                                ? 'bg-amber-500 text-black'
-                                : 'bg-white/10 text-white/70'
-                            }`}
-                          >
-                            <Globe className="size-4" />
-                          </div>
-
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-mono font-bold text-xs text-white truncate">
-                                @{dom.domain}
-                              </span>
-                              {dom.isDefault && (
-                                <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 text-[10px] font-mono border border-amber-500/30">
-                                  Default
-                                </span>
-                              )}
-                              {isCurrent && (
-                                <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-mono border border-emerald-500/30">
-                                  Active Inbound
-                                </span>
-                              )}
-                              {isMxMissing ? (
-                                <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 text-[10px] font-mono border border-amber-500/30">
-                                  ⚠️ MX Pending
-                                </span>
-                              ) : (
-                                <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-mono border border-emerald-500/30">
-                                  ✓ Receiving Ready
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-white/40 font-mono block mt-0.5">
-                              Status: {dom.status.toUpperCase()} • Key: {dom.hasCustomKey ? (dom.resendApiKeyMasked || 'Custom') : 'Global Default'}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-                          {/* Check / Verify with Resend */}
-                          <button
-                            type="button"
-                            onClick={() => handleVerifyDomain(dom.domain)}
-                            disabled={isVerifying}
-                            className="h-8 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-white/90 hover:text-white text-xs font-medium cursor-pointer transition-colors flex items-center gap-1.5"
-                            title="Query Resend API to check live DNS verification"
-                          >
-                            <RefreshCw className={`size-3 ${isVerifying ? 'animate-spin text-amber-400' : ''}`} />
-                            <span>{isVerifying ? 'Checking...' : 'Check DNS'}</span>
-                          </button>
-
-                          {/* Toggle DNS view */}
-                          {dom.dnsRecords && dom.dnsRecords.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => setExpandedDomainDns(isExpanded ? null : dom.domain)}
-                              className="h-8 px-2.5 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 text-white/80 hover:text-white text-xs font-mono cursor-pointer transition-colors flex items-center gap-1"
-                              title="View required DNS records for this domain"
-                            >
-                              <span>DNS ({dom.dnsRecords.length})</span>
-                              {isExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
-                            </button>
-                          )}
-
-                          {!isCurrent && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedDomain(dom.domain);
-                                handleCreateInbox(undefined, selectedTtl, dom.domain);
-                                setIsDomainModalOpen(false);
-                              }}
-                              className="h-8 px-3 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold cursor-pointer transition-colors"
-                            >
-                              Switch to this
-                            </button>
-                          )}
-
-                          {availableDomains.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteDomain(dom.domain)}
-                              className="size-8 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 grid place-items-center cursor-pointer transition-colors"
-                              title="Remove domain"
-                            >
-                              <Trash2 className="size-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Expandable DNS Records Details */}
-                      {isExpanded && dom.dnsRecords && (
-                        <div className="pt-3 border-t border-white/10 space-y-2">
-                          <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200/90 leading-relaxed font-mono">
-                            <strong className="text-amber-300 block mb-0.5">⚡ Receiving Requirement:</strong>
-                            To receive emails, you MUST configure the <strong className="text-white">MX record</strong> below in Spaceship / your DNS provider. Without this MX record, sender servers cannot route incoming emails to Resend.
-                          </div>
-
-                          <div className="space-y-1.5">
-                            {dom.dnsRecords.map((r, idx) => {
-                              const recordKey = `dom_${dom.id}_${r.type}_${r.name}_${idx}`;
-                              const isMx = r.type === 'MX';
-                              const hostDisplay = !r.name || r.name.trim() === '' ? '@' : r.name;
-
-                              return (
-                                <div
-                                  key={recordKey}
-                                  className={`p-2.5 rounded-xl border text-[11px] font-mono flex items-center justify-between gap-2 ${
-                                    isMx
-                                      ? 'bg-amber-950/40 border-amber-500/40 text-amber-200'
-                                      : 'bg-black/40 border-white/10 text-white/90'
-                                  }`}
-                                >
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2 mb-0.5">
-                                      <span className={`font-bold px-1.5 py-0.2 rounded text-[10px] ${
-                                        isMx ? 'bg-amber-500 text-black font-extrabold' : 'bg-white/10 text-white/80'
-                                      }`}>
-                                        {r.type}
-                                      </span>
-                                      {isMx && (
-                                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-                                          Receiving Mail Server
-                                        </span>
-                                      )}
-                                      <span className="text-white/60">Host:</span>
-                                      <span className="text-amber-300 font-bold">{hostDisplay}</span>
-                                      {r.priority !== undefined && (
-                                        <span className="text-white/50">Priority: <strong className="text-white">{r.priority}</strong></span>
-                                      )}
-                                      {r.status && (
-                                        <span className={`text-[10px] px-1.5 py-0.2 rounded ${
-                                          r.status === 'verified'
-                                            ? 'bg-emerald-500/20 text-emerald-300'
-                                            : 'bg-amber-500/20 text-amber-300'
-                                        }`}>
-                                          {r.status.toUpperCase()}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="text-emerald-300 truncate text-[10px]">
-                                      Target: {r.value}
-                                    </div>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCopyDnsValue(recordKey, r.value)}
-                                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[10px] text-white cursor-pointer shrink-0 font-medium transition-colors"
-                                  >
-                                    {copiedRecordKey === recordKey ? 'Copied' : 'Copy'}
-                                  </button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20 text-[11px] text-amber-200/80 leading-relaxed font-mono">
-              <strong className="text-amber-300 block mb-1">Spaceship DNS Instructions:</strong>
-              1. Open Spaceship &gt; <strong>Domain List</strong> &gt; your domain &gt; <strong>Advanced DNS</strong>.
-              <br />
-              2. Add Record: <strong>Type: MX</strong>, <strong>Host: @</strong>, <strong>Mail Server: receive-apne1.forge.rmta.net</strong>, <strong>Priority: 10</strong>.
-              <br />
-              3. Once added, click <strong>&ldquo;Check DNS&rdquo;</strong> above to verify in real-time with Resend.
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
