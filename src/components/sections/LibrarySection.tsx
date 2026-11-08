@@ -17,14 +17,29 @@ import {
   Play,
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
-import { defaultLibraryData } from '@/data/default-library';
 import { LibraryContent } from '@/types/library';
 import { YouTubeIcon } from '@/components/ui/Icons';
 import { playSuccessSound, playSparkleSound, playKeyPressSound } from '@/lib/sound';
 
+const EMPTY_LIBRARY: LibraryContent = {
+  aiSkills: [],
+  bookmarks: [],
+  music: [],
+  voiceovers: {
+    channelName: '',
+    handle: '',
+    description: '',
+    subscribeUrl: '',
+    items: [],
+  },
+};
+
 export const LibrarySection: React.FC = () => {
   const { content } = usePortfolio();
-  const library: LibraryContent = content.libraryData || defaultLibraryData;
+  const library: LibraryContent = content.libraryData || EMPTY_LIBRARY;
+  const aiSkills = Array.isArray(library.aiSkills) ? library.aiSkills : [];
+  const bookmarks = Array.isArray(library.bookmarks) ? library.bookmarks : [];
+  const music = Array.isArray(library.music) ? library.music : [];
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showBookmarkModal, setShowBookmarkModal] = useState<boolean>(false);
@@ -134,7 +149,7 @@ export const LibrarySection: React.FC = () => {
               <h2 className="text-lg font-bold tracking-tight text-ink flex items-center gap-2">
                 <span>AI Skills</span>
                 <span className="text-xs font-mono text-ink-3 font-normal">
-                  ({library.aiSkills.length})
+                  ({aiSkills.length})
                 </span>
               </h2>
               <p className="text-xs text-ink-3">
@@ -155,73 +170,85 @@ export const LibrarySection: React.FC = () => {
         </div>
 
         {/* Skills Grid */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          {library.aiSkills.map((skill) => {
-            const isCopied = copiedId === skill.id;
+        {aiSkills.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-line bg-surface-2/40 p-8 text-center">
+            <div className="size-10 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 grid place-items-center mx-auto mb-2.5">
+              <Terminal className="size-4.5" />
+            </div>
+            <h3 className="text-xs font-semibold text-ink">AI Skills Coming Soon</h3>
+            <p className="text-[11px] text-ink-3 mt-1 max-w-xs mx-auto leading-relaxed">
+              Curated agent skills and developer prompts are being updated in the CMS.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {aiSkills.map((skill) => {
+              const isCopied = copiedId === skill.id;
 
-            return (
-              <div
-                key={skill.id}
-                className="group relative flex flex-col justify-between rounded-2xl border border-line bg-surface p-5 transition-all duration-200 hover:border-line-strong hover:shadow-sm"
-              >
-                <div className="space-y-2.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="text-base font-bold text-ink font-mono flex items-center gap-1">
-                        <span className="text-brand-500">/</span>
-                        <span>{skill.name}</span>
-                      </h3>
-                      <p className="text-xs text-ink-3 mt-0.5">by {skill.author}</p>
+              return (
+                <div
+                  key={skill.id}
+                  className="group relative flex flex-col justify-between rounded-2xl border border-line bg-surface p-5 transition-all duration-200 hover:border-line-strong hover:shadow-sm"
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="text-base font-bold text-ink font-mono flex items-center gap-1">
+                          <span className="text-brand-500">/</span>
+                          <span>{skill.name}</span>
+                        </h3>
+                        <p className="text-xs text-ink-3 mt-0.5">by {skill.author}</p>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {skill.badge && (
+                          <span className="rounded-md bg-surface-2 px-2 py-0.5 text-[10px] font-semibold text-ink-3">
+                            {skill.badge}
+                          </span>
+                        )}
+                        {skill.url && (
+                          <a
+                            href={skill.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 rounded-lg text-ink-3 hover:text-ink transition-colors"
+                            title="View skill documentation"
+                          >
+                            <ExternalLink className="size-3.5" />
+                          </a>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {skill.badge && (
-                        <span className="rounded-md bg-surface-2 px-2 py-0.5 text-[10px] font-semibold text-ink-3">
-                          {skill.badge}
-                        </span>
-                      )}
-                      {skill.url && (
-                        <a
-                          href={skill.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1 rounded-lg text-ink-3 hover:text-ink transition-colors"
-                          title="View skill documentation"
-                        >
-                          <ExternalLink className="size-3.5" />
-                        </a>
-                      )}
+                    <p className="text-xs text-ink-2 leading-relaxed">
+                      {skill.description}
+                    </p>
+                  </div>
+
+                  {/* Command Copy Box */}
+                  <div className="mt-4 pt-3 border-t border-line/60">
+                    <div className="flex items-center justify-between gap-2 rounded-xl bg-surface-2/70 px-3 py-2 font-mono text-[11px] text-ink border border-line/50">
+                      <span className="text-brand-500 font-bold select-none shrink-0">$</span>
+                      <span className="truncate flex-1 select-all">{skill.command}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyCommand(skill.id, skill.command)}
+                        className="shrink-0 p-1 rounded-md text-ink-3 hover:text-ink transition-colors cursor-pointer"
+                        title="Copy install command"
+                      >
+                        {isCopied ? (
+                          <Check className="size-3.5 text-emerald-500" />
+                        ) : (
+                          <Copy className="size-3.5" />
+                        )}
+                      </button>
                     </div>
                   </div>
-
-                  <p className="text-xs text-ink-2 leading-relaxed">
-                    {skill.description}
-                  </p>
                 </div>
-
-                {/* Command Copy Box */}
-                <div className="mt-4 pt-3 border-t border-line/60">
-                  <div className="flex items-center justify-between gap-2 rounded-xl bg-surface-2/70 px-3 py-2 font-mono text-[11px] text-ink border border-line/50">
-                    <span className="text-brand-500 font-bold select-none shrink-0">$</span>
-                    <span className="truncate flex-1 select-all">{skill.command}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleCopyCommand(skill.id, skill.command)}
-                      className="shrink-0 p-1 rounded-md text-ink-3 hover:text-ink transition-colors cursor-pointer"
-                      title="Copy install command"
-                    >
-                      {isCopied ? (
-                        <Check className="size-3.5 text-emerald-500" />
-                      ) : (
-                        <Copy className="size-3.5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* 3. Bookmarks Section */}
@@ -235,7 +262,7 @@ export const LibrarySection: React.FC = () => {
               <h2 className="text-lg font-bold tracking-tight text-ink flex items-center gap-2">
                 <span>Bookmarks</span>
                 <span className="text-xs font-mono text-ink-3 font-normal">
-                  ({library.bookmarks.length})
+                  ({bookmarks.length})
                 </span>
               </h2>
               <p className="text-xs text-ink-3">
@@ -245,110 +272,124 @@ export const LibrarySection: React.FC = () => {
           </div>
         </div>
 
-        {/* Featured Top Pick Card */}
-        {library.bookmarks.find((b) => b.isTopPick) && (() => {
-          const topPick = library.bookmarks.find((b) => b.isTopPick)!;
-          return (
-            <div className="rounded-[28px] border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-surface p-5 sm:p-7 shadow-xs relative overflow-hidden">
-              <div className="grid gap-6 md:grid-cols-[1.1fr_1fr] items-center">
-                {topPick.image_url ? (
-                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl ring-1 ring-line shadow-xs">
-                    <Image
-                      src={topPick.image_url}
-                      alt={topPick.title}
-                      fill
-                      className="object-cover transition-transform duration-500 hover:scale-105"
-                      unoptimized
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-[16/9] w-full rounded-2xl bg-surface-2 grid place-items-center border border-line">
-                    <Star className="size-8 text-amber-500" />
-                  </div>
-                )}
-
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    {topPick.badges?.map((badge) => (
-                      <span
-                        key={badge}
-                        className="inline-flex items-center gap-1 rounded-full bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-700 dark:text-emerald-400 border border-brand-500/20"
-                      >
-                        <Sparkles className="size-3" />
-                        <span>{badge}</span>
-                      </span>
-                    )) || (
-                      <span className="rounded-full bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-700 dark:text-emerald-400">
-                        Top Pick
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="text-xl font-bold tracking-tight text-ink">
-                    {topPick.title}
-                  </h3>
-
-                  {topPick.author && (
-                    <p className="text-xs font-medium text-ink-3">by {topPick.author}</p>
-                  )}
-
-                  <p className="text-sm leading-relaxed text-ink-2">
-                    {topPick.description}
-                  </p>
-
-                  <div className="pt-2">
-                    <a
-                      href={topPick.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-primary h-9 px-4 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
-                    >
-                      <span>Visit Resource</span>
-                      <ArrowUpRight className="size-3.5" />
-                    </a>
-                  </div>
-                </div>
-              </div>
+        {bookmarks.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-line bg-surface-2/40 p-8 text-center">
+            <div className="size-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 grid place-items-center mx-auto mb-2.5">
+              <Star className="size-4.5" />
             </div>
-          );
-        })()}
+            <h3 className="text-xs font-semibold text-ink">Bookmarks Coming Soon</h3>
+            <p className="text-[11px] text-ink-3 mt-1 max-w-xs mx-auto leading-relaxed">
+              Curated tools, courses, and engineering resources are being updated in the CMS.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Featured Top Pick Card */}
+            {bookmarks.find((b) => b.isTopPick) && (() => {
+              const topPick = bookmarks.find((b) => b.isTopPick)!;
+              return (
+                <div className="rounded-[28px] border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-surface p-5 sm:p-7 shadow-xs relative overflow-hidden">
+                  <div className="grid gap-6 md:grid-cols-[1.1fr_1fr] items-center">
+                    {topPick.image_url ? (
+                      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl ring-1 ring-line shadow-xs">
+                        <Image
+                          src={topPick.image_url}
+                          alt={topPick.title}
+                          fill
+                          className="object-cover transition-transform duration-500 hover:scale-105"
+                          unoptimized
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-[16/9] w-full rounded-2xl bg-surface-2 grid place-items-center border border-line">
+                        <Star className="size-8 text-amber-500" />
+                      </div>
+                    )}
 
-        {/* Regular Bookmarks Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-          {library.bookmarks.filter((b) => !b.isTopPick).map((bm) => (
-            <a
-              key={bm.id}
-              href={bm.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex flex-col justify-between rounded-2xl border border-line bg-surface p-5 transition-all duration-200 hover:border-line-strong hover:shadow-xs"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-base font-bold text-ink group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-                    {bm.title}
-                  </h3>
-                  {bm.badge && (
-                    <span className="rounded-md bg-surface-2 px-2 py-0.5 text-[10px] font-semibold text-ink-3">
-                      {bm.badge}
-                    </span>
-                  )}
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-1.5">
+                        {topPick.badges?.map((badge) => (
+                          <span
+                            key={badge}
+                            className="inline-flex items-center gap-1 rounded-full bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-700 dark:text-emerald-400 border border-brand-500/20"
+                          >
+                            <Sparkles className="size-3" />
+                            <span>{badge}</span>
+                          </span>
+                        )) || (
+                          <span className="rounded-full bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-700 dark:text-emerald-400">
+                            Top Pick
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="text-xl font-bold tracking-tight text-ink">
+                        {topPick.title}
+                      </h3>
+
+                      {topPick.author && (
+                        <p className="text-xs font-medium text-ink-3">by {topPick.author}</p>
+                      )}
+
+                      <p className="text-sm leading-relaxed text-ink-2">
+                        {topPick.description}
+                      </p>
+
+                      <div className="pt-2">
+                        <a
+                          href={topPick.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-primary h-9 px-4 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5"
+                        >
+                          <span>Visit Resource</span>
+                          <ArrowUpRight className="size-3.5" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              );
+            })()}
 
-                <p className="text-xs text-ink-2 leading-relaxed">
-                  {bm.description}
-                </p>
-              </div>
+            {/* Regular Bookmarks Grid */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+              {bookmarks.filter((b) => !b.isTopPick).map((bm) => (
+                <a
+                  key={bm.id}
+                  href={bm.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-col justify-between rounded-2xl border border-line bg-surface p-5 transition-all duration-200 hover:border-line-strong hover:shadow-xs"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-base font-bold text-ink group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                        {bm.title}
+                      </h3>
+                      {bm.badge && (
+                        <span className="rounded-md bg-surface-2 px-2 py-0.5 text-[10px] font-semibold text-ink-3">
+                          {bm.badge}
+                        </span>
+                      )}
+                    </div>
 
-              <div className="mt-4 flex items-center justify-between text-xs font-medium text-ink-3 pt-3 border-t border-line/60">
-                <span className="truncate">
-                  {new URL(bm.url).hostname.replace(/^www\./, '')}
-                </span>
-                <ArrowUpRight className="size-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </div>
-            </a>
-          ))}
-        </div>
+                    <p className="text-xs text-ink-2 leading-relaxed">
+                      {bm.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between text-xs font-medium text-ink-3 pt-3 border-t border-line/60">
+                    <span className="truncate">
+                      {new URL(bm.url).hostname.replace(/^www\./, '')}
+                    </span>
+                    <ArrowUpRight className="size-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                  </div>
+                </a>
+              ))}
+            </div>
+          </>
+        )}
       </section>
 
       {/* 4. Music & Nasheeds (Focus Audio) */}
@@ -362,7 +403,7 @@ export const LibrarySection: React.FC = () => {
               <h2 className="text-lg font-bold tracking-tight text-ink flex items-center gap-2">
                 <span>Music & Nasheeds</span>
                 <span className="text-xs font-mono text-ink-3 font-normal">
-                  ({library.music.length})
+                  ({music.length})
                 </span>
               </h2>
               <p className="text-xs text-ink-3">
@@ -373,49 +414,61 @@ export const LibrarySection: React.FC = () => {
         </div>
 
         {/* Audio Track List */}
-        <div className="rounded-2xl border border-line bg-surface overflow-hidden divide-y divide-line/60 shadow-xs">
-          {library.music.map((track, idx) => (
-            <div
-              key={track.id}
-              className="flex items-center justify-between gap-4 p-4 hover:bg-surface-2/60 transition-colors"
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <span className="text-xs font-mono font-semibold text-ink-3 w-6 shrink-0 text-center">
-                  0{idx + 1}
-                </span>
+        {music.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-line bg-surface-2/40 p-8 text-center">
+            <div className="size-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 grid place-items-center mx-auto mb-2.5">
+              <Headphones className="size-4.5" />
+            </div>
+            <h3 className="text-xs font-semibold text-ink">Focus Audio Coming Soon</h3>
+            <p className="text-[11px] text-ink-3 mt-1 max-w-xs mx-auto leading-relaxed">
+              Curated nasheeds and focus audio tracks are being updated in the CMS.
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-line bg-surface overflow-hidden divide-y divide-line/60 shadow-xs">
+            {music.map((track, idx) => (
+              <div
+                key={track.id}
+                className="flex items-center justify-between gap-4 p-4 hover:bg-surface-2/60 transition-colors"
+              >
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <span className="text-xs font-mono font-semibold text-ink-3 w-6 shrink-0 text-center">
+                    0{idx + 1}
+                  </span>
 
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-bold text-ink truncate">{track.title}</span>
-                    {track.arabic_title && (
-                      <span className="text-xs font-serif text-brand-600 dark:text-emerald-400 font-semibold" dir="rtl">
-                        {track.arabic_title}
-                      </span>
-                    )}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-bold text-ink truncate">{track.title}</span>
+                      {track.arabic_title && (
+                        <span className="text-xs font-serif text-brand-600 dark:text-emerald-400 font-semibold" dir="rtl">
+                          {track.arabic_title}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-ink-3 truncate mt-0.5">{track.artist}</p>
                   </div>
-                  <p className="text-xs text-ink-3 truncate mt-0.5">{track.artist}</p>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  {track.duration && (
+                    <span className="text-xs font-mono text-ink-3">{track.duration}</span>
+                  )}
+                  {track.url && (
+                    <a
+                      href={track.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="size-8 rounded-full border border-line bg-surface hover:bg-surface-2 grid place-items-center text-ink-2 hover:text-ink transition-colors"
+                      title={`Listen to ${track.title}`}
+                    >
+                      <Play className="size-3.5 fill-current ml-0.5" />
+                    </a>
+                  )}
                 </div>
               </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                {track.duration && (
-                  <span className="text-xs font-mono text-ink-3">{track.duration}</span>
-                )}
-                {track.url && (
-                  <a
-                    href={track.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="size-8 rounded-full border border-line bg-surface hover:bg-surface-2 grid place-items-center text-ink-2 hover:text-ink transition-colors"
-                    title={`Listen to ${track.title}`}
-                  >
-                    <Play className="size-3.5 fill-current ml-0.5" />
-                  </a>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 5. Voiceovers & Media */}

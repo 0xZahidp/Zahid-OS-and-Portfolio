@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Target, Download, Sparkles } from 'lucide-react';
-import { topSkillsData } from '@/data/profile';
 import { usePortfolio } from '@/context/PortfolioContext';
 import {
   TablerTools,
@@ -31,6 +30,7 @@ export const SkillsSection: React.FC = () => {
   const aiSkills = skills.filter((s) => s.category === 'ai');
   const techSkills = skills.filter((s) => s.category === 'tech');
   const toolSkills = skills.filter((s) => s.category === 'tool');
+  const topSkills = skills.slice(0, 5);
 
   const getSkillIcon = (id: string, name: string) => {
     const key = (id || name).toLowerCase();
@@ -55,32 +55,46 @@ export const SkillsSection: React.FC = () => {
 
   return (
     <div id="skills" className="space-y-10 mt-10 scroll-mt-20">
-      {/* Top Skills */}
-      <section aria-labelledby="top-skills-heading">
-        <div className="mb-5 flex items-center justify-between gap-4">
-          <h2
-            id="top-skills-heading"
-            className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-ink"
-          >
-            <Target className="size-6 shrink-0 text-ink" />
-            <span>Top skills</span>
-          </h2>
+      {skills.length === 0 ? (
+        <div className="rounded-[24px] border border-dashed border-line bg-surface-2/40 p-8 sm:p-10 text-center">
+          <div className="size-12 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 grid place-items-center mx-auto mb-3">
+            <Target className="size-5" />
+          </div>
+          <h3 className="text-sm font-semibold text-ink">Skills & Tech Stack Coming Soon</h3>
+          <p className="text-xs text-ink-3 mt-1.5 max-w-sm mx-auto leading-relaxed">
+            Technical competencies, frameworks, and developer toolchains are being updated in the CMS.
+          </p>
         </div>
-        <ul className="flex flex-wrap gap-2.5">
-          {topSkillsData.map((skill) => (
-            <li
-              key={skill}
-              className="inline-flex items-center gap-2 rounded-full bg-surface-2 px-3.5 py-1.5 text-xs font-semibold text-ink border border-line shadow-xs transition-transform hover:-translate-y-0.5 cursor-default select-none"
-            >
-              <span className="size-1.5 rounded-full bg-brand-500" />
-              <span>{skill}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      ) : (
+        <>
+          {/* Top Skills */}
+          {topSkills.length > 0 && (
+            <section aria-labelledby="top-skills-heading">
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <h2
+                  id="top-skills-heading"
+                  className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-ink"
+                >
+                  <Target className="size-6 shrink-0 text-ink" />
+                  <span>Top skills</span>
+                </h2>
+              </div>
+              <ul className="flex flex-wrap gap-2.5">
+                {topSkills.map((skill) => (
+                  <li
+                    key={skill.id || skill.name}
+                    className="inline-flex items-center gap-2 rounded-full bg-surface-2 px-3.5 py-1.5 text-xs font-semibold text-ink border border-line shadow-xs transition-transform hover:-translate-y-0.5 cursor-default select-none"
+                  >
+                    <span className="size-1.5 rounded-full bg-brand-500" />
+                    <span>{skill.name}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
-      {/* Skills and Tools */}
-      <section aria-labelledby="skills-heading">
+          {/* Skills and Tools */}
+          <section aria-labelledby="skills-heading">
         <div className="mb-5 flex items-center justify-between gap-4">
           <h2
             id="skills-heading"
@@ -145,6 +159,8 @@ export const SkillsSection: React.FC = () => {
           </p>
         </div>
       </section>
-    </div>
+    </>
+  )}
+</div>
   );
 };

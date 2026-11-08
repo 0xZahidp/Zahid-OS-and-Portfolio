@@ -7,7 +7,7 @@ import { SocialLink } from '@/types/profile';
 
 export const SocialsTab: React.FC = () => {
   const { content, updateSocialLinks } = usePortfolio();
-  const socialLinks = content.socialLinks;
+  const socialLinks = Array.isArray(content.socialLinks) ? content.socialLinks : [];
 
   const handleUpdate = (idx: number, patch: Partial<SocialLink>) => {
     const updated = [...socialLinks];
@@ -65,7 +65,18 @@ export const SocialsTab: React.FC = () => {
         </div>
 
         <div className="space-y-3">
-          {socialLinks.map((social, idx) => (
+          {socialLinks.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-line bg-surface-2/40 p-8 text-center">
+              <div className="size-10 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 grid place-items-center mx-auto mb-2.5">
+                <Share2 className="size-4.5" />
+              </div>
+              <h3 className="text-xs font-semibold text-ink">No social channels listed</h3>
+              <p className="text-[11px] text-ink-3 mt-1 max-w-xs mx-auto leading-relaxed">
+                Click &quot;Add Channel&quot; above to link your social accounts.
+              </p>
+            </div>
+          ) : (
+            socialLinks.map((social, idx) => (
             <div
               key={social.id || idx}
               className="p-4 rounded-xl border border-line bg-surface-2/60 hover:bg-surface-2 transition-all space-y-3"
@@ -146,7 +157,8 @@ export const SocialsTab: React.FC = () => {
                 </div>
               </div>
             </div>
-          ))}
+          ))
+        )}
         </div>
       </div>
     </div>

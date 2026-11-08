@@ -9,7 +9,7 @@ import { CompanyLogoUploader } from '@/components/admin/CompanyLogoUploader';
 
 export const ProjectsTab: React.FC = () => {
   const { content, updateProjects } = usePortfolio();
-  const projects = content.projects;
+  const projects = Array.isArray(content.projects) ? content.projects : [];
   const [newTagInputs, setNewTagInputs] = useState<Record<string, string>>({});
 
   const handleUpdate = (idx: number, patch: Partial<Project>) => {
@@ -102,7 +102,18 @@ export const ProjectsTab: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          {projects.map((proj, idx) => (
+          {projects.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-line bg-surface-2/40 p-8 text-center">
+              <div className="size-10 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 grid place-items-center mx-auto mb-2.5">
+                <Layers className="size-4.5" />
+              </div>
+              <h3 className="text-xs font-semibold text-ink">No projects listed</h3>
+              <p className="text-[11px] text-ink-3 mt-1 max-w-xs mx-auto leading-relaxed">
+                Click &quot;Add Project&quot; above to create your first portfolio work entry.
+              </p>
+            </div>
+          ) : (
+            projects.map((proj, idx) => (
             <div
               key={proj.id || idx}
               className="p-3.5 sm:p-5 rounded-2xl border border-line bg-surface-2/60 hover:bg-surface-2 transition-all space-y-4"
@@ -299,7 +310,8 @@ export const ProjectsTab: React.FC = () => {
                 </div>
               </div>
             </div>
-          ))}
+          ))
+        )}
         </div>
       </div>
     </div>

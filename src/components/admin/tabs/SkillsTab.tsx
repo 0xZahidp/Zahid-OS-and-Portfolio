@@ -7,7 +7,7 @@ import { Skill } from '@/types/profile';
 
 export const SkillsTab: React.FC = () => {
   const { content, updateSkills } = usePortfolio();
-  const skills = content.skills;
+  const skills = Array.isArray(content.skills) ? content.skills : [];
 
   const [inputAI, setInputAI] = useState('');
   const [inputWeb, setInputWeb] = useState('');

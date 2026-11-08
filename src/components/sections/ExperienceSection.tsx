@@ -5,7 +5,7 @@ import { usePortfolio } from '@/context/PortfolioContext';
 
 export const ExperienceSection: React.FC = () => {
   const { content } = usePortfolio();
-  const experiencesData = content.experience;
+  const experiencesData = content.experience || [];
   return (
     <section id="experience" aria-labelledby="experience-heading" className="mt-14 scroll-mt-20">
       <div className="mb-5 flex items-center justify-between gap-4">
@@ -18,7 +18,18 @@ export const ExperienceSection: React.FC = () => {
         </h2>
       </div>
 
-      <ol className="relative space-y-1">
+      {experiencesData.length === 0 ? (
+        <div className="rounded-[24px] border border-dashed border-line bg-surface-2/40 p-8 sm:p-10 text-center">
+          <div className="size-12 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 grid place-items-center mx-auto mb-3">
+            <Briefcase className="size-5" />
+          </div>
+          <h3 className="text-sm font-semibold text-ink">Career Timeline Coming Soon</h3>
+          <p className="text-xs text-ink-3 mt-1.5 max-w-sm mx-auto leading-relaxed">
+            Experience history and professional milestones are currently being updated from the CMS.
+          </p>
+        </div>
+      ) : (
+        <ol className="relative space-y-1">
         {experiencesData.map((exp, index) => {
           const isLast = index === experiencesData.length - 1;
 
@@ -154,7 +165,8 @@ export const ExperienceSection: React.FC = () => {
             </li>
           );
         })}
-      </ol>
+        </ol>
+      )}
     </section>
   );
 };

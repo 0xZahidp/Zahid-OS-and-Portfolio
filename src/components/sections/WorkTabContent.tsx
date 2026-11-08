@@ -94,7 +94,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
   onNavigateToProjects,
 }) => {
   const { content } = usePortfolio();
-  const projectsData = content.projects;
+  const projectsData = Array.isArray(content.projects) ? content.projects : [];
   const [totalContributions, setTotalContributions] = useState<number>(0);
   const [totalRepos, setTotalRepos] = useState<number>(26);
   const [followersCount, setFollowersCount] = useState<number>(6);
@@ -536,50 +536,56 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
         </div>
 
         {/* 2-Column Grid of 4 Pinned Repositories */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          {effectivePinnedRepos.map((repo) => (
-            <a
-              key={repo.id}
-              href={repo.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group rounded-[20px] border border-line bg-surface p-5 flex flex-col justify-between hover:border-line-strong transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer"
-            >
-              <div>
-                <h3 className="text-sm font-bold text-ink group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors font-mono">
-                  {repo.name}
-                </h3>
-                <p className="mt-2 text-xs leading-relaxed text-ink-2 line-clamp-2">
-                  {repo.description}
-                </p>
-              </div>
+        {effectivePinnedRepos.length === 0 ? (
+          <div className="rounded-[20px] border border-dashed border-line bg-surface-2/40 p-6 text-center">
+            <p className="text-xs text-ink-3">Public repositories coming soon.</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {effectivePinnedRepos.map((repo) => (
+              <a
+                key={repo.id}
+                href={repo.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-[20px] border border-line bg-surface p-5 flex flex-col justify-between hover:border-line-strong transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer"
+              >
+                <div>
+                  <h3 className="text-sm font-bold text-ink group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors font-mono">
+                    {repo.name}
+                  </h3>
+                  <p className="mt-2 text-xs leading-relaxed text-ink-2 line-clamp-2">
+                    {repo.description}
+                  </p>
+                </div>
 
-              <div className="mt-4 flex items-center gap-4 text-xs text-ink-3 pt-3 border-t border-line/50">
-                {repo.language && (
-                  <span className="inline-flex items-center gap-1.5 font-medium">
-                    <span
-                      className="size-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: repo.languageColor }}
-                    />
-                    <span>{repo.language}</span>
-                  </span>
-                )}
+                <div className="mt-4 flex items-center gap-4 text-xs text-ink-3 pt-3 border-t border-line/50">
+                  {repo.language && (
+                    <span className="inline-flex items-center gap-1.5 font-medium">
+                      <span
+                        className="size-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: repo.languageColor }}
+                      />
+                      <span>{repo.language}</span>
+                    </span>
+                  )}
 
-                <span className="inline-flex items-center gap-1">
-                  <span>☆</span>
-                  <span className="tabular-nums">{repo.stars}</span>
-                </span>
-
-                {repo.forks !== undefined && (
                   <span className="inline-flex items-center gap-1">
-                    <GitFork className="size-3.5" />
-                    <span className="tabular-nums">{repo.forks}</span>
+                    <span>☆</span>
+                    <span className="tabular-nums">{repo.stars}</span>
                   </span>
-                )}
-              </div>
-            </a>
-          ))}
-        </div>
+
+                  {repo.forks !== undefined && (
+                    <span className="inline-flex items-center gap-1">
+                      <GitFork className="size-3.5" />
+                      <span className="tabular-nums">{repo.forks}</span>
+                    </span>
+                  )}
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 2. Projects List Section (Screenshots 2 & 3) */}
@@ -606,42 +612,54 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
         </div>
 
         {/* Vertical Rows List */}
-        <div className="space-y-2">
-          {projectsData.map((project) => {
-            const link = project.project_url || project.repository_url || '#';
+        {projectsData.length === 0 ? (
+          <div className="rounded-[20px] border border-dashed border-line bg-surface-2/40 p-8 text-center">
+            <div className="size-11 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 grid place-items-center mx-auto mb-3">
+              <Layers className="size-5" />
+            </div>
+            <h3 className="text-sm font-semibold text-ink">Projects Coming Soon</h3>
+            <p className="text-xs text-ink-3 mt-1.5 max-w-sm mx-auto leading-relaxed">
+              Featured projects, case studies, and engineering apps are being published from the CMS.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {projectsData.map((project) => {
+              const link = project.project_url || project.repository_url || '#';
 
-            return (
-              <a
-                key={project.id}
-                href={link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-start gap-4 rounded-[20px] border border-line bg-surface p-4 hover:border-line-strong hover:bg-surface-2/40 transition-all duration-200 shadow-xs cursor-pointer"
-              >
-                {/* 48px square icon badge */}
-                {renderRowIcon(project)}
+              return (
+                <a
+                  key={project.id}
+                  href={link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-start gap-4 rounded-[20px] border border-line bg-surface p-4 hover:border-line-strong hover:bg-surface-2/40 transition-all duration-200 shadow-xs cursor-pointer"
+                >
+                  {/* 48px square icon badge */}
+                  {renderRowIcon(project)}
 
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-bold text-ink group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                    {project.title}
-                  </h3>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-bold text-ink group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                      {project.title}
+                    </h3>
 
-                  <p className="mt-1 text-xs text-ink-2 leading-relaxed">
-                    {project.description}
-                  </p>
+                    <p className="mt-1 text-xs text-ink-2 leading-relaxed">
+                      {project.description}
+                    </p>
 
-                  {/* Tags */}
-                  {project.tags && project.tags.length > 0 && (
-                    <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] text-ink-3">
-                      <Tag className="size-3 text-ink-3" />
-                      <span>{project.tags.join(', ')}</span>
-                    </div>
-                  )}
-                </div>
-              </a>
-            );
-          })}
-        </div>
+                    {/* Tags */}
+                    {project.tags && project.tags.length > 0 && (
+                      <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] text-ink-3">
+                        <Tag className="size-3 text-ink-3" />
+                        <span>{project.tags.join(', ')}</span>
+                      </div>
+                    )}
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        )}
       </section>
     </div>
   );

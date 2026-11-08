@@ -19,8 +19,8 @@ import {
 import {
   servicesData,
   directContactData,
-  contactSocialsData,
 } from '@/data/profile';
+import { usePortfolio } from '@/context/PortfolioContext';
 import {
   XIcon,
   GitHubIcon,
@@ -34,6 +34,8 @@ import {
 } from '@/components/ui/Icons';
 
 export const ContactSection: React.FC = () => {
+  const { content } = usePortfolio();
+  const socials = Array.isArray(content.socialLinks) ? content.socialLinks : [];
   const [currentTime, setCurrentTime] = useState<string>('7:17 PM');
 
   // Direct message modal state
@@ -486,31 +488,37 @@ export const ContactSection: React.FC = () => {
           Find me on
         </h3>
 
-        <div className="grid gap-3.5 sm:grid-cols-3">
-          {contactSocialsData.map((social) => (
-            <a
-              key={social.id}
-              href={social.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group rounded-[20px] border border-line bg-surface p-4 flex items-center justify-between hover:border-line-strong hover:bg-surface-2/40 transition-all shadow-xs cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <span className="grid size-10 place-items-center rounded-full bg-surface-2 border border-line text-ink group-hover:scale-105 transition-transform shrink-0">
-                  {renderSocialIcon(social.platform)}
-                </span>
-                <div className="min-w-0">
-                  <h4 className="text-sm font-bold text-ink truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                    {social.label}
-                  </h4>
-                  <p className="text-xs text-ink-3 mt-0.5 truncate">{social.handle}</p>
+        {socials.length === 0 ? (
+          <div className="rounded-[20px] border border-dashed border-line bg-surface-2/40 p-6 text-center">
+            <p className="text-xs text-ink-3">Social links coming soon.</p>
+          </div>
+        ) : (
+          <div className="grid gap-3.5 sm:grid-cols-3">
+            {socials.map((social) => (
+              <a
+                key={social.id}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-[20px] border border-line bg-surface p-4 flex items-center justify-between hover:border-line-strong hover:bg-surface-2/40 transition-all shadow-xs cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="grid size-10 place-items-center rounded-full bg-surface-2 border border-line text-ink group-hover:scale-105 transition-transform shrink-0">
+                    {renderSocialIcon(social.platform)}
+                  </span>
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-bold text-ink truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                      {social.label}
+                    </h4>
+                    <p className="text-xs text-ink-3 mt-0.5 truncate">{social.handle}</p>
+                  </div>
                 </div>
-              </div>
 
-              <ArrowUpRight className="size-4 text-ink-3 group-hover:text-ink transition-colors shrink-0 ml-1" />
-            </a>
-          ))}
-        </div>
+                <ArrowUpRight className="size-4 text-ink-3 group-hover:text-ink transition-colors shrink-0 ml-1" />
+              </a>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Direct Message Modal */}

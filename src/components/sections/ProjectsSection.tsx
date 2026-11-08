@@ -2,15 +2,17 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { openSourceReposData } from '@/data/profile';
 import { GitHubIcon } from '@/components/ui/Icons';
 import { Project } from '@/types/profile';
-import { GitFork } from 'lucide-react';
+import { Layers } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 
 export const ProjectsSection: React.FC = () => {
   const { content } = usePortfolio();
   const projectsData = content.projects || [];
+  const openSourceProjects = projectsData.filter(
+    (p) => p.tags?.some((t) => t.toLowerCase().includes('open source')) || p.repository_url
+  );
 
   const renderFloatingBadge = (project: Project) => {
     if (project.image_url) {
@@ -85,8 +87,19 @@ export const ProjectsSection: React.FC = () => {
   return (
     <div className="space-y-12">
       {/* Featured Projects Grid */}
-      <div className="grid gap-5 sm:grid-cols-2">
-        {projectsData.map((project) => {
+      {projectsData.length === 0 ? (
+        <div className="rounded-[24px] border border-dashed border-line bg-surface-2/40 p-8 sm:p-10 text-center">
+          <div className="size-12 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 grid place-items-center mx-auto mb-3">
+            <Layers className="size-5" />
+          </div>
+          <h3 className="text-sm font-semibold text-ink">Featured Projects Coming Soon</h3>
+          <p className="text-xs text-ink-3 mt-1.5 max-w-sm mx-auto leading-relaxed">
+            Case studies, client products, and systems are currently being compiled in the CMS.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2">
+          {projectsData.map((project) => {
           const link = project.project_url || project.repository_url || '#';
           const hasVisual = !!project.image_url || !!project.logoType;
 
@@ -165,9 +178,10 @@ export const ProjectsSection: React.FC = () => {
             </a>
           );
         })}
-      </div>
+        </div>
+      )}
 
-      {/* Open Source Repositories Section (Image 1) */}
+      {/* Open Source Repositories Section */}
       <section aria-labelledby="open-source-heading" className="pt-4">
         <div className="mb-5 flex items-center gap-2.5">
           <GitHubIcon className="size-5.5 text-ink" />
@@ -179,48 +193,49 @@ export const ProjectsSection: React.FC = () => {
           </h2>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          {openSourceReposData.map((repo) => (
-            <a
-              key={repo.id}
-              href={repo.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group rounded-[20px] border border-line bg-surface p-5 flex flex-col justify-between hover:border-line-strong transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer"
-            >
-              <div>
-                <h3 className="text-sm font-bold text-ink group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors font-mono">
-                  {repo.name}
-                </h3>
-                <p className="mt-2 text-xs leading-relaxed text-ink-2 line-clamp-2">
-                  {repo.description}
-                </p>
-              </div>
+        {openSourceProjects.length === 0 ? (
+          <div className="rounded-[20px] border border-dashed border-line bg-surface-2/30 p-6 text-center">
+            <p className="text-xs text-ink-3">Public repositories and open source packages coming soon.</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {openSourceProjects.map((project) => {
+              const link = project.repository_url || project.project_url || '#';
+              return (
+                <a
+                  key={project.id}
+                  href={link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group rounded-[20px] border border-line bg-surface p-5 flex flex-col justify-between hover:border-line-strong transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer"
+                >
+                  <div>
+                    <h3 className="text-sm font-bold text-ink group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors font-mono">
+                      {project.title}
+                    </h3>
+                    <p className="mt-2 text-xs leading-relaxed text-ink-2 line-clamp-2">
+                      {project.description}
+                    </p>
+                  </div>
 
-              <div className="mt-4 flex items-center gap-4 text-xs text-ink-3 pt-3 border-t border-line/50">
-                <span className="inline-flex items-center gap-1.5 font-medium">
-                  <span
-                    className="size-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: repo.languageColor }}
-                  />
-                  <span>{repo.language}</span>
-                </span>
+                  <div className="mt-4 flex items-center gap-4 text-xs text-ink-3 pt-3 border-t border-line/50">
+                    <span className="inline-flex items-center gap-1.5 font-medium">
+                      <span className="size-2.5 rounded-full shrink-0 bg-brand-500" />
+                      <span>{project.tags?.[0] || 'Repository'}</span>
+                    </span>
 
-                <span className="inline-flex items-center gap-1">
-                  <span>☆</span>
-                  <span className="tabular-nums">{repo.stars}</span>
-                </span>
-
-                {repo.forks !== undefined && (
-                  <span className="inline-flex items-center gap-1">
-                    <GitFork className="size-3.5" />
-                    <span className="tabular-nums">{repo.forks}</span>
-                  </span>
-                )}
-              </div>
-            </a>
-          ))}
-        </div>
+                    {project.stars !== undefined && project.stars > 0 && (
+                      <span className="inline-flex items-center gap-1">
+                        <span>☆</span>
+                        <span className="tabular-nums">{project.stars}</span>
+                      </span>
+                    )}
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        )}
       </section>
     </div>
   );

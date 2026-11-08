@@ -279,7 +279,7 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date().toISOString(),
     };
 
-    const isClientLoaded = body.clientLoaded === true;
+    const isClientLoaded = body.clientLoaded !== false;
     const isConfirmDelete = body.confirmDelete === true;
 
     const destinations: string[] = [];

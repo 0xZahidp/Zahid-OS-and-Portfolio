@@ -11,7 +11,6 @@ import {
   Quote as QuoteIcon,
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
-import { defaultRecommendedPeople } from '@/data/default-people';
 import { FollowerRecommendation } from '@/types/profile';
 import {
   GitHubIcon,
@@ -30,10 +29,7 @@ export const PeopleSection: React.FC = () => {
 
   // 1. Gather raw people list and normalize fields
   const people: FollowerRecommendation[] = useMemo(() => {
-    const rawList =
-      content.suggestedPeople && content.suggestedPeople.length > 0
-        ? content.suggestedPeople
-        : defaultRecommendedPeople;
+    const rawList = Array.isArray(content.suggestedPeople) ? content.suggestedPeople : [];
 
     return rawList.map((p, idx) => {
       const primaryPlatform =
@@ -144,7 +140,19 @@ export const PeopleSection: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* 1. Hero Banner Card */}
+      {people.length === 0 ? (
+        <div className="rounded-[28px] border border-dashed border-line bg-surface-2/40 p-8 sm:p-12 text-center">
+          <div className="size-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 grid place-items-center mx-auto mb-3">
+            <Users className="size-5" />
+          </div>
+          <h3 className="text-sm font-semibold text-ink">Curated Directory Coming Soon</h3>
+          <p className="text-xs text-ink-3 mt-1.5 max-w-sm mx-auto leading-relaxed">
+            A curated list of builders, founders, and teachers I learn from is currently being updated in the CMS.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* 1. Hero Banner Card */}
       <div className="rounded-[28px] p-6 sm:p-7 bg-gradient-to-br from-emerald-100/70 via-teal-50/40 to-emerald-50/30 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-emerald-900/10 border border-emerald-500/20 shadow-xs relative overflow-hidden">
         {/* Avatar Stack Facepile */}
         <div className="flex items-center -space-x-2">
@@ -356,6 +364,8 @@ export const PeopleSection: React.FC = () => {
           );
         })}
       </div>
-    </div>
+    </>
+  )}
+</div>
   );
 };

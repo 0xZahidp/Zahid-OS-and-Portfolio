@@ -31,8 +31,8 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   activeSection = 'profile',
 }) => {
   const { content } = usePortfolio();
-  const suggestedPeople = content.suggestedPeople;
-  const socialLinksData = content.socialLinks;
+  const suggestedPeople = Array.isArray(content.suggestedPeople) ? content.suggestedPeople : [];
+  const socialLinksData = Array.isArray(content.socialLinks) ? content.socialLinks : [];
   const [followedState, setFollowedState] = useState<Record<string, boolean>>({});
   const [isFollowingMain, setIsFollowingMain] = useState(false);
 
@@ -124,7 +124,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         )}
 
         {/* 2. Who to Follow Card (Card Raised - solid surface, subtle border, shadow) */}
-        {activeSection !== 'people' && (
+        {activeSection !== 'people' && suggestedPeople.length > 0 && (
           <section id="who-to-follow" className="card-raised p-4 hover:translate-0">
             <h2 className="mb-2 flex items-center gap-2 text-body font-semibold text-ink">
               <UserPlus className="size-4.5 text-link shrink-0" />
@@ -256,7 +256,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         )}
 
         {/* 3. Find me on Section */}
-        {activeSection !== 'contact' && (
+        {activeSection !== 'contact' && socialLinksData.length > 0 && (
           <section>
             <h2 className="mb-3 flex items-center gap-2.5 text-body font-semibold text-ink">
               <span className="size-2 rounded-full bg-brand-500" aria-hidden="true" />
@@ -293,7 +293,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
               href="/contact#find-me-on"
               className="group -mx-2 mt-1 flex items-center gap-1 rounded-xl px-2 py-2 text-meta font-semibold text-link transition-colors hover:bg-surface-2"
             >
-              <span>See all 7 profiles</span>
+              <span>See all {socialLinksData.length} profiles</span>
               <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
             </a>
           </section>

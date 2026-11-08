@@ -41,7 +41,7 @@ const PLATFORM_OPTIONS: { id: SupportedPlatform; label: string; icon: React.Reac
 
 export const PeopleTab: React.FC = () => {
   const { content, updateSuggestedPeople } = usePortfolio();
-  const people = content.suggestedPeople || [];
+  const people = Array.isArray(content.suggestedPeople) ? content.suggestedPeople : [];
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<{ text: string; type: 'success' | 'info' | 'error' } | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(people[0]?.id || null);
@@ -253,7 +253,18 @@ export const PeopleTab: React.FC = () => {
 
         {/* People List */}
         <div className="space-y-3.5">
-          {people.map((person, idx) => {
+          {people.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-line bg-surface-2/40 p-8 text-center">
+              <div className="size-10 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 grid place-items-center mx-auto mb-2.5">
+                <Users className="size-4.5" />
+              </div>
+              <h3 className="text-xs font-semibold text-ink">No people or mentors listed</h3>
+              <p className="text-[11px] text-ink-3 mt-1 max-w-xs mx-auto leading-relaxed">
+                Click &quot;Add Person&quot; above or &quot;Sync GitHub Following&quot; to populate your curated directory.
+              </p>
+            </div>
+          ) : (
+            people.map((person, idx) => {
             const isExpanded = expandedId === person.id;
             const primaryPlat = person.primaryPlatform || 'x';
             const platformsList = person.platforms || [];
@@ -566,7 +577,8 @@ export const PeopleTab: React.FC = () => {
                 )}
               </div>
             );
-          })}
+          })
+        )}
         </div>
       </div>
     </div>
