@@ -162,7 +162,7 @@ export function normalizeMessage(item: Record<string, unknown>): MailMessage {
       item.isTrashed || item.is_trashed || item.folder === 'trash' || item.status === 'trash'
     );
     const isArchived = Boolean(
-      item.isArchived || item.is_archived || item.folder === 'archive' || item.status === 'archived'
+      item.isArchived || item.is_archived || item.folder === 'archive' || item.status === 'archived' || item.label === 'archive'
     );
 
     let folder: 'inbox' | 'sent' | 'archive' | 'trash';
@@ -228,7 +228,9 @@ export function normalizeMessage(item: Record<string, unknown>): MailMessage {
   // Relational table format (Supabase inbox_messages table row or CSV row)
   const isSent = Boolean(item.is_sent || item.direction === 'outbound' || item.folder === 'sent');
   const isTrashed = Boolean(item.is_trashed || item.folder === 'trash' || item.status === 'trash');
-  const isArchived = Boolean(item.is_archived || item.folder === 'archive' || item.status === 'archived');
+  const isArchived = Boolean(
+    item.is_archived || item.folder === 'archive' || item.status === 'archived' || item.label === 'archive'
+  );
 
   let folder: 'inbox' | 'sent' | 'archive' | 'trash';
   if (isTrashed) {
@@ -734,8 +736,9 @@ export async function getUnreadThreadCount(): Promise<number> {
           .select('thread_id')
           .eq('is_read', false)
           .eq('is_trashed', false)
-          .eq('is_archived', false)
-          .or('folder.eq.inbox,direction.eq.inbound')
+          .neq('status', 'archived')
+          .neq('status', 'trash')
+          .eq('direction', 'inbound')
       );
 
       if (!error && Array.isArray(data)) {
@@ -889,7 +892,6 @@ export async function upsertReceivedEmail(email: {
     read_at: null,
     is_starred: false,
     is_trashed: false,
-    is_archived: false,
     label: 'inbox',
     direction: 'inbound',
     in_reply_to: inReplyTo,
@@ -1017,7 +1019,6 @@ export async function saveSentMessage(sent: {
     read_at: createdAt,
     is_starred: false,
     is_trashed: false,
-    is_archived: false,
     label: 'sent',
     direction: 'outbound',
     in_reply_to: sent.inReplyTo || '',
@@ -1123,12 +1124,14 @@ export async function updateThreadFolder(
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
+      const statusValue = isTrashed ? 'trash' : isArchived ? 'archived' : 'read';
+      const labelValue = isArchived ? 'archive' : isTrashed ? 'trash' : folder === 'sent' ? 'sent' : 'inbox';
       await supabase
         .from('inbox_messages')
         .update({
           is_trashed: isTrashed,
-          is_archived: isArchived,
-          status: isTrashed ? 'trash' : isArchived ? 'archived' : 'read',
+          status: statusValue,
+          label: labelValue,
         })
         .or(`thread_id.eq.${threadId},id.eq.${threadId}`);
     } catch (err) {
@@ -1199,7 +1202,7 @@ export async function deleteThread(threadId: string, permanent = false): Promise
         const supabase = supabaseServer();
         await supabase
           .from('inbox_messages')
-          .update({ is_trashed: true, is_archived: false, status: 'trash' })
+          .update({ is_trashed: true, status: 'trash', label: 'trash' })
           .or(`thread_id.eq.${threadId},id.eq.${threadId}`);
       } catch (err) {
         console.warn('[MailStore] Supabase trash thread error:', err);
@@ -1252,31 +1255,37 @@ export async function updateMailMessage(
       }
       if (typeof updates.isTrashed === 'boolean') {
         patch.is_trashed = updates.isTrashed;
-        patch.status = updates.isTrashed ? 'trash' : updated.isRead ? 'read' : 'unread';
+        if (updates.isTrashed) {
+          patch.status = 'trash';
+          patch.label = 'trash';
+        }
       }
       if (typeof updates.isArchived === 'boolean') {
-        patch.is_archived = updates.isArchived;
-        patch.status = updates.isArchived ? 'archived' : updated.isRead ? 'read' : 'unread';
+        if (updates.isArchived) {
+          patch.status = 'archived';
+          patch.label = 'archive';
+        }
       }
 
       if (updates.folder === 'trash') {
         patch.is_trashed = true;
-        patch.is_archived = false;
         patch.status = 'trash';
+        patch.label = 'trash';
       } else if (updates.folder === 'archive') {
         patch.is_trashed = false;
-        patch.is_archived = true;
         patch.status = 'archived';
+        patch.label = 'archive';
       } else if (updates.folder === 'inbox') {
         patch.is_trashed = false;
-        patch.is_archived = false;
         patch.status = updated.isRead ? 'read' : 'unread';
         patch.direction = 'inbound';
+        patch.label = 'inbox';
       } else if (updates.folder === 'sent') {
         patch.is_trashed = false;
-        patch.is_archived = false;
         patch.status = 'read';
         patch.direction = 'outbound';
+        patch.label = 'sent';
+        patch.is_sent = true;
       }
 
       const { error } = await supabase.from('inbox_messages').update(patch).eq('id', id);
@@ -1323,14 +1332,10 @@ export async function deleteMailMessage(id: string, permanent: boolean = false):
     if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
       try {
         const supabase = supabaseServer();
-        const { error } = await supabase
+        await supabase
           .from('inbox_messages')
-          .update({ is_trashed: true, is_archived: false, status: 'trash' })
+          .update({ is_trashed: true, status: 'trash', label: 'trash' })
           .eq('id', id);
-
-        if (error && error.message?.includes('column')) {
-          await supabase.from('inbox_messages').update({ status: 'trash' }).eq('id', id);
-        }
       } catch (err) {
         console.warn('[MailStore] Supabase trash error:', err);
       }

@@ -240,3 +240,4 @@ test('Unread count calculation counts unread THREADS, not total unread messages'
   messages[1].isRead = true;
   assert.equal(calculateUnreadThreadCount(messages), 0);
 });
+

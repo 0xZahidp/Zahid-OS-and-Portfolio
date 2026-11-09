@@ -4,13 +4,13 @@
 -- =========================================================================
 -- BACKUP INSTRUCTIONS (RUN BEFORE EXECUTING THIS MIGRATION):
 -- In Supabase Dashboard -> SQL Editor, run:
---   CREATE TABLE public.inbox_messages_backup_20261110 AS SELECT * FROM public.inbox_messages;
--- Or use pg_dump / Table Editor export to CSV.
+--   CREATE TABLE IF NOT EXISTS public.inbox_messages_backup_20261110 AS SELECT * FROM public.inbox_messages;
 --
 -- ROLLBACK INSTRUCTIONS (IF YOU NEED TO REVERT):
 --   ALTER TABLE public.inbox_messages DROP COLUMN IF EXISTS thread_id;
 --   ALTER TABLE public.inbox_messages DROP COLUMN IF EXISTS read_at;
 --   DROP INDEX IF EXISTS idx_inbox_messages_thread_id;
+--   DROP INDEX IF EXISTS idx_inbox_messages_read_status;
 --   DROP INDEX IF EXISTS idx_inbox_messages_resend_id_unique;
 -- =========================================================================
 
@@ -37,9 +37,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_inbox_messages_resend_id_unique
   ON public.inbox_messages (resend_id)
   WHERE resend_id IS NOT NULL AND resend_id <> '';
 
--- 4. Create index on thread_id for fast conversation fetching
+-- 4. Create index on thread_id and read status for fast conversation fetching
 CREATE INDEX IF NOT EXISTS idx_inbox_messages_thread_id ON public.inbox_messages (thread_id);
-CREATE INDEX IF NOT EXISTS idx_inbox_messages_read_state ON public.inbox_messages (is_read, is_trashed, is_archived);
+CREATE INDEX IF NOT EXISTS idx_inbox_messages_read_status ON public.inbox_messages (is_read, is_trashed, status, direction);
 
 -- 5. Backfill read_at for messages that were already marked read
 UPDATE public.inbox_messages
