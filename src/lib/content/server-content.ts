@@ -2,6 +2,7 @@ import { unstable_cache } from 'next/cache';
 import { supabaseServer } from '@/lib/supabase/server';
 import { defaultPortfolioContent } from '@/data/default-content';
 import { PortfolioContent } from '@/types/cms';
+import { Project } from '@/types/profile';
 
 /**
  * Fetch portfolio content directly from Supabase tables in parallel.
@@ -113,7 +114,13 @@ export async function fetchPortfolioContentServer(): Promise<PortfolioContent> {
           },
           bioParagraphs: (bioRes.data || []).map((b) => b.content),
           experience: expRes.data || [],
-          projects: projRes.data || [],
+          projects: (projRes.data || []).map((p: Project) => ({
+            ...p,
+            highlightBadge: p.highlightBadge || p.highlight_badge || '',
+            highlight_badge: p.highlight_badge || p.highlightBadge || '',
+            logoType: p.logoType || p.logo_type || 'bidvers',
+            logo_type: p.logo_type || p.logoType || 'bidvers',
+          })),
           skills: skillRes.data || [],
           languages: (langRes.data || []).map((l) => ({
             id: l.id,
@@ -150,6 +157,13 @@ export async function fetchPortfolioContentServer(): Promise<PortfolioContent> {
         const legacyObj = legacyData.data as PortfolioContent;
         return {
           ...legacyObj,
+          projects: (legacyObj.projects || []).map((p: Project) => ({
+            ...p,
+            highlightBadge: p.highlightBadge || p.highlight_badge || '',
+            highlight_badge: p.highlight_badge || p.highlightBadge || '',
+            logoType: p.logoType || p.logo_type || 'bidvers',
+            logo_type: p.logo_type || p.logoType || 'bidvers',
+          })),
           version: typeof legacyObj.version === 'number' ? legacyObj.version : 0,
           githubSettings: legacyObj.githubSettings
             ? { ...legacyObj.githubSettings, token: undefined }

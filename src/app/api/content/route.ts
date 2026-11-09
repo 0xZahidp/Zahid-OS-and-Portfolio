@@ -5,6 +5,7 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { supabaseServer } from '@/lib/supabase/server';
 import { fetchPortfolioContentServer, getCachedPortfolioContent } from '@/lib/content/server-content';
 import { PortfolioContent, CmsSaveResponse } from '@/types/cms';
+import { Project } from '@/types/profile';
 import { requireAdmin, isAdminRequest } from '@/lib/auth/admin-auth';
 
 export const dynamic = 'force-dynamic';
@@ -80,9 +81,18 @@ export async function POST(req: NextRequest) {
 
     const tokenToSave = body.githubSettings?.token?.trim();
 
-    // Sanitize content: strip secret token before persisting
+    // Sanitize content: strip secret token before persisting and normalize projects
+    const sanitizedProjects = (body.projects || []).map((p: Project) => ({
+      ...p,
+      highlightBadge: p.highlightBadge || p.highlight_badge || '',
+      highlight_badge: p.highlight_badge || p.highlightBadge || '',
+      logoType: p.logoType || p.logo_type || 'bidvers',
+      logo_type: p.logo_type || p.logoType || 'bidvers',
+    }));
+
     const sanitizedContent: PortfolioContent = {
       ...body,
+      projects: sanitizedProjects,
       githubSettings: {
         ...body.githubSettings,
         token: undefined,
@@ -200,7 +210,7 @@ export async function POST(req: NextRequest) {
           : existingExpIds;
         const deletedExpIds = candidateExpIds.filter((id) => !incomingExpIds.includes(id));
 
-        const projRows = (sanitizedContent.projects || []).map((proj, idx) => ({
+        const projRows = (sanitizedContent.projects || []).map((proj: Project, idx: number) => ({
           id: proj.id || `proj_${Date.now()}_${idx}`,
           title: proj.title,
           description: proj.description || '',
@@ -209,8 +219,8 @@ export async function POST(req: NextRequest) {
           project_url: proj.project_url || '',
           repository_url: proj.repository_url || '',
           stars: proj.stars || 0,
-          highlight_badge: proj.highlightBadge || '',
-          logo_type: proj.logoType || '',
+          highlight_badge: proj.highlightBadge || proj.highlight_badge || '',
+          logo_type: proj.logoType || proj.logo_type || '',
           sort_order: idx,
           updated_at: new Date().toISOString(),
         }));

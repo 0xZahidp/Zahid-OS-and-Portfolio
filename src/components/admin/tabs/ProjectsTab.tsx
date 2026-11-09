@@ -14,7 +14,18 @@ export const ProjectsTab: React.FC = () => {
 
   const handleUpdate = (idx: number, patch: Partial<Project>) => {
     const updated = [...projects];
-    updated[idx] = { ...updated[idx], ...patch };
+    const item = { ...updated[idx], ...patch };
+    if ('highlightBadge' in patch || 'highlight_badge' in patch) {
+      const badge = patch.highlightBadge !== undefined ? patch.highlightBadge : (patch.highlight_badge || '');
+      item.highlightBadge = badge;
+      item.highlight_badge = badge;
+    }
+    if ('logoType' in patch || 'logo_type' in patch) {
+      const lt = patch.logoType !== undefined ? patch.logoType : patch.logo_type;
+      item.logoType = lt;
+      item.logo_type = lt;
+    }
+    updated[idx] = item;
     updateProjects(updated);
   };
 
@@ -139,9 +150,9 @@ export const ProjectsTab: React.FC = () => {
                   <div>
                     <h3 className="text-xs font-bold text-ink flex items-center gap-2">
                       <span>{proj.title}</span>
-                      {proj.highlightBadge && (
+                      {(proj.highlightBadge || proj.highlight_badge) && (
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
-                          {proj.highlightBadge}
+                          {proj.highlightBadge || proj.highlight_badge}
                         </span>
                       )}
                     </h3>
@@ -206,8 +217,8 @@ export const ProjectsTab: React.FC = () => {
                   <label className="text-[11px] font-semibold text-ink-3">Highlight Badge (Optional)</label>
                   <input
                     type="text"
-                    value={proj.highlightBadge || ''}
-                    onChange={(e) => handleUpdate(idx, { highlightBadge: e.target.value })}
+                    value={proj.highlightBadge || proj.highlight_badge || ''}
+                    onChange={(e) => handleUpdate(idx, { highlightBadge: e.target.value, highlight_badge: e.target.value })}
                     placeholder="e.g. $120K+ raised or Open source"
                     className="w-full rounded-xl border border-line bg-surface px-3 py-1.5 text-xs text-ink focus:outline-none"
                   />
@@ -216,8 +227,8 @@ export const ProjectsTab: React.FC = () => {
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-ink-3">Preset Vector Icon (Fallback if no uploaded icon)</label>
                   <select
-                    value={proj.logoType || 'bidvers'}
-                    onChange={(e) => handleUpdate(idx, { logoType: e.target.value as Project['logoType'] })}
+                    value={proj.logoType || proj.logo_type || 'bidvers'}
+                    onChange={(e) => handleUpdate(idx, { logoType: e.target.value as Project['logoType'], logo_type: e.target.value as Project['logoType'] })}
                     className="w-full rounded-xl border border-line bg-surface px-3 py-1.5 text-xs text-ink focus:outline-none"
                   >
                     <option value="bidvers">Bidvers (Dark B badge)</option>

@@ -51,11 +51,27 @@ interface PortfolioContextType {
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
+const normalizePortfolioContent = (raw: PortfolioContent): PortfolioContent => {
+  if (!raw) return raw;
+  return {
+    ...raw,
+    projects: (raw.projects || []).map((p: Project) => ({
+      ...p,
+      highlightBadge: p.highlightBadge || p.highlight_badge || '',
+      highlight_badge: p.highlight_badge || p.highlightBadge || '',
+      logoType: p.logoType || p.logo_type || 'bidvers',
+      logo_type: p.logo_type || p.logoType || 'bidvers',
+    })),
+  };
+};
+
 export const PortfolioProvider: React.FC<{
   children: React.ReactNode;
   initialContent?: PortfolioContent;
 }> = ({ children, initialContent }) => {
-  const [content, setContent] = useState<PortfolioContent>(initialContent || defaultPortfolioContent);
+  const [content, setContent] = useState<PortfolioContent>(() =>
+    normalizePortfolioContent(initialContent || defaultPortfolioContent)
+  );
   const [loadedIds, setLoadedIds] = useState<LoadedCollectionIds | undefined>(initialContent?.loadedIds);
   const [hasLoaded, setHasLoaded] = useState<boolean>(Boolean(initialContent));
   const [isLoading, setIsLoading] = useState<boolean>(!initialContent);
@@ -68,7 +84,7 @@ export const PortfolioProvider: React.FC<{
   // Sync state if initialContent changes on navigation / ISR update
   useEffect(() => {
     if (initialContent) {
-      setContent(initialContent);
+      setContent(normalizePortfolioContent(initialContent));
       setLoadedIds(initialContent.loadedIds);
       setHasLoaded(true);
       setIsLoading(false);
@@ -83,7 +99,7 @@ export const PortfolioProvider: React.FC<{
       if (!res.ok) return;
       const data = await res.json();
       if (data.content) {
-        setContent(data.content);
+        setContent(normalizePortfolioContent(data.content));
         setLoadedIds(data.loadedIds || data.content.loadedIds);
         setHasLoaded(true);
         setIsDirty(false);

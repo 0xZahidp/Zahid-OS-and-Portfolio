@@ -66,7 +66,10 @@ export interface Project {
   created_at?: string;
   stars?: number;
   highlightBadge?: string;
-  logoType?: 'bidvers' | 'laravel' | 'invo' | 'prompt' | 'mytapcard' | 'gymscanner';
+  highlight_badge?: string;
+  logoType?: 'bidvers' | 'laravel' | 'invo' | 'prompt' | 'mytapcard' | 'gymscanner' | (string & {});
+  logo_type?: 'bidvers' | 'laravel' | 'invo' | 'prompt' | 'mytapcard' | 'gymscanner' | (string & {});
+  sort_order?: number;
 }
 
 export interface SocialLink {

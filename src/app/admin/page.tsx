@@ -104,6 +104,43 @@ const TAB_META: Record<AdminTab, { title: string; description: string }> = {
   },
 };
 
+const VALID_ADMIN_TABS: AdminTab[] = [
+  'profile',
+  'bio',
+  'github',
+  'experience',
+  'projects',
+  'skills',
+  'facts',
+  'socials',
+  'people',
+  'library',
+  'os',
+  'career',
+  'health',
+  'inbox',
+  'supabase',
+  'settings',
+  'security',
+  'backups',
+];
+
+const getStoredAdminTab = (): AdminTab => {
+  if (typeof window === 'undefined') return 'profile';
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const searchTab = params.get('tab') as AdminTab | null;
+    if (searchTab && VALID_ADMIN_TABS.includes(searchTab)) return searchTab;
+
+    const hashTab = window.location.hash.replace('#', '') as AdminTab | null;
+    if (hashTab && VALID_ADMIN_TABS.includes(hashTab)) return hashTab;
+
+    const stored = localStorage.getItem('folioframe_admin_tab') as AdminTab | null;
+    if (stored && VALID_ADMIN_TABS.includes(stored)) return stored;
+  } catch {}
+  return 'profile';
+};
+
 function AdminDashboardInner() {
   const { user, isLocalBypass, isLoading, mfaLevel, bypassLocalAuth } = useAdminAuth();
   const {
@@ -115,12 +152,49 @@ function AdminDashboardInner() {
     exportJson,
   } = usePortfolio();
 
-  const [activeTab, setActiveTab] = useState<AdminTab>('profile');
+  const [activeTab, setActiveTabState] = useState<AdminTab>(getStoredAdminTab);
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [supabaseReady, setSupabaseReady] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showLoadingFallback, setShowLoadingFallback] = useState<boolean>(false);
+
+  const setActiveTab = useCallback((tab: AdminTab) => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('folioframe_admin_tab', tab);
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('tab') !== tab) {
+          url.searchParams.set('tab', tab);
+          window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+        }
+      } catch {}
+    }
+  }, []);
+
+  // Sync active tab on mount and listen to browser navigation (back/forward)
+  useEffect(() => {
+    const initial = getStoredAdminTab();
+    setActiveTabState(initial);
+    if (typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('tab') !== initial) {
+          url.searchParams.set('tab', initial);
+          window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+        }
+      } catch {}
+    }
+
+    const handlePopState = () => {
+      const popped = getStoredAdminTab();
+      setActiveTabState(popped);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   useEffect(() => {
     if (!isLoading) {
