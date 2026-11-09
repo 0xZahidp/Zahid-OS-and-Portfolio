@@ -62,14 +62,14 @@ WHERE child.thread_id IS NULL
   AND child.id <> parent.id;
 
 -- Pass 2: Normalized subject fallback WITH participant overlap AND within 30 days
--- Strip common email reply/forward prefixes: 're:', 'fwd:', 're :', etc.
+-- Strip common email reply/forward prefixes: 're:', 'fwd:', 're :', etc. using POSIX 'gi' flag
 WITH normalized_messages AS (
   SELECT 
     id,
     received_at,
     from_email,
     to_email,
-    TRIM(REGEXP_REPLACE(subject, '^(?i)(re|fwd|fw|re\s*\[\d+\]|fwd\s*\[\d+\])\s*:\s*', '', 'g')) AS norm_subject
+    TRIM(REGEXP_REPLACE(COALESCE(subject, ''), '^((re|fwd|fw|re\s*\[[0-9]+\]|fwd\s*\[[0-9]+\])\s*:\s*)+', '', 'gi')) AS norm_subject
   FROM public.inbox_messages
   WHERE thread_id IS NULL
 ),
@@ -80,7 +80,7 @@ linked_pairs AS (
   FROM normalized_messages n1
   JOIN public.inbox_messages parent ON parent.id <> n1.id
   WHERE n1.norm_subject <> ''
-    AND TRIM(REGEXP_REPLACE(parent.subject, '^(?i)(re|fwd|fw|re\s*\[\d+\]|fwd\s*\[\d+\])\s*:\s*', '', 'g')) = n1.norm_subject
+    AND TRIM(REGEXP_REPLACE(COALESCE(parent.subject, ''), '^((re|fwd|fw|re\s*\[[0-9]+\]|fwd\s*\[[0-9]+\])\s*:\s*)+', '', 'gi')) = n1.norm_subject
     -- Require participant overlap:
     AND (
       n1.from_email = parent.from_email 
@@ -89,8 +89,8 @@ linked_pairs AS (
       OR n1.to_email = parent.to_email
     )
     -- Require messages to be within 30 days (2,592,000 seconds)
-    AND ABS(EXTRACT(EPOCH FROM (n1.received_at - parent.received_at))) <= 2592000
-    AND parent.received_at <= n1.received_at
+    AND ABS(EXTRACT(EPOCH FROM (COALESCE(n1.received_at, NOW()) - COALESCE(parent.received_at, NOW())))) <= 2592000
+    AND COALESCE(parent.received_at, NOW()) <= COALESCE(n1.received_at, NOW())
   ORDER BY n1.id, parent.received_at ASC
 )
 UPDATE public.inbox_messages m
