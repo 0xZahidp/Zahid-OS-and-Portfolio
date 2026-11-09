@@ -86,5 +86,6 @@ export interface MailSendResponse {
 
 export interface MailStoreData {
   messages: MailMessage[];
+  deletedResendIds?: string[];
   updatedAt: string;
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getAppSecret } from '@/lib/env-vault';
-import { upsertReceivedEmail } from '@/lib/mail/store';
+import { upsertReceivedEmail, getTombstoneResendIds } from '@/lib/mail/store';
 import { EmailAttachment } from '@/types/mail';
 
 export const runtime = 'nodejs';
@@ -102,6 +102,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing email_id in webhook event data' }, { status: 400 });
     }
 
+    // 6b. Check tombstones before calling Resend Receiving API
+    const tombstones = await getTombstoneResendIds();
+    if (tombstones.has(emailId)) {
+      console.log(`[Resend Webhook] Ignoring permanently deleted email (Resend ID: ${emailId})`);
+      return NextResponse.json(
+        { received: true, ignored: 'tombstoned', message: 'Email was previously permanently deleted' },
+        { status: 200 }
+      );
+    }
+
     // 7. Fetch full email (html, text, headers, attachments) using Resend Receiving API
     const fullEmailRes = await resend.emails.receiving.get(emailId);
 
@@ -125,6 +135,13 @@ export async function POST(req: NextRequest) {
       headers: fullEmail.headers as Record<string, unknown> | undefined,
       attachments: fullEmail.attachments as EmailAttachment[] | undefined,
     });
+
+    if (!savedMessage) {
+      return NextResponse.json(
+        { received: true, ignored: 'tombstoned', message: 'Email was previously permanently deleted' },
+        { status: 200 }
+      );
+    }
 
     // 8b. Also check if recipient matches an active Zahid OS Temp Mail inbox with anti-flooding limits
     try {

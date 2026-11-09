@@ -357,11 +357,16 @@ export async function readMailStore(): Promise<MailStoreData> {
     return {
       updatedAt: (parsed && !Array.isArray(parsed) && parsed.updatedAt) || new Date().toISOString(),
       messages,
+      deletedResendIds:
+        parsed && !Array.isArray(parsed) && Array.isArray(parsed.deletedResendIds)
+          ? parsed.deletedResendIds
+          : [],
     };
   } catch {
     return {
       updatedAt: new Date().toISOString(),
       messages: [],
+      deletedResendIds: [],
     };
   }
 }
@@ -373,6 +378,9 @@ export async function writeMailStore(data: MailStoreData): Promise<boolean> {
   data.updatedAt = new Date().toISOString();
   if (!Array.isArray(data.messages)) {
     data.messages = [];
+  }
+  if (!Array.isArray(data.deletedResendIds)) {
+    data.deletedResendIds = [];
   }
 
   data.messages = data.messages.map((m) => normalizeMessage(m as unknown as Record<string, unknown>));
@@ -798,6 +806,108 @@ export async function addMailMessage(message: MailMessage): Promise<boolean> {
 }
 
 /**
+ * Records permanently deleted resend_ids in the inbox_deleted_resend_ids tombstone table (and local store)
+ * with ON CONFLICT (resend_id) DO NOTHING so that permanently deleted emails are NEVER re-imported.
+ */
+export async function recordTombstones(resendIds: (string | undefined | null)[]): Promise<void> {
+  const validIds = Array.from(
+    new Set(
+      resendIds
+        .filter((id): id is string => typeof id === 'string' && Boolean(id.trim()))
+        .map((id) => id.trim())
+    )
+  );
+
+  if (validIds.length === 0) return;
+
+  // 1. Update local JSON store
+  if (!process.env.VERCEL) {
+    try {
+      let store: MailStoreData;
+      try {
+        const raw = await fs.readFile(STORE_PATH, 'utf-8');
+        store = JSON.parse(raw);
+      } catch {
+        store = { messages: [], updatedAt: new Date().toISOString() };
+      }
+      const existing = new Set(store.deletedResendIds || []);
+      for (const id of validIds) {
+        existing.add(id);
+      }
+      store.deletedResendIds = Array.from(existing);
+      await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), 'utf-8');
+    } catch (err) {
+      console.warn('[MailStore] Failed to update deletedResendIds in local store:', err);
+    }
+  }
+
+  // 2. Update Supabase tombstone table
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    try {
+      const supabase = supabaseServer();
+      const rows = validIds.map((resend_id) => ({
+        resend_id,
+        deleted_at: new Date().toISOString(),
+      }));
+
+      const { error } = await supabase
+        .from('inbox_deleted_resend_ids')
+        .upsert(rows, { onConflict: 'resend_id', ignoreDuplicates: true });
+
+      if (error) {
+        console.warn('[MailStore] Supabase recordTombstones error:', error.message);
+      }
+    } catch (err) {
+      console.warn('[MailStore] Supabase recordTombstones exception:', err);
+    }
+  }
+}
+
+/**
+ * Retrieves the set of all permanently deleted Resend email IDs (tombstones).
+ */
+export async function getTombstoneResendIds(): Promise<Set<string>> {
+  const tombstones = new Set<string>();
+
+  // 1. Check local JSON store
+  try {
+    const raw = await fs.readFile(STORE_PATH, 'utf-8');
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.deletedResendIds)) {
+      for (const id of parsed.deletedResendIds) {
+        if (id && typeof id === 'string') tombstones.add(id.trim());
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  // 2. Check Supabase inbox_deleted_resend_ids table
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    try {
+      const supabase = supabaseServer();
+      const { data, error } = await supabase
+        .from('inbox_deleted_resend_ids')
+        .select('resend_id');
+
+      if (!error && Array.isArray(data)) {
+        for (const row of data) {
+          if (row.resend_id && typeof row.resend_id === 'string') {
+            tombstones.add(row.resend_id.trim());
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[MailStore] Supabase getTombstoneResendIds error:', err);
+    }
+  }
+
+  return tombstones;
+}
+
+/**
  * Ingest / Upsert a received email from Resend (used by both webhook and backfill)
  */
 export async function upsertReceivedEmail(email: {
@@ -810,7 +920,14 @@ export async function upsertReceivedEmail(email: {
   created_at?: string;
   headers?: Record<string, unknown>;
   attachments?: EmailAttachment[];
-}): Promise<MailMessage> {
+}): Promise<MailMessage | null> {
+  // Check tombstones FIRST: permanently deleted emails must NEVER be re-imported
+  const tombstones = await getTombstoneResendIds();
+  if (tombstones.has(email.id)) {
+    console.log(`[MailStore] Skipping ingestion of tombstoned email (resendId: ${email.id})`);
+    return null;
+  }
+
   // Extract clean sender name and email
   let fromName = '';
   let fromEmail = email.from || '';
@@ -1177,6 +1294,32 @@ export async function deleteThread(threadId: string, permanent = false): Promise
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   if (shouldPermanentlyDelete) {
+    // Collect all resend_ids in this thread before deleting
+    const resendIdsToTombstone: string[] = threadMsgs
+      .map((m) => m.resendId)
+      .filter((id): id is string => Boolean(id));
+
+    if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+      try {
+        const supabase = supabaseServer();
+        const { data: dbRows } = await supabase
+          .from('inbox_messages')
+          .select('resend_id')
+          .or(`thread_id.eq.${threadId},id.eq.${threadId}`);
+        if (Array.isArray(dbRows)) {
+          for (const row of dbRows) {
+            if (row.resend_id) resendIdsToTombstone.push(row.resend_id);
+          }
+        }
+      } catch {
+        // fallback
+      }
+    }
+
+    if (resendIdsToTombstone.length > 0) {
+      await recordTombstones(resendIdsToTombstone);
+    }
+
     store.messages = store.messages.filter((m) => m.threadId !== threadId && m.id !== threadId);
     if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
       try {
@@ -1316,6 +1459,25 @@ export async function deleteMailMessage(id: string, permanent: boolean = false):
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   if (shouldPermanentlyDelete) {
+    let resendId = msg.resendId;
+    if (!resendId && supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+      try {
+        const supabase = supabaseServer();
+        const { data: dbMsg } = await supabase
+          .from('inbox_messages')
+          .select('resend_id')
+          .eq('id', id)
+          .maybeSingle();
+        if (dbMsg?.resend_id) resendId = dbMsg.resend_id;
+      } catch {
+        // fallback
+      }
+    }
+
+    if (resendId) {
+      await recordTombstones([resendId]);
+    }
+
     store.messages.splice(idx, 1);
     if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
       try {
@@ -1345,20 +1507,57 @@ export async function deleteMailMessage(id: string, permanent: boolean = false):
   return writeMailStore(store);
 }
 
+/**
+ * Bulk delete messages. Uses deleteMailMessage under the hood to ensure tombstones are
+ * always recorded for permanent deletions.
+ */
+export async function deleteMailMessages(ids: string[], permanent = false): Promise<number> {
+  let count = 0;
+  for (const id of ids) {
+    const success = await deleteMailMessage(id, permanent);
+    if (success) count++;
+  }
+  return count;
+}
+
 export async function emptyTrash(): Promise<number> {
   const store = await readMailStore();
-  const trashIds = store.messages.filter((m) => m.isTrashed || m.folder === 'trash').map((m) => m.id);
+  const trashMsgs = store.messages.filter((m) => m.isTrashed || m.folder === 'trash');
+  const trashIds = trashMsgs.map((m) => m.id);
+  const resendIdsToTombstone = trashMsgs.map((m) => m.resendId).filter(Boolean) as string[];
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    try {
+      const supabase = supabaseServer();
+      const { data: dbTrash } = await supabase
+        .from('inbox_messages')
+        .select('resend_id')
+        .or('status.eq.trash,is_trashed.eq.true');
+      if (Array.isArray(dbTrash)) {
+        for (const row of dbTrash) {
+          if (row.resend_id) resendIdsToTombstone.push(row.resend_id);
+        }
+      }
+    } catch (err) {
+      console.warn('[MailStore] Supabase emptyTrash fetch resend_ids error:', err);
+    }
+  }
+
+  if (resendIdsToTombstone.length > 0) {
+    await recordTombstones(resendIdsToTombstone);
+  }
+
   const originalLength = store.messages.length;
   store.messages = store.messages.filter((m) => !m.isTrashed && m.folder !== 'trash');
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
       if (trashIds.length > 0) {
         await supabase.from('inbox_messages').delete().in('id', trashIds);
       }
-      await supabase.from('inbox_messages').delete().eq('status', 'trash');
+      await supabase.from('inbox_messages').delete().or('status.eq.trash,is_trashed.eq.true');
     } catch (err) {
       console.warn('[MailStore] Supabase empty trash error:', err);
     }
@@ -1398,11 +1597,33 @@ export async function syncReceivedEmailsFromResend(force = false): Promise<{ cou
 
     const emailSummaries = listRes.data.data;
     const store = await readMailStore();
+
+    // Fetch tombstones once per sync
+    const tombstones = await getTombstoneResendIds();
+
     const existingResendIds = new Set(
-      store.messages.map((m) => m.resendId).filter(Boolean)
+      store.messages.map((m) => m.resendId).filter(Boolean) as string[]
     );
 
-    const newSummaries = emailSummaries.filter((s) => !existingResendIds.has(s.id));
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+      try {
+        const supabase = supabaseServer();
+        const { data: dbRows } = await supabase.from('inbox_messages').select('resend_id');
+        if (Array.isArray(dbRows)) {
+          for (const r of dbRows) {
+            if (r.resend_id) existingResendIds.add(r.resend_id);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // Skip any email that already exists in DB/store OR has been tombstoned
+    const newSummaries = emailSummaries.filter(
+      (s) => !existingResendIds.has(s.id) && !tombstones.has(s.id)
+    );
     if (newSummaries.length === 0) {
       return { count: 0, newEmails: [] };
     }
@@ -1413,7 +1634,7 @@ export async function syncReceivedEmailsFromResend(force = false): Promise<{ cou
         const fullRes = await resend.emails.receiving.get(item.id);
         if (fullRes.data) {
           const full = fullRes.data;
-          await upsertReceivedEmail({
+          const saved = await upsertReceivedEmail({
             id: full.id,
             from: full.from,
             to: full.to,
@@ -1425,22 +1646,24 @@ export async function syncReceivedEmailsFromResend(force = false): Promise<{ cou
             attachments: full.attachments as EmailAttachment[] | undefined,
           });
 
-          // Also deliver to Temp Mail if recipient is a disposable address
-          try {
-            const { ingestInboundEmail } = await import('@/lib/os/temp-mail');
-            await ingestInboundEmail({
-              resendId: full.id,
-              from: full.from,
-              to: full.to,
-              subject: full.subject,
-              text: full.text,
-              html: full.html,
-            });
-          } catch {
-            // ignore non-blocking
-          }
+          if (saved) {
+            // Also deliver to Temp Mail if recipient is a disposable address
+            try {
+              const { ingestInboundEmail } = await import('@/lib/os/temp-mail');
+              await ingestInboundEmail({
+                resendId: full.id,
+                from: full.from,
+                to: full.to,
+                subject: full.subject,
+                text: full.text,
+                html: full.html,
+              });
+            } catch {
+              // ignore non-blocking
+            }
 
-          importedIds.push(full.id);
+            importedIds.push(full.id);
+          }
         }
       } catch (e) {
         console.warn(`[MailStore] Error fetching receiving email ${item.id}:`, e);

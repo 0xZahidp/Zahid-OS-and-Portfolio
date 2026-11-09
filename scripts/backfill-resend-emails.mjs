@@ -63,10 +63,38 @@ async function runBackfill() {
       return;
     }
 
-    // 2. Fetch full email for each and save
+    // 1b. Fetch tombstone set (permanently deleted emails)
+    const tombstones = new Set();
+    const storePath = path.resolve(process.cwd(), 'src/data/inbox-store.json');
+    if (fs.existsSync(storePath)) {
+      try {
+        const content = JSON.parse(fs.readFileSync(storePath, 'utf-8'));
+        if (Array.isArray(content.deletedResendIds)) {
+          content.deletedResendIds.forEach((id) => id && tombstones.add(id));
+        }
+      } catch {}
+    }
+
+    if (supabase) {
+      try {
+        const { data: tombData, error: tombErr } = await supabase
+          .from('inbox_deleted_resend_ids')
+          .select('resend_id');
+        if (!tombErr && Array.isArray(tombData)) {
+          tombData.forEach((r) => r.resend_id && tombstones.add(r.resend_id));
+        }
+      } catch (err) {
+        console.warn('Could not query inbox_deleted_resend_ids from Supabase:', err.message);
+      }
+    }
+
+    const eligibleSummaries = emailSummaries.filter((item) => !tombstones.has(item.id));
+    console.log(`Eligible emails after tombstone filter: ${eligibleSummaries.length} of ${emailSummaries.length} (${tombstones.size} tombstones active).`);
+
+    // 2. Fetch full email for each eligible email and save
     let successCount = 0;
 
-    for (const item of emailSummaries) {
+    for (const item of eligibleSummaries) {
       console.log(`\nFetching details for email [${item.id}] Subject: "${item.subject}"...`);
       const fullRes = await resend.emails.receiving.get(item.id);
       if (fullRes.error || !fullRes.data) {

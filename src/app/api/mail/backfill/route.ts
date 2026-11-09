@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getAppSecret } from '@/lib/env-vault';
-import { upsertReceivedEmail, readMailStore, writeMailStore } from '@/lib/mail/store';
+import { upsertReceivedEmail, readMailStore, writeMailStore, getTombstoneResendIds } from '@/lib/mail/store';
 import { supabaseServer } from '@/lib/supabase/server';
 import { EmailAttachment } from '@/types/mail';
 import { requireAdmin } from '@/lib/auth/admin-auth';
@@ -63,10 +63,17 @@ async function handleBackfill(req: NextRequest) {
       await writeMailStore(store);
     }
 
-    // 3. Ingest each email by getting full body and upserting
+    // 3. Fetch tombstones once per backfill to skip permanently deleted emails
+    const tombstones = await getTombstoneResendIds();
+    const eligibleSummaries = emailSummaries.filter((item) => !tombstones.has(item.id));
+    console.log(
+      `[Backfill] Resend total: ${emailSummaries.length}, tombstoned: ${tombstones.size}, eligible: ${eligibleSummaries.length}`
+    );
+
+    // 4. Ingest each eligible email by getting full body and upserting
     const imported: Array<{ id: string; subject: string; from: string; to: string[] }> = [];
 
-    for (const item of emailSummaries) {
+    for (const item of eligibleSummaries) {
       try {
         const fullEmailRes = await resend.emails.receiving.get(item.id);
         if (fullEmailRes.data) {
@@ -83,12 +90,14 @@ async function handleBackfill(req: NextRequest) {
             attachments: fullEmail.attachments as EmailAttachment[] | undefined,
           });
 
-          imported.push({
-            id: saved.id,
-            subject: saved.subject,
-            from: saved.from.email,
-            to: (Array.isArray(fullEmail.to) ? fullEmail.to : [fullEmail.to]) as string[],
-          });
+          if (saved) {
+            imported.push({
+              id: saved.id,
+              subject: saved.subject,
+              from: saved.from.email,
+              to: (Array.isArray(fullEmail.to) ? fullEmail.to : [fullEmail.to]) as string[],
+            });
+          }
         }
       } catch (itemErr) {
         console.error(`[Backfill] Error importing email ${item.id}:`, itemErr);
