@@ -23,14 +23,9 @@ import {
 import { usePortfolio } from '@/context/PortfolioContext';
 import {
   XIcon,
-  GitHubIcon,
-  LinkedInIcon,
-  FacebookIcon,
-  DevToIcon,
-  BehanceIcon,
-  PeerlistIcon,
   LogosWhatsAppIcon,
   MessengerIcon,
+  getPlatformIcon,
 } from '@/components/ui/Icons';
 
 export const ContactSection: React.FC = () => {
@@ -153,25 +148,8 @@ export const ContactSection: React.FC = () => {
     }
   };
 
-  const renderSocialIcon = (platform: string) => {
-    switch (platform) {
-      case 'github':
-        return <GitHubIcon className="size-4.5" />;
-      case 'x':
-        return <XIcon className="size-4.5" />;
-      case 'linkedin':
-        return <LinkedInIcon className="size-4.5" />;
-      case 'peerlist':
-        return <PeerlistIcon className="size-4.5 text-emerald-600 dark:text-emerald-400" />;
-      case 'facebook':
-        return <FacebookIcon className="size-4.5 text-blue-600" />;
-      case 'devto':
-        return <DevToIcon className="size-4.5" />;
-      case 'behance':
-        return <BehanceIcon className="size-4.5 text-blue-500" />;
-      default:
-        return <ArrowUpRight className="size-4.5" />;
-    }
+  const renderSocialIcon = (platform: string, url?: string) => {
+    return getPlatformIcon(platform, url, 'size-4.5');
   };
 
   return (
@@ -504,7 +482,7 @@ export const ContactSection: React.FC = () => {
               >
                 <div className="flex items-center gap-3">
                   <span className="grid size-10 place-items-center rounded-full bg-surface-2 border border-line text-ink group-hover:scale-105 transition-transform shrink-0">
-                    {renderSocialIcon(social.platform)}
+                    {renderSocialIcon(social.platform, social.url)}
                   </span>
                   <div className="min-w-0">
                     <h4 className="text-sm font-bold text-ink truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">

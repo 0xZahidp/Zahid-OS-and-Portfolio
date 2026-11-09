@@ -20,6 +20,7 @@ import { usePortfolio } from '@/context/PortfolioContext';
 import { FollowerRecommendation } from '@/types/profile';
 import { CompanyLogoUploader } from '@/components/admin/CompanyLogoUploader';
 import { defaultRecommendedPeople } from '@/data/default-people';
+import { DEFAULT_PERSON_AVATAR } from '@/lib/constants';
 import {
   GitHubIcon,
   XIcon,
@@ -91,7 +92,7 @@ export const PeopleTab: React.FC = () => {
       id: newId,
       name: 'New Person',
       role: 'Full Stack Engineer & Open Source Contributor',
-      avatar_url: '/images/avatar.webp',
+      avatar_url: '',
       url: 'https://x.com',
       handle: 'username',
       verified: false,
@@ -291,12 +292,15 @@ export const PeopleTab: React.FC = () => {
                     {/* Avatar with Platform Overlay Badge */}
                     <div className="relative size-10 rounded-full shrink-0 overflow-hidden bg-surface border border-line">
                       <Image
-                        src={person.avatar_url || '/images/avatar.webp'}
+                        src={person.avatar_url?.trim() || DEFAULT_PERSON_AVATAR}
                         alt={person.name}
                         fill
                         sizes="40px"
                         className="object-cover"
                         unoptimized
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = DEFAULT_PERSON_AVATAR;
+                        }}
                       />
                       <span className="absolute -bottom-0.5 -right-0.5 grid size-4 place-items-center rounded-full bg-surface border border-line shadow-xs">
                         {renderPlatformBadgeIcon(primaryPlat)}
@@ -405,6 +409,7 @@ export const PeopleTab: React.FC = () => {
                         companyName={person.name}
                         onLogoChange={(newUrl) => handleUpdate(idx, { avatar_url: newUrl })}
                         label="Avatar Photo"
+                        fallbackImage={DEFAULT_PERSON_AVATAR}
                       />
                     </div>
 

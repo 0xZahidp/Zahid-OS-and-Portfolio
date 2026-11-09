@@ -20,21 +20,14 @@ import { ContactSection } from '@/components/sections/ContactSection';
 import { LibrarySection } from '@/components/sections/LibrarySection';
 import { FocusSection } from '@/components/sections/FocusSection';
 import { WorkTabContent } from '@/components/sections/WorkTabContent';
+import { usePortfolio } from '@/context/PortfolioContext';
 
 const ShareModal = dynamic(
   () => import('@/components/ui/ShareModal').then((m) => m.ShareModal),
   { ssr: false }
 );
 import { Briefcase, MapPin } from 'lucide-react';
-import {
-  GitHubIcon,
-  XIcon,
-  LinkedInIcon,
-  FacebookIcon,
-  ProductHuntIcon,
-  DevToIcon,
-  BehanceIcon,
-} from '@/components/ui/Icons';
+import { getPlatformIcon } from '@/components/ui/Icons';
 
 interface MobileLayoutProps {
   profile: Profile;
@@ -51,12 +44,24 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   onNavigate,
   onTabChange,
 }) => {
+  const { content } = usePortfolio();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
 
   const handleContactClick = () => {
     onNavigate('contact');
   };
+
+  const defaultSocials = [
+    { id: 'def-github', platform: 'github', label: 'GitHub', url: 'https://github.com/0xZahidp' },
+    { id: 'def-x', platform: 'x', label: 'X', url: 'https://x.com/0xZahidP' },
+    { id: 'def-linkedin', platform: 'linkedin', label: 'LinkedIn', url: 'https://linkedin.com/in/0xZahidp' },
+    { id: 'def-telegram', platform: 'telegram', label: 'Telegram', url: 'https://t.me/0xZahidP' },
+    { id: 'def-facebook', platform: 'facebook', label: 'Facebook', url: 'https://facebook.com/0xZahidp' },
+  ];
+  const socials = Array.isArray(content.socialLinks) && content.socialLinks.length > 0
+    ? content.socialLinks
+    : defaultSocials;
 
   return (
     <div className="flex min-h-dvh flex-col md:hidden" suppressHydrationWarning>
@@ -208,72 +213,21 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           </>
         )}
 
-        {/* Mobile Footer with 7 Social Icons */}
+        {/* Mobile Footer with Social Icons */}
         <footer className="mt-14 pt-6 border-t border-line flex flex-col items-center gap-3 text-center px-4">
           <div className="flex items-center gap-4 text-ink-3">
-            <a
-              href="https://github.com/0xZahidp"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub"
-              className="hover:text-ink transition-colors"
-            >
-              <GitHubIcon className="size-4" />
-            </a>
-            <a
-              href="https://x.com/0xZahidP"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="X"
-              className="hover:text-ink transition-colors"
-            >
-              <XIcon className="size-4" />
-            </a>
-            <a
-              href="https://linkedin.com/in/0xZahidp"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="LinkedIn"
-              className="hover:text-ink transition-colors"
-            >
-              <LinkedInIcon className="size-4" />
-            </a>
-            <a
-              href="https://producthunt.com/@0xzahidp"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Product Hunt"
-              className="hover:text-ink transition-colors"
-            >
-              <ProductHuntIcon className="size-4" />
-            </a>
-            <a
-              href="https://facebook.com/0xZahidp"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Facebook"
-              className="hover:text-ink transition-colors"
-            >
-              <FacebookIcon className="size-4" />
-            </a>
-            <a
-              href="https://dev.to/0xzahidp"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="DEV"
-              className="hover:text-ink transition-colors"
-            >
-              <DevToIcon className="size-4" />
-            </a>
-            <a
-              href="https://behance.net/0xzahidp"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Behance"
-              className="hover:text-ink transition-colors"
-            >
-              <BehanceIcon className="size-4" />
-            </a>
+            {socials.map((social) => (
+              <a
+                key={social.id || social.url}
+                href={social.url}
+                target="_blank"
+                rel="me noopener noreferrer"
+                aria-label={social.label || social.platform}
+                className="hover:text-ink transition-colors"
+              >
+                {getPlatformIcon(social.platform, social.url, 'size-4')}
+              </a>
+            ))}
           </div>
           <p className="text-xs text-ink-3">© 2026 Zahid</p>
         </footer>

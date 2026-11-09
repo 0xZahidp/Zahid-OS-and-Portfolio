@@ -11,12 +11,15 @@ import {
   Globe,
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
+import { DEFAULT_PERSON_AVATAR } from '@/lib/constants';
 import {
   GitHubIcon,
   XIcon,
   LinkedInIcon,
   FacebookIcon,
   YouTubeIcon,
+  TelegramIcon,
+  getPlatformIcon,
 } from '@/components/ui/Icons';
 
 interface RightSidebarProps {
@@ -44,6 +47,8 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         return <GitHubIcon className="size-2.75 text-ink" />;
       case 'linkedin':
         return <LinkedInIcon className="size-2.75 text-ink" />;
+      case 'telegram':
+        return <TelegramIcon className="size-2.75 text-ink" />;
       case 'facebook':
         return <FacebookIcon className="size-2.75 text-ink" />;
       case 'youtube':
@@ -58,19 +63,8 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
     setFollowedState((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const getSocialIcon = (platform: string) => {
-    switch (platform) {
-      case 'github':
-        return <GitHubIcon className="size-4" />;
-      case 'x':
-        return <XIcon className="size-3.5" />;
-      case 'linkedin':
-        return <LinkedInIcon className="size-4" />;
-      case 'facebook':
-        return <FacebookIcon className="size-4" />;
-      default:
-        return <ArrowUpRight className="size-4" />;
-    }
+  const getSocialIcon = (platform: string, url?: string) => {
+    return getPlatformIcon(platform, url, 'size-4');
   };
 
   return (
@@ -161,12 +155,15 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                     >
                       <span className="relative inline-block shrink-0 self-start">
                         <Image
-                          src={person.avatar_url || '/images/avatar.webp'}
+                          src={person.avatar_url?.trim() || DEFAULT_PERSON_AVATAR}
                           alt={person.name}
                           width={36}
                           height={36}
                           className="rounded-full object-cover size-9 text-meta ring-1 ring-line"
                           unoptimized
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = DEFAULT_PERSON_AVATAR;
+                          }}
                         />
                         <span
                           className="absolute grid place-items-center rounded-full bg-surface text-ink shadow-sm ring-2 ring-surface size-4.5 -right-0.5 -bottom-0.5"
@@ -236,12 +233,15 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                     className={`relative inline-block shrink-0 self-start ${idx > 0 ? '-ml-2' : ''}`}
                   >
                     <Image
-                      src={p.avatar_url}
+                      src={p.avatar_url?.trim() || DEFAULT_PERSON_AVATAR}
                       alt=""
                       width={28}
                       height={28}
                       className="rounded-full object-cover size-7 text-micro ring-2 ring-surface"
                       unoptimized
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = DEFAULT_PERSON_AVATAR;
+                      }}
                     />
                   </span>
                 ))}
@@ -274,7 +274,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                   >
                     <span className="btn btn-secondary grid size-9 place-items-center rounded-full shrink-0">
                       <span className="btn-content">
-                        {getSocialIcon(social.platform)}
+                        {getSocialIcon(social.platform, social.url)}
                       </span>
                     </span>
 

@@ -93,7 +93,10 @@ export const SocialsTab: React.FC = () => {
                     <option value="github">GitHub</option>
                     <option value="x">X / Twitter</option>
                     <option value="linkedin">LinkedIn</option>
+                    <option value="telegram">Telegram</option>
                     <option value="facebook">Facebook</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="peerlist">Peerlist</option>
                     <option value="producthunt">ProductHunt</option>
                     <option value="devto">Dev.to</option>
                     <option value="behance">Behance</option>

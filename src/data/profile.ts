@@ -108,6 +108,13 @@ export const socialLinksData: SocialLink[] = [
   },
   {
     id: 's4',
+    platform: 'telegram',
+    label: 'Telegram',
+    handle: '@0xZahidP',
+    url: 'https://t.me/0xZahidP',
+  },
+  {
+    id: 's5',
     platform: 'facebook',
     label: 'Facebook',
     handle: '/0xZahidp',

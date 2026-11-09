@@ -20,6 +20,7 @@ interface CompanyLogoUploaderProps {
   companyName: string;
   onLogoChange: (newLogoUrl: string) => void;
   label?: string;
+  fallbackImage?: string;
 }
 
 export const CompanyLogoUploader: React.FC<CompanyLogoUploaderProps> = ({
@@ -27,6 +28,7 @@ export const CompanyLogoUploader: React.FC<CompanyLogoUploaderProps> = ({
   companyName,
   onLogoChange,
   label = 'Company Logo / Icon',
+  fallbackImage = DEFAULT_COMPANY_LOGO,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -134,14 +136,14 @@ export const CompanyLogoUploader: React.FC<CompanyLogoUploaderProps> = ({
         {/* Preview Thumbnail */}
         <div className="relative size-12 rounded-xl bg-surface-2 border border-line overflow-hidden shrink-0 grid place-items-center shadow-xs">
           <Image
-            src={currentLogo?.trim() || DEFAULT_COMPANY_LOGO}
-            alt={companyName || 'Company logo'}
+            src={currentLogo?.trim() || fallbackImage}
+            alt={companyName || 'Item logo'}
             width={48}
             height={48}
             className="size-10 object-contain"
             unoptimized
             onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = DEFAULT_COMPANY_LOGO;
+              (e.currentTarget as HTMLImageElement).src = fallbackImage;
             }}
           />
 

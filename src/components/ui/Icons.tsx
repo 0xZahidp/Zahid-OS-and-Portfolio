@@ -1,4 +1,5 @@
 import React from 'react';
+import { Globe } from 'lucide-react';
 export { ZahidLogo } from './ZahidLogo';
 
 // Exact Tabler Icons from nahian.bd
@@ -410,3 +411,45 @@ export const PeerlistIcon = ({ className = 'size-4' }: { className?: string }) =
     <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1.6 13.6h-3.2V8.4h3.2a2.6 2.6 0 0 1 0 5.2zm0-2.6a1.2 1.2 0 1 0 0-2.4h-1.8v2.4z" />
   </svg>
 );
+
+export const TelegramIcon = ({ className = 'size-4' }: { className?: string }) => (
+  <svg width="1em" height="1em" viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
+    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+  </svg>
+);
+
+export function getPlatformIcon(platform?: string, url?: string, className = 'size-4') {
+  const p = (platform || '').toLowerCase();
+  const u = (url || '').toLowerCase();
+  if (p === 'telegram' || u.includes('t.me') || u.includes('telegram.')) {
+    return <TelegramIcon className={className} />;
+  }
+  if (p === 'github' || u.includes('github.com')) {
+    return <GitHubIcon className={className} />;
+  }
+  if (p === 'x' || p === 'twitter' || u.includes('x.com') || u.includes('twitter.com')) {
+    return <XIcon className={className} />;
+  }
+  if (p === 'linkedin' || u.includes('linkedin.com')) {
+    return <LinkedInIcon className={className} />;
+  }
+  if (p === 'facebook' || u.includes('facebook.com')) {
+    return <FacebookIcon className={className} />;
+  }
+  if (p === 'youtube' || u.includes('youtube.com') || u.includes('youtu.be')) {
+    return <YouTubeIcon className={className} />;
+  }
+  if (p === 'peerlist' || u.includes('peerlist.io')) {
+    return <PeerlistIcon className={className} />;
+  }
+  if (p === 'devto' || u.includes('dev.to')) {
+    return <DevToIcon className={className} />;
+  }
+  if (p === 'behance' || u.includes('behance.net')) {
+    return <BehanceIcon className={className} />;
+  }
+  if (p === 'producthunt' || u.includes('producthunt.com')) {
+    return <ProductHuntIcon className={className} />;
+  }
+  return <Globe className={className} />;
+}

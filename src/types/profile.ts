@@ -71,7 +71,7 @@ export interface Project {
 
 export interface SocialLink {
   id: string;
-  platform: 'github' | 'x' | 'linkedin' | 'facebook' | 'producthunt' | 'devto' | 'behance' | 'peerlist';
+  platform: 'github' | 'x' | 'linkedin' | 'facebook' | 'telegram' | 'youtube' | 'producthunt' | 'devto' | 'behance' | 'peerlist' | (string & {});
   url: string;
   handle: string;
   label: string;

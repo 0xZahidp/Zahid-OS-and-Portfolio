@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { FollowerRecommendation } from '@/types/profile';
+import { DEFAULT_PERSON_AVATAR } from '@/lib/constants';
 import {
   GitHubIcon,
   XIcon,
@@ -162,12 +163,15 @@ export const PeopleSection: React.FC = () => {
               className="size-9 rounded-full ring-2 ring-white dark:ring-zinc-900 overflow-hidden shrink-0 shadow-xs bg-surface"
             >
               <Image
-                src={person.avatar_url || '/images/avatar.webp'}
+                src={person.avatar_url?.trim() || DEFAULT_PERSON_AVATAR}
                 alt={person.name}
                 width={36}
                 height={36}
                 className="size-full object-cover"
                 unoptimized
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = DEFAULT_PERSON_AVATAR;
+                }}
               />
             </div>
           ))}
@@ -267,12 +271,15 @@ export const PeopleSection: React.FC = () => {
                   {/* Avatar with Platform Overlay Badge */}
                   <div className="relative size-11 rounded-full shrink-0">
                     <Image
-                      src={person.avatar_url || '/images/avatar.webp'}
+                      src={person.avatar_url?.trim() || DEFAULT_PERSON_AVATAR}
                       alt={person.name}
                       width={44}
                       height={44}
                       className="size-11 rounded-full object-cover ring-1 ring-line"
                       unoptimized
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = DEFAULT_PERSON_AVATAR;
+                      }}
                     />
                     <span className="absolute -bottom-1 -right-1 grid size-4.5 place-items-center rounded-full bg-surface border border-line shadow-xs text-ink">
                       {renderPlatformIcon(primaryPlat, 'size-2.75')}

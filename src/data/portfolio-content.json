@@ -730,9 +730,9 @@
   "socialLinks": [
     {
       "id": "soc-telegram",
-      "platform": "peerlist",
-      "url": "https://t.me/0xzahidp",
-      "handle": "@OxZahidP",
+      "platform": "telegram",
+      "url": "https://t.me/0xZahidP",
+      "handle": "@0xZahidP",
       "label": "Telegram",
       "sort_order": 0,
       "updated_at": "2026-11-05T06:46:39.643+00:00"
