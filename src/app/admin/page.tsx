@@ -9,6 +9,7 @@ import { LivePreviewPane } from '@/components/admin/LivePreviewPane';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import { AdminLogin } from '@/components/admin/AdminLogin';
 import { Loader2 } from 'lucide-react';
+import { InboxProvider } from '@/context/InboxContext';
 
 // Tabs
 import { ProfileTab } from '@/components/admin/tabs/ProfileTab';
@@ -409,7 +410,7 @@ function AdminDashboardInner() {
             {/* Form Editor Column */}
             <main
               className={`flex-1 overflow-y-auto w-full min-w-0 ${
-                activeTab === 'career' || activeTab === 'health'
+                activeTab === 'career' || activeTab === 'health' || activeTab === 'inbox'
                   ? 'p-0 max-w-none'
                   : 'p-3.5 sm:p-6 lg:p-8 max-w-5xl mx-auto'
               }`}
@@ -459,5 +460,9 @@ function AdminDashboardInner() {
 }
 
 export default function AdminDashboard() {
-  return <AdminDashboardInner />;
+  return (
+    <InboxProvider>
+      <AdminDashboardInner />
+    </InboxProvider>
+  );
 }

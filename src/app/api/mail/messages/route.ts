@@ -3,13 +3,18 @@ import { requireAdmin } from '@/lib/auth/admin-auth';
 import {
   readMailStore,
   filterMailMessages,
+  groupMessagesIntoThreads,
   calculateUnreadCount,
   calculateMailFolderCounts,
   getUnreadCount,
   getMailFolderCounts,
   addMailMessage,
   updateMailMessage,
+  updateThreadReadState,
+  updateThreadFolder,
+  updateThreadStar,
   deleteMailMessage,
+  deleteThread,
   emptyTrash,
   syncReceivedEmailsFromResend,
 } from '@/lib/mail/store';
@@ -55,6 +60,7 @@ export async function GET(req: NextRequest) {
     const store = await readMailStore();
     const allMessages = store.messages || [];
 
+    const threads = groupMessagesIntoThreads(allMessages, { folder, search, alias, category });
     const messages = filterMailMessages(allMessages, { folder, search, alias, category });
     const unreadCount = calculateUnreadCount(allMessages);
     const counts = calculateMailFolderCounts(allMessages, category);
@@ -64,9 +70,10 @@ export async function GET(req: NextRequest) {
         success: true,
         folder,
         category,
-        count: messages.length,
+        count: threads.length,
         unreadCount,
         counts,
+        threads,
         messages,
       },
       {
@@ -148,10 +155,41 @@ export async function PATCH(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { id, isRead, isStarred, folder, isArchived, isTrashed } = body;
+    const { id, threadId, isRead, isStarred, folder, isArchived, isTrashed } = body;
 
-    if (!id) {
-      return NextResponse.json({ success: false, error: 'Message ID is required.' }, { status: 400 });
+    const targetThreadId = threadId || (!id?.startsWith('msg_') && id ? id : undefined);
+
+    if (!id && !threadId) {
+      return NextResponse.json(
+        { success: false, error: 'Message ID or Thread ID is required.' },
+        { status: 400 }
+      );
+    }
+
+    if (targetThreadId) {
+      if (typeof isRead === 'boolean') {
+        await updateThreadReadState(targetThreadId, isRead);
+      }
+      if (typeof isStarred === 'boolean') {
+        await updateThreadStar(targetThreadId, isStarred);
+      }
+      if (folder) {
+        await updateThreadFolder(targetThreadId, folder as 'inbox' | 'archive' | 'trash' | 'sent');
+      } else if (isArchived) {
+        await updateThreadFolder(targetThreadId, 'archive');
+      } else if (isTrashed) {
+        await updateThreadFolder(targetThreadId, 'trash');
+      }
+
+      const unreadCount = await getUnreadCount();
+      const counts = await getMailFolderCounts();
+
+      return NextResponse.json({
+        success: true,
+        threadId: targetThreadId,
+        unreadCount,
+        counts,
+      });
     }
 
     const updates: Partial<MailMessage> = {};
@@ -189,6 +227,7 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
+    const threadId = searchParams.get('threadId');
     const emptyTrashAction = searchParams.get('emptyTrash') === 'true';
     const permanent = searchParams.get('permanent') === 'true';
 
@@ -198,8 +237,18 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: true, removedCount: removed, counts });
     }
 
+    if (threadId) {
+      const success = await deleteThread(threadId, permanent);
+      const unreadCount = await getUnreadCount();
+      const counts = await getMailFolderCounts();
+      return NextResponse.json({ success, unreadCount, counts });
+    }
+
     if (!id) {
-      return NextResponse.json({ success: false, error: 'Message ID is required.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: 'Message ID or Thread ID is required.' },
+        { status: 400 }
+      );
     }
 
     const success = await deleteMailMessage(id, permanent);

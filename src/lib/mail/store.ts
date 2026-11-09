@@ -1,11 +1,106 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { MailMessage, MailStoreData, EmailAttachment } from '@/types/mail';
+import { MailMessage, MailStoreData, EmailAttachment, MailThread, EmailAddress } from '@/types/mail';
 import { supabaseServer } from '@/lib/supabase/server';
 import { Resend } from 'resend';
 import { getAppSecret } from '@/lib/env-vault';
 
 const STORE_PATH = path.join(process.cwd(), 'src', 'data', 'inbox-store.json');
+
+/**
+ * Normalizes an email subject by stripping Re:, Fwd:, FW:, etc. case-insensitively and repeatedly.
+ */
+export function normalizeSubject(subject: string): string {
+  if (!subject) return '';
+  return subject
+    .replace(/^(\s*(re|fwd|fw|re\s*\[\d+\]|fwd\s*\[\d+\])\s*:\s*)+/i, '')
+    .trim();
+}
+
+/**
+ * Resolves thread assignments for an array of messages using the 3-pass algorithm:
+ * Pass 1: In-Reply-To / References linking
+ * Pass 2: Normalized subject fallback ONLY if participants overlap AND messages are within 30 days
+ * Pass 3: Self-assign threadId = id
+ */
+export function backfillThreads(messages: MailMessage[]): MailMessage[] {
+  const result = messages.map((m) => ({ ...m }));
+  const idMap = new Map<string, MailMessage>();
+  const resendMap = new Map<string, MailMessage>();
+
+  for (const m of result) {
+    if (m.id) idMap.set(m.id, m);
+    if (m.resendId) resendMap.set(m.resendId, m);
+  }
+
+  // Pass 1: In-Reply-To and References
+  for (const m of result) {
+    let parent: MailMessage | undefined;
+    if (m.inReplyTo) {
+      parent = resendMap.get(m.inReplyTo) || idMap.get(m.inReplyTo);
+    }
+    if (!parent && m.references) {
+      for (const [resendId, candidate] of resendMap.entries()) {
+        if (m.references.includes(resendId)) {
+          parent = candidate;
+          break;
+        }
+      }
+    }
+    if (parent) {
+      const assigned = parent.threadId || parent.id;
+      m.threadId = assigned;
+      m.thread_id = assigned;
+    }
+  }
+
+  // Pass 2: Normalized subject fallback ONLY if participants overlap AND within 30 days
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+  for (let i = 0; i < result.length; i++) {
+    const current = result[i];
+    const norm = normalizeSubject(current.subject);
+    if (!norm) continue;
+
+    for (let j = 0; j < result.length; j++) {
+      if (i === j) continue;
+      const other = result[j];
+      const otherNorm = normalizeSubject(other.subject);
+      if (norm.toLowerCase() !== otherNorm.toLowerCase()) continue;
+
+      const currentParticipants = [current.from.email, ...(current.to || []).map((t) => t.email)]
+        .filter(Boolean)
+        .map((e) => e.toLowerCase());
+      const otherParticipants = [other.from.email, ...(other.to || []).map((t) => t.email)]
+        .filter(Boolean)
+        .map((e) => e.toLowerCase());
+      const hasOverlap = currentParticipants.some((p) => otherParticipants.includes(p));
+      if (!hasOverlap) continue;
+
+      const currentTime = new Date(current.createdAt).getTime();
+      const otherTime = new Date(other.createdAt).getTime();
+      if (Math.abs(currentTime - otherTime) <= thirtyDaysMs) {
+        const targetThreadId =
+          otherTime <= currentTime
+            ? other.threadId || other.id
+            : current.threadId || current.id;
+        current.threadId = targetThreadId;
+        current.thread_id = targetThreadId;
+        other.threadId = targetThreadId;
+        other.thread_id = targetThreadId;
+      }
+    }
+  }
+
+  // Pass 3: Self-assign
+  for (const m of result) {
+    if (!m.threadId) {
+      m.threadId = m.id;
+      m.thread_id = m.id;
+    }
+  }
+
+  return result;
+}
 
 /**
  * Official locked business aliases for the domain.
@@ -81,9 +176,15 @@ export function normalizeMessage(item: Record<string, unknown>): MailMessage {
       folder = 'inbox';
     }
 
+    const threadId = (item.threadId || item.thread_id) ? String(item.threadId || item.thread_id) : undefined;
+    const readAt = (item.readAt || item.read_at) ? String(item.readAt || item.read_at) : undefined;
+
     return {
       id: String(item.id || `msg_${Date.now()}`),
+      threadId: threadId || String(item.id || ''),
+      thread_id: threadId || String(item.id || ''),
       resendId: (item.resendId || item.resend_id) as string | undefined,
+      resend_id: (item.resendId || item.resend_id) as string | undefined,
       folder,
       from: {
         name: fromObj?.name || 'Sender',
@@ -107,6 +208,8 @@ export function normalizeMessage(item: Record<string, unknown>): MailMessage {
       createdAt: String(item.createdAt || item.created_at || item.received_at || new Date().toISOString()),
       receivedAt: (item.receivedAt || item.received_at) as string | undefined,
       isRead: Boolean(item.isRead ?? (item.status === 'read')),
+      readAt,
+      read_at: readAt,
       isStarred: Boolean(item.isStarred ?? item.is_starred),
       isTrashed,
       isArchived,
@@ -156,9 +259,15 @@ export function normalizeMessage(item: Record<string, unknown>): MailMessage {
       ? Boolean(item.is_read)
       : item.status !== 'unread';
 
+  const relThreadId = (item.thread_id || item.threadId) ? String(item.thread_id || item.threadId) : undefined;
+  const relReadAt = (item.read_at || item.readAt) ? String(item.read_at || item.readAt) : undefined;
+
   return {
     id: String(item.id || `msg_${Date.now()}`),
+    threadId: relThreadId || String(item.id || ''),
+    thread_id: relThreadId || String(item.id || ''),
     resendId: (item.resend_id || item.resendId) as string | undefined,
+    resend_id: (item.resend_id || item.resendId) as string | undefined,
     folder,
     from: { name: fromName, email: fromEmail },
     to: [{ name: toName, email: toEmail }],
@@ -171,6 +280,8 @@ export function normalizeMessage(item: Record<string, unknown>): MailMessage {
     createdAt: String(item.received_at || item.created_at || item.createdAt || new Date().toISOString()),
     receivedAt: (item.received_at || item.receivedAt) as string | undefined,
     isRead,
+    readAt: relReadAt,
+    read_at: relReadAt,
     isStarred: Boolean(item.is_starred ?? item.isStarred),
     isTrashed,
     isArchived,
@@ -377,13 +488,151 @@ export function filterMailMessages(
 }
 
 export function calculateUnreadCount(msgs: MailMessage[]): number {
-  return (msgs || []).filter(
-    (m) =>
-      (m.folder === 'inbox' || !m.folder) &&
+  const unreadThreads = new Set<string>();
+  const threaded = backfillThreads(msgs || []);
+  for (const m of threaded) {
+    if (
       !m.isRead &&
       !m.isTrashed &&
-      !m.isArchived
-  ).length;
+      !m.isArchived &&
+      (m.folder === 'inbox' || (!m.folder && m.direction === 'inbound'))
+    ) {
+      unreadThreads.add(m.threadId || m.id);
+    }
+  }
+  return unreadThreads.size;
+}
+
+export function groupMessagesIntoThreads(
+  messages: MailMessage[],
+  filter?: {
+    folder?: string;
+    search?: string;
+    isStarred?: boolean;
+    alias?: string;
+    category?: 'official' | 'temp' | 'all';
+  }
+): MailThread[] {
+  const threaded = backfillThreads(messages || []);
+  const threadMap = new Map<string, MailMessage[]>();
+
+  for (const m of threaded) {
+    const tid = m.threadId || m.id;
+    if (!threadMap.has(tid)) {
+      threadMap.set(tid, []);
+    }
+    threadMap.get(tid)!.push(m);
+  }
+
+  const allThreads: MailThread[] = [];
+
+  for (const [threadId, msgs] of threadMap.entries()) {
+    msgs.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+    const rootMessage = msgs[0];
+    const latestMessage = msgs[msgs.length - 1];
+
+    const participantMap = new Map<string, EmailAddress>();
+    for (const m of msgs) {
+      if (m.from?.email) participantMap.set(m.from.email.toLowerCase(), m.from);
+      for (const t of m.to || []) {
+        if (t?.email) participantMap.set(t.email.toLowerCase(), t);
+      }
+    }
+
+    const hasUnread = msgs.some(
+      (m) =>
+        !m.isRead &&
+        !m.isTrashed &&
+        !m.isArchived &&
+        (m.folder === 'inbox' || (!m.folder && m.direction === 'inbound'))
+    );
+    const isStarred = msgs.some((m) => m.isStarred && !m.isTrashed);
+    const isTrashed = msgs.every((m) => m.isTrashed || m.folder === 'trash');
+    const isArchived = msgs.every((m) => m.isArchived || m.folder === 'archive');
+    const hasSent = msgs.some((m) => m.direction === 'outbound' || m.folder === 'sent');
+    const hasInbound = msgs.some((m) => m.direction === 'inbound' || m.folder === 'inbox');
+
+    const allTags = Array.from(new Set(msgs.flatMap((m) => m.tags || [])));
+
+    allThreads.push({
+      id: threadId,
+      subject: rootMessage.subject || latestMessage.subject || '(No Subject)',
+      normalizedSubject: normalizeSubject(rootMessage.subject || latestMessage.subject),
+      snippet: latestMessage.snippet || latestMessage.body || '',
+      lastMessageAt: latestMessage.createdAt,
+      firstMessageAt: rootMessage.createdAt,
+      participants: Array.from(participantMap.values()),
+      messageCount: msgs.length,
+      hasUnread,
+      isStarred,
+      isArchived,
+      isTrashed,
+      hasSent,
+      hasInbound,
+      tags: allTags,
+      messages: msgs,
+    });
+  }
+
+  let filtered = allThreads;
+
+  if (filter?.folder) {
+    if (filter.folder === 'starred') {
+      filtered = filtered.filter((t) => t.isStarred && !t.isTrashed);
+    } else if (filter.folder === 'trash') {
+      filtered = filtered.filter(
+        (t) => t.isTrashed || t.messages.some((m) => m.isTrashed || m.folder === 'trash')
+      );
+    } else if (filter.folder === 'archive') {
+      filtered = filtered.filter(
+        (t) =>
+          (t.isArchived || t.messages.some((m) => m.isArchived || m.folder === 'archive')) &&
+          !t.isTrashed
+      );
+    } else if (filter.folder === 'sent') {
+      filtered = filtered.filter((t) => t.hasSent && !t.isTrashed && !t.isArchived);
+    } else {
+      // 'inbox'
+      filtered = filtered.filter(
+        (t) =>
+          !t.isTrashed &&
+          !t.isArchived &&
+          t.messages.some((m) => m.folder === 'inbox' || (!m.folder && m.direction === 'inbound'))
+      );
+    }
+  }
+
+  const cat = filter?.category || (filter?.folder === 'inbox' ? 'official' : 'all');
+  if (cat === 'official') {
+    filtered = filtered.filter((t) => t.messages.some((m) => isOfficialEmail(m)));
+  } else if (cat === 'temp') {
+    filtered = filtered.filter((t) => t.messages.some((m) => isTempEmail(m)));
+  }
+
+  if (filter?.alias && filter.alias !== 'all') {
+    const aliasLower = filter.alias.toLowerCase().trim();
+    filtered = filtered.filter((t) =>
+      t.participants.some((p) => p.email.toLowerCase().includes(aliasLower))
+    );
+  }
+
+  if (filter?.search) {
+    const q = filter.search.toLowerCase();
+    filtered = filtered.filter(
+      (t) =>
+        t.subject.toLowerCase().includes(q) ||
+        t.snippet.toLowerCase().includes(q) ||
+        t.participants.some(
+          (p) => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q)
+        ) ||
+        t.messages.some((m) => m.body.toLowerCase().includes(q))
+    );
+  }
+
+  return filtered.sort(
+    (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
+  );
 }
 
 export function calculateMailFolderCounts(
@@ -399,8 +648,7 @@ export function calculateMailFolderCounts(
   official: number;
   temp: number;
 } {
-  const allMsgs = msgs || [];
-
+  const threads = groupMessagesIntoThreads(msgs || []);
   let inbox = 0;
   let unread = 0;
   let sent = 0;
@@ -410,35 +658,38 @@ export function calculateMailFolderCounts(
   let official = 0;
   let temp = 0;
 
-  for (const m of allMsgs) {
-    const isT = isTempEmail(m);
-    if (isT) temp++;
+  for (const t of threads) {
+    const isTemp = t.messages.some((m) => isTempEmail(m));
+    if (isTemp) temp++;
     else official++;
 
-    if (m.isTrashed || m.folder === 'trash') {
+    if (t.isTrashed || t.messages.some((m) => m.isTrashed || m.folder === 'trash')) {
       trash++;
-    } else if (m.isArchived || m.folder === 'archive') {
+    } else if (t.isArchived || t.messages.every((m) => m.isArchived || m.folder === 'archive')) {
       archive++;
-    } else if (m.direction === 'outbound' || m.folder === 'sent') {
-      sent++;
     } else {
-      if (filterCategory === 'temp') {
-        if (isT) {
+      if (t.hasSent) sent++;
+      if (
+        t.messages.some((m) => m.folder === 'inbox' || (!m.folder && m.direction === 'inbound'))
+      ) {
+        if (filterCategory === 'temp') {
+          if (isTemp) {
+            inbox++;
+            if (t.hasUnread) unread++;
+          }
+        } else if (filterCategory === 'official') {
+          if (!isTemp) {
+            inbox++;
+            if (t.hasUnread) unread++;
+          }
+        } else {
           inbox++;
-          if (!m.isRead) unread++;
+          if (t.hasUnread) unread++;
         }
-      } else if (filterCategory === 'official') {
-        if (!isT) {
-          inbox++;
-          if (!m.isRead) unread++;
-        }
-      } else {
-        inbox++;
-        if (!m.isRead) unread++;
       }
     }
 
-    if (m.isStarred && !m.isTrashed && m.folder !== 'trash') {
+    if (t.isStarred && !t.isTrashed) {
       starred++;
     }
   }
@@ -457,7 +708,45 @@ export async function listMailMessages(filter?: {
   return filterMailMessages(store.messages || [], filter);
 }
 
+export async function listMailThreads(filter?: {
+  folder?: string;
+  search?: string;
+  isStarred?: boolean;
+  alias?: string;
+  category?: 'official' | 'temp' | 'all';
+}): Promise<MailThread[]> {
+  const store = await readMailStore();
+  return groupMessagesIntoThreads(store.messages || [], filter);
+}
+
 export async function getUnreadCount(): Promise<number> {
+  return getUnreadThreadCount();
+}
+
+export async function getUnreadThreadCount(): Promise<number> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    try {
+      const supabase = supabaseServer();
+      const { data, error } = await withTimeout(
+        supabase
+          .from('inbox_messages')
+          .select('thread_id')
+          .eq('is_read', false)
+          .eq('is_trashed', false)
+          .eq('is_archived', false)
+          .or('folder.eq.inbox,direction.eq.inbound')
+      );
+
+      if (!error && Array.isArray(data)) {
+        const uniqueThreads = new Set(data.map((r) => r.thread_id).filter(Boolean));
+        return uniqueThreads.size;
+      }
+    } catch (err) {
+      console.warn('[MailStore] Supabase unread count error:', err);
+    }
+  }
+
   const store = await readMailStore();
   return calculateUnreadCount(store.messages || []);
 }
@@ -540,13 +829,54 @@ export async function upsertReceivedEmail(email: {
   const textBody = email.text || (email.html ? email.html.replace(/<[^>]+>/g, ' ') : '');
   const htmlBody = email.html || '';
   const receivedAt = email.created_at || new Date().toISOString();
-  const inReplyTo = email.headers?.['in-reply-to'] || '';
-  const referencesHeader = email.headers?.references || '';
+  const inReplyTo = (email.headers?.['in-reply-to'] as string) || '';
+  const referencesHeader = (email.headers?.references as string) || '';
 
   const id = `msg_resend_${email.id}`;
 
+  const store = await readMailStore();
+
+  // Resolve Thread ID using our 3-pass criteria
+  let resolvedThreadId: string | undefined;
+  if (inReplyTo || referencesHeader) {
+    const candidate = store.messages.find(
+      (m) =>
+        (inReplyTo && (m.resendId === inReplyTo || m.id === inReplyTo)) ||
+        (referencesHeader && m.resendId && referencesHeader.includes(m.resendId))
+    );
+    if (candidate) {
+      resolvedThreadId = candidate.threadId || candidate.id;
+    }
+  }
+
+  if (!resolvedThreadId) {
+    const norm = normalizeSubject(subject);
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+    const currentParticipants = [fromEmail, ...toList].map((e) => e.toLowerCase().trim());
+
+    const candidate = store.messages.find((m) => {
+      if (normalizeSubject(m.subject).toLowerCase() !== norm.toLowerCase()) return false;
+      const mParticipants = [m.from.email, ...(m.to || []).map((t) => t.email)].map((e) =>
+        e.toLowerCase().trim()
+      );
+      const hasOverlap = currentParticipants.some((p) => mParticipants.includes(p));
+      if (!hasOverlap) return false;
+      const timeDiff = Math.abs(new Date(receivedAt).getTime() - new Date(m.createdAt).getTime());
+      return timeDiff <= thirtyDaysMs;
+    });
+
+    if (candidate) {
+      resolvedThreadId = candidate.threadId || candidate.id;
+    }
+  }
+
+  if (!resolvedThreadId) {
+    resolvedThreadId = id;
+  }
+
   const richRow = {
     id,
+    thread_id: resolvedThreadId,
     resend_id: email.id,
     from_name: fromName,
     from_email: fromEmail,
@@ -556,6 +886,7 @@ export async function upsertReceivedEmail(email: {
     html_body: htmlBody,
     received_at: receivedAt,
     is_read: false,
+    read_at: null,
     is_starred: false,
     is_trashed: false,
     is_archived: false,
@@ -579,79 +910,29 @@ export async function upsertReceivedEmail(email: {
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
-
-      // Check if already exists by resend_id or id
-      const { data: existing } = await supabase
+      // DB-level deduplication: upsert with ON CONFLICT (resend_id) DO NOTHING
+      const { error: upsertErr } = await supabase
         .from('inbox_messages')
-        .select('*')
-        .or(`resend_id.eq.${email.id},id.eq.${id}`)
-        .maybeSingle();
+        .upsert(richRow, { onConflict: 'resend_id', ignoreDuplicates: true });
 
-      if (existing) {
-        // Preserve user state (status, is_starred, etc.) if already exists
-        const existingStatus = existing.status || (existing.is_read ? 'read' : 'unread');
-        const updateRow = {
-          ...richRow,
-          status: existingStatus,
-          is_read: existing.is_read ?? (existingStatus === 'read'),
-          is_starred: existing.is_starred ?? false,
-          is_trashed: existing.is_trashed ?? (existingStatus === 'trash'),
-          is_archived: existing.is_archived ?? (existingStatus === 'archived'),
-        };
-
-        const { error: updateErr } = await supabase
-          .from('inbox_messages')
-          .update(updateRow)
-          .eq('id', existing.id);
-
-        if (updateErr && updateErr.message?.includes('column')) {
-          await supabase
-            .from('inbox_messages')
-            .update({
-              name: fromName,
-              email: fromEmail,
-              recipient: toEmail,
-              subject,
-              body: textBody || htmlBody || '',
-              status: existingStatus,
-              created_at: receivedAt,
-            })
-            .eq('id', existing.id);
-        }
-      } else {
-        // Insert new row
-        const { error: insertErr } = await supabase
-          .from('inbox_messages')
-          .insert(richRow);
-
-        if (insertErr && insertErr.message?.includes('column')) {
-          await supabase.from('inbox_messages').insert({
-            id,
-            name: fromName,
-            email: fromEmail,
-            recipient: toEmail,
-            subject,
-            body: textBody || htmlBody || '',
-            status: 'unread',
-            is_starred: false,
-            is_sent: false,
-            created_at: receivedAt,
-          });
-        }
+      if (upsertErr) {
+        console.warn('[MailStore] Supabase upsert error for received email:', upsertErr.message);
       }
     } catch (err) {
-      console.warn('[MailStore] Supabase upsert error for received email:', err);
+      console.warn('[MailStore] Supabase upsert exception for received email:', err);
     }
   }
 
   // Also update local store
-  const store = await readMailStore();
   const normalized = normalizeMessage(richRow);
   const existingIdx = store.messages.findIndex((m) => m.resendId === email.id || m.id === id);
   if (existingIdx >= 0) {
     store.messages[existingIdx] = {
       ...normalized,
+      threadId: store.messages[existingIdx].threadId || resolvedThreadId,
+      thread_id: store.messages[existingIdx].thread_id || resolvedThreadId,
       isRead: store.messages[existingIdx].isRead,
+      readAt: store.messages[existingIdx].readAt,
       isStarred: store.messages[existingIdx].isStarred,
       isTrashed: store.messages[existingIdx].isTrashed,
       isArchived: store.messages[existingIdx].isArchived,
@@ -670,6 +951,7 @@ export async function upsertReceivedEmail(email: {
  */
 export async function saveSentMessage(sent: {
   id: string;
+  threadId?: string;
   resendId?: string;
   fromName: string;
   fromEmail: string;
@@ -681,9 +963,48 @@ export async function saveSentMessage(sent: {
   references?: string;
 }): Promise<MailMessage> {
   const createdAt = new Date().toISOString();
+  const store = await readMailStore();
+
+  let resolvedThreadId = sent.threadId;
+  if (!resolvedThreadId && (sent.inReplyTo || sent.references)) {
+    const candidate = store.messages.find(
+      (m) =>
+        (sent.inReplyTo && (m.resendId === sent.inReplyTo || m.id === sent.inReplyTo)) ||
+        (sent.references && m.resendId && sent.references.includes(m.resendId))
+    );
+    if (candidate) {
+      resolvedThreadId = candidate.threadId || candidate.id;
+    }
+  }
+
+  if (!resolvedThreadId) {
+    const norm = normalizeSubject(sent.subject);
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+    const currentParticipants = [sent.fromEmail, sent.toEmail].map((e) => e.toLowerCase().trim());
+
+    const candidate = store.messages.find((m) => {
+      if (normalizeSubject(m.subject).toLowerCase() !== norm.toLowerCase()) return false;
+      const mParticipants = [m.from.email, ...(m.to || []).map((t) => t.email)].map((e) =>
+        e.toLowerCase().trim()
+      );
+      const hasOverlap = currentParticipants.some((p) => mParticipants.includes(p));
+      if (!hasOverlap) return false;
+      const timeDiff = Math.abs(new Date(createdAt).getTime() - new Date(m.createdAt).getTime());
+      return timeDiff <= thirtyDaysMs;
+    });
+
+    if (candidate) {
+      resolvedThreadId = candidate.threadId || candidate.id;
+    }
+  }
+
+  if (!resolvedThreadId) {
+    resolvedThreadId = sent.id;
+  }
 
   const richRow = {
     id: sent.id,
+    thread_id: resolvedThreadId,
     resend_id: sent.resendId || null,
     from_name: sent.fromName,
     from_email: sent.fromEmail,
@@ -693,6 +1014,7 @@ export async function saveSentMessage(sent: {
     html_body: sent.html || '',
     received_at: createdAt,
     is_read: true,
+    read_at: createdAt,
     is_starred: false,
     is_trashed: false,
     is_archived: false,
@@ -736,12 +1058,156 @@ export async function saveSentMessage(sent: {
     }
   }
 
-  const store = await readMailStore();
   const normalized = normalizeMessage(richRow);
   store.messages.unshift(normalized);
   await writeMailStore(store);
 
   return normalized;
+}
+
+export async function updateThreadReadState(threadId: string, isRead: boolean): Promise<boolean> {
+  const store = await readMailStore();
+  const now = new Date().toISOString();
+  let anyUpdated = false;
+
+  for (const m of store.messages) {
+    if ((m.threadId === threadId || m.id === threadId) && m.direction === 'inbound') {
+      m.isRead = isRead;
+      m.readAt = isRead ? (m.readAt || now) : undefined;
+      m.read_at = isRead ? (m.read_at || now) : undefined;
+      anyUpdated = true;
+    }
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    try {
+      const supabase = supabaseServer();
+      const patch: Record<string, unknown> = {
+        is_read: isRead,
+        status: isRead ? 'read' : 'unread',
+        read_at: isRead ? now : null,
+      };
+      await supabase
+        .from('inbox_messages')
+        .update(patch)
+        .or(`thread_id.eq.${threadId},id.eq.${threadId}`);
+    } catch (err) {
+      console.warn('[MailStore] Supabase update thread read state error:', err);
+    }
+  }
+
+  if (anyUpdated) {
+    await writeMailStore(store);
+  }
+  return true;
+}
+
+export async function updateThreadFolder(
+  threadId: string,
+  folder: 'inbox' | 'archive' | 'trash' | 'sent'
+): Promise<boolean> {
+  const store = await readMailStore();
+  const isTrashed = folder === 'trash';
+  const isArchived = folder === 'archive';
+
+  for (const m of store.messages) {
+    if (m.threadId === threadId || m.id === threadId) {
+      m.folder = folder;
+      m.isTrashed = isTrashed;
+      m.isArchived = isArchived;
+    }
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    try {
+      const supabase = supabaseServer();
+      await supabase
+        .from('inbox_messages')
+        .update({
+          is_trashed: isTrashed,
+          is_archived: isArchived,
+          status: isTrashed ? 'trash' : isArchived ? 'archived' : 'read',
+        })
+        .or(`thread_id.eq.${threadId},id.eq.${threadId}`);
+    } catch (err) {
+      console.warn('[MailStore] Supabase update thread folder error:', err);
+    }
+  }
+
+  return writeMailStore(store);
+}
+
+export async function updateThreadStar(threadId: string, isStarred: boolean): Promise<boolean> {
+  const store = await readMailStore();
+  for (const m of store.messages) {
+    if (m.threadId === threadId || m.id === threadId) {
+      m.isStarred = isStarred;
+    }
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    try {
+      const supabase = supabaseServer();
+      await supabase
+        .from('inbox_messages')
+        .update({ is_starred: isStarred })
+        .or(`thread_id.eq.${threadId},id.eq.${threadId}`);
+    } catch (err) {
+      console.warn('[MailStore] Supabase update thread star error:', err);
+    }
+  }
+
+  return writeMailStore(store);
+}
+
+export async function deleteThread(threadId: string, permanent = false): Promise<boolean> {
+  const store = await readMailStore();
+  const threadMsgs = store.messages.filter((m) => m.threadId === threadId || m.id === threadId);
+  if (threadMsgs.length === 0) return false;
+
+  const isAlreadyTrash = threadMsgs.every((m) => m.isTrashed || m.folder === 'trash');
+  const shouldPermanentlyDelete = permanent || isAlreadyTrash;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (shouldPermanentlyDelete) {
+    store.messages = store.messages.filter((m) => m.threadId !== threadId && m.id !== threadId);
+    if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+      try {
+        const supabase = supabaseServer();
+        await supabase
+          .from('inbox_messages')
+          .delete()
+          .or(`thread_id.eq.${threadId},id.eq.${threadId}`);
+      } catch (err) {
+        console.warn('[MailStore] Supabase permanent delete thread error:', err);
+      }
+    }
+  } else {
+    for (const m of store.messages) {
+      if (m.threadId === threadId || m.id === threadId) {
+        m.isTrashed = true;
+        m.isArchived = false;
+        m.folder = 'trash';
+      }
+    }
+    if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+      try {
+        const supabase = supabaseServer();
+        await supabase
+          .from('inbox_messages')
+          .update({ is_trashed: true, is_archived: false, status: 'trash' })
+          .or(`thread_id.eq.${threadId},id.eq.${threadId}`);
+      } catch (err) {
+        console.warn('[MailStore] Supabase trash thread error:', err);
+      }
+    }
+  }
+
+  return writeMailStore(store);
 }
 
 export async function updateMailMessage(

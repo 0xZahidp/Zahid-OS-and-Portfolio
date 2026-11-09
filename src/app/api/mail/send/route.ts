@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { to, subject, text, html, replyTo, from, inReplyTo, references } = body;
+    const { to, subject, text, html, replyTo, from, inReplyTo, references, threadId } = body;
 
     if (!to || !subject || (!text && !html)) {
       return NextResponse.json(
@@ -120,9 +120,10 @@ export async function POST(req: NextRequest) {
     const senderName = fromMatch ? fromMatch[1].trim() : 'Md Zahid Hasan';
     const senderEmail = fromMatch ? fromMatch[2].trim() : fromAddress;
 
-    // Save outbound sent message to Supabase inbox_messages with direction='outbound'
+    // Save outbound sent message to Supabase inbox_messages with direction='outbound' and thread linkage
     const savedSent = await saveSentMessage({
       id: messageId,
+      threadId: threadId || undefined,
       resendId,
       fromName: senderName,
       fromEmail: senderEmail,

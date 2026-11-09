@@ -27,6 +27,8 @@
 *.rar
 *.zip
 *.tar*
+backups/
+*.bak
 scratch/
 /career/
 /health/

@@ -17,7 +17,10 @@ export interface EmailAttachment {
 
 export interface MailMessage {
   id: string;
+  threadId?: string;
+  thread_id?: string;
   resendId?: string;
+  resend_id?: string;
   folder: 'inbox' | 'sent' | 'archive' | 'trash';
   from: EmailAddress;
   to: EmailAddress[];
@@ -30,6 +33,8 @@ export interface MailMessage {
   createdAt: string;
   receivedAt?: string;
   isRead: boolean;
+  readAt?: string;
+  read_at?: string;
   isStarred: boolean;
   isTrashed?: boolean;
   isArchived?: boolean;
@@ -40,6 +45,25 @@ export interface MailMessage {
   attachments?: EmailAttachment[];
   headers?: Record<string, string>;
   tags?: string[];
+}
+
+export interface MailThread {
+  id: string; // thread_id
+  subject: string;
+  normalizedSubject: string;
+  snippet: string;
+  lastMessageAt: string;
+  firstMessageAt: string;
+  participants: EmailAddress[];
+  messageCount: number;
+  hasUnread: boolean;
+  isStarred: boolean;
+  isArchived: boolean;
+  isTrashed: boolean;
+  hasSent: boolean;
+  hasInbound: boolean;
+  tags: string[];
+  messages: MailMessage[];
 }
 
 export interface MailSendRequest {

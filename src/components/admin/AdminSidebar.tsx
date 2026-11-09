@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAdminAuth } from '@/context/AdminAuthContext';
+import { useInbox } from '@/context/InboxContext';
 import { ZahidLogo } from '@/components/ui/ZahidLogo';
 
 export type AdminTab =
@@ -71,26 +72,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const { content, isDirty, isSaving } = usePortfolio();
   const { user, signOut, isLocalBypass } = useAdminAuth();
-  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const { unreadThreadCount } = useInbox();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
-
-  // Load unread messages count
-  useEffect(() => {
-    async function loadUnread() {
-      try {
-        const res = await fetch('/api/mail/status');
-        if (res.ok) {
-          const data = await res.json();
-          setUnreadCount(data.unreadCount ?? 0);
-        }
-      } catch {
-        // ignore
-      }
-    }
-    loadUnread();
-    const interval = setInterval(loadUnread, 15000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Read sidebar state from localStorage and set default based on screen size
   useEffect(() => {
@@ -168,11 +151,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           id: 'inbox' as AdminTab,
           label: 'Inbox & Mail',
           icon: Mail,
-          badge: unreadCount > 0 ? `${unreadCount} new` : 'Resend',
-          badgeColor:
-            unreadCount > 0
-              ? 'bg-brand-500 text-white font-bold'
-              : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+          badge: unreadThreadCount > 0 ? `${unreadThreadCount} new` : undefined,
+          badgeColor: 'bg-brand-500 text-white font-bold',
         },
       ],
     },
