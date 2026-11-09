@@ -74,17 +74,17 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           }`}
         >
           {/* Theme Toggle */}
-          <ThemeToggle className="btn btn-secondary grid size-9 place-items-center rounded-full" />
+          <ThemeToggle className="btn btn-secondary grid size-9 place-items-center rounded-xl border border-white/[0.08] hover:bg-white/[0.08]" />
 
           {/* Sound Toggle */}
-          <SoundToggle className="btn btn-secondary grid size-9 place-items-center rounded-full" />
+          <SoundToggle className="btn btn-secondary grid size-9 place-items-center rounded-xl border border-white/[0.08] hover:bg-white/[0.08]" />
 
           {/* Sidebar Collapse/Expand Toggle */}
           <button
             type="button"
             onClick={onToggleCollapse}
             aria-label="Toggle sidebar width"
-            className="btn btn-secondary grid size-9 place-items-center rounded-full"
+            className="btn btn-secondary grid size-9 place-items-center rounded-xl border border-white/[0.08] hover:bg-white/[0.08]"
           >
             {isCollapsed ? (
               <TablerSidebarLeftExpand className="size-4.5 text-ink-2" />

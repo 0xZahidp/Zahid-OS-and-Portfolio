@@ -96,12 +96,12 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         {activeSection === 'projects' ? (
           <div>
             {/* Sticky Header for Projects View */}
-            <header className="sticky top-0 z-30 flex h-[4.375rem] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
-              <h1 className="text-xl font-bold tracking-tight text-ink">Projects</h1>
+            <header className="sticky top-0 z-30 flex h-[4.5rem] items-center px-6 border-b border-line bg-surface/85 backdrop-blur-md">
+              <h1 className="text-[19px] font-semibold tracking-tight text-ink">Projects</h1>
             </header>
 
-            <div className="px-6 py-8 lg:px-8">
-              <p className="text-base text-ink-2 mb-8 leading-relaxed">
+            <div className="px-6 py-6">
+              <p className="text-[14px] text-zinc-400 mb-5 leading-normal">
                 Products I&apos;ve designed, built and shipped, plus the open source work behind them.
               </p>
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { TablerVolume, TablerVolumeOff } from '@/components/ui/Icons';
 import { isSoundEnabled, toggleSound } from '@/lib/sound';
+import { cn } from '@/lib/utils';
 
 export const SoundToggle: React.FC<{ className?: string }> = ({ className = '' }) => {
   const [enabled, setEnabled] = useState(true);
@@ -37,7 +38,7 @@ export const SoundToggle: React.FC<{ className?: string }> = ({ className = '' }
       aria-pressed={enabled}
       title={enabled ? 'Sound effects enabled (Click to mute)' : 'Sound effects muted (Click to enable)'}
       data-no-sound
-      className={`btn btn-secondary grid size-9 place-items-center rounded-full transition-all active:scale-95 cursor-pointer ${className}`}
+      className={cn('btn btn-secondary grid size-9 place-items-center rounded-xl transition-all active:scale-95 cursor-pointer', className)}
     >
       <span className="btn-content">
         {enabled ? (

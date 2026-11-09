@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { TablerMoon, TablerSun } from '@/components/ui/Icons';
 import { toggleGlobalTheme } from './ThemeManager';
+import { cn } from '@/lib/utils';
 
 interface ThemeToggleProps {
   className?: string;
@@ -35,7 +36,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
       <button
         type="button"
         aria-label="Toggle theme"
-        className={`btn btn-secondary grid size-9 place-items-center rounded-full transition-transform active:scale-95 ${className}`}
+        className={cn('btn btn-secondary grid size-9 place-items-center rounded-xl transition-transform active:scale-95', className)}
       >
         <TablerSun className="size-4.5 text-zinc-300" />
       </button>
@@ -48,7 +49,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
       onClick={toggleGlobalTheme}
       aria-label={`Toggle theme (currently ${theme}, press Space to toggle)`}
       title="Toggle theme (Space)"
-      className={`btn btn-secondary grid size-9 place-items-center rounded-full transition-transform active:scale-95 ${className}`}
+      className={cn('btn btn-secondary grid size-9 place-items-center rounded-xl transition-transform active:scale-95', className)}
     >
       <span className="btn-content">
         {theme === 'dark' ? (

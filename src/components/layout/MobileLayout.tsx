@@ -81,9 +81,9 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       {/* 2. Main Scrollable Content */}
       <main className="flex-1 pb-24">
         {activeSection === 'projects' ? (
-          <div className="px-4 py-6">
-            <h1 className="text-xl font-bold tracking-tight text-ink mb-1">Projects</h1>
-            <p className="text-sm text-ink-2 mb-6">
+          <div className="px-4 py-5">
+            <h1 className="text-[19px] font-semibold tracking-tight text-ink mb-1">Projects</h1>
+            <p className="text-[13px] text-zinc-400 mb-5 leading-normal">
               Products I&apos;ve designed, built and shipped, plus the open source work behind them.
             </p>
             <ProjectsSection />

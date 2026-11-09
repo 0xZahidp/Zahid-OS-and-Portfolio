@@ -46,13 +46,13 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
           onClick={() => onNavigate(item.id)}
           title={item.label}
           aria-label={item.label}
-          className={`group grid size-11 place-items-center rounded-2xl transition-all cursor-pointer ${
+          className={`group grid size-10.5 place-items-center rounded-xl transition-all cursor-pointer ${
             isActive
-              ? 'bg-surface-2/70 font-semibold text-ink shadow-xs ring-1 ring-line/50'
-              : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
+              ? 'bg-[#18191c] font-semibold text-white border border-white/[0.1] shadow-xs'
+              : 'text-zinc-400 hover:bg-white/[0.04] hover:text-white'
           }`}
         >
-          <Icon className="size-6 shrink-0 transition-transform group-active:scale-90" />
+          <Icon className="size-5.5 shrink-0 transition-transform group-active:scale-90" />
         </button>
       );
     }
@@ -65,13 +65,13 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
         onClick={() => onNavigate(item.id)}
         title={item.label}
         aria-label={item.label}
-        className={`group grid size-11 place-items-center rounded-2xl transition-all cursor-pointer xl:flex xl:size-auto xl:w-full xl:items-center xl:gap-3.5 xl:rounded-xl xl:px-3 xl:py-2.5 xl:text-left ${
+        className={`group grid size-10.5 place-items-center rounded-xl transition-all cursor-pointer xl:flex xl:size-auto xl:w-full xl:items-center xl:gap-3.5 xl:rounded-xl xl:px-3 xl:py-2.5 xl:text-left ${
           isActive
-            ? 'bg-surface-2/70 font-semibold text-ink shadow-xs ring-1 ring-line/50 xl:shadow-none xl:ring-0'
-            : 'text-ink-2 hover:bg-surface-2 hover:text-ink xl:text-ink xl:font-normal'
+            ? 'bg-[#18191c] font-semibold text-white border border-white/[0.1] shadow-xs'
+            : 'text-zinc-400 hover:bg-white/[0.04] hover:text-white'
         }`}
       >
-        <Icon className="size-6 shrink-0 transition-transform group-active:scale-90 xl:size-5.5 xl:group-active:scale-95" />
+        <Icon className="size-5.5 shrink-0 transition-transform group-active:scale-90 xl:size-5 xl:group-active:scale-95" />
         <span className="sr-only truncate xl:not-sr-only xl:text-lead">
           {item.label}
         </span>
