@@ -193,9 +193,9 @@ export function normalizeMessage(item: Record<string, unknown>): MailMessage {
       htmlBody: (item.htmlBody || item.html_body) as string | undefined,
       snippet: String(
         item.snippet ||
-          (item.textBody || item.text_body || item.body
-            ? String(item.textBody || item.text_body || item.body).substring(0, 120)
-            : '')
+        (item.textBody || item.text_body || item.body
+          ? String(item.textBody || item.text_body || item.body).substring(0, 120)
+          : '')
       ),
       createdAt: String(item.createdAt || item.created_at || item.received_at || new Date().toISOString()),
       receivedAt: (item.receivedAt || item.received_at) as string | undefined,
@@ -246,8 +246,8 @@ export function normalizeMessage(item: Record<string, unknown>): MailMessage {
   const snippet = textContent
     ? textContent.replace(/[\r\n\t]+/g, ' ').substring(0, 120)
     : htmlContent
-    ? htmlContent.replace(/<[^>]+>/g, ' ').substring(0, 120)
-    : '';
+      ? htmlContent.replace(/<[^>]+>/g, ' ').substring(0, 120)
+      : '';
 
   const isRead =
     item.is_read !== undefined && item.is_read !== null
@@ -649,8 +649,8 @@ export function groupMessagesIntoThreads(
     const threadMailbox: 'official' | 'unofficial' | null = isOfficial
       ? 'official'
       : isUnofficial
-      ? 'unofficial'
-      : null;
+        ? 'unofficial'
+        : null;
 
     allThreads.push({
       id: threadId,

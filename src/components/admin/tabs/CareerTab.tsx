@@ -30,6 +30,7 @@ import {
   ChevronUp,
   HelpCircle,
   Zap,
+  Save,
 } from 'lucide-react';
 import {
   DndContext,
@@ -598,28 +599,33 @@ export const CareerTab: React.FC = () => {
     }
   };
 
-  const fetchApplications = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const res = await fetch('/api/admin/career', {
-        headers: getAuthHeaders(),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setApplications(data.applications || []);
-        if (data.metrics) setMetrics(data.metrics);
-        setCareerVersion(typeof data.version === 'number' ? data.version : 0);
-        setLoadError(false);
-      } else {
-        setLoadError(true);
+  const fetchApplications = useCallback(
+    async (options?: { silent?: boolean }) => {
+      try {
+        if (!options?.silent && applications.length === 0) {
+          setIsLoading(true);
+        }
+        const res = await fetch('/api/admin/career', {
+          headers: getAuthHeaders(),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setApplications(data.applications || []);
+          if (data.metrics) setMetrics(data.metrics);
+          setCareerVersion(typeof data.version === 'number' ? data.version : 0);
+          setLoadError(false);
+        } else {
+          if (applications.length === 0) setLoadError(true);
+        }
+      } catch (err) {
+        console.error('Failed to load career applications:', err);
+        if (applications.length === 0) setLoadError(true);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error('Failed to load career applications:', err);
-      setLoadError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [getAuthHeaders]);
+    },
+    [getAuthHeaders, applications.length]
+  );
 
   useEffect(() => {
     fetchApplications();
@@ -1930,8 +1936,8 @@ export const CareerTab: React.FC = () => {
           expectedVersion={careerVersion}
           onVersionUpdate={(v) => setCareerVersion(v)}
           onConflict={() => {
-            showToast('This data changed elsewhere, reload before saving');
-            fetchApplications();
+            showToast('Syncing latest updates from server…');
+            fetchApplications({ silent: true });
           }}
           onUpdate={(updated) => {
             setApplications((prev) =>
@@ -1943,8 +1949,6 @@ export const CareerTab: React.FC = () => {
             handleDeleteApplication(id);
             handleCloseDetail();
           }}
-          saveState={saveState}
-          setSaveState={setSaveState}
           disabled={loadError}
         />
       )}
@@ -1952,14 +1956,12 @@ export const CareerTab: React.FC = () => {
   );
 };
 
-// SLIDE-OVER DETAIL PANEL (480px, interactive, debounced autosave 600ms)
+// SLIDE-OVER DETAIL PANEL (480px, responsive, isolated edits with manual + gentle 2.5s autosave)
 interface CareerSlideOverProps {
   app: CareerApplication;
   onClose: () => void;
   onUpdate: (app: CareerApplication) => void;
   onDelete: (id: string) => void;
-  saveState: 'idle' | 'saving' | 'saved' | 'error';
-  setSaveState: (s: 'idle' | 'saving' | 'saved' | 'error') => void;
   disabled?: boolean;
   expectedVersion?: number;
   onVersionUpdate?: (version: number) => void;
@@ -1971,8 +1973,6 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
   onClose,
   onUpdate,
   onDelete,
-  saveState,
-  setSaveState,
   disabled = false,
   expectedVersion,
   onVersionUpdate,
@@ -1982,7 +1982,18 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
   const [localApp, setLocalApp] = useState<CareerApplication>(app);
   const [activeTab, setActiveTab] = useState<'overview' | 'interviews' | 'contacts' | 'emails'>('overview');
   const [hasUnsaved, setHasUnsaved] = useState(false);
+  const [slideOverSaveState, setSlideOverSaveState] = useState<'idle' | 'saving' | 'saved' | 'unsaved' | 'error'>('idle');
+
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isSavingRef = useRef<boolean>(false);
+  const queuedSaveRef = useRef<CareerApplication | null>(null);
+  const currentVersionRef = useRef<number>(expectedVersion || 0);
+
+  useEffect(() => {
+    if (typeof expectedVersion === 'number') {
+      currentVersionRef.current = expectedVersion;
+    }
+  }, [expectedVersion]);
 
   // Email generator state
   const [emailTemplate, setEmailTemplate] = useState<
@@ -1990,16 +2001,29 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
   >('follow_up');
   const [copiedEmail, setCopiedEmail] = useState(false);
 
-  // Sync when app prop changes
+  // Sync only when opening a different application
   useEffect(() => {
-    setLocalApp(app);
-  }, [app]);
+    if (app.id !== localApp.id) {
+      setLocalApp(app);
+      setHasUnsaved(false);
+      setSlideOverSaveState('idle');
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    }
+  }, [app, localApp.id]);
 
-  // Persist changes to backend
+  // Persist changes to backend without blocking the user
   const persistChanges = useCallback(
     async (data: CareerApplication) => {
       if (disabled) return;
-      setSaveState('saving');
+
+      if (isSavingRef.current) {
+        queuedSaveRef.current = data;
+        return;
+      }
+
+      isSavingRef.current = true;
+      setSlideOverSaveState('saving');
+
       try {
         const res = await fetch('/api/admin/career', {
           method: 'PATCH',
@@ -2007,32 +2031,88 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
             'Content-Type': 'application/json',
             ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
           },
-          body: JSON.stringify({ ...data, expectedVersion }),
+          body: JSON.stringify({ ...data, expectedVersion: currentVersionRef.current }),
         });
+
         if (res.ok) {
           const json = await res.json();
           if (typeof json.version === 'number') {
+            currentVersionRef.current = json.version;
             onVersionUpdate?.(json.version);
           }
-          onUpdate(json.application);
-          setSaveState('saved');
+          if (json.application) {
+            onUpdate(json.application);
+          }
+          setSlideOverSaveState('saved');
           setHasUnsaved(false);
-          setTimeout(() => setSaveState('idle'), 2000);
+
+          if (queuedSaveRef.current) {
+            const nextData = queuedSaveRef.current;
+            queuedSaveRef.current = null;
+            isSavingRef.current = false;
+            persistChanges(nextData);
+            return;
+          }
+
+          setTimeout(() => {
+            setSlideOverSaveState((curr) => (curr === 'saved' ? 'idle' : curr));
+          }, 2000);
         } else if (res.status === 409) {
-          setSaveState('error');
+          // Version conflict: refresh version silently and retry save without wiping UI
+          try {
+            const refreshRes = await fetch('/api/admin/career', {
+              headers: {
+                ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+              },
+            });
+            if (refreshRes.ok) {
+              const refreshJson = await refreshRes.json();
+              if (typeof refreshJson.version === 'number') {
+                currentVersionRef.current = refreshJson.version;
+                onVersionUpdate?.(refreshJson.version);
+              }
+              const retryRes = await fetch('/api/admin/career', {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+                },
+                body: JSON.stringify({ ...data, expectedVersion: currentVersionRef.current }),
+              });
+              if (retryRes.ok) {
+                const retryJson = await retryRes.json();
+                if (typeof retryJson.version === 'number') {
+                  currentVersionRef.current = retryJson.version;
+                  onVersionUpdate?.(retryJson.version);
+                }
+                if (retryJson.application) {
+                  onUpdate(retryJson.application);
+                }
+                setSlideOverSaveState('saved');
+                setHasUnsaved(false);
+                return;
+              }
+            }
+          } catch {
+            // Ignore retry fetch error
+          }
+          setSlideOverSaveState('error');
           onConflict?.();
         } else {
-          setSaveState('error');
+          setSlideOverSaveState('error');
         }
       } catch {
-        setSaveState('error');
+        setSlideOverSaveState('error');
+      } finally {
+        isSavingRef.current = false;
       }
     },
-    [disabled, onUpdate, setSaveState, session?.access_token, expectedVersion, onVersionUpdate, onConflict]
+    [disabled, onUpdate, session?.access_token, onVersionUpdate, onConflict]
   );
 
-  // Debounced field change (600ms)
-  const handleFieldChange = (updates: Partial<CareerApplication>) => {
+  // Field change: updates localApp state instantly.
+  // Immediate for dropdowns/picks; 2.5s inactivity debounce for typing in text fields!
+  const handleFieldChange = (updates: Partial<CareerApplication>, immediate = false) => {
     if (disabled) return;
     const statusChanged = updates.status && updates.status !== localApp.status;
     const updated: CareerApplication = {
@@ -2043,12 +2123,40 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
     };
     setLocalApp(updated);
     setHasUnsaved(true);
+    setSlideOverSaveState('unsaved');
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => {
+
+    if (immediate || statusChanged) {
       persistChanges(updated);
-    }, 600);
+    } else {
+      saveTimerRef.current = setTimeout(() => {
+        persistChanges(updated);
+      }, 2500);
+    }
   };
+
+  const handleBlurField = () => {
+    if (hasUnsaved && !disabled) {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      persistChanges(localApp);
+    }
+  };
+
+  // Keyboard shortcut Ctrl+S / Cmd+S
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (hasUnsaved && !disabled) {
+          if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+          persistChanges(localApp);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasUnsaved, disabled, localApp, persistChanges]);
 
   // Safe close that flushes pending edits
   const handleSafeClose = () => {
@@ -2172,7 +2280,7 @@ Md Zahid Hasan Patwary`;
             <select
               value={localApp.status}
               onChange={(e) =>
-                handleFieldChange({ status: e.target.value as CareerApplicationStatus })
+                handleFieldChange({ status: e.target.value as CareerApplicationStatus }, true)
               }
               className={`h-7 px-2 rounded-lg border text-xs font-semibold cursor-pointer ${
                 STATUS_CONFIG[localApp.status]?.bg
@@ -2185,22 +2293,37 @@ Md Zahid Hasan Patwary`;
               ))}
             </select>
 
-            {/* Autosave feedback */}
-            {saveState === 'saving' && (
-              <span className="text-[10px] text-ink-3 flex items-center gap-1 font-mono">
-                <Loader2 className="size-2.5 animate-spin" />
-                <span>Saving…</span>
-              </span>
-            )}
-            {saveState === 'saved' && (
-              <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-0.5 animate-in fade-in">
-                <Check className="size-2.5" />
-                <span>Saved ✓</span>
-              </span>
-            )}
-            {saveState === 'error' && (
-              <span className="text-[10px] text-rose-500 font-semibold">Save failed, retry</span>
-            )}
+            {/* Explicit Save button & feedback */}
+            <button
+              type="button"
+              onClick={() => persistChanges(localApp)}
+              disabled={disabled || slideOverSaveState === 'saving' || !hasUnsaved}
+              className={`h-7 px-2.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                hasUnsaved
+                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs'
+                  : 'bg-surface-2 text-ink-3 hover:text-ink border border-line/60'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              title="Save Changes (Ctrl+S)"
+            >
+              {slideOverSaveState === 'saving' ? (
+                <>
+                  <Loader2 className="size-3 animate-spin" />
+                  <span>Saving…</span>
+                </>
+              ) : slideOverSaveState === 'saved' ? (
+                <>
+                  <Check className="size-3 text-emerald-400" />
+                  <span className="text-emerald-500">Saved ✓</span>
+                </>
+              ) : hasUnsaved ? (
+                <>
+                  <Save className="size-3" />
+                  <span>Save</span>
+                </>
+              ) : (
+                <span className="text-[11px] text-ink-4">Saved</span>
+              )}
+            </button>
 
             {/* Close Button */}
             <button
@@ -2285,6 +2408,7 @@ Md Zahid Hasan Patwary`;
                     type="text"
                     value={localApp.company_name}
                     onChange={(e) => handleFieldChange({ company_name: e.target.value })}
+                    onBlur={handleBlurField}
                     className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface-2 text-ink focus:outline-hidden"
                   />
                 </div>
@@ -2294,6 +2418,7 @@ Md Zahid Hasan Patwary`;
                     type="text"
                     value={localApp.role_title}
                     onChange={(e) => handleFieldChange({ role_title: e.target.value })}
+                    onBlur={handleBlurField}
                     className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface-2 text-ink focus:outline-hidden"
                   />
                 </div>
@@ -2306,7 +2431,7 @@ Md Zahid Hasan Patwary`;
                   <select
                     value={localApp.priority}
                     onChange={(e) =>
-                      handleFieldChange({ priority: e.target.value as CareerPriorityLevel })
+                      handleFieldChange({ priority: e.target.value as CareerPriorityLevel }, true)
                     }
                     className="w-full h-8 px-2 rounded-xl border border-line bg-surface-2 text-ink focus:outline-hidden"
                   >
@@ -2321,9 +2446,12 @@ Md Zahid Hasan Patwary`;
                   <select
                     value={localApp.type || 'job'}
                     onChange={(e) =>
-                      handleFieldChange({
-                        type: e.target.value as 'job' | 'scholarship',
-                      })
+                      handleFieldChange(
+                        {
+                          type: e.target.value as 'job' | 'scholarship',
+                        },
+                        true
+                      )
                     }
                     className="w-full h-8 px-2 rounded-xl border border-line bg-surface-2 text-ink focus:outline-hidden"
                   >
@@ -2336,9 +2464,12 @@ Md Zahid Hasan Patwary`;
                   <select
                     value={localApp.remote_type}
                     onChange={(e) =>
-                      handleFieldChange({
-                        remote_type: e.target.value as 'remote' | 'hybrid' | 'onsite',
-                      })
+                      handleFieldChange(
+                        {
+                          remote_type: e.target.value as 'remote' | 'hybrid' | 'onsite',
+                        },
+                        true
+                      )
                     }
                     className="w-full h-8 px-2 rounded-xl border border-line bg-surface-2 text-ink focus:outline-hidden"
                   >
@@ -2361,6 +2492,7 @@ Md Zahid Hasan Patwary`;
                       onChange={(e) =>
                         handleFieldChange({ salary_min: Number(e.target.value) || undefined })
                       }
+                      onBlur={handleBlurField}
                       placeholder="120000"
                       className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface text-ink font-mono focus:outline-hidden"
                     />
@@ -2373,6 +2505,7 @@ Md Zahid Hasan Patwary`;
                       onChange={(e) =>
                         handleFieldChange({ salary_max: Number(e.target.value) || undefined })
                       }
+                      onBlur={handleBlurField}
                       placeholder="150000"
                       className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface text-ink font-mono focus:outline-hidden"
                     />
@@ -2384,6 +2517,7 @@ Md Zahid Hasan Patwary`;
                     type="text"
                     value={localApp.compensation_notes || ''}
                     onChange={(e) => handleFieldChange({ compensation_notes: e.target.value })}
+                    onBlur={handleBlurField}
                     placeholder="e.g. + 0.1% equity, $10k sign-on bonus"
                     className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface text-ink focus:outline-hidden mt-0.5"
                   />
@@ -2398,6 +2532,7 @@ Md Zahid Hasan Patwary`;
                     type="url"
                     value={localApp.company_website || ''}
                     onChange={(e) => handleFieldChange({ company_website: e.target.value })}
+                    onBlur={handleBlurField}
                     placeholder="https://..."
                     className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface-2 text-ink focus:outline-hidden"
                   />
@@ -2428,13 +2563,14 @@ Md Zahid Hasan Patwary`;
                   <input
                     type="date"
                     value={localApp.next_followup_date || ''}
-                    onChange={(e) => handleFieldChange({ next_followup_date: e.target.value })}
+                    onChange={(e) => handleFieldChange({ next_followup_date: e.target.value }, true)}
                     className="w-full h-8 px-2 rounded-xl border border-line bg-surface text-ink focus:outline-hidden font-mono text-xs"
                   />
                   <input
                     type="text"
                     value={localApp.next_followup_notes || ''}
                     onChange={(e) => handleFieldChange({ next_followup_notes: e.target.value })}
+                    onBlur={handleBlurField}
                     placeholder="e.g. Check in with recruiter"
                     className="w-full h-8 px-2.5 rounded-xl border border-line bg-surface text-ink focus:outline-hidden"
                   />
@@ -2448,6 +2584,7 @@ Md Zahid Hasan Patwary`;
                   rows={4}
                   value={localApp.notes || ''}
                   onChange={(e) => handleFieldChange({ notes: e.target.value })}
+                  onBlur={handleBlurField}
                   placeholder="Notes on the hiring process, recruiter calls, tech stack..."
                   className="w-full p-2.5 rounded-xl border border-line bg-surface-2 text-ink leading-relaxed resize-none focus:outline-hidden text-xs"
                 />
@@ -2501,7 +2638,7 @@ Md Zahid Hasan Patwary`;
                       completed: false,
                       questions: [],
                     };
-                    handleFieldChange({ interviews: [...(localApp.interviews || []), newRound] });
+                    handleFieldChange({ interviews: [...(localApp.interviews || []), newRound] }, true);
                   }}
                   className="btn btn-secondary h-7 px-2.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
                 >
@@ -2561,7 +2698,7 @@ Md Zahid Hasan Patwary`;
                           type="button"
                           onClick={() => {
                             const updatedList = (localApp.interviews || []).filter((_, i) => i !== idx);
-                            handleFieldChange({ interviews: updatedList });
+                            handleFieldChange({ interviews: updatedList }, true);
                           }}
                           className="size-7 rounded-lg text-ink-3 hover:text-rose-500 hover:bg-rose-500/10 flex items-center justify-center transition-colors cursor-pointer"
                           title="Delete round"
@@ -2581,6 +2718,7 @@ Md Zahid Hasan Patwary`;
                           updatedList[idx] = { ...intv, interviewer: e.target.value };
                           handleFieldChange({ interviews: updatedList });
                         }}
+                        onBlur={handleBlurField}
                         placeholder="Interviewer name(s)"
                         className="h-7 px-2 rounded-lg border border-line bg-surface text-ink text-xs"
                       />
@@ -2592,6 +2730,7 @@ Md Zahid Hasan Patwary`;
                           updatedList[idx] = { ...intv, meeting_url: e.target.value };
                           handleFieldChange({ interviews: updatedList });
                         }}
+                        onBlur={handleBlurField}
                         placeholder="Google Meet / Zoom URL"
                         className="h-7 px-2 rounded-lg border border-line bg-surface text-ink text-xs"
                       />
@@ -2606,6 +2745,7 @@ Md Zahid Hasan Patwary`;
                         updatedList[idx] = { ...intv, notes: e.target.value };
                         handleFieldChange({ interviews: updatedList });
                       }}
+                      onBlur={handleBlurField}
                       placeholder="Round notes & prep guidance..."
                       className="w-full p-2 rounded-lg border border-line bg-surface text-ink text-xs resize-none focus:outline-hidden"
                     />
@@ -2697,7 +2837,7 @@ Md Zahid Hasan Patwary`;
                       email: '',
                       linkedin: '',
                     };
-                    handleFieldChange({ contacts: [...(localApp.contacts || []), newContact] });
+                    handleFieldChange({ contacts: [...(localApp.contacts || []), newContact] }, true);
                   }}
                   className="btn btn-secondary h-7 px-2.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
                 >
@@ -2747,7 +2887,7 @@ Md Zahid Hasan Patwary`;
                         type="button"
                         onClick={() => {
                           const updatedList = (localApp.contacts || []).filter((_, i) => i !== idx);
-                          handleFieldChange({ contacts: updatedList });
+                          handleFieldChange({ contacts: updatedList }, true);
                         }}
                         className="size-7 rounded-lg text-ink-3 hover:text-rose-500 hover:bg-rose-500/10 flex items-center justify-center transition-colors cursor-pointer shrink-0"
                         title="Delete contact"
@@ -2766,6 +2906,7 @@ Md Zahid Hasan Patwary`;
                             updatedList[idx] = { ...cnt, email: e.target.value };
                             handleFieldChange({ contacts: updatedList });
                           }}
+                          onBlur={handleBlurField}
                           placeholder="Email address"
                           className="h-7 px-2 rounded-lg border border-line bg-surface text-ink text-xs font-mono w-full"
                         />
@@ -2789,6 +2930,7 @@ Md Zahid Hasan Patwary`;
                             updatedList[idx] = { ...cnt, linkedin: e.target.value };
                             handleFieldChange({ contacts: updatedList });
                           }}
+                          onBlur={handleBlurField}
                           placeholder="LinkedIn URL"
                           className="h-7 px-2 rounded-lg border border-line bg-surface text-ink text-xs w-full"
                         />

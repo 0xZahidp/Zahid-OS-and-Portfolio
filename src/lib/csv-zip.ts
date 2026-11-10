@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { TABLE_SCHEMAS, TableName } from './table-store';
 
 /**
  * Escape a single cell value for CSV output according to RFC 4180
@@ -24,22 +25,37 @@ export function escapeCsvCell(value: unknown): string {
 }
 
 /**
- * Serialize an array of row objects into RFC 4180 compliant CSV string
+ * Serialize an array of row objects into RFC 4180 compliant CSV string.
+ * If rows is empty and a tableName is supplied, it automatically uses the table's
+ * typed sample row from TABLE_SCHEMAS so that empty tables export with headers
+ * and sample values illustrating the row types!
  */
-export function serializeToCsv(rows: Record<string, unknown>[]): string {
-  if (!Array.isArray(rows) || rows.length === 0) {
+export function serializeToCsv(
+  rows: Record<string, unknown>[],
+  tableName?: string
+): string {
+  let effectiveRows = rows;
+
+  if ((!Array.isArray(effectiveRows) || effectiveRows.length === 0) && tableName) {
+    const schema = TABLE_SCHEMAS[tableName as TableName];
+    if (schema?.sampleRow) {
+      effectiveRows = [schema.sampleRow];
+    }
+  }
+
+  if (!Array.isArray(effectiveRows) || effectiveRows.length === 0) {
     return '';
   }
 
   // Collect all unique column headers across all rows
   const headersSet = new Set<string>();
-  rows.forEach((row) => {
+  effectiveRows.forEach((row) => {
     Object.keys(row).forEach((k) => headersSet.add(k));
   });
   const headers = Array.from(headersSet);
 
   const headerLine = headers.map(escapeCsvCell).join(',');
-  const rowLines = rows.map((row) => {
+  const rowLines = effectiveRows.map((row) => {
     return headers.map((header) => escapeCsvCell(row[header])).join(',');
   });
 
@@ -174,7 +190,8 @@ function tryParseValue(raw: string): unknown {
 }
 
 /**
- * Create a ZIP archive containing all database tables as CSV files + manifest.json
+ * Create a ZIP archive containing all database tables as CSV files + manifest.json.
+ * For any empty tables, sample rows with column headers and row types are included.
  */
 export async function createDatabaseZip(
   tablesData: Record<string, Record<string, unknown>[]>
@@ -183,14 +200,31 @@ export async function createDatabaseZip(
 
   const manifest = {
     exportedAt: new Date().toISOString(),
-    generator: 'FolioFrame CMS Relational Backup',
-    version: '2.0.0',
+    generator: 'FolioFrame CMS Relational Backup Engine v3.0',
+    version: '3.0.0',
     tables: {} as Record<string, number>,
+    emptyTablesWithSampleData: [] as string[],
+    schemaSummary: {} as Record<string, { columns: string[]; sampleRowType: string }>,
   };
 
   for (const [tableName, rows] of Object.entries(tablesData)) {
-    manifest.tables[tableName] = rows.length;
-    const csvContent = serializeToCsv(rows);
+    const isEmpty = rows.length === 0 || (rows.length === 1 && rows[0]._row_type === 'sample');
+    if (isEmpty) {
+      manifest.emptyTablesWithSampleData.push(tableName);
+      manifest.tables[tableName] = 0;
+    } else {
+      manifest.tables[tableName] = rows.length;
+    }
+
+    const schema = TABLE_SCHEMAS[tableName as TableName];
+    if (schema) {
+      manifest.schemaSummary[tableName] = {
+        columns: schema.columns.map((c) => `${c.name} (${c.type})`),
+        sampleRowType: schema.description,
+      };
+    }
+
+    const csvContent = serializeToCsv(rows, tableName);
     zip.file(`${tableName}.csv`, csvContent);
   }
 

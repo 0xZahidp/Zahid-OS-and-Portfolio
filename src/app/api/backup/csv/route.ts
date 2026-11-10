@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     }
 
     const rows = await getTableRows(table);
-    const csvContent = serializeToCsv(rows);
+    const csvContent = serializeToCsv(rows, table);
     const dateStr = new Date().toISOString().slice(0, 10);
     const fileName = `${table}-${dateStr}.csv`;
 

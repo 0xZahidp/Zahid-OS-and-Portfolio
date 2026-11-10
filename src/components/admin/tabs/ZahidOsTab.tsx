@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import {
   Smartphone,
@@ -38,6 +38,8 @@ import {
   Terminal,
   AlertCircle,
   Loader2,
+  Cloud,
+  Save,
 } from 'lucide-react';
 import { ShortLink, ZahidOsAppId, ZahidOsSettings } from '@/types/os';
 import { TravelWorkspace } from '@/components/os/travel/TravelWorkspace';
@@ -101,9 +103,21 @@ export const ZahidOsTab: React.FC = () => {
   // Delete Link Confirm
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Notes / Scratchpad state
+  // Notes / Scratchpad state with Supabase cloud persistence & multi-note support
+  const [notesList, setNotesList] = useState<
+    Array<{ id: string; title: string; content: string; updated_at?: string }>
+  >([
+    { id: 'main_scratchpad', title: 'Admin Notes', content: '' },
+  ]);
+  const [activeNoteId, setActiveNoteId] = useState<string>('main_scratchpad');
+  const [activeNoteTitle, setActiveNoteTitle] = useState<string>('Admin Notes');
   const [scratchpadNote, setScratchpadNote] = useState<string>('');
-  const [scratchpadSaved, setScratchpadSaved] = useState<boolean>(false);
+  const [noteSaveState, setNoteSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [isCloudSynced, setIsCloudSynced] = useState<boolean>(false);
+  const [noteLastSaved, setNoteLastSaved] = useState<string | null>(null);
+  const [isCreatingNote, setIsCreatingNote] = useState<boolean>(false);
+  const [newNoteTitleInput, setNewNoteTitleInput] = useState<string>('');
+  const noteSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Snippets state
   const [snippets, setSnippets] = useState<SnippetItem[]>([]);
@@ -146,13 +160,14 @@ export const ZahidOsTab: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch short links and OS settings on mount
+  // Fetch short links, OS settings and Notes on mount
   const loadData = useCallback(async () => {
     try {
       setIsLoadingLinks(true);
-      const [linksRes, settingsRes] = await Promise.all([
+      const [linksRes, settingsRes, notesRes] = await Promise.all([
         fetch('/api/os/short-links', { headers: getAdminHeaders() }),
         fetch('/api/os/settings', { headers: getAdminHeaders() }),
+        fetch('/api/os/notes', { headers: getAdminHeaders() }),
       ]);
 
       if (linksRes.ok) {
@@ -166,12 +181,51 @@ export const ZahidOsTab: React.FC = () => {
           setOsSettings(settsData.settings);
         }
       }
+
+      if (notesRes.ok) {
+        const notesData = await notesRes.json();
+        if (Array.isArray(notesData.notes) && notesData.notes.length > 0) {
+          setNotesList(notesData.notes);
+          const current =
+            notesData.notes.find((n: { id: string }) => n.id === activeNoteId) ||
+            notesData.notes[0];
+          const localSaved =
+            typeof window !== 'undefined' ? localStorage.getItem('zahid_os_scratchpad') || '' : '';
+
+          if ((!current.content || !current.content.trim()) && localSaved.trim()) {
+            // Auto-migrate user's local notes to Supabase!
+            setScratchpadNote(localSaved);
+            setActiveNoteTitle(current.title || 'Admin Notes');
+            fetch('/api/os/notes', {
+              method: 'POST',
+              headers: getAdminHeaders(),
+              body: JSON.stringify({
+                id: current.id,
+                title: current.title || 'Admin Notes',
+                content: localSaved,
+              }),
+            })
+              .then(() => {
+                setIsCloudSynced(true);
+                setNoteLastSaved(new Date().toLocaleTimeString());
+              })
+              .catch(() => {});
+          } else {
+            setScratchpadNote(current.content || '');
+            setActiveNoteTitle(current.title || 'Admin Notes');
+            setIsCloudSynced(true);
+            if (typeof window !== 'undefined' && current.content) {
+              localStorage.setItem('zahid_os_scratchpad', current.content);
+            }
+          }
+        }
+      }
     } catch (err) {
       console.warn('Error loading Zahid OS data:', err);
     } finally {
       setIsLoadingLinks(false);
     }
-  }, [getAdminHeaders]);
+  }, [getAdminHeaders, activeNoteId]);
 
   useEffect(() => {
     loadData();
@@ -245,11 +299,128 @@ export const ZahidOsTab: React.FC = () => {
     });
   }, [links, filterMode, searchQuery]);
 
-  const handleSaveScratchpad = () => {
+  const handleCloudSaveNote = async (
+    targetId = activeNoteId,
+    targetTitle = activeNoteTitle,
+    contentToSave = scratchpadNote
+  ) => {
+    setNoteSaveState('saving');
     if (typeof window !== 'undefined') {
-      localStorage.setItem('zahid_os_scratchpad', scratchpadNote);
-      setScratchpadSaved(true);
-      setTimeout(() => setScratchpadSaved(false), 2000);
+      localStorage.setItem('zahid_os_scratchpad', contentToSave);
+    }
+
+    try {
+      const res = await fetch('/api/os/notes', {
+        method: 'POST',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({
+          id: targetId,
+          title: targetTitle,
+          content: contentToSave,
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        setNoteSaveState('saved');
+        setIsCloudSynced(true);
+        setNoteLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        setNotesList((prev) => {
+          const idx = prev.findIndex((n) => n.id === targetId);
+          if (idx >= 0) {
+            const next = [...prev];
+            next[idx] = {
+              ...next[idx],
+              title: targetTitle,
+              content: contentToSave,
+              updated_at: json.note?.updated_at || new Date().toISOString(),
+            };
+            return next;
+          }
+          return [
+            {
+              id: targetId,
+              title: targetTitle,
+              content: contentToSave,
+              updated_at: json.note?.updated_at || new Date().toISOString(),
+            },
+            ...prev,
+          ];
+        });
+        setTimeout(() => setNoteSaveState('idle'), 2500);
+      } else {
+        setNoteSaveState('error');
+      }
+    } catch {
+      setNoteSaveState('error');
+    }
+  };
+
+  const handleNoteContentChange = (newText: string) => {
+    setScratchpadNote(newText);
+    setIsCloudSynced(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('zahid_os_scratchpad', newText);
+    }
+
+    if (noteSaveTimerRef.current) clearTimeout(noteSaveTimerRef.current);
+    noteSaveTimerRef.current = setTimeout(() => {
+      handleCloudSaveNote(activeNoteId, activeNoteTitle, newText);
+    }, 1500);
+  };
+
+  const handleSelectNote = (n: { id: string; title: string; content: string }) => {
+    if (noteSaveTimerRef.current) {
+      clearTimeout(noteSaveTimerRef.current);
+      handleCloudSaveNote(activeNoteId, activeNoteTitle, scratchpadNote);
+    }
+    setActiveNoteId(n.id);
+    setActiveNoteTitle(n.title);
+    setScratchpadNote(n.content || '');
+    setIsCloudSynced(true);
+    setNoteSaveState('idle');
+  };
+
+  const handleCreateNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const title = newNoteTitleInput.trim() || 'New Note';
+    const newId = `note_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    setNewNoteTitleInput('');
+    setIsCreatingNote(false);
+
+    setActiveNoteId(newId);
+    setActiveNoteTitle(title);
+    setScratchpadNote('');
+    setIsCloudSynced(false);
+
+    await handleCloudSaveNote(newId, title, '');
+  };
+
+  const handleDeleteNote = async (idToDelete: string) => {
+    if (!confirm('Are you sure you want to delete this note?')) return;
+    try {
+      await fetch(`/api/os/notes?id=${encodeURIComponent(idToDelete)}`, {
+        method: 'DELETE',
+        headers: getAdminHeaders(),
+      });
+      const remaining = notesList.filter((n) => n.id !== idToDelete);
+      setNotesList(
+        remaining.length > 0
+          ? remaining
+          : [{ id: 'main_scratchpad', title: 'Admin Notes', content: '' }]
+      );
+      if (activeNoteId === idToDelete) {
+        const next = remaining[0] || {
+          id: 'main_scratchpad',
+          title: 'Admin Notes',
+          content: '',
+        };
+        setActiveNoteId(next.id);
+        setActiveNoteTitle(next.title);
+        setScratchpadNote(next.content || '');
+      }
+    } catch (err) {
+      console.warn('Failed to delete note:', err);
     }
   };
 
@@ -907,36 +1078,149 @@ export const ZahidOsTab: React.FC = () => {
       case 'notes':
         return (
           <div className="p-4 sm:p-7 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div>
-                <h3 className="font-extrabold text-base sm:text-lg text-amber-300 flex items-center gap-2">
-                  <FileText className="size-5 text-amber-400" />
-                  <span>Notes & Instant Scratchpad</span>
-                </h3>
-                <p className="text-xs text-white/60">
-                  {scratchpadNote.trim()
-                    ? `${scratchpadNote.trim().split(/\s+/).length} words • Saved locally`
-                    : 'Blank notepad'}
-                </p>
+            {/* Top Toolbar & Note Tabs */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <FileText className="size-5 text-amber-400 shrink-0" />
+                <div className="min-w-0">
+                  <h3 className="font-extrabold text-base sm:text-lg text-amber-300 flex items-center gap-2 truncate">
+                    <span>{activeNoteTitle}</span>
+                  </h3>
+                  <div className="flex items-center gap-2 text-xs text-white/60 flex-wrap">
+                    <span>
+                      {scratchpadNote.trim()
+                        ? `${scratchpadNote.trim().split(/\s+/).length} words • ${scratchpadNote.length} chars`
+                        : '0 words • Empty note'}
+                    </span>
+                    <span className="text-white/30">•</span>
+                    {/* Cloud status badge */}
+                    {noteSaveState === 'saving' ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-amber-300 font-mono">
+                        <Loader2 className="size-3 animate-spin" />
+                        <span>Saving to Supabase…</span>
+                      </span>
+                    ) : noteSaveState === 'saved' || isCloudSynced ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-semibold">
+                        <Cloud className="size-3" />
+                        <span>Synced to Supabase Cloud</span>
+                        {noteLastSaved && <span className="text-white/40">({noteLastSaved})</span>}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-amber-400 font-mono">
+                        <span>Unsaved edits (cached in browser)</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleSaveScratchpad}
-                className="h-8 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-              >
-                {scratchpadSaved ? <Check className="size-3.5" /> : null}
-                <span>{scratchpadSaved ? 'Saved to Browser!' : 'Save Note'}</span>
-              </button>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 shrink-0">
+                {activeNoteId !== 'main_scratchpad' && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteNote(activeNoteId)}
+                    className="h-8 px-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                    title="Delete Note"
+                  >
+                    <Trash2 className="size-3.5" />
+                    <span>Delete</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => handleCloudSaveNote()}
+                  disabled={noteSaveState === 'saving'}
+                  className="h-8 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                >
+                  {noteSaveState === 'saving' ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : noteSaveState === 'saved' ? (
+                    <Check className="size-3.5" />
+                  ) : (
+                    <Save className="size-3.5" />
+                  )}
+                  <span>
+                    {noteSaveState === 'saving'
+                      ? 'Saving…'
+                      : noteSaveState === 'saved'
+                      ? 'Saved ✓'
+                      : 'Save Note'}
+                  </span>
+                </button>
+              </div>
             </div>
 
-            <textarea
-              value={scratchpadNote}
-              onChange={(e) => setScratchpadNote(e.target.value)}
-              placeholder="Jot down quick thoughts, project ideas, scratch code, or memos..."
-              rows={16}
-              className="w-full p-4 rounded-2xl border border-white/10 bg-amber-950/20 text-xs font-mono text-amber-100 placeholder:text-amber-200/30 outline-hidden leading-relaxed resize-y shadow-inner"
-            />
+            {/* Note Selector Tabs Bar */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+              {notesList.map((n) => (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => handleSelectNote(n)}
+                  className={`h-7 px-3 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                    activeNoteId === n.id
+                      ? 'bg-amber-500 text-white shadow-xs'
+                      : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10'
+                  }`}
+                >
+                  <FileText className="size-3 opacity-70" />
+                  <span>{n.title || 'Untitled Note'}</span>
+                </button>
+              ))}
+
+              {isCreatingNote ? (
+                <form onSubmit={handleCreateNote} className="flex items-center gap-1.5 shrink-0">
+                  <input
+                    type="text"
+                    autoFocus
+                    value={newNoteTitleInput}
+                    onChange={(e) => setNewNoteTitleInput(e.target.value)}
+                    placeholder="Note title..."
+                    className="h-7 px-2.5 rounded-lg border border-amber-500/50 bg-white/10 text-xs text-white outline-hidden font-sans w-36"
+                  />
+                  <button
+                    type="submit"
+                    className="h-7 px-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold cursor-pointer"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsCreatingNote(false)}
+                    className="h-7 px-2 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 text-xs cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsCreatingNote(true)}
+                  className="h-7 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-dashed border-white/20 text-white/60 hover:text-white text-xs font-semibold shrink-0 cursor-pointer flex items-center gap-1"
+                >
+                  <Plus className="size-3" />
+                  <span>New Note</span>
+                </button>
+              )}
+            </div>
+
+            {/* Note Editor Area */}
+            <div className="relative">
+              <textarea
+                value={scratchpadNote}
+                onChange={(e) => handleNoteContentChange(e.target.value)}
+                placeholder="Jot down quick thoughts, project ideas, scratch code, meeting memos..."
+                rows={16}
+                className="w-full p-4 rounded-2xl border border-white/10 bg-amber-950/20 text-xs font-mono text-amber-100 placeholder:text-amber-200/30 outline-hidden leading-relaxed resize-y shadow-inner focus:border-amber-500/50 transition-colors"
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-white/50 pt-1 font-mono">
+              <span>Backed by Supabase table <code>public.os_notes</code></span>
+              <span>Autosaves 1.5s after typing • Stored offline in localStorage</span>
+            </div>
           </div>
         );
 
