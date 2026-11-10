@@ -10,6 +10,7 @@ import {
   Menu,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { SoundToggle } from '@/components/ui/SoundToggle';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import { AdminTab } from './AdminSidebar';
 
@@ -108,6 +109,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           <Download className="size-3.5" />
           <span>Backup</span>
         </button>
+
+        {/* Sound Toggle */}
+        <SoundToggle className="btn btn-secondary size-8 sm:size-8.5 grid place-items-center rounded-xl cursor-pointer" />
 
         {/* Theme Toggle */}
         <ThemeToggle className="btn btn-secondary size-8 sm:size-8.5 grid place-items-center rounded-xl cursor-pointer" />

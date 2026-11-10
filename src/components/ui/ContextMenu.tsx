@@ -13,6 +13,7 @@ import {
   TablerMessageCircle,
 } from '@/components/ui/Icons';
 import { Check } from 'lucide-react';
+import { isSoundEnabled, toggleSound as toggleGlobalSound } from '@/lib/sound';
 
 interface ContextMenuTargetData {
   selection?: string;
@@ -41,15 +42,18 @@ export const ContextMenu: React.FC = () => {
           (!document.documentElement.classList.contains('light') &&
             window.matchMedia('(prefers-color-scheme: dark)').matches);
         setIsDarkMode(isDark);
-        const soundState = localStorage.getItem('folioframe-sound');
-        setIsSoundMuted(soundState !== 'on');
+        setIsSoundMuted(!isSoundEnabled());
         setCanGoBack(window.history.length > 1);
       }
     };
 
     syncThemeAndSound();
     window.addEventListener('folioframe-theme-change', syncThemeAndSound);
-    return () => window.removeEventListener('folioframe-theme-change', syncThemeAndSound);
+    window.addEventListener('folioframe-sound-change', syncThemeAndSound);
+    return () => {
+      window.removeEventListener('folioframe-theme-change', syncThemeAndSound);
+      window.removeEventListener('folioframe-sound-change', syncThemeAndSound);
+    };
   }, [isOpen]);
 
   const closeMenu = useCallback(() => {
@@ -90,8 +94,8 @@ export const ContextMenu: React.FC = () => {
       });
 
       // Calculate position with bounds checking
-      const menuWidth = 256;
-      const menuHeight = selection || link ? 280 : 225;
+      const menuWidth = 270;
+      const menuHeight = selection || link ? 320 : 260;
       const pX = e.clientX;
       const pY = e.clientY;
 
@@ -167,9 +171,8 @@ export const ContextMenu: React.FC = () => {
   };
 
   const toggleSound = () => {
-    const nextMuted = !isSoundMuted;
-    setIsSoundMuted(nextMuted);
-    localStorage.setItem('folioframe-sound', nextMuted ? 'off' : 'on');
+    const nextEnabled = toggleGlobalSound();
+    setIsSoundMuted(!nextEnabled);
     setTimeout(closeMenu, 150);
   };
 
@@ -191,7 +194,7 @@ export const ContextMenu: React.FC = () => {
         top: `${position.y}px`,
         transformOrigin,
       }}
-      className="fixed z-[100] w-[270px] select-none rounded-[22px] transition-[opacity,transform] duration-150 ease-out outline-none animate-in fade-in zoom-in-95"
+      className="fixed z-[9999] w-[270px] select-none rounded-[22px] transition-[opacity,transform] duration-150 ease-out outline-none animate-in fade-in zoom-in-95"
     >
       <div className="p-2 rounded-[22px] border border-zinc-200/80 dark:border-zinc-800 bg-white/95 dark:bg-[#151518]/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-ink">
         {/* 1. Top Row: Back, Forward, Reload, Copy Link */}

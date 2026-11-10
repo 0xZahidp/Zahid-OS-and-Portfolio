@@ -3,8 +3,19 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
+import {
+  isWebAuthnSupported,
+  parseCreationOptions,
+  serializeCreationResponse,
+  parseRequestOptions,
+  serializeRequestResponse,
+} from '@/lib/auth/webauthn-client';
 
 interface PasskeyApi {
+  startRegistration: () => Promise<{ data: { challenge_id: string; options: Record<string, unknown> } | null; error: Error | null }>;
+  verifyRegistration: (params: { challengeId: string; credential: Record<string, unknown> }) => Promise<{ data: { id: string } | null; error: Error | null }>;
+  startAuthentication: () => Promise<{ data: { challenge_id: string; options: Record<string, unknown> } | null; error: Error | null }>;
+  verifyAuthentication: (params: { challengeId: string; credential: Record<string, unknown> }) => Promise<{ data: { session: Session | null; user: User | null } | null; error: Error | null }>;
   list: () => Promise<{ data: PasskeyItem[] | null; error: Error | null }>;
   delete: (params: { passkeyId: string }) => Promise<{ error: Error | null }>;
   update?: (params: { passkeyId: string; friendlyName: string }) => Promise<{ error: Error | null }>;
@@ -49,10 +60,30 @@ interface AdminAuthContextType {
 }
 
 function formatPasskeyError(rawMsg: string): string {
-  if (rawMsg.includes('RP ID') || rawMsg.toLowerCase().includes('relying party')) {
-    const domain = typeof window !== 'undefined' ? window.location.hostname : 'your domain';
-    return `The WebAuthn RP ID in your Supabase Dashboard is still set to "localhost". Change Relying Party ID to "${domain}" in Supabase Dashboard > Authentication > Passkeys.`;
+  if (!rawMsg) return 'Passkey operation failed';
+  const domain = typeof window !== 'undefined' ? window.location.hostname : 'zahidp.com';
+
+  if (
+    rawMsg.includes('RP ID') ||
+    rawMsg.toLowerCase().includes('relying party') ||
+    rawMsg.includes('valid domain suffix') ||
+    rawMsg.includes('SecurityError')
+  ) {
+    if (domain === 'localhost' || domain === '127.0.0.1') {
+      return `Passkeys are cryptographically bound to "zahidp.com". Browsers strictly prohibit registering or authenticating a "zahidp.com" passkey on localhost (${domain}). Please test on https://zahidp.com/admin.`;
+    }
+    return `The WebAuthn RP ID in your Supabase Dashboard is configured for "zahidp.com". Please ensure you are accessing via https://zahidp.com.`;
   }
+
+  if (
+    rawMsg.includes('The operation either timed out or was not allowed') ||
+    rawMsg.includes('NotAllowedError') ||
+    rawMsg.toLowerCase().includes('cancelled') ||
+    rawMsg.toLowerCase().includes('abort')
+  ) {
+    return 'Passkey prompt was cancelled or timed out.';
+  }
+
   return rawMsg;
 }
 
@@ -303,29 +334,61 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const signInWithPasskey = useCallback(async () => {
     setError(null);
     try {
-      if (typeof window === 'undefined' || !window.PublicKeyCredential) {
+      if (!isWebAuthnSupported()) {
         const msg = 'WebAuthn passkeys are not supported on this platform/browser.';
         setError(msg);
         return { success: false, error: msg };
       }
 
-      if (typeof supabase.auth.signInWithPasskey !== 'function') {
-        const msg = 'Passkey authentication function is not supported in this client build.';
+      const passkeyApi = (supabase.auth as unknown as { passkey?: PasskeyApi }).passkey;
+      if (!passkeyApi || typeof passkeyApi.startAuthentication !== 'function') {
+        const msg = 'Passkey authentication API is not available in this client build.';
         setError(msg);
         return { success: false, error: msg };
       }
 
-      const { data, error: passkeyErr } = await supabase.auth.signInWithPasskey();
-
-      if (passkeyErr) {
-        const errorMsg = formatPasskeyError(passkeyErr.message);
+      // 1. Request authentication challenge options from Supabase
+      const { data: optData, error: optErr } = await passkeyApi.startAuthentication();
+      if (optErr) {
+        const errorMsg = formatPasskeyError(optErr.message);
         setError(errorMsg);
         return { success: false, error: errorMsg };
       }
 
-      if (data?.session) {
-        setSession(data.session);
-        setUser(data.user);
+      if (!optData?.options) {
+        const errorMsg = 'Failed to obtain passkey authentication options from Supabase.';
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
+      }
+
+      // 2. Perform WebAuthn browser ceremony
+      const requestOptions = parseRequestOptions(optData.options);
+      const credential = await navigator.credentials.get(requestOptions);
+
+      if (!credential || !(credential instanceof PublicKeyCredential)) {
+        const errorMsg = 'No passkey credential selected.';
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
+      }
+
+      // 3. Serialize credential response
+      const credentialPayload = serializeRequestResponse(credential);
+
+      // 4. Verify assertion with Supabase and establish session
+      const { data: authData, error: verifyErr } = await passkeyApi.verifyAuthentication({
+        challengeId: optData.challenge_id,
+        credential: credentialPayload,
+      });
+
+      if (verifyErr) {
+        const errorMsg = formatPasskeyError(verifyErr.message);
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
+      }
+
+      if (authData?.session) {
+        setSession(authData.session);
+        setUser(authData.user);
         setIsLocalBypass(false);
         await checkMfaLevel();
       }
@@ -437,14 +500,15 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const registerPasskey = useCallback(async (name?: string) => {
     setError(null);
     try {
-      if (typeof window === 'undefined' || !window.PublicKeyCredential) {
-        const msg = 'WebAuthn passkeys are not supported on this platform.';
+      if (!isWebAuthnSupported()) {
+        const msg = 'WebAuthn passkeys are not supported on this platform/browser.';
         setError(msg);
         return { success: false, error: msg };
       }
 
-      if (typeof supabase.auth.registerPasskey !== 'function') {
-        const msg = 'Passkey registration function is not available.';
+      const passkeyApi = (supabase.auth as unknown as { passkey?: PasskeyApi }).passkey;
+      if (!passkeyApi || typeof passkeyApi.startRegistration !== 'function') {
+        const msg = 'Passkey registration API is not available in this client build.';
         setError(msg);
         return { success: false, error: msg };
       }
@@ -459,22 +523,54 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         };
       }
 
-      const { data, error: regErr } = await supabase.auth.registerPasskey();
+      // 1. Request registration options from Supabase
+      const { data: optData, error: optErr } = await passkeyApi.startRegistration();
 
-      if (regErr) {
-        if (regErr.message?.includes('AAL2') || regErr.message?.includes('aal2')) {
-          return { success: false, requiresAal2StepUp: true, error: regErr.message };
+      if (optErr) {
+        if (optErr.message?.includes('AAL2') || optErr.message?.includes('aal2')) {
+          return { success: false, requiresAal2StepUp: true, error: optErr.message };
         }
-        const errorMsg = formatPasskeyError(regErr.message);
+        const errorMsg = formatPasskeyError(optErr.message);
         setError(errorMsg);
         return { success: false, error: errorMsg };
       }
 
-      if (name && data && 'id' in data && typeof data.id === 'string') {
-        const passkeyApi = (supabase.auth as unknown as { passkey?: PasskeyApi }).passkey;
-        if (passkeyApi?.update) {
+      if (!optData?.options) {
+        const errorMsg = 'Failed to obtain passkey registration options from Supabase.';
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
+      }
+
+      // 2. Perform WebAuthn browser ceremony
+      const creationOptions = parseCreationOptions(optData.options);
+      const credential = await navigator.credentials.create(creationOptions);
+
+      if (!credential || !(credential instanceof PublicKeyCredential)) {
+        const errorMsg = 'No credential created by the authenticator.';
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
+      }
+
+      // 3. Serialize credential response
+      const credentialPayload = serializeCreationResponse(credential);
+
+      // 4. Verify registration with Supabase
+      const { data: verifyData, error: verifyErr } = await passkeyApi.verifyRegistration({
+        challengeId: optData.challenge_id,
+        credential: credentialPayload,
+      });
+
+      if (verifyErr) {
+        const errorMsg = formatPasskeyError(verifyErr.message);
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
+      }
+
+      // 5. Update friendly name if provided
+      if (name && verifyData && 'id' in verifyData && typeof verifyData.id === 'string') {
+        if (passkeyApi.update) {
           try {
-            await passkeyApi.update({ passkeyId: data.id, friendlyName: name });
+            await passkeyApi.update({ passkeyId: verifyData.id, friendlyName: name });
           } catch (nameErr) {
             console.warn('Could not set friendly name for passkey:', nameErr);
           }

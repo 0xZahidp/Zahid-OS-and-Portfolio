@@ -177,6 +177,18 @@ export const SecurityTab: React.FC = () => {
           </div>
         </div>
 
+        {typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-xs leading-relaxed space-y-1">
+            <div className="font-bold flex items-center gap-1.5">
+              <AlertCircle className="size-4 shrink-0" />
+              <span>Localhost Domain Notice</span>
+            </div>
+            <p className="text-[11.5px]">
+              Passkeys in Supabase are configured for domain <code className="font-mono bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded font-bold">zahidp.com</code>. WebAuthn security specifications prohibit browsers from creating or verifying a &ldquo;zahidp.com&rdquo; credential while on localhost. To enroll or test your Passkeys, visit production at <a href="https://zahidp.com/admin" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-amber-800 dark:hover:text-amber-300">https://zahidp.com/admin</a>.
+            </p>
+          </div>
+        )}
+
         {/* Register New Passkey Form */}
         <form onSubmit={handleRegister} className="p-4 rounded-xl border border-line bg-surface-2/60 space-y-3">
           <div className="flex items-center gap-2 text-xs font-bold text-ink">

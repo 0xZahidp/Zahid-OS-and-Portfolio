@@ -69,6 +69,12 @@ function getAudioContext(): { ctx: AudioContext; out: GainNode } | null {
 export function isSoundEnabled(): boolean {
   if (typeof window === 'undefined') return false;
   try {
+    // Backward-compatibility: migrate legacy hyphenated key if set
+    const legacy = localStorage.getItem('folioframe-sound');
+    if (legacy !== null && localStorage.getItem('folioframe_sound') === null) {
+      localStorage.setItem('folioframe_sound', legacy);
+      localStorage.removeItem('folioframe-sound');
+    }
     return localStorage.getItem('folioframe_sound') !== 'off';
   } catch {
     return true;
@@ -80,6 +86,8 @@ export function setSoundEnabled(enabled: boolean): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem('folioframe_sound', enabled ? 'on' : 'off');
+    // Mirror legacy key as well so older or unrefreshed components don't desync
+    localStorage.setItem('folioframe-sound', enabled ? 'on' : 'off');
     window.dispatchEvent(new CustomEvent('folioframe-sound-change', { detail: { enabled } }));
   } catch {}
 }
@@ -87,10 +95,8 @@ export function setSoundEnabled(enabled: boolean): void {
 /** Toggle sound on/off with audible confirmation */
 export function toggleSound(): boolean {
   const next = !isSoundEnabled();
+  playToggleSound(next);
   setSoundEnabled(next);
-  if (next) {
-    playToggleSound(true);
-  }
   return next;
 }
 
@@ -192,14 +198,30 @@ export function playKeyPressSound(): void {
 }
 
 /**
- * Toggle on/off sound
+ * Toggle on/off sound (plays acoustic feedback chord: ascending when ON, descending when OFF)
  */
 export function playToggleSound(isOn: boolean): void {
-  if (!isSoundEnabled() && !isOn) return;
   try {
-    const [note1, note2] = isOn ? [PENTATONIC_SCALE[4], PENTATONIC_SCALE[7]] : [PENTATONIC_SCALE[7], PENTATONIC_SCALE[4]];
-    playTone(note1, 0, 0.6);
-    playTone(note2, 0.09, 0.6);
+    const audio = getAudioContext();
+    if (!audio) return;
+    const now = audio.ctx.currentTime;
+    const [note1, note2] = isOn
+      ? [PENTATONIC_SCALE[4], PENTATONIC_SCALE[7]] // A5 -> D6 (ascending)
+      : [PENTATONIC_SCALE[7], PENTATONIC_SCALE[4]]; // D6 -> A5 (descending)
+
+    [note1, note2].forEach((freq, idx) => {
+      const osc = audio.ctx.createOscillator();
+      const gain = audio.ctx.createGain();
+      const delay = idx * 0.08;
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + delay);
+      gain.gain.setValueAtTime(0.18, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.3);
+      osc.connect(gain);
+      gain.connect(audio.out);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.31);
+    });
   } catch {}
 }
 
