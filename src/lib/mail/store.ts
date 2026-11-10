@@ -314,7 +314,7 @@ export async function readMailStore(options?: {
       const supabase = supabaseServer();
       const columns =
         options?.includeBody === false
-          ? 'id, thread_id, resend_id, folder, status, label, direction, mailbox, from_name, from_email, to_email, subject, received_at, created_at, is_read, read_at, is_starred, is_trashed, in_reply_to, references_header, raw_headers, attachments, name, email, recipient, is_sent'
+          ? 'id, thread_id, resend_id, status, label, direction, mailbox, from_name, from_email, to_email, subject, received_at, created_at, is_read, read_at, is_starred, is_trashed, in_reply_to, references_header, raw_headers, attachments, name, email, recipient, is_sent'
           : '*';
 
       const query = supabase.from('inbox_messages') as unknown as {
