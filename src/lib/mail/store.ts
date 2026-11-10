@@ -1011,6 +1011,7 @@ export async function upsertReceivedEmail(email: {
   to: string[] | string;
   cc?: string[] | string;
   bcc?: string[] | string;
+  received_for?: string[] | string;
   subject?: string | null;
   html?: string | null;
   text?: string | null;
@@ -1022,7 +1023,7 @@ export async function upsertReceivedEmail(email: {
   // Check tombstones FIRST: permanently deleted emails must NEVER be re-imported
   const tombstones = await getTombstoneResendIds();
   if (tombstones.has(email.id)) {
-    console.log(`[MailStore] Skipping ingestion of tombstoned email (resendId: ${email.id})`);
+    console.log(`[resend-webhook] Skipping ingestion of tombstoned email (resendId: ${email.id})`);
     return null;
   }
 
@@ -1030,6 +1031,8 @@ export async function upsertReceivedEmail(email: {
   const allRecipients: string[] = [];
   if (Array.isArray(email.to)) allRecipients.push(...email.to);
   else if (email.to) allRecipients.push(email.to);
+  if (Array.isArray(email.received_for)) allRecipients.push(...email.received_for);
+  else if (email.received_for) allRecipients.push(email.received_for);
   if (Array.isArray(email.cc)) allRecipients.push(...email.cc);
   else if (email.cc) allRecipients.push(email.cc);
   if (Array.isArray(email.bcc)) allRecipients.push(...email.bcc);
@@ -1039,7 +1042,7 @@ export async function upsertReceivedEmail(email: {
   if (!mailbox) {
     const classification = classifyMailbox(allRecipients);
     if (classification === 'ignore') {
-      console.log(`[MailStore] Skipping ingestion of foreign-domain email (resendId: ${email.id})`);
+      console.log(`[resend-webhook] Skipping ingestion of foreign-domain email (resendId: ${email.id})`);
       return null;
     }
     mailbox = classification;
@@ -1163,10 +1166,14 @@ export async function upsertReceivedEmail(email: {
       }
 
       if (upsertErr) {
-        console.warn('[MailStore] Supabase upsert error for received email:', upsertErr.message);
+        console.error(
+          `[resend-webhook] Supabase upsert error for email_id=${email.id}: [${upsertErr.code || 'UNKNOWN'}] ${upsertErr.message}`
+        );
+      } else {
+        console.log(`[resend-webhook] Supabase insert SUCCESS for email_id=${email.id}`);
       }
     } catch (err) {
-      console.warn('[MailStore] Supabase upsert exception for received email:', err);
+      console.error(`[resend-webhook] Supabase upsert exception for email_id=${email.id}:`, err);
     }
   }
 
