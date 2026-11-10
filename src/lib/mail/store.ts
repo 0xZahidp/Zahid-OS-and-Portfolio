@@ -4,6 +4,7 @@ import { MailMessage, MailStoreData, EmailAttachment, MailThread, EmailAddress }
 import { supabaseServer } from '@/lib/supabase/server';
 import { Resend } from 'resend';
 import { getAppSecret } from '@/lib/env-vault';
+import { classifyMailbox } from '@/lib/mail/mailbox';
 
 const STORE_PATH = path.join(process.cwd(), 'src', 'data', 'inbox-store.json');
 
@@ -121,28 +122,19 @@ export const OFFICIAL_ALIASES = [
 ] as const;
 
 export function isOfficialEmail(m: MailMessage): boolean {
-  if (m.tags?.includes('Temp Mail')) return false;
-  if (m.direction === 'outbound' || m.folder === 'sent') {
-    const user = m.from.email.split('@')[0]?.toLowerCase() || '';
-    return OFFICIAL_ALIASES.some((a) => user === a || user.startsWith(a));
-  }
-  return (
-    m.to?.some((t) => {
-      const user = t.email.split('@')[0]?.toLowerCase() || '';
-      if (!user || user.startsWith('tmp_') || user.startsWith('tmp-')) return false;
-      return OFFICIAL_ALIASES.some((a) => user === a || user.startsWith(a));
-    }) ?? false
-  );
+  if (m.mailbox === 'official') return true;
+  if (m.mailbox === 'unofficial') return false;
+  if (m.direction === 'outbound' || m.folder === 'sent') return true;
+  const toEmails = (m.to || []).map((t) => t.email).filter(Boolean);
+  return classifyMailbox(toEmails) === 'official';
 }
 
-export function isTempEmail(m: MailMessage): boolean {
-  if (m.tags?.includes('Temp Mail')) return true;
-  return (
-    m.to?.some((t) => {
-      const user = t.email.split('@')[0]?.toLowerCase() || '';
-      return user.startsWith('tmp_') || user.startsWith('tmp-');
-    }) ?? false
-  );
+export function isUnofficialEmail(m: MailMessage): boolean {
+  if (m.mailbox === 'unofficial') return true;
+  if (m.mailbox === 'official') return false;
+  if (m.direction === 'outbound' || m.folder === 'sent') return false;
+  const toEmails = (m.to || []).map((t) => t.email).filter(Boolean);
+  return classifyMailbox(toEmails) === 'unofficial';
 }
 
 
@@ -214,6 +206,7 @@ export function normalizeMessage(item: Record<string, unknown>): MailMessage {
       isTrashed,
       isArchived,
       label: (item.label as string) || 'inbox',
+      mailbox: (item.mailbox as 'official' | 'unofficial') || undefined,
       direction: (item.direction as 'inbound' | 'outbound') || (folder === 'sent' ? 'outbound' : 'inbound'),
       inReplyTo: (item.inReplyTo || item.in_reply_to) as string | undefined,
       references: (item.references || item.references_header) as string | undefined,
@@ -288,6 +281,7 @@ export function normalizeMessage(item: Record<string, unknown>): MailMessage {
     isTrashed,
     isArchived,
     label: (item.label as string) || (folder === 'archive' ? 'archive' : 'inbox'),
+    mailbox: (item.mailbox as 'official' | 'unofficial') || undefined,
     direction: (item.direction as 'inbound' | 'outbound') || (isSent ? 'outbound' : 'inbound'),
     inReplyTo: (item.in_reply_to || item.inReplyTo) as string | undefined,
     references: (item.references_header || item.references) as string | undefined,
@@ -309,19 +303,45 @@ async function withTimeout<T>(promise: PromiseLike<T>, timeoutMs = 4000): Promis
   }
 }
 
-export async function readMailStore(): Promise<MailStoreData> {
+export async function readMailStore(options?: {
+  includeBody?: boolean;
+}): Promise<MailStoreData> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  // 1. Try Supabase relational table first (newest first)
+  // 1. Try Supabase relational table first (newest received first)
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
       const supabase = supabaseServer();
-      const { data, error } = await withTimeout(
-        supabase
-          .from('inbox_messages')
-          .select('*')
-          .order('created_at', { ascending: false })
+      const columns =
+        options?.includeBody === false
+          ? 'id, thread_id, resend_id, folder, status, label, direction, mailbox, from_name, from_email, to_email, subject, received_at, created_at, is_read, read_at, is_starred, is_trashed, in_reply_to, references_header, raw_headers, attachments, name, email, recipient, is_sent'
+          : '*';
+
+      const query = supabase.from('inbox_messages') as unknown as {
+        select: (cols: string) => {
+          order: (
+            col: string,
+            opts: { ascending: boolean; nullsFirst: boolean }
+          ) => PromiseLike<{ data: Record<string, unknown>[] | null; error: { message: string } | null }>;
+        };
+      };
+      let { data, error } = await withTimeout(
+        query
+          .select(columns)
+          .order('received_at', { ascending: false, nullsFirst: false })
       );
+
+      // Graceful fallback if migration 20261110030000_inbox_mailbox.sql has not been run yet
+      if (error && (error.message?.includes('mailbox') || error.message?.includes('schema cache'))) {
+        const fallbackCols = columns.replace('mailbox, ', '').replace(', mailbox', '');
+        const retryResult = await withTimeout(
+          query
+            .select(fallbackCols)
+            .order('received_at', { ascending: false, nullsFirst: false })
+        );
+        data = retryResult.data;
+        error = retryResult.error;
+      }
 
       if (error) {
         throw new Error(`Failed to read inbox messages: ${error.message}`);
@@ -330,7 +350,7 @@ export async function readMailStore(): Promise<MailStoreData> {
       if (Array.isArray(data)) {
         return {
           updatedAt: new Date().toISOString(),
-          messages: data.map((d) => normalizeMessage(d as Record<string, unknown>)),
+          messages: data.map((d) => normalizeMessage(d)),
         };
       }
     } catch (err) {
@@ -352,7 +372,15 @@ export async function readMailStore(): Promise<MailStoreData> {
       rawList = parsed.messages;
     }
 
-    const messages = rawList.map((item) => normalizeMessage(item));
+    const messages = rawList.map((item) => {
+      const normalized = normalizeMessage(item);
+      if (options?.includeBody === false) {
+        normalized.body = '';
+        normalized.textBody = undefined;
+        normalized.htmlBody = undefined;
+      }
+      return normalized;
+    });
 
     return {
       updatedAt: (parsed && !Array.isArray(parsed) && parsed.updatedAt) || new Date().toISOString(),
@@ -369,6 +397,39 @@ export async function readMailStore(): Promise<MailStoreData> {
       deletedResendIds: [],
     };
   }
+}
+
+/**
+ * Fetches full thread messages including complete HTML and text bodies for the reading pane.
+ */
+export async function getThreadWithBodies(threadId: string): Promise<MailThread | null> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    try {
+      const supabase = supabaseServer();
+      const { data, error } = await supabase
+        .from('inbox_messages')
+        .select('*')
+        .or(`thread_id.eq.${threadId},id.eq.${threadId}`)
+        .order('received_at', { ascending: true, nullsFirst: false });
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const msgs = data.map((d) => normalizeMessage(d as Record<string, unknown>));
+        const threads = groupMessagesIntoThreads(msgs);
+        return threads[0] || null;
+      }
+    } catch (err) {
+      console.warn('[MailStore] Supabase getThreadWithBodies error:', err);
+    }
+  }
+
+  // Fallback to local store
+  const store = await readMailStore({ includeBody: true });
+  const msgs = store.messages.filter((m) => m.threadId === threadId || m.id === threadId);
+  if (msgs.length === 0) return null;
+  const threads = groupMessagesIntoThreads(msgs);
+  return threads[0] || null;
 }
 
 export async function writeMailStore(data: MailStoreData): Promise<boolean> {
@@ -430,7 +491,6 @@ export function filterMailMessages(
     search?: string;
     isStarred?: boolean;
     alias?: string;
-    category?: 'official' | 'temp' | 'all';
   }
 ): MailMessage[] {
   let msgs = allMsgs || [];
@@ -449,25 +509,26 @@ export function filterMailMessages(
           !m.isTrashed &&
           !m.isArchived
       );
-    } else {
-      // 'inbox'
+    } else if (filter.folder === 'unofficial') {
       msgs = msgs.filter(
         (m) =>
           (m.folder === 'inbox' || !m.folder) &&
           m.direction !== 'outbound' &&
           !m.isTrashed &&
-          !m.isArchived
+          !m.isArchived &&
+          isUnofficialEmail(m)
+      );
+    } else {
+      // Default: 'inbox' (official)
+      msgs = msgs.filter(
+        (m) =>
+          (m.folder === 'inbox' || !m.folder) &&
+          m.direction !== 'outbound' &&
+          !m.isTrashed &&
+          !m.isArchived &&
+          isOfficialEmail(m)
       );
     }
-  }
-
-  // Lock to official mail vs temp mail
-  // Default for inbox is 'official' unless explicitly asked for 'all' or 'temp'
-  const cat = filter?.category || (filter?.folder === 'inbox' ? 'official' : 'all');
-  if (cat === 'official') {
-    msgs = msgs.filter((m) => !isTempEmail(m));
-  } else if (cat === 'temp') {
-    msgs = msgs.filter((m) => isTempEmail(m));
   }
 
   // Filter by alias (e.g. test@zahidp.com or hello@zahidp.com)
@@ -505,7 +566,25 @@ export function calculateUnreadCount(msgs: MailMessage[]): number {
       !m.isRead &&
       !m.isTrashed &&
       !m.isArchived &&
-      (m.folder === 'inbox' || (!m.folder && m.direction === 'inbound'))
+      (m.folder === 'inbox' || (!m.folder && m.direction === 'inbound')) &&
+      isOfficialEmail(m)
+    ) {
+      unreadThreads.add(m.threadId || m.id);
+    }
+  }
+  return unreadThreads.size;
+}
+
+export function calculateUnofficialUnreadCount(msgs: MailMessage[]): number {
+  const unreadThreads = new Set<string>();
+  const threaded = backfillThreads(msgs || []);
+  for (const m of threaded) {
+    if (
+      !m.isRead &&
+      !m.isTrashed &&
+      !m.isArchived &&
+      (m.folder === 'inbox' || (!m.folder && m.direction === 'inbound')) &&
+      isUnofficialEmail(m)
     ) {
       unreadThreads.add(m.threadId || m.id);
     }
@@ -565,6 +644,14 @@ export function groupMessagesIntoThreads(
 
     const allTags = Array.from(new Set(msgs.flatMap((m) => m.tags || [])));
 
+    const isOfficial = msgs.some((m) => isOfficialEmail(m));
+    const isUnofficial = !isOfficial && msgs.some((m) => isUnofficialEmail(m));
+    const threadMailbox: 'official' | 'unofficial' | null = isOfficial
+      ? 'official'
+      : isUnofficial
+      ? 'unofficial'
+      : null;
+
     allThreads.push({
       id: threadId,
       subject: rootMessage.subject || latestMessage.subject || '(No Subject)',
@@ -581,6 +668,7 @@ export function groupMessagesIntoThreads(
       hasSent,
       hasInbound,
       tags: allTags,
+      mailbox: threadMailbox,
       messages: msgs,
     });
   }
@@ -602,22 +690,25 @@ export function groupMessagesIntoThreads(
       );
     } else if (filter.folder === 'sent') {
       filtered = filtered.filter((t) => t.hasSent && !t.isTrashed && !t.isArchived);
-    } else {
-      // 'inbox'
+    } else if (filter.folder === 'unofficial') {
+      // Unofficial folder: only unofficial inbound threads
       filtered = filtered.filter(
         (t) =>
           !t.isTrashed &&
           !t.isArchived &&
-          t.messages.some((m) => m.folder === 'inbox' || (!m.folder && m.direction === 'inbound'))
+          t.messages.some((m) => m.folder === 'inbox' || (!m.folder && m.direction === 'inbound')) &&
+          (t.mailbox === 'unofficial' || t.messages.some((m) => isUnofficialEmail(m)))
+      );
+    } else {
+      // Default 'inbox': only official inbound threads
+      filtered = filtered.filter(
+        (t) =>
+          !t.isTrashed &&
+          !t.isArchived &&
+          t.messages.some((m) => m.folder === 'inbox' || (!m.folder && m.direction === 'inbound')) &&
+          (t.mailbox === 'official' || t.messages.some((m) => isOfficialEmail(m)))
       );
     }
-  }
-
-  const cat = filter?.category || (filter?.folder === 'inbox' ? 'official' : 'all');
-  if (cat === 'official') {
-    filtered = filtered.filter((t) => t.messages.some((m) => isOfficialEmail(m)));
-  } else if (cat === 'temp') {
-    filtered = filtered.filter((t) => t.messages.some((m) => isTempEmail(m)));
   }
 
   if (filter?.alias && filter.alias !== 'all') {
@@ -646,33 +737,29 @@ export function groupMessagesIntoThreads(
 }
 
 export function calculateMailFolderCounts(
-  msgs: MailMessage[],
-  filterCategory?: 'official' | 'temp' | 'all'
+  msgs: MailMessage[]
 ): {
   inbox: number;
   unread: number;
+  unofficial: number;
+  unofficialUnread: number;
   sent: number;
   starred: number;
   archive: number;
   trash: number;
   official: number;
-  temp: number;
 } {
   const threads = groupMessagesIntoThreads(msgs || []);
   let inbox = 0;
   let unread = 0;
+  let unofficial = 0;
+  let unofficialUnread = 0;
   let sent = 0;
   let starred = 0;
   let archive = 0;
   let trash = 0;
-  let official = 0;
-  let temp = 0;
 
   for (const t of threads) {
-    const isTemp = t.messages.some((m) => isTempEmail(m));
-    if (isTemp) temp++;
-    else official++;
-
     if (t.isTrashed || t.messages.some((m) => m.isTrashed || m.folder === 'trash')) {
       trash++;
     } else if (t.isArchived || t.messages.every((m) => m.isArchived || m.folder === 'archive')) {
@@ -682,19 +769,13 @@ export function calculateMailFolderCounts(
       if (
         t.messages.some((m) => m.folder === 'inbox' || (!m.folder && m.direction === 'inbound'))
       ) {
-        if (filterCategory === 'temp') {
-          if (isTemp) {
-            inbox++;
-            if (t.hasUnread) unread++;
-          }
-        } else if (filterCategory === 'official') {
-          if (!isTemp) {
-            inbox++;
-            if (t.hasUnread) unread++;
-          }
-        } else {
+        const isOfficial = t.mailbox === 'official' || t.messages.some((m) => isOfficialEmail(m));
+        if (isOfficial) {
           inbox++;
           if (t.hasUnread) unread++;
+        } else {
+          unofficial++;
+          if (t.hasUnread) unofficialUnread++;
         }
       }
     }
@@ -704,7 +785,17 @@ export function calculateMailFolderCounts(
     }
   }
 
-  return { inbox, unread, sent, starred, archive, trash, official, temp };
+  return {
+    inbox,
+    unread,
+    unofficial,
+    unofficialUnread,
+    sent,
+    starred,
+    archive,
+    trash,
+    official: inbox,
+  };
 }
 
 export async function listMailMessages(filter?: {
@@ -730,10 +821,10 @@ export async function listMailThreads(filter?: {
 }
 
 export async function getUnreadCount(): Promise<number> {
-  return getUnreadThreadCount();
+  return getUnreadThreadCount('official');
 }
 
-export async function getUnreadThreadCount(): Promise<number> {
+export async function getUnreadThreadCount(mailbox: 'official' | 'unofficial' = 'official'): Promise<number> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
     try {
@@ -747,6 +838,7 @@ export async function getUnreadThreadCount(): Promise<number> {
           .neq('status', 'archived')
           .neq('status', 'trash')
           .eq('direction', 'inbound')
+          .eq('mailbox', mailbox)
       );
 
       if (!error && Array.isArray(data)) {
@@ -759,21 +851,24 @@ export async function getUnreadThreadCount(): Promise<number> {
   }
 
   const store = await readMailStore();
-  return calculateUnreadCount(store.messages || []);
+  return mailbox === 'official'
+    ? calculateUnreadCount(store.messages || [])
+    : calculateUnofficialUnreadCount(store.messages || []);
 }
 
-export async function getMailFolderCounts(filterCategory?: 'official' | 'temp' | 'all'): Promise<{
+export async function getMailFolderCounts(): Promise<{
   inbox: number;
   unread: number;
+  unofficial: number;
+  unofficialUnread: number;
   sent: number;
   starred: number;
   archive: number;
   trash: number;
   official: number;
-  temp: number;
 }> {
   const store = await readMailStore();
-  return calculateMailFolderCounts(store.messages || [], filterCategory);
+  return calculateMailFolderCounts(store.messages || []);
 }
 
 export async function addMailMessage(message: MailMessage): Promise<boolean> {
@@ -914,18 +1009,40 @@ export async function upsertReceivedEmail(email: {
   id: string;
   from: string;
   to: string[] | string;
+  cc?: string[] | string;
+  bcc?: string[] | string;
   subject?: string | null;
   html?: string | null;
   text?: string | null;
   created_at?: string;
   headers?: Record<string, unknown>;
   attachments?: EmailAttachment[];
+  mailbox?: 'official' | 'unofficial';
 }): Promise<MailMessage | null> {
   // Check tombstones FIRST: permanently deleted emails must NEVER be re-imported
   const tombstones = await getTombstoneResendIds();
   if (tombstones.has(email.id)) {
     console.log(`[MailStore] Skipping ingestion of tombstoned email (resendId: ${email.id})`);
     return null;
+  }
+
+  // Determine and classify mailbox
+  const allRecipients: string[] = [];
+  if (Array.isArray(email.to)) allRecipients.push(...email.to);
+  else if (email.to) allRecipients.push(email.to);
+  if (Array.isArray(email.cc)) allRecipients.push(...email.cc);
+  else if (email.cc) allRecipients.push(email.cc);
+  if (Array.isArray(email.bcc)) allRecipients.push(...email.bcc);
+  else if (email.bcc) allRecipients.push(email.bcc);
+
+  let mailbox = email.mailbox;
+  if (!mailbox) {
+    const classification = classifyMailbox(allRecipients);
+    if (classification === 'ignore') {
+      console.log(`[MailStore] Skipping ingestion of foreign-domain email (resendId: ${email.id})`);
+      return null;
+    }
+    mailbox = classification;
   }
 
   // Extract clean sender name and email
@@ -1011,6 +1128,7 @@ export async function upsertReceivedEmail(email: {
     is_trashed: false,
     label: 'inbox',
     direction: 'inbound',
+    mailbox,
     in_reply_to: inReplyTo,
     references_header: referencesHeader,
     raw_headers: email.headers || {},
@@ -1030,9 +1148,19 @@ export async function upsertReceivedEmail(email: {
     try {
       const supabase = supabaseServer();
       // DB-level deduplication: upsert with ON CONFLICT (resend_id) DO NOTHING
-      const { error: upsertErr } = await supabase
+      let { error: upsertErr } = await supabase
         .from('inbox_messages')
         .upsert(richRow, { onConflict: 'resend_id', ignoreDuplicates: true });
+
+      // Fallback if migration 20261110030000_inbox_mailbox.sql has not been run yet
+      if (upsertErr && (upsertErr.message?.includes('mailbox') || upsertErr.message?.includes('schema cache'))) {
+        const fallbackRow = { ...richRow };
+        delete (fallbackRow as Record<string, unknown>).mailbox;
+        const retryResult = await supabase
+          .from('inbox_messages')
+          .upsert(fallbackRow, { onConflict: 'resend_id', ignoreDuplicates: true });
+        upsertErr = retryResult.error;
+      }
 
       if (upsertErr) {
         console.warn('[MailStore] Supabase upsert error for received email:', upsertErr.message);
@@ -1050,6 +1178,7 @@ export async function upsertReceivedEmail(email: {
       ...normalized,
       threadId: store.messages[existingIdx].threadId || resolvedThreadId,
       thread_id: store.messages[existingIdx].thread_id || resolvedThreadId,
+      mailbox: store.messages[existingIdx].mailbox || mailbox,
       isRead: store.messages[existingIdx].isRead,
       readAt: store.messages[existingIdx].readAt,
       isStarred: store.messages[existingIdx].isStarred,
@@ -1628,12 +1757,53 @@ export async function syncReceivedEmailsFromResend(force = false): Promise<{ cou
       return { count: 0, newEmails: [] };
     }
 
-    const importedIds: string[] = [];
+    // Classify each summary from its recipients before fetching details.
+    // Skip 'ignore' without fetching, and log the skipped count.
+    let skippedForeignCount = 0;
+    const summariesToProcess: typeof newSummaries = [];
+
     for (const item of newSummaries) {
+      const recipients: string[] = [];
+      if (Array.isArray(item.to)) recipients.push(...item.to);
+      else if (typeof item.to === 'string' && item.to) recipients.push(item.to);
+
+      if (recipients.length > 0) {
+        const mb = classifyMailbox(recipients);
+        if (mb === 'ignore') {
+          skippedForeignCount++;
+          continue;
+        }
+      }
+      summariesToProcess.push(item);
+    }
+
+    if (skippedForeignCount > 0) {
+      console.log(`[MailStore] Skipped ${skippedForeignCount} foreign-domain emails during sync`);
+    }
+
+    const importedIds: string[] = [];
+    for (const item of summariesToProcess) {
       try {
         const fullRes = await resend.emails.receiving.get(item.id);
         if (fullRes.data) {
           const full = fullRes.data;
+
+          // If summary lacked recipients, classify now from full email
+          const fullRecipients: string[] = [];
+          if (Array.isArray(full.to)) fullRecipients.push(...full.to);
+          else if (typeof full.to === 'string' && full.to) fullRecipients.push(full.to);
+          const fullRaw = full as unknown as Record<string, unknown>;
+          if (Array.isArray(fullRaw.cc)) fullRecipients.push(...(fullRaw.cc as string[]));
+          else if (typeof fullRaw.cc === 'string') fullRecipients.push(fullRaw.cc);
+          if (Array.isArray(fullRaw.bcc)) fullRecipients.push(...(fullRaw.bcc as string[]));
+          else if (typeof fullRaw.bcc === 'string') fullRecipients.push(fullRaw.bcc);
+
+          const mb = classifyMailbox(fullRecipients);
+          if (mb === 'ignore') {
+            console.log(`[MailStore] Skipped foreign-domain email ${full.id} during details fetch`);
+            continue;
+          }
+
           const saved = await upsertReceivedEmail({
             id: full.id,
             from: full.from,
@@ -1644,24 +1814,10 @@ export async function syncReceivedEmailsFromResend(force = false): Promise<{ cou
             created_at: full.created_at,
             headers: full.headers as Record<string, unknown> | undefined,
             attachments: full.attachments as EmailAttachment[] | undefined,
+            mailbox: mb as 'official' | 'unofficial',
           });
 
           if (saved) {
-            // Also deliver to Temp Mail if recipient is a disposable address
-            try {
-              const { ingestInboundEmail } = await import('@/lib/os/temp-mail');
-              await ingestInboundEmail({
-                resendId: full.id,
-                from: full.from,
-                to: full.to,
-                subject: full.subject,
-                text: full.text,
-                html: full.html,
-              });
-            } catch {
-              // ignore non-blocking
-            }
-
             importedIds.push(full.id);
           }
         }

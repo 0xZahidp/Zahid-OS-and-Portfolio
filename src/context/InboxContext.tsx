@@ -6,12 +6,13 @@ import { MailThread, MailFolder } from '@/types/mail';
 export interface FolderCounts {
   inbox: number;
   unread: number;
+  unofficial: number;
+  unofficialUnread: number;
   sent: number;
   starred: number;
   archive: number;
   trash: number;
   official?: number;
-  temp?: number;
 }
 
 interface InboxContextType {
@@ -29,6 +30,9 @@ interface InboxContextType {
   loadError: boolean;
   defaultSender: string;
   lastSyncedAt: Date | null;
+  page: number;
+  totalPages: number;
+  totalCount: number;
 
   // Setters
   setActiveThreadId: (id: string | null) => void;
@@ -36,6 +40,9 @@ interface InboxContextType {
   setSearchQuery: (query: string) => void;
   setSelectedAlias: (alias: string) => void;
   setMailCategory: (category: 'official' | 'temp' | 'all') => void;
+  setPage: (page: number) => void;
+  nextPage: () => void;
+  prevPage: () => void;
 
   // Operations
   fetchThreads: (forceSync?: boolean) => Promise<void>;
@@ -68,6 +75,8 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [counts, setCounts] = useState<FolderCounts>({
     inbox: 0,
     unread: 0,
+    unofficial: 0,
+    unofficialUnread: 0,
     sent: 0,
     starred: 0,
     archive: 0,
@@ -78,6 +87,16 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [loadError, setLoadError] = useState<boolean>(false);
   const [defaultSender, setDefaultSender] = useState<string>('Md Zahid Hasan <hello@zahidp.com>');
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+
+  // Pagination states (25 threads per page)
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [folder, searchQuery, selectedAlias, mailCategory]);
 
   // 1. Initial status fetch (for defaultSender & initial unread count)
   useEffect(() => {
@@ -96,7 +115,7 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     loadStatus();
   }, []);
 
-  // 2. Main fetch function
+  // 2. Main fetch function (reads from Supabase paginated, never polls Resend automatically)
   const fetchThreads = useCallback(
     async (forceSync = false) => {
       if (forceSync) setIsSyncing(true);
@@ -109,6 +128,8 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (selectedAlias && selectedAlias !== 'all') params.set('alias', selectedAlias.trim());
         if (mailCategory) params.set('category', mailCategory);
         if (forceSync) params.set('forceSync', 'true');
+        params.set('page', String(page));
+        params.set('limit', '25');
 
         const res = await fetch(`/api/mail/messages?${params.toString()}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -118,6 +139,8 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setThreads(data.threads);
           if (typeof data.unreadCount === 'number') setUnreadThreadCount(data.unreadCount);
           if (data.counts) setCounts(data.counts);
+          if (typeof data.totalPages === 'number') setTotalPages(data.totalPages);
+          if (typeof data.totalCount === 'number') setTotalCount(data.totalCount);
           setLoadError(false);
           setLastSyncedAt(new Date());
         }
@@ -129,20 +152,12 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsSyncing(false);
       }
     },
-    [folder, searchQuery, selectedAlias, mailCategory, threads.length]
+    [folder, searchQuery, selectedAlias, mailCategory, page, threads.length]
   );
 
-  // Re-fetch on filter change
+  // Re-fetch on filter or page change
   useEffect(() => {
     fetchThreads(false);
-  }, [fetchThreads]);
-
-  // 3. Fallback background poll every 15s
-  useEffect(() => {
-    const timer = setInterval(() => {
-      fetchThreads(false);
-    }, 15000);
-    return () => clearInterval(timer);
   }, [fetchThreads]);
 
   // 4. Derive active thread
@@ -150,6 +165,37 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!activeThreadId) return null;
     return threads.find((t) => t.id === activeThreadId) || null;
   }, [threads, activeThreadId]);
+
+  // 4b. On-demand load full message bodies for the active thread view
+  useEffect(() => {
+    if (!activeThreadId) return;
+    const thread = threads.find((t) => t.id === activeThreadId);
+    if (!thread) return;
+
+    const needsBodies = thread.messages.some((m) => !m.htmlBody && !m.textBody && !m.body);
+    if (needsBodies) {
+      fetch(`/api/mail/messages?threadId=${encodeURIComponent(activeThreadId)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.thread) {
+            setThreads((prev) =>
+              prev.map((t) => (t.id === activeThreadId ? data.thread : t))
+            );
+          }
+        })
+        .catch((err) => {
+          console.warn('[InboxContext] Failed to fetch thread bodies:', err);
+        });
+    }
+  }, [activeThreadId, threads]);
+
+  const nextPage = useCallback(() => {
+    setPage((p) => Math.min(totalPages, p + 1));
+  }, [totalPages]);
+
+  const prevPage = useCallback(() => {
+    setPage((p) => Math.max(1, p - 1));
+  }, []);
 
   // 5. Auto-mark thread as read after 500ms of viewing
   useEffect(() => {
@@ -369,11 +415,17 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       loadError,
       defaultSender,
       lastSyncedAt,
+      page,
+      totalPages,
+      totalCount,
       setActiveThreadId,
       setFolder,
       setSearchQuery,
       setSelectedAlias,
       setMailCategory,
+      setPage,
+      nextPage,
+      prevPage,
       fetchThreads,
       markThreadRead,
       toggleThreadStar,
@@ -397,6 +449,12 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       loadError,
       defaultSender,
       lastSyncedAt,
+      page,
+      totalPages,
+      totalCount,
+      setPage,
+      nextPage,
+      prevPage,
       fetchThreads,
       markThreadRead,
       toggleThreadStar,

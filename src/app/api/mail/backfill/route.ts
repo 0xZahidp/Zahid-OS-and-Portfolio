@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getAppSecret } from '@/lib/env-vault';
 import { upsertReceivedEmail, readMailStore, writeMailStore, getTombstoneResendIds } from '@/lib/mail/store';
+import { classifyMailbox } from '@/lib/mail/mailbox';
 import { supabaseServer } from '@/lib/supabase/server';
 import { EmailAttachment } from '@/types/mail';
 import { requireAdmin } from '@/lib/auth/admin-auth';
@@ -70,14 +71,54 @@ async function handleBackfill(req: NextRequest) {
       `[Backfill] Resend total: ${emailSummaries.length}, tombstoned: ${tombstones.size}, eligible: ${eligibleSummaries.length}`
     );
 
-    // 4. Ingest each eligible email by getting full body and upserting
-    const imported: Array<{ id: string; subject: string; from: string; to: string[] }> = [];
+    // 4. Pre-filter foreign domain summaries without fetching full details
+    let skippedForeignCount = 0;
+    const summariesToProcess: typeof eligibleSummaries = [];
 
     for (const item of eligibleSummaries) {
+      const recipients: string[] = [];
+      const itemTo = (item as Record<string, unknown>).to;
+      if (Array.isArray(itemTo)) recipients.push(...(itemTo as string[]));
+      else if (typeof itemTo === 'string' && itemTo) recipients.push(itemTo);
+
+      if (recipients.length > 0) {
+        const mb = classifyMailbox(recipients);
+        if (mb === 'ignore') {
+          skippedForeignCount++;
+          continue;
+        }
+      }
+      summariesToProcess.push(item);
+    }
+
+    if (skippedForeignCount > 0) {
+      console.log(`[Backfill] Skipped ${skippedForeignCount} foreign-domain emails before fetching details`);
+    }
+
+    // 5. Ingest each eligible email by getting full body and upserting
+    const imported: Array<{ id: string; subject: string; from: string; to: string[] }> = [];
+
+    for (const item of summariesToProcess) {
       try {
         const fullEmailRes = await resend.emails.receiving.get(item.id);
         if (fullEmailRes.data) {
           const fullEmail = fullEmailRes.data;
+
+          const fullRecipients: string[] = [];
+          if (Array.isArray(fullEmail.to)) fullRecipients.push(...fullEmail.to);
+          else if (typeof fullEmail.to === 'string' && fullEmail.to) fullRecipients.push(fullEmail.to);
+          const fullRaw = fullEmail as unknown as Record<string, unknown>;
+          if (Array.isArray(fullRaw.cc)) fullRecipients.push(...(fullRaw.cc as string[]));
+          else if (typeof fullRaw.cc === 'string') fullRecipients.push(fullRaw.cc);
+          if (Array.isArray(fullRaw.bcc)) fullRecipients.push(...(fullRaw.bcc as string[]));
+          else if (typeof fullRaw.bcc === 'string') fullRecipients.push(fullRaw.bcc);
+
+          const mb = classifyMailbox(fullRecipients);
+          if (mb === 'ignore') {
+            console.log(`[Backfill] Skipped foreign-domain email ${fullEmail.id} after details fetch`);
+            continue;
+          }
+
           const saved = await upsertReceivedEmail({
             id: fullEmail.id,
             from: fullEmail.from,
@@ -88,6 +129,7 @@ async function handleBackfill(req: NextRequest) {
             created_at: fullEmail.created_at,
             headers: fullEmail.headers as Record<string, unknown> | undefined,
             attachments: fullEmail.attachments as EmailAttachment[] | undefined,
+            mailbox: mb as 'official' | 'unofficial',
           });
 
           if (saved) {

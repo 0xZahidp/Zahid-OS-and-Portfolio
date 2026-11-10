@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getAppSecret } from '@/lib/env-vault';
-import { upsertReceivedEmail, getTombstoneResendIds } from '@/lib/mail/store';
+import {
+  upsertReceivedEmail,
+  getTombstoneResendIds,
+  readMailStore,
+  writeMailStore,
+} from '@/lib/mail/store';
+import { classifyMailbox } from '@/lib/mail/mailbox';
+import { supabaseServer } from '@/lib/supabase/server';
 import { EmailAttachment } from '@/types/mail';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-let hasLoggedWebhookSecretMissing = false;
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,36 +20,36 @@ export async function POST(req: NextRequest) {
     const rawBody = await req.text();
 
     if (!rawBody) {
+      console.warn('[resend-webhook] Empty request body received');
       return NextResponse.json({ error: 'Empty request body' }, { status: 400 });
     }
 
-    // 2. Unsigned requests must return 401
+    // 2. Extract Svix signature headers
     const svixId = req.headers.get('svix-id') || req.headers.get('webhook-id') || '';
     const svixTimestamp = req.headers.get('svix-timestamp') || req.headers.get('webhook-timestamp') || '';
     const svixSignature = req.headers.get('svix-signature') || req.headers.get('webhook-signature') || '';
 
+    // Missing signature headers -> fail with 400
     if (!svixId || !svixTimestamp || !svixSignature) {
+      console.warn('[resend-webhook] Missing signature headers');
       return NextResponse.json(
-        { error: 'Unauthorized: Missing signature headers' },
-        { status: 401 }
+        { error: 'Missing signature headers' },
+        { status: 400 }
       );
     }
 
-    // 3. Fetch Webhook Secret (if missing when signed request arrives, log warning once and return 503)
+    // 3. Fetch Webhook Secret: if missing, fail closed (500) and log clear error
     const webhookSecret =
       (await getAppSecret('RESEND_WEBHOOK_SECRET')) || process.env.RESEND_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
-      if (!hasLoggedWebhookSecretMissing) {
-        hasLoggedWebhookSecretMissing = true;
-        console.warn(
-          '[Resend Webhook] RESEND_WEBHOOK_SECRET is not configured in environment or database. Webhook endpoint unavailable.'
-        );
-      }
-      return NextResponse.json({ error: 'Webhook service unavailable' }, { status: 503 });
+      console.error(
+        '[resend-webhook] RESEND_WEBHOOK_SECRET is not configured in environment or database. Failing closed with 500.'
+      );
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
     }
 
-    // 4. Badly signed requests must return 401
+    // 4. Verify Svix signature with RESEND_WEBHOOK_SECRET
     const apiKey = (await getAppSecret('RESEND_API_KEY')) || process.env.RESEND_API_KEY;
     const resend = new Resend(apiKey || 're_webhook_verifier');
 
@@ -59,15 +64,11 @@ export async function POST(req: NextRequest) {
         },
       });
     } catch {
-      return NextResponse.json({ error: 'Unauthorized: Invalid webhook signature' }, { status: 401 });
+      console.warn('[resend-webhook] Invalid signature verification');
+      return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 400 });
     }
 
-    if (!apiKey) {
-      console.error('[Resend Webhook] RESEND_API_KEY is not configured');
-      return NextResponse.json({ error: 'RESEND_API_KEY missing' }, { status: 500 });
-    }
-
-    // 4. Parse JSON payload
+    // 5. Parse JSON payload
     let event: {
       type: string;
       created_at?: string;
@@ -83,95 +84,264 @@ export async function POST(req: NextRequest) {
     try {
       event = JSON.parse(rawBody);
     } catch {
+      console.warn('[resend-webhook] Malformed JSON payload');
       return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
     }
 
-    // 5. Handle only `email.received` event; return 200 quickly for other events
-    if (event.type !== 'email.received') {
-      return NextResponse.json(
-        { received: true, ignored: event.type, message: 'Event type not monitored' },
-        { status: 200 }
-      );
-    }
-
-    // 6. Extract email id from event data
     const emailId = event.data?.email_id || event.data?.id;
 
-    if (!emailId) {
-      console.error('[Resend Webhook] email.received event missing email_id in data:', event);
-      return NextResponse.json({ error: 'Missing email_id in webhook event data' }, { status: 400 });
+    // 6. Handle Outbound Status Events: email.delivered, email.failed, email.bounced, email.complained
+    const OUTBOUND_STATUS_MAP: Record<string, 'delivered' | 'failed' | 'bounced' | 'complained'> = {
+      'email.delivered': 'delivered',
+      'email.failed': 'failed',
+      'email.bounced': 'bounced',
+      'email.complained': 'complained',
+    };
+
+    if (OUTBOUND_STATUS_MAP[event.type]) {
+      if (!emailId) {
+        console.warn(`[resend-webhook] ${event.type} event missing email_id`);
+        return NextResponse.json({ error: 'Missing email_id' }, { status: 400 });
+      }
+
+      const targetStatus = OUTBOUND_STATUS_MAP[event.type];
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      let existingSent: { id: string; status: string } | null = null;
+
+      if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+        try {
+          const supabase = supabaseServer();
+          const { data, error } = await supabase
+            .from('inbox_messages')
+            .select('id, status')
+            .eq('resend_id', emailId)
+            .eq('direction', 'outbound')
+            .maybeSingle();
+
+          if (error) {
+            console.error(`[resend-webhook] Database error querying sent message for ${emailId}:`, error.message);
+            return NextResponse.json({ error: 'Database query error' }, { status: 500 });
+          }
+          if (data) existingSent = data;
+        } catch (err) {
+          console.error(`[resend-webhook] Exception querying sent message for ${emailId}:`, err);
+          return NextResponse.json({ error: 'Database query exception' }, { status: 500 });
+        }
+      } else {
+        const store = await readMailStore();
+        const local = store.messages.find(
+          (m) => m.resendId === emailId && (m.direction === 'outbound' || m.folder === 'sent')
+        );
+        if (local) existingSent = { id: local.id, status: local.status || '' };
+      }
+
+      // If no matching outbound row exists, return 200 { received: true, ignored: 'unknown-message' }
+      if (!existingSent) {
+        console.log(`[resend-webhook] Ignored ${event.type} for unknown outbound message: ${emailId}`);
+        return NextResponse.json({ received: true, ignored: 'unknown-message' }, { status: 200 });
+      }
+
+      // Status updates must be idempotent.
+      // A delivered event must never overwrite a final failed/bounced/complained status if it arrives late.
+      const TERMINAL_FAILURES = ['failed', 'bounced', 'complained'];
+      if (targetStatus === 'delivered' && TERMINAL_FAILURES.includes(existingSent.status)) {
+        console.log(
+          `[resend-webhook] Delivered event ignored for terminal status "${existingSent.status}" on ${emailId}`
+        );
+        return NextResponse.json({ received: true, ignored: 'already-terminal' }, { status: 200 });
+      }
+
+      if (existingSent.status === targetStatus) {
+        return NextResponse.json({ received: true, updated: false, status: targetStatus }, { status: 200 });
+      }
+
+      // Update ONLY status column. Never touch is_read, is_starred, folder, is_trashed, or thread_id.
+      if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+        try {
+          const supabase = supabaseServer();
+          const { error: updateErr } = await supabase
+            .from('inbox_messages')
+            .update({ status: targetStatus })
+            .eq('id', existingSent.id);
+
+          if (updateErr) {
+            console.error(
+              `[resend-webhook] Database error updating status to ${targetStatus} for ${emailId}:`,
+              updateErr.message
+            );
+            return NextResponse.json({ error: 'Database update error' }, { status: 500 });
+          }
+        } catch (err) {
+          console.error(`[resend-webhook] Exception updating status for ${emailId}:`, err);
+          return NextResponse.json({ error: 'Database update exception' }, { status: 500 });
+        }
+      }
+
+      try {
+        const store = await readMailStore();
+        const localMsg = store.messages.find((m) => m.id === existingSent?.id || m.resendId === emailId);
+        if (localMsg) {
+          localMsg.status = targetStatus;
+          await writeMailStore(store);
+        }
+      } catch {
+        // non-blocking local fallback
+      }
+
+      console.log(`[resend-webhook] Updated outbound status to "${targetStatus}" for email_id: ${emailId}`);
+      return NextResponse.json({ received: true, updated: true, status: targetStatus }, { status: 200 });
     }
 
-    // 6b. Check tombstones before calling Resend Receiving API
-    const tombstones = await getTombstoneResendIds();
-    if (tombstones.has(emailId)) {
-      console.log(`[Resend Webhook] Ignoring permanently deleted email (Resend ID: ${emailId})`);
-      return NextResponse.json(
-        { received: true, ignored: 'tombstoned', message: 'Email was previously permanently deleted' },
-        { status: 200 }
-      );
-    }
+    // 7. Handle Inbound Event: email.received
+    if (event.type === 'email.received') {
+      if (!emailId) {
+        console.warn('[resend-webhook] email.received event missing email_id');
+        return NextResponse.json({ error: 'Missing email_id' }, { status: 400 });
+      }
 
-    // 7. Fetch full email (html, text, headers, attachments) using Resend Receiving API
-    const fullEmailRes = await resend.emails.receiving.get(emailId);
+      // 7a. Check tombstones first
+      const tombstones = await getTombstoneResendIds();
+      if (tombstones.has(emailId)) {
+        console.log(`[resend-webhook] Tombstoned email.received ignored for email_id: ${emailId}`);
+        return NextResponse.json({ received: true, ignored: 'tombstoned' }, { status: 200 });
+      }
 
-    if (fullEmailRes.error || !fullEmailRes.data) {
-      const errMsg = fullEmailRes.error?.message || 'Failed to fetch email from Resend Receiving API';
-      console.error(`[Resend Webhook] Error fetching receiving email ${emailId}:`, errMsg);
-      return NextResponse.json({ error: errMsg }, { status: 500 });
-    }
+      // 7b. Check if already exists in inbox_messages (duplicate)
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      let isDuplicate = false;
 
-    const fullEmail = fullEmailRes.data;
+      if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+        try {
+          const supabase = supabaseServer();
+          const { data: existing, error: existErr } = await supabase
+            .from('inbox_messages')
+            .select('id')
+            .eq('resend_id', emailId)
+            .maybeSingle();
 
-    // 8. Upsert into Supabase (and local store) keyed on Resend email id
-    const savedMessage = await upsertReceivedEmail({
-      id: fullEmail.id,
-      from: fullEmail.from,
-      to: fullEmail.to,
-      subject: fullEmail.subject,
-      html: fullEmail.html,
-      text: fullEmail.text,
-      created_at: fullEmail.created_at,
-      headers: fullEmail.headers as Record<string, unknown> | undefined,
-      attachments: fullEmail.attachments as EmailAttachment[] | undefined,
-    });
+          if (existErr) {
+            console.error(
+              `[resend-webhook] Database error checking duplicate for ${emailId}:`,
+              existErr.message
+            );
+            return NextResponse.json({ error: 'Database check failure' }, { status: 500 });
+          }
+          if (existing) isDuplicate = true;
+        } catch (err) {
+          console.error(`[resend-webhook] Exception checking duplicate for ${emailId}:`, err);
+          return NextResponse.json({ error: 'Database check exception' }, { status: 500 });
+        }
+      } else {
+        const store = await readMailStore();
+        if (store.messages.some((m) => m.resendId === emailId)) {
+          isDuplicate = true;
+        }
+      }
 
-    if (!savedMessage) {
-      return NextResponse.json(
-        { received: true, ignored: 'tombstoned', message: 'Email was previously permanently deleted' },
-        { status: 200 }
-      );
-    }
+      if (isDuplicate) {
+        console.log(`[resend-webhook] Duplicate email.received ignored for email_id: ${emailId}`);
+        return NextResponse.json({ received: true, ignored: 'duplicate' }, { status: 200 });
+      }
 
-    // 8b. Also check if recipient matches an active Zahid OS Temp Mail inbox with anti-flooding limits
-    try {
-      const { ingestInboundEmail } = await import('@/lib/os/temp-mail');
-      await ingestInboundEmail({
-        resendId: fullEmail.id,
+      // 7c. Classify recipients if available in event payload before calling Resend API
+      const payloadRecipients: string[] = [];
+      const toField = event.data?.to;
+      if (Array.isArray(toField)) payloadRecipients.push(...toField);
+      else if (typeof toField === 'string' && toField) payloadRecipients.push(toField);
+
+      const rawEventData = (event.data || {}) as Record<string, unknown>;
+      if (Array.isArray(rawEventData.cc)) payloadRecipients.push(...(rawEventData.cc as string[]));
+      else if (typeof rawEventData.cc === 'string') payloadRecipients.push(rawEventData.cc);
+      if (Array.isArray(rawEventData.bcc)) payloadRecipients.push(...(rawEventData.bcc as string[]));
+      else if (typeof rawEventData.bcc === 'string') payloadRecipients.push(rawEventData.bcc);
+
+      let mailbox: 'official' | 'unofficial' | 'ignore' | null = null;
+      if (payloadRecipients.length > 0) {
+        mailbox = classifyMailbox(payloadRecipients);
+        if (mailbox === 'ignore') {
+          console.log(
+            `[resend-webhook] Ignored foreign-domain recipient "${payloadRecipients.join(', ')}" for email_id: ${emailId}`
+          );
+          return NextResponse.json({ received: true, ignored: 'foreign-domain' }, { status: 200 });
+        }
+      }
+
+      if (!apiKey) {
+        console.error('[resend-webhook] RESEND_API_KEY is not configured');
+        return NextResponse.json({ error: 'RESEND_API_KEY missing' }, { status: 500 });
+      }
+
+      // 7d. Fetch full email from Resend Receiving API
+      const fullEmailRes = await resend.emails.receiving.get(emailId);
+
+      if (fullEmailRes.error || !fullEmailRes.data) {
+        const errMsg = fullEmailRes.error?.message || 'Failed to fetch email from Resend Receiving API';
+        console.error(`[resend-webhook] Error fetching receiving email ${emailId}:`, errMsg);
+        return NextResponse.json({ error: errMsg }, { status: 500 });
+      }
+
+      const fullEmail = fullEmailRes.data;
+
+      // If event payload did not include recipients, classify now from full email details
+      if (!mailbox) {
+        const fetchedRecipients: string[] = [];
+        if (Array.isArray(fullEmail.to)) fetchedRecipients.push(...fullEmail.to);
+        else if (typeof fullEmail.to === 'string' && fullEmail.to) fetchedRecipients.push(fullEmail.to);
+
+        const fullRaw = fullEmail as unknown as Record<string, unknown>;
+        if (Array.isArray(fullRaw.cc)) fetchedRecipients.push(...(fullRaw.cc as string[]));
+        else if (typeof fullRaw.cc === 'string') fetchedRecipients.push(fullRaw.cc);
+        if (Array.isArray(fullRaw.bcc)) fetchedRecipients.push(...(fullRaw.bcc as string[]));
+        else if (typeof fullRaw.bcc === 'string') fetchedRecipients.push(fullRaw.bcc);
+
+        mailbox = classifyMailbox(fetchedRecipients);
+        if (mailbox === 'ignore') {
+          console.log(
+            `[resend-webhook] Ignored foreign-domain recipient "${fetchedRecipients.join(', ')}" for email_id: ${emailId}`
+          );
+          return NextResponse.json({ received: true, ignored: 'foreign-domain' }, { status: 200 });
+        }
+      }
+
+      // 7e. Insert through existing upsertReceivedEmail path with mailbox classification
+      const savedMessage = await upsertReceivedEmail({
+        id: fullEmail.id,
         from: fullEmail.from,
         to: fullEmail.to,
         subject: fullEmail.subject,
-        text: fullEmail.text,
         html: fullEmail.html,
+        text: fullEmail.text,
+        created_at: fullEmail.created_at,
+        headers: fullEmail.headers as Record<string, unknown> | undefined,
+        attachments: fullEmail.attachments as EmailAttachment[] | undefined,
+        mailbox: mailbox as 'official' | 'unofficial',
       });
-    } catch (tempMailErr) {
-      console.warn('[Resend Webhook] Temp mail ingestion notice:', tempMailErr);
+
+      if (!savedMessage) {
+        return NextResponse.json({ received: true, ignored: 'tombstoned' }, { status: 200 });
+      }
+
+      console.log(`[resend-webhook] Successfully ingested ${mailbox} email.received for email_id: ${emailId}`);
+      return NextResponse.json(
+        {
+          success: true,
+          messageId: savedMessage.id,
+          resendId: savedMessage.resendId,
+          mailbox,
+        },
+        { status: 200 }
+      );
     }
 
-    console.log(`[Resend Webhook] Successfully ingested incoming email "${savedMessage.subject}" from ${savedMessage.from.email} (Resend ID: ${savedMessage.resendId})`);
-
+    // 8. Ignore any other event types with HTTP 200
+    console.log(`[resend-webhook] Ignored unmonitored event type: ${event.type}`);
     return NextResponse.json(
-      {
-        success: true,
-        messageId: savedMessage.id,
-        resendId: savedMessage.resendId,
-        subject: savedMessage.subject,
-      },
+      { received: true, ignored: event.type },
       { status: 200 }
     );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal webhook processing error';
-    console.error('[Resend Webhook] Unhandled exception:', message);
+    console.error('[resend-webhook] Unhandled exception:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

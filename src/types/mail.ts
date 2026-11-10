@@ -3,7 +3,7 @@ export interface EmailAddress {
   email: string;
 }
 
-export type MailFolder = 'inbox' | 'sent' | 'starred' | 'archive' | 'trash';
+export type MailFolder = 'inbox' | 'unofficial' | 'sent' | 'starred' | 'archive' | 'trash';
 
 export interface EmailAttachment {
   id?: string | null;
@@ -22,6 +22,8 @@ export interface MailMessage {
   resendId?: string;
   resend_id?: string;
   folder: 'inbox' | 'sent' | 'archive' | 'trash';
+  status?: 'unread' | 'read' | 'delivered' | 'failed' | 'bounced' | 'complained' | string;
+  mailbox?: 'official' | 'unofficial' | null;
   from: EmailAddress;
   to: EmailAddress[];
   replyTo?: string;
@@ -63,6 +65,7 @@ export interface MailThread {
   hasSent: boolean;
   hasInbound: boolean;
   tags: string[];
+  mailbox?: 'official' | 'unofficial' | null;
   messages: MailMessage[];
 }
 

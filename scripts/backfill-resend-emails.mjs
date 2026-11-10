@@ -44,6 +44,47 @@ console.log('Supabase URL:', supabaseUrl || 'None');
 const resend = new Resend(apiKey);
 const supabase = supabaseUrl && serviceKey ? createClient(supabaseUrl, serviceKey) : null;
 
+const OFFICIAL_DOMAIN = 'zahidp.com';
+const OFFICIAL_SLUGS = new Set([
+  'contact', 'hello', 'info', 'support', 'hire', 'jobs', 'careers', 'business',
+  'partnerships', 'billing', 'privacy', 'legal', 'security', 'abuse', 'postmaster', 'admin', 'zahid'
+]);
+
+function parseEmailAddress(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const angleMatch = trimmed.match(/<([^>]+)>/);
+  const addr = (angleMatch ? angleMatch[1] : trimmed).trim();
+  const atIdx = addr.indexOf('@');
+  if (atIdx <= 0 || atIdx === addr.length - 1) return null;
+  const local = addr.slice(0, atIdx).trim().toLowerCase();
+  const domain = addr.slice(atIdx + 1).trim().toLowerCase();
+  const slug = local.split('+')[0].trim();
+  return { local, slug, domain };
+}
+
+function classifyMailbox(recipients) {
+  if (!Array.isArray(recipients) || recipients.length === 0) return 'ignore';
+  let hasOfficial = false;
+  let hasUnofficial = false;
+  for (const raw of recipients) {
+    if (!raw) continue;
+    const parts = raw.split(',');
+    for (const part of parts) {
+      const parsed = parseEmailAddress(part);
+      if (!parsed) continue;
+      if (parsed.domain === OFFICIAL_DOMAIN.toLowerCase()) {
+        if (OFFICIAL_SLUGS.has(parsed.slug)) hasOfficial = true;
+        else hasUnofficial = true;
+      }
+    }
+  }
+  if (hasOfficial) return 'official';
+  if (hasUnofficial) return 'unofficial';
+  return 'ignore';
+}
+
 async function runBackfill() {
   try {
     // 1. List all received emails from Resend Receiving
@@ -91,10 +132,32 @@ async function runBackfill() {
     const eligibleSummaries = emailSummaries.filter((item) => !tombstones.has(item.id));
     console.log(`Eligible emails after tombstone filter: ${eligibleSummaries.length} of ${emailSummaries.length} (${tombstones.size} tombstones active).`);
 
-    // 2. Fetch full email for each eligible email and save
+    // 2. Pre-filter foreign domain summaries
+    let skippedForeignCount = 0;
+    const summariesToProcess = [];
+    for (const item of eligibleSummaries) {
+      const recipients = [];
+      if (Array.isArray(item.to)) recipients.push(...item.to);
+      else if (typeof item.to === 'string' && item.to) recipients.push(item.to);
+
+      if (recipients.length > 0) {
+        const mb = classifyMailbox(recipients);
+        if (mb === 'ignore') {
+          skippedForeignCount++;
+          continue;
+        }
+      }
+      summariesToProcess.push(item);
+    }
+
+    if (skippedForeignCount > 0) {
+      console.log(`Skipped ${skippedForeignCount} foreign-domain emails before fetching details.`);
+    }
+
+    // 3. Fetch full email for each eligible email and save
     let successCount = 0;
 
-    for (const item of eligibleSummaries) {
+    for (const item of summariesToProcess) {
       console.log(`\nFetching details for email [${item.id}] Subject: "${item.subject}"...`);
       const fullRes = await resend.emails.receiving.get(item.id);
       if (fullRes.error || !fullRes.data) {
@@ -103,6 +166,19 @@ async function runBackfill() {
       }
 
       const email = fullRes.data;
+
+      const allRecipients = [];
+      if (Array.isArray(email.to)) allRecipients.push(...email.to);
+      else if (typeof email.to === 'string' && email.to) allRecipients.push(email.to);
+      if (Array.isArray(email.cc)) allRecipients.push(...email.cc);
+      else if (typeof email.cc === 'string' && email.cc) allRecipients.push(email.cc);
+
+      const mb = classifyMailbox(allRecipients);
+      if (mb === 'ignore') {
+        console.log(`  Skipping foreign-domain email [${item.id}] for recipients: ${allRecipients.join(', ')}`);
+        continue;
+      }
+
       const textBody = email.text || (email.html ? email.html.replace(/<[^>]+>/g, ' ') : '');
       const toStr = Array.isArray(email.to) ? email.to.join(', ') : (email.to || 'hello@zahidp.com');
       const receivedAt = email.created_at || new Date().toISOString();
@@ -127,6 +203,7 @@ async function runBackfill() {
         from_name: fromName,
         from_email: fromEmail,
         to_email: toStr,
+        mailbox: mb,
         subject: email.subject || '(No Subject)',
         text_body: textBody,
         html_body: email.html || '',

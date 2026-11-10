@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import DOMPurify from 'dompurify';
 import {
   Send,
@@ -23,7 +23,6 @@ import {
   ArchiveRestore,
   Check,
   Lock,
-  Zap,
   Maximize2,
   ChevronDown,
   ChevronUp,
@@ -136,18 +135,21 @@ export const InboxTab: React.FC = () => {
     folder,
     searchQuery,
     selectedAlias,
-    mailCategory,
     counts,
     isLoading,
     isSyncing,
     loadError,
     defaultSender,
     lastSyncedAt,
+    page,
+    totalPages,
+    totalCount,
     setActiveThreadId,
     setFolder,
     setSearchQuery,
     setSelectedAlias,
-    setMailCategory,
+    nextPage,
+    prevPage,
     fetchThreads,
     markThreadRead,
     toggleThreadStar,
@@ -188,6 +190,21 @@ export const InboxTab: React.FC = () => {
       setComposeFrom(defaultSender);
     }
   }, [defaultSender]);
+
+  // Default replyFrom to the address the email was received at (already on zahidp.com)
+  useEffect(() => {
+    if (!activeThread) return;
+    const latestInbound = [...activeThread.messages].reverse().find((m) => m.direction === 'inbound');
+    const recipient =
+      latestInbound?.to?.find((t) => t.email && t.email.toLowerCase().endsWith('@zahidp.com')) ||
+      latestInbound?.to?.[0];
+    if (recipient?.email) {
+      const name = recipient.name && recipient.name !== 'Recipient' ? recipient.name : 'Md Zahid Hasan';
+      setReplyFrom(`${name} <${recipient.email}>`);
+    } else if (defaultSender) {
+      setReplyFrom(defaultSender);
+    }
+  }, [activeThread, defaultSender]);
 
   // Draft auto-save and restore per thread
   useEffect(() => {
@@ -306,6 +323,43 @@ export const InboxTab: React.FC = () => {
     markThreadRead,
   ]);
 
+  const handleBackToList = useCallback(() => {
+    setActiveThreadId(null);
+    setMobileView('list');
+  }, [setActiveThreadId]);
+
+  // Browser / device back button gesture support
+  useEffect(() => {
+    const onPopState = () => {
+      if (mobileView === 'message') {
+        handleBackToList();
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [mobileView, handleBackToList]);
+
+  // Automatically return to list view on mobile if selected thread is cleared
+  useEffect(() => {
+    if (!activeThreadId && mobileView === 'message') {
+      setMobileView('list');
+    }
+  }, [activeThreadId, mobileView]);
+
+  const handleDeleteThreadAction = async (threadId: string, isTrashed: boolean) => {
+    if (mobileView === 'message') {
+      handleBackToList();
+    }
+    await deleteThreadById(threadId, isTrashed);
+  };
+
+  const handleMoveThreadAction = async (threadId: string, targetFolder: MailFolder) => {
+    if (mobileView === 'message') {
+      handleBackToList();
+    }
+    await moveThread(threadId, targetFolder);
+  };
+
   // Toggle individual message collapse in thread
   const toggleMessageExpand = (msgId: string) => {
     setExpandedMessageIds((prev) => {
@@ -320,6 +374,9 @@ export const InboxTab: React.FC = () => {
   const handleSelectThread = (thread: MailThread) => {
     setActiveThreadId(thread.id);
     setMobileView('message');
+    if (typeof window !== 'undefined') {
+      window.history.pushState({ inboxView: 'message', threadId: thread.id }, '');
+    }
   };
 
   // Submit Quick Reply
@@ -471,6 +528,7 @@ export const InboxTab: React.FC = () => {
             <p className="px-2.5 text-[10px] font-bold text-ink-3 uppercase tracking-wider mb-1.5">Folders</p>
             {[
               { id: 'inbox' as MailFolder, label: 'Inbox', icon: Mail, count: counts.unread, isUnreadCount: true },
+              { id: 'unofficial' as MailFolder, label: 'Unofficial', icon: MailCheck, count: counts.unofficialUnread, isMutedCount: true },
               { id: 'starred' as MailFolder, label: 'Starred', icon: Star, count: counts.starred },
               { id: 'sent' as MailFolder, label: 'Sent', icon: Send, count: counts.sent },
               { id: 'archive' as MailFolder, label: 'Archive', icon: Archive, count: counts.archive },
@@ -505,6 +563,8 @@ export const InboxTab: React.FC = () => {
                       className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
                         f.isUnreadCount
                           ? 'bg-brand-500 text-white font-bold'
+                          : f.isMutedCount
+                          ? 'bg-surface-3 text-ink-3 font-medium border border-line/60'
                           : 'bg-surface-3 text-ink-3 font-semibold'
                       }`}
                     >
@@ -615,14 +675,13 @@ export const InboxTab: React.FC = () => {
                 </span>
               </div>
               {LOCKED_OFFICIAL_ALIASES.map((al) => {
-                const isActive = selectedAlias === al.alias && mailCategory === 'official';
+                const isActive = selectedAlias === al.alias;
                 return (
                   <button
                     key={al.id}
                     type="button"
                     onClick={() => {
                       setSelectedAlias(al.alias);
-                      setMailCategory('official');
                     }}
                     className={`px-2 py-0.5 rounded-md text-[10px] font-mono whitespace-nowrap transition-colors cursor-pointer shrink-0 flex items-center gap-1 ${
                       isActive
@@ -634,25 +693,6 @@ export const InboxTab: React.FC = () => {
                   </button>
                 );
               })}
-              <div className="h-3 w-px bg-line shrink-0 mx-0.5" />
-              <button
-                type="button"
-                onClick={() => {
-                  setMailCategory(mailCategory === 'temp' ? 'official' : 'temp');
-                  setSelectedAlias('all');
-                }}
-                className={`px-2 py-0.5 rounded-md text-[10px] font-mono whitespace-nowrap transition-colors cursor-pointer shrink-0 flex items-center gap-1 ${
-                  mailCategory === 'temp'
-                    ? 'bg-amber-500 text-black font-bold shadow-xs'
-                    : 'bg-surface border border-amber-500/30 text-amber-500 hover:bg-amber-500/10'
-                }`}
-              >
-                <Zap className="size-2.5" />
-                <span>
-                  Temp Mail{' '}
-                  {typeof counts.temp === 'number' && counts.temp > 0 ? `(${counts.temp})` : ''}
-                </span>
-              </button>
             </div>
           </div>
 
@@ -797,6 +837,33 @@ export const InboxTab: React.FC = () => {
               })
             )}
           </div>
+
+          {/* Pagination Controls (25 threads per page) */}
+          {totalPages > 1 && (
+            <div className="p-2.5 border-t border-line bg-surface/90 flex items-center justify-between text-[11px] text-ink-3 shrink-0">
+              <span className="font-mono text-[10px]">
+                Page {page} of {totalPages} ({totalCount} {totalCount === 1 ? 'thread' : 'threads'})
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={prevPage}
+                  className="px-2 py-0.5 rounded-md border border-line bg-surface hover:bg-surface-2 text-ink text-[10px] font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={nextPage}
+                  className="px-2 py-0.5 rounded-md border border-line bg-surface hover:bg-surface-2 text-ink text-[10px] font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* COLUMN 3: Reading Pane & Docked Reply Composer (3 Zones) */}
@@ -812,7 +879,7 @@ export const InboxTab: React.FC = () => {
                 <div className="flex items-center gap-2.5 min-w-0">
                   <button
                     type="button"
-                    onClick={() => setMobileView('list')}
+                    onClick={handleBackToList}
                     className="lg:hidden p-1.5 -ml-1 text-ink-3 hover:text-ink hover:bg-surface-2 rounded-lg transition-colors cursor-pointer shrink-0"
                     title="Back to conversation list"
                   >
@@ -880,7 +947,7 @@ export const InboxTab: React.FC = () => {
                   <button
                     type="button"
                     onClick={() =>
-                      moveThread(activeThread.id, activeThread.isArchived ? 'inbox' : 'archive')
+                      handleMoveThreadAction(activeThread.id, activeThread.isArchived ? 'inbox' : 'archive')
                     }
                     className="p-2 rounded-lg border border-line text-ink-3 hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors cursor-pointer"
                     title={activeThread.isArchived ? 'Move to Inbox' : 'Archive conversation'}
@@ -895,7 +962,7 @@ export const InboxTab: React.FC = () => {
                   {/* Delete / Trash */}
                   <button
                     type="button"
-                    onClick={() => deleteThreadById(activeThread.id, activeThread.isTrashed)}
+                    onClick={() => handleDeleteThreadAction(activeThread.id, activeThread.isTrashed)}
                     className="p-2 rounded-lg border border-line text-ink-3 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
                     title={activeThread.isTrashed ? 'Delete permanently' : 'Move to Trash'}
                   >
@@ -1162,11 +1229,33 @@ export const InboxTab: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className="flex-1 grid place-items-center p-8 text-center text-ink-3">
-              <div className="space-y-2">
-                <Mail className="size-10 mx-auto opacity-30" />
-                <h4 className="text-sm font-bold text-ink">Select a conversation to read</h4>
-                <p className="text-xs">Or press &apos;New Message&apos; above to compose and dispatch an email.</p>
+            <div className="flex-1 flex flex-col min-h-0 bg-surface">
+              {/* Mobile back button header when no active thread is selected */}
+              <div className="lg:hidden p-3 border-b border-line flex items-center gap-2 bg-surface shrink-0">
+                <button
+                  type="button"
+                  onClick={handleBackToList}
+                  className="p-1.5 text-ink-3 hover:text-ink hover:bg-surface-2 rounded-lg transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 text-xs font-semibold"
+                  title="Back to conversation list"
+                >
+                  <ArrowLeft className="size-4" />
+                  <span>Back to list</span>
+                </button>
+              </div>
+              <div className="flex-1 grid place-items-center p-8 text-center text-ink-3">
+                <div className="space-y-3">
+                  <Mail className="size-10 mx-auto opacity-30" />
+                  <h4 className="text-sm font-bold text-ink">Select a conversation to read</h4>
+                  <p className="text-xs">Or press &apos;New Message&apos; above to compose and dispatch an email.</p>
+                  <button
+                    type="button"
+                    onClick={handleBackToList}
+                    className="lg:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line bg-surface-2 hover:bg-surface-3 text-xs font-semibold text-ink transition-colors cursor-pointer"
+                  >
+                    <ArrowLeft className="size-3.5" />
+                    <span>Return to conversation list</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}

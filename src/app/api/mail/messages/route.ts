@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth/admin-auth';
 import {
   readMailStore,
-  filterMailMessages,
+  getThreadWithBodies,
   groupMessagesIntoThreads,
   calculateUnreadCount,
   calculateMailFolderCounts,
@@ -22,7 +22,7 @@ import { MailMessage } from '@/types/mail';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/mail/messages?folder=inbox&search=keyword&alias=test@zahidp.com&category=official&forceSync=false
+// GET /api/mail/messages?folder=inbox&search=keyword&alias=test@zahidp.com&category=official&forceSync=false&page=1&limit=25&threadId=...
 export async function GET(req: NextRequest) {
   const authError = await requireAdmin(req);
   if (authError) return authError;
@@ -32,49 +32,64 @@ export async function GET(req: NextRequest) {
     const folder = searchParams.get('folder') || 'inbox';
     const search = searchParams.get('search') || undefined;
     const alias = searchParams.get('alias') || undefined;
-    const category = (searchParams.get('category') || (folder === 'inbox' ? 'official' : 'all')) as
-      | 'official'
-      | 'temp'
-      | 'all';
     const forceSync = searchParams.get('forceSync') === 'true';
-    const autoSync = searchParams.get('sync') !== 'false';
+    const threadId = searchParams.get('threadId');
 
-    // 1. Sync emails from Resend Receiving
-    // If explicitly forceSync=true, wait for it.
-    // Otherwise, trigger in background without blocking so the inbox loads instantly (<30ms)!
-    if (autoSync) {
-      if (forceSync) {
-        try {
-          await syncReceivedEmailsFromResend(true);
-        } catch (syncErr) {
-          console.warn('[Messages Route] Resend auto-sync warning:', syncErr);
-        }
-      } else {
-        syncReceivedEmailsFromResend(false).catch((syncErr) => {
-          console.warn('[Messages Route] Background Resend sync note:', syncErr);
-        });
+    // 1. Manual sync fallback only: NEVER poll or sync automatically on page load
+    if (forceSync) {
+      try {
+        await syncReceivedEmailsFromResend(true);
+      } catch (syncErr) {
+        console.warn('[Messages Route] Manual Resend sync error:', syncErr);
       }
     }
 
-    // 2. Read mail store ONCE and calculate all views in memory (no repeated DB round-trips)
-    const store = await readMailStore();
+    // 2. Single thread detail view: fetch full thread messages with complete bodies
+    if (threadId) {
+      const thread = await getThreadWithBodies(threadId);
+      if (!thread) {
+        return NextResponse.json({ success: false, error: 'Thread not found' }, { status: 404 });
+      }
+      return NextResponse.json(
+        { success: true, thread },
+        {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          },
+        }
+      );
+    }
+
+    // 3. Paginated list query: read from Supabase (25 per page, ordered by received_at desc),
+    // without fetching heavy bodies in the list query.
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.max(1, parseInt(searchParams.get('limit') || '25', 10));
+    const offset = (page - 1) * limit;
+
+    const store = await readMailStore({ includeBody: false });
     const allMessages = store.messages || [];
 
-    const threads = groupMessagesIntoThreads(allMessages, { folder, search, alias, category });
-    const messages = filterMailMessages(allMessages, { folder, search, alias, category });
     const unreadCount = calculateUnreadCount(allMessages);
-    const counts = calculateMailFolderCounts(allMessages, category);
+    const counts = calculateMailFolderCounts(allMessages);
+
+    const allFilteredThreads = groupMessagesIntoThreads(allMessages, { folder, search, alias });
+    const totalCount = allFilteredThreads.length;
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+    const paginatedThreads = allFilteredThreads.slice(offset, offset + limit);
 
     return NextResponse.json(
       {
         success: true,
         folder,
-        category,
-        count: threads.length,
+        count: paginatedThreads.length,
+        totalCount,
+        page,
+        limit,
+        totalPages,
+        hasMore: page < totalPages,
         unreadCount,
         counts,
-        threads,
-        messages,
+        threads: paginatedThreads,
       },
       {
         headers: {
