@@ -77,6 +77,11 @@ const TempMailApp = dynamic(
   }
 );
 
+const IosNotesApp = dynamic(
+  () => import('@/components/os/IosNotesApp').then((m) => m.IosNotesApp),
+  { ssr: false }
+);
+
 const DEFAULT_OS_SETTINGS: ZahidOsSettings = {
   is_public_enabled: true,
   allow_public_link_creation: true,
@@ -120,23 +125,9 @@ export default function PublicZahidOsPage() {
   const [focusSeconds, setFocusSeconds] = useState<number>(25 * 60);
   const [isFocusRunning, setIsFocusRunning] = useState<boolean>(false);
 
-  // Scratchpad state
-  const [publicNote, setPublicNote] = useState<string>('');
-
   useEffect(() => {
     setHasMounted(true);
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('zos_public_scratchpad') || '';
-      setPublicNote(saved);
-    }
   }, []);
-
-  const handlePublicNoteChange = (val: string) => {
-    setPublicNote(val);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('zos_public_scratchpad', val);
-    }
-  };
 
   // Live clock
   useEffect(() => {
@@ -605,27 +596,8 @@ export default function PublicZahidOsPage() {
 
       case 'notes':
         return (
-          <div className="p-4 sm:p-7 space-y-4 max-w-3xl mx-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div>
-                <h3 className="font-bold text-base text-amber-300 flex items-center gap-2">
-                  <FileText className="size-4.5 text-amber-400" />
-                  <span>Instant Notes & Scratchpad</span>
-                </h3>
-                <p className="text-xs text-white/60">
-                  {publicNote.trim()
-                    ? `${publicNote.trim().split(/\s+/).length} words • Cached in browser storage`
-                    : 'Blank scratchpad'}
-                </p>
-              </div>
-            </div>
-            <textarea
-              value={publicNote}
-              onChange={(e) => handlePublicNoteChange(e.target.value)}
-              placeholder="Jot down quick thoughts, code snippets, or memos..."
-              rows={14}
-              className="w-full p-4 rounded-2xl border border-white/10 bg-amber-950/20 text-xs font-mono text-amber-100 placeholder:text-amber-200/30 outline-hidden leading-relaxed resize-y shadow-inner focus:border-amber-500/50"
-            />
+          <div className="p-4 sm:p-7 max-w-4xl mx-auto">
+            <IosNotesApp isAdmin={false} />
           </div>
         );
 
