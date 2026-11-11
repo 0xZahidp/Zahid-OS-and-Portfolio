@@ -14,12 +14,18 @@ const SoundManager = dynamic(
   { ssr: false }
 );
 
+const ConfirmDialog = dynamic(
+  () => import('./ConfirmDialog').then((m) => m.ConfirmDialog),
+  { ssr: false }
+);
+
 export const AmbientProviders: React.FC = () => {
   return (
     <>
       <ThemeManager />
       <SoundManager />
       <ContextMenu />
+      <ConfirmDialog />
     </>
   );
 };

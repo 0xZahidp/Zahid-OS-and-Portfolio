@@ -23,6 +23,7 @@ import {
   Columns,
   Maximize2,
 } from 'lucide-react';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 export interface IosNoteItem {
   id: string;
@@ -285,7 +286,13 @@ export const IosNotesApp: React.FC<IosNotesAppProps> = ({
 
   // Delete active or specified note
   const handleDeleteNote = async (idToDelete: string) => {
-    if (!confirm('Are you sure you want to delete this note?')) return;
+    const ok = await confirmModal({
+      title: 'Delete Note',
+      message: 'Are you sure you want to permanently delete this note?',
+      confirmText: 'Delete Note',
+      type: 'danger',
+    });
+    if (!ok) return;
 
     if (isAdmin && getAdminHeaders) {
       try {

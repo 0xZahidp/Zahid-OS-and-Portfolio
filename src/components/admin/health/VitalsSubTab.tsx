@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { Vital, VitalType, Vaccination } from '@/types/health';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 interface VitalsSubTabProps {
   vitals: Vital[];
@@ -615,7 +616,13 @@ export const VitalsSubTab: React.FC<VitalsSubTabProps> = ({
                 type="button"
                 onClick={async () => {
                   if (disabled) return;
-                  if (confirm('Delete this measurement entry?')) {
+                  const ok = await confirmModal({
+                    title: 'Delete Measurement',
+                    message: 'Are you sure you want to delete this measurement entry?',
+                    confirmText: 'Delete Measurement',
+                    type: 'danger',
+                  });
+                  if (ok) {
                     await onDeleteVital(vital.id);
                     showToast('✓ Measurement removed');
                   }
@@ -671,7 +678,13 @@ export const VitalsSubTab: React.FC<VitalsSubTabProps> = ({
                     type="button"
                     onClick={async () => {
                       if (disabled) return;
-                      if (confirm(`Delete vaccine record "${vac.name}"?`)) {
+                      const ok = await confirmModal({
+                        title: 'Delete Vaccine Record',
+                        message: `Delete vaccine record "${vac.name}"? This will also remove reminder notifications.`,
+                        confirmText: 'Delete Vaccine',
+                        type: 'danger',
+                      });
+                      if (ok) {
                         await onDeleteVaccination(vac.id);
                         await onSyncVaccineReminder(vac, true);
                         showToast('✓ Vaccine record deleted');

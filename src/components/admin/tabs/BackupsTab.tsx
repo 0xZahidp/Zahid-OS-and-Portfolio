@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAdminAuth } from '@/context/AdminAuthContext';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 interface TableMetaInfo {
   id: string;
@@ -242,12 +243,14 @@ export const BackupsTab: React.FC = () => {
     if (jsonInputRef.current) jsonInputRef.current.value = '';
   };
 
-  const handleReset = () => {
-    if (
-      window.confirm(
-        'Are you sure you want to reset all data to the default template? Any unsaved edits will be discarded.'
-      )
-    ) {
+  const handleReset = async () => {
+    const ok = await confirmModal({
+      title: 'Reset All Data',
+      message: 'Are you sure you want to reset all data to the default template? Any unsaved edits will be discarded.',
+      confirmText: 'Reset to Default',
+      type: 'warning',
+    });
+    if (ok) {
       resetToDefault();
       showStatus('success', '✓ Reset all sections to default template.');
     }

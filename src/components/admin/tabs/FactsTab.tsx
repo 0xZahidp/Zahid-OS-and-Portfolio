@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { LanguageSkill } from '@/types/profile';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 export const FactsTab: React.FC = () => {
   const {
@@ -82,11 +83,14 @@ export const FactsTab: React.FC = () => {
     updateLanguages(updated);
   };
 
-  const handleRemoveLanguage = (idx: number) => {
+  const handleRemoveLanguage = async (idx: number) => {
     const lang = languages[idx];
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${lang.name || 'this language'}"? This change will be permanently applied when you save.`
-    );
+    const confirmed = await confirmModal({
+      title: 'Delete Language',
+      message: `Are you sure you want to delete "${lang.name || 'this language'}"? This change will be permanently applied when you save.`,
+      confirmText: 'Delete Language',
+      type: 'danger',
+    });
     if (!confirmed) return;
 
     const remaining = languages

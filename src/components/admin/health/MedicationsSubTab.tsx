@@ -15,6 +15,7 @@ import {
   BellRing,
 } from 'lucide-react';
 import { Medication } from '@/types/health';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 interface MedicationsSubTabProps {
   medications: Medication[];
@@ -338,7 +339,13 @@ export const MedicationsSubTab: React.FC<MedicationsSubTabProps> = ({
                 type="button"
                 onClick={async () => {
                   if (disabled) return;
-                  if (confirm(`Delete medication "${med.name}"?`)) {
+                  const ok = await confirmModal({
+                    title: 'Delete Medication',
+                    message: `Delete medication "${med.name}"? This will also remove scheduled refill reminders.`,
+                    confirmText: 'Delete Medication',
+                    type: 'danger',
+                  });
+                  if (ok) {
                     await onDeleteMedication(med.id);
                     await onSyncRefillReminder(med, true);
                     showToast('✓ Medication deleted');

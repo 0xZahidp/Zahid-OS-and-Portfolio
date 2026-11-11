@@ -54,6 +54,7 @@ import {
   CareerContact,
 } from '@/types/career';
 import { useAdminAuth } from '@/context/AdminAuthContext';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 const STATUS_CONFIG: Record<
   CareerApplicationStatus,
@@ -817,7 +818,13 @@ export const CareerTab: React.FC = () => {
   // Delete Application
   const handleDeleteApplication = async (appId: string) => {
     if (loadError) return;
-    if (!confirm('Are you sure you want to delete this application record?')) return;
+    const ok = await confirmModal({
+      title: 'Delete Application',
+      message: 'Are you sure you want to delete this application record? This action cannot be undone.',
+      confirmText: 'Delete Application',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       setSaveState('saving');
       const res = await fetch(`/api/admin/career?id=${appId}&expectedVersion=${careerVersion}`, {
@@ -2596,9 +2603,7 @@ Md Zahid Hasan Patwary`;
                   type="button"
                   onClick={() => {
                     if (disabled) return;
-                    if (confirm('Delete this application permanently?')) {
-                      onDelete(localApp.id);
-                    }
+                    onDelete(localApp.id);
                   }}
                   disabled={disabled}
                   className="text-xs text-rose-500 hover:text-rose-600 font-semibold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"

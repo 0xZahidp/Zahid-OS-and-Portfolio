@@ -29,6 +29,7 @@ import { InboxTab } from '@/components/admin/tabs/InboxTab';
 import { BackupsTab } from '@/components/admin/tabs/BackupsTab';
 import { CareerTab } from '@/components/admin/tabs/CareerTab';
 import { HealthTab } from '@/components/admin/tabs/HealthTab';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 const TAB_META: Record<AdminTab, { title: string; description: string }> = {
   inbox: {
@@ -246,8 +247,14 @@ function AdminDashboardInner() {
     }
   }, [saveContent, errorMessage]);
 
-  const handleReset = () => {
-    if (window.confirm('Are you sure you want to reset all data to default template?')) {
+  const handleReset = async () => {
+    const ok = await confirmModal({
+      title: 'Reset Portfolio Data',
+      message: 'Are you sure you want to reset all data to default template? Any unsaved edits will be discarded.',
+      confirmText: 'Reset to Default',
+      type: 'warning',
+    });
+    if (ok) {
       resetToDefault();
       showToast('✓ Reset to default template.');
     }

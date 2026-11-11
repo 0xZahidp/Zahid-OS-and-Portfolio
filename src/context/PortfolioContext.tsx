@@ -13,6 +13,7 @@ import {
 } from '@/types/profile';
 import { LibraryContent } from '@/types/library';
 import { defaultPortfolioContent } from '@/data/default-content';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 export interface SaveResult {
   success: boolean;
@@ -238,9 +239,12 @@ export const PortfolioProvider: React.FC<{
           };
         }
         if (data.requiresConfirmation && !confirmDelete && typeof window !== 'undefined') {
-          const userConfirmed = window.confirm(
-            `${data.error || 'Mass deletion guard: deleting more than 50% of a collection requires confirmation.'}\n\nDo you want to proceed with deleting these items?`
-          );
+          const userConfirmed = await confirmModal({
+            title: 'Mass Deletion Confirmation',
+            message: `${data.error || 'Mass deletion guard: deleting more than 50% of a collection requires confirmation.'}\n\nDo you want to proceed with deleting these items?`,
+            confirmText: 'Proceed With Deletion',
+            type: 'danger',
+          });
           if (userConfirmed) {
             return await saveContent(true);
           }

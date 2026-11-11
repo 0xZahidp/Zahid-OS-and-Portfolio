@@ -13,6 +13,7 @@ import {
   BellRing,
 } from 'lucide-react';
 import { Visit, HealthDocument } from '@/types/health';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 interface VisitsSubTabProps {
   visits: Visit[];
@@ -200,7 +201,13 @@ export const VisitsSubTab: React.FC<VisitsSubTabProps> = ({
                     type="button"
                     onClick={async () => {
                       if (disabled) return;
-                      if (confirm(`Delete visit record for Dr. ${visit.doctor}?`)) {
+                      const ok = await confirmModal({
+                        title: 'Delete Visit Record',
+                        message: `Delete visit record for Dr. ${visit.doctor}? This will also remove any linked follow-up reminders.`,
+                        confirmText: 'Delete Visit',
+                        type: 'danger',
+                      });
+                      if (ok) {
                         await onDeleteVisit(visit.id);
                         await onSyncFollowUpReminder(visit, true);
                         showToast('✓ Visit record deleted');

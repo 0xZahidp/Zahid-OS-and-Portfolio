@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { FollowerRecommendation } from '@/types/profile';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 import { CompanyLogoUploader } from '@/components/admin/CompanyLogoUploader';
 import { defaultRecommendedPeople } from '@/data/default-people';
 import { DEFAULT_PERSON_AVATAR } from '@/lib/constants';
@@ -72,8 +73,14 @@ export const PeopleTab: React.FC = () => {
     }
   };
 
-  const handleResetToDefaultMentors = () => {
-    if (window.confirm('Reset the list to the 11 recommended mentors & builders from the reference showcase?')) {
+  const handleResetToDefaultMentors = async () => {
+    const ok = await confirmModal({
+      title: 'Reset Recommended Mentors',
+      message: 'Reset the list to the 11 recommended mentors & builders from the reference showcase?',
+      confirmText: 'Reset List',
+      type: 'warning',
+    });
+    if (ok) {
       updateSuggestedPeople(defaultRecommendedPeople);
       setExpandedId(defaultRecommendedPeople[0]?.id || null);
       showNotification('Loaded 11 mentors & builders with rich quotes, tags, and multi-platform links!', 'success');
@@ -108,9 +115,15 @@ export const PeopleTab: React.FC = () => {
     showNotification('Added new person. Fill out their profile options below.', 'info');
   };
 
-  const handleRemove = (idx: number) => {
+  const handleRemove = async (idx: number) => {
     const personName = people[idx]?.name || 'Person';
-    if (window.confirm(`Delete "${personName}" from Who to Connect?`)) {
+    const ok = await confirmModal({
+      title: 'Remove Person',
+      message: `Are you sure you want to delete "${personName}" from Who to Connect?`,
+      confirmText: 'Delete Person',
+      type: 'danger',
+    });
+    if (ok) {
       const updated = people.filter((_, i) => i !== idx);
       updateSuggestedPeople(updated);
       showNotification(`Removed "${personName}".`, 'info');

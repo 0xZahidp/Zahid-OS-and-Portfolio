@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { TempMailDomainRecord, TempMailDnsRecord } from '@/lib/os/temp-mail-domains';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 interface TempMailDomainManagerProps {
   adminHeaders?: HeadersInit;
@@ -121,7 +122,13 @@ export const TempMailDomainManager: React.FC<TempMailDomainManagerProps> = ({ ad
   };
 
   const handleDeleteDomain = async (domainName: string) => {
-    if (!window.confirm(`Are you sure you want to remove domain '${domainName}'?`)) return;
+    const ok = await confirmModal({
+      title: 'Remove Domain',
+      message: `Are you sure you want to remove domain '${domainName}'? Inbound emails sent to addresses under this domain will no longer be received.`,
+      confirmText: 'Remove Domain',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/os/temp-mail/domains?domain=${encodeURIComponent(domainName)}`, {
         method: 'DELETE',

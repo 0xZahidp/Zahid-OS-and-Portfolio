@@ -34,6 +34,7 @@ import { useAdminAuth, PasskeyItem } from '@/context/AdminAuthContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { EnvVaultItem } from '@/lib/env-vault';
 import { supabase } from '@/lib/supabase/client';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 export const SettingsTab: React.FC = () => {
   const {
@@ -298,7 +299,13 @@ export const SettingsTab: React.FC = () => {
 
   // Handle Delete Env Secret
   const handleDeleteEnv = async (key: string) => {
-    if (!window.confirm(`Delete variable "${key}" from Supabase?`)) return;
+    const ok = await confirmModal({
+      title: 'Delete Environment Variable',
+      message: `Are you sure you want to delete variable "${key}" from Supabase?`,
+      confirmText: 'Delete Variable',
+      type: 'danger',
+    });
+    if (!ok) return;
 
     try {
       const res = await fetch(`/api/env-vault?key=${encodeURIComponent(key)}`, {
@@ -572,13 +579,13 @@ export const SettingsTab: React.FC = () => {
 
   // Handle Removing an MFA Factor (with AAL1 server fallback)
   const handleRemoveFactor = async (factorId: string, friendlyName?: string) => {
-    if (
-      !window.confirm(
-        `Remove authentication factor "${friendlyName || factorId}"? If this is your only 2FA device, two-factor authentication will be disabled.`
-      )
-    ) {
-      return;
-    }
+    const ok = await confirmModal({
+      title: 'Remove 2FA Factor',
+      message: `Are you sure you want to remove authentication factor "${friendlyName || factorId}"? If this is your only 2FA device, two-factor authentication will be disabled.`,
+      confirmText: 'Remove Factor',
+      type: 'danger',
+    });
+    if (!ok) return;
 
     setMfaFeedback(null);
     setShowPostEnrollWarning(false);
@@ -622,9 +629,13 @@ export const SettingsTab: React.FC = () => {
 
   // Handle passkey deletion
   const handleDeletePasskey = async (id: string, name?: string) => {
-    if (!window.confirm(`Remove passkey "${name || id}"? You will not be able to use this authenticator until re-enrolled.`)) {
-      return;
-    }
+    const ok = await confirmModal({
+      title: 'Remove Passkey',
+      message: `Remove passkey "${name || id}"? You will not be able to use this authenticator until re-enrolled.`,
+      confirmText: 'Remove Passkey',
+      type: 'danger',
+    });
+    if (!ok) return;
     const res = await deletePasskey(id);
     if (res.success) {
       setPasskeyFeedback({ type: 'success', message: 'Passkey removed.' });
@@ -1194,7 +1205,13 @@ export const SettingsTab: React.FC = () => {
               <button
                 type="button"
                 onClick={async () => {
-                  if (window.confirm('Are you sure you want to sign out from all devices?')) {
+                  const ok = await confirmModal({
+                    title: 'Sign Out Everywhere',
+                    message: 'Are you sure you want to sign out from all devices? This will invalidate all active sessions.',
+                    confirmText: 'Sign Out Everywhere',
+                    type: 'danger',
+                  });
+                  if (ok) {
                     await signOutAllDevices();
                   }
                 }}

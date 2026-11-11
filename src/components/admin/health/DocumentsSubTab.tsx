@@ -30,6 +30,7 @@ import {
   HealthDocumentCategory,
   HealthStorageUsage,
 } from '@/types/health';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 interface DocumentsSubTabProps {
   documents: HealthDocument[];
@@ -280,7 +281,13 @@ export const DocumentsSubTab: React.FC<DocumentsSubTabProps> = ({
   // Delete Document
   const handleDeleteDocument = async (doc: HealthDocument) => {
     if (disabled) return;
-    if (!confirm(`Permanently delete confidential document "${doc.title}"?`)) return;
+    const ok = await confirmModal({
+      title: 'Delete Confidential Document',
+      message: `Permanently delete confidential document "${doc.title}"? This will delete the file from private storage.`,
+      confirmText: 'Delete Document',
+      type: 'danger',
+    });
+    if (!ok) return;
 
     try {
       const res = await fetch(`/api/admin/health/file?id=${doc.id}`, {

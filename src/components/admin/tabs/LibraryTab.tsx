@@ -23,6 +23,7 @@ import {
   VoiceoverItem,
   LibraryContent,
 } from '@/types/library';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 type ActiveLibrarySubTab = 'skills' | 'bookmarks' | 'music' | 'voiceovers';
 
@@ -37,8 +38,14 @@ export const LibraryTab: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleResetToDefault = () => {
-    if (window.confirm('Reset all library sections to the default curated showcase from nahian.bd/library?')) {
+  const handleResetToDefault = async () => {
+    const ok = await confirmModal({
+      title: 'Reset Library Showcase',
+      message: 'Reset all library sections to the default curated showcase from nahian.bd/library?',
+      confirmText: 'Reset Library',
+      type: 'warning',
+    });
+    if (ok) {
       updateLibraryData(defaultLibraryData);
       showToast('Library reset to default showcase data!');
     }

@@ -36,6 +36,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { TableMeta } from '@/types/supabase-crud';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 // Category grouping definition per specification
 const TABLE_GROUPS: Record<string, string[]> = {
@@ -370,7 +371,13 @@ export const SupabaseTab: React.FC = () => {
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to delete record where ${pk} = "${pkValue}"?`)) {
+    const confirmed = await confirmModal({
+      title: 'Delete Database Record',
+      message: `Are you sure you want to delete record where ${pk} = "${pkValue}"? This action directly mutates the Supabase database.`,
+      confirmText: 'Delete Record',
+      type: 'danger',
+    });
+    if (!confirmed) {
       return;
     }
 

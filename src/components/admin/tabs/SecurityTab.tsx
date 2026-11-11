@@ -16,6 +16,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useAdminAuth, PasskeyItem } from '@/context/AdminAuthContext';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 
 export const SecurityTab: React.FC = () => {
   const {
@@ -74,9 +75,13 @@ export const SecurityTab: React.FC = () => {
   };
 
   const handleDelete = async (id: string, name?: string) => {
-    if (!window.confirm(`Are you sure you want to remove the passkey "${name || 'Unnamed'}"?`)) {
-      return;
-    }
+    const ok = await confirmModal({
+      title: 'Remove Passkey',
+      message: `Are you sure you want to remove the passkey "${name || 'Unnamed'}"? You will not be able to sign in with this device until re-registered.`,
+      confirmText: 'Remove Passkey',
+      type: 'danger',
+    });
+    if (!ok) return;
 
     const res = await deletePasskey(id);
     if (res.success) {
