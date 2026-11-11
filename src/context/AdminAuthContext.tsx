@@ -62,6 +62,14 @@ interface AdminAuthContextType {
 function formatPasskeyError(rawMsg: string): string {
   if (!rawMsg) return 'Passkey operation failed';
   const domain = typeof window !== 'undefined' ? window.location.hostname : 'zahidp.com';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://zahidp.com';
+
+  if (rawMsg.includes('Credential verification failed') || rawMsg.includes('verification_failed')) {
+    if (domain !== 'zahidp.com') {
+      return `Credential verification failed: Your browser origin is "${origin}", but Supabase WebAuthn RP is registered for "https://zahidp.com". Please access admin directly via https://zahidp.com/admin.`;
+    }
+    return `Credential verification failed by Supabase server. Please ensure you are accessing via https://zahidp.com (clean root domain, without www or localhost) and retry.`;
+  }
 
   if (
     rawMsg.includes('RP ID') ||
@@ -141,7 +149,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (typeof window !== 'undefined') {
       try {
         localStorage.removeItem('folioframe_admin_local_bypass');
-      } catch {}
+      } catch { }
 
       let hasSupabaseSession = false;
       try {
@@ -193,7 +201,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
             document.cookie = `sb-access-token=${encodeURIComponent(data.session.access_token)}; path=/; SameSite=Lax; max-age=3600${isSecure}`;
           }
-          checkMfaLevel().catch(() => {});
+          checkMfaLevel().catch(() => { });
         }
       } catch (err) {
         console.warn('Supabase getSession failed:', err);
@@ -221,7 +229,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
           document.cookie = `sb-access-token=${encodeURIComponent(currentSession.access_token)}; path=/; SameSite=Lax; max-age=3600${isSecure}`;
         }
-        checkMfaLevel().catch(() => {});
+        checkMfaLevel().catch(() => { });
       } else {
         setMfaLevel(null);
         if (typeof document !== 'undefined') {
@@ -345,6 +353,32 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const msg = 'Passkey authentication API is not available in this client build.';
         setError(msg);
         return { success: false, error: msg };
+      }
+
+      // Try official high-level signInWithPasskey() first
+      const authWithPasskey = supabase.auth as unknown as {
+        signInWithPasskey?: () => Promise<{ data: { session: Session | null; user: User | null } | null; error: Error | null }>;
+      };
+
+      if (typeof authWithPasskey.signInWithPasskey === 'function') {
+        const { data: authData, error: authErr } = await authWithPasskey.signInWithPasskey();
+        if (!authErr && authData?.session) {
+          setSession(authData.session);
+          setUser(authData.user);
+          setIsLocalBypass(false);
+          await checkMfaLevel();
+          return { success: true };
+        }
+        if (
+          authErr &&
+          (authErr.message?.toLowerCase().includes('cancel') ||
+            authErr.message?.toLowerCase().includes('abort') ||
+            authErr.message?.toLowerCase().includes('notallowed'))
+        ) {
+          const msg = formatPasskeyError(authErr.message);
+          setError(msg);
+          return { success: false, error: msg };
+        }
       }
 
       // 1. Request authentication challenge options from Supabase
@@ -524,6 +558,32 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           requiresAal2StepUp: true,
           error: 'AAL2 session is required to manage passkeys when MFA is enabled.',
         };
+      }
+
+      // Try official high-level registerPasskey() method first
+      const authWithPasskey = supabase.auth as unknown as {
+        registerPasskey?: () => Promise<{ data: { id: string } | null; error: Error | null }>;
+      };
+
+      if (typeof authWithPasskey.registerPasskey === 'function') {
+        const { data: regData, error: regErr } = await authWithPasskey.registerPasskey();
+        if (!regErr) {
+          if (name && regData?.id && passkeyApi.update) {
+            try {
+              await passkeyApi.update({ passkeyId: regData.id, friendlyName: name });
+            } catch {}
+          }
+          return { success: true };
+        }
+        if (
+          regErr.message?.toLowerCase().includes('cancel') ||
+          regErr.message?.toLowerCase().includes('abort') ||
+          regErr.message?.toLowerCase().includes('notallowed')
+        ) {
+          const msg = formatPasskeyError(regErr.message);
+          setError(msg);
+          return { success: false, error: msg };
+        }
       }
 
       // 1. Request registration options from Supabase

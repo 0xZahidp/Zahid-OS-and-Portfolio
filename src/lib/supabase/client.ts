@@ -7,8 +7,12 @@ const supabaseAnonKey =
   'placeholder-anon-key';
 
 /**
- * Browser-side Supabase client placeholder.
- * Safe for client components; uses public anonymous key.
+ * Browser-side Supabase client.
+ * Configured with experimental passkey support enabled.
  */
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    experimental: { passkey: true },
+  },
+});
 
