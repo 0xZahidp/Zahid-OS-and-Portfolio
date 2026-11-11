@@ -46,32 +46,46 @@ export function uint8ArrayToBase64Url(bytes: Uint8Array | ArrayBuffer): string {
 /**
  * Parse registration/creation options returned by Supabase (/passkeys/registration/options)
  * into CredentialCreationOptions ready for navigator.credentials.create()
+ *
+ * NOTE: navigator.credentials.create() requires { publicKey: PublicKeyCredentialCreationOptions }
+ * Native PublicKeyCredential.parseCreationOptionsFromJSON returns PublicKeyCredentialCreationOptions
+ * which must be wrapped inside { publicKey: ... }!
  */
 export function parseCreationOptions(options: Record<string, unknown>): CredentialCreationOptions {
+  // If options is already wrapped in { publicKey: ... }, unwrap it for Level 3 JSON parsing
+  const rawJson = (
+    options?.publicKey && typeof options.publicKey === 'object'
+      ? options.publicKey
+      : options
+  ) as Record<string, unknown>;
+
   // Use native Level 3 parseCreationOptionsFromJSON if available
   if (
     typeof PublicKeyCredential !== 'undefined' &&
     'parseCreationOptionsFromJSON' in PublicKeyCredential &&
-    typeof (PublicKeyCredential as unknown as { parseCreationOptionsFromJSON?: (opts: unknown) => CredentialCreationOptions }).parseCreationOptionsFromJSON === 'function'
+    typeof (PublicKeyCredential as unknown as { parseCreationOptionsFromJSON?: (opts: unknown) => PublicKeyCredentialCreationOptions }).parseCreationOptionsFromJSON === 'function'
   ) {
     try {
-      return (PublicKeyCredential as unknown as { parseCreationOptionsFromJSON: (opts: unknown) => CredentialCreationOptions }).parseCreationOptionsFromJSON(options);
+      const parsed = (PublicKeyCredential as unknown as { parseCreationOptionsFromJSON: (opts: unknown) => PublicKeyCredentialCreationOptions }).parseCreationOptionsFromJSON(rawJson);
+      // Guarantee it is wrapped in { publicKey: ... }
+      const unwrapped = (parsed as { publicKey?: PublicKeyCredentialCreationOptions }).publicKey || parsed;
+      return { publicKey: unwrapped };
     } catch (e) {
       console.warn('Native parseCreationOptionsFromJSON failed, falling back to manual parser:', e);
     }
   }
 
   // Manual fallback parsing
-  const challengeStr = String(options.challenge || '');
+  const challengeStr = String(rawJson.challenge || '');
   const challenge = base64UrlToUint8Array(challengeStr).buffer as ArrayBuffer;
 
-  const rawUser = (options.user as { id?: string; name?: string; displayName?: string }) || {};
+  const rawUser = (rawJson.user as { id?: string; name?: string; displayName?: string }) || {};
   const user = {
     ...rawUser,
     id: base64UrlToUint8Array(String(rawUser.id || '')).buffer as ArrayBuffer,
   };
 
-  const rawExclude = (options.excludeCredentials as Array<{ id: string; type?: string; transports?: AuthenticatorTransport[] }>) || [];
+  const rawExclude = (rawJson.excludeCredentials as Array<{ id: string; type?: string; transports?: AuthenticatorTransport[] }>) || [];
   const excludeCredentials = rawExclude.map((cred) => ({
     ...cred,
     id: base64UrlToUint8Array(cred.id).buffer as ArrayBuffer,
@@ -79,7 +93,7 @@ export function parseCreationOptions(options: Record<string, unknown>): Credenti
     transports: cred.transports,
   }));
 
-  const restOptions = { ...options };
+  const restOptions = { ...rawJson };
   delete restOptions.challenge;
   delete restOptions.user;
   delete restOptions.excludeCredentials;
@@ -128,26 +142,40 @@ export function serializeCreationResponse(credential: PublicKeyCredential): Reco
 /**
  * Parse authentication options returned by Supabase (/passkeys/authentication/options)
  * into CredentialRequestOptions ready for navigator.credentials.get()
+ *
+ * NOTE: navigator.credentials.get() requires { publicKey: PublicKeyCredentialRequestOptions }
+ * Native PublicKeyCredential.parseRequestOptionsFromJSON returns PublicKeyCredentialRequestOptions
+ * which must be wrapped inside { publicKey: ... }!
  */
 export function parseRequestOptions(options: Record<string, unknown>): CredentialRequestOptions {
+  // If options is already wrapped in { publicKey: ... }, unwrap it for Level 3 JSON parsing
+  const rawJson = (
+    options?.publicKey && typeof options.publicKey === 'object'
+      ? options.publicKey
+      : options
+  ) as Record<string, unknown>;
+
   // Use native Level 3 parseRequestOptionsFromJSON if available
   if (
     typeof PublicKeyCredential !== 'undefined' &&
     'parseRequestOptionsFromJSON' in PublicKeyCredential &&
-    typeof (PublicKeyCredential as unknown as { parseRequestOptionsFromJSON?: (opts: unknown) => CredentialRequestOptions }).parseRequestOptionsFromJSON === 'function'
+    typeof (PublicKeyCredential as unknown as { parseRequestOptionsFromJSON?: (opts: unknown) => PublicKeyCredentialRequestOptions }).parseRequestOptionsFromJSON === 'function'
   ) {
     try {
-      return (PublicKeyCredential as unknown as { parseRequestOptionsFromJSON: (opts: unknown) => CredentialRequestOptions }).parseRequestOptionsFromJSON(options);
+      const parsed = (PublicKeyCredential as unknown as { parseRequestOptionsFromJSON: (opts: unknown) => PublicKeyCredentialRequestOptions }).parseRequestOptionsFromJSON(rawJson);
+      // Guarantee it is wrapped in { publicKey: ... }
+      const unwrapped = (parsed as { publicKey?: PublicKeyCredentialRequestOptions }).publicKey || parsed;
+      return { publicKey: unwrapped };
     } catch (e) {
       console.warn('Native parseRequestOptionsFromJSON failed, falling back to manual parser:', e);
     }
   }
 
   // Manual fallback parsing
-  const challengeStr = String(options.challenge || '');
+  const challengeStr = String(rawJson.challenge || '');
   const challenge = base64UrlToUint8Array(challengeStr).buffer as ArrayBuffer;
 
-  const rawAllow = (options.allowCredentials as Array<{ id: string; type?: string; transports?: AuthenticatorTransport[] }>) || [];
+  const rawAllow = (rawJson.allowCredentials as Array<{ id: string; type?: string; transports?: AuthenticatorTransport[] }>) || [];
   const allowCredentials = rawAllow.map((cred) => ({
     ...cred,
     id: base64UrlToUint8Array(cred.id).buffer as ArrayBuffer,
@@ -155,7 +183,7 @@ export function parseRequestOptions(options: Record<string, unknown>): Credentia
     transports: cred.transports,
   }));
 
-  const restOptions = { ...options };
+  const restOptions = { ...rawJson };
   delete restOptions.challenge;
   delete restOptions.allowCredentials;
 
@@ -197,4 +225,3 @@ export function serializeRequestResponse(credential: PublicKeyCredential): Recor
     authenticatorAttachment: (credential as unknown as { authenticatorAttachment?: string }).authenticatorAttachment,
   };
 }
-

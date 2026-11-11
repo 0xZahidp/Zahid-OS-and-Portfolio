@@ -363,7 +363,10 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       // 2. Perform WebAuthn browser ceremony
       const requestOptions = parseRequestOptions(optData.options);
-      const credential = await navigator.credentials.get(requestOptions);
+      const finalOptions: CredentialRequestOptions = requestOptions.publicKey
+        ? requestOptions
+        : { publicKey: requestOptions as unknown as PublicKeyCredentialRequestOptions };
+      const credential = await navigator.credentials.get(finalOptions);
 
       if (!credential || !(credential instanceof PublicKeyCredential)) {
         const errorMsg = 'No passkey credential selected.';
@@ -543,7 +546,10 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       // 2. Perform WebAuthn browser ceremony
       const creationOptions = parseCreationOptions(optData.options);
-      const credential = await navigator.credentials.create(creationOptions);
+      const finalOptions: CredentialCreationOptions = creationOptions.publicKey
+        ? creationOptions
+        : { publicKey: creationOptions as unknown as PublicKeyCredentialCreationOptions };
+      const credential = await navigator.credentials.create(finalOptions);
 
       if (!credential || !(credential instanceof PublicKeyCredential)) {
         const errorMsg = 'No credential created by the authenticator.';
