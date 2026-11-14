@@ -77,6 +77,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/admin/leads",
+        destination: "/admin?tab=leads",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

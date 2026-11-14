@@ -27,6 +27,7 @@ import {
   ChevronLeft,
   ChevronRight,
   HeartPulse,
+  Radar,
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAdminAuth } from '@/context/AdminAuthContext';
@@ -46,6 +47,7 @@ export type AdminTab =
   | 'library'
   | 'os'
   | 'career'
+  | 'leads'
   | 'health'
   | 'inbox'
   | 'supabase'
@@ -165,6 +167,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           icon: Briefcase,
           badge: 'Private',
           badgeColor: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
+        },
+        {
+          id: 'leads' as AdminTab,
+          label: 'Leads & Outreach Radar',
+          icon: Radar,
+          badge: 'Private',
+          badgeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
         },
         {
           id: 'health' as AdminTab,

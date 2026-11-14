@@ -28,6 +28,7 @@ import { SettingsTab } from '@/components/admin/tabs/SettingsTab';
 import { InboxTab } from '@/components/admin/tabs/InboxTab';
 import { BackupsTab } from '@/components/admin/tabs/BackupsTab';
 import { CareerTab } from '@/components/admin/tabs/CareerTab';
+import { LeadsTab } from '@/components/admin/tabs/LeadsTab';
 import { HealthTab } from '@/components/admin/tabs/HealthTab';
 import { confirmModal } from '@/components/ui/ConfirmDialog';
 
@@ -39,6 +40,10 @@ const TAB_META: Record<AdminTab, { title: string; description: string }> = {
   career: {
     title: 'Career Tracker & Job Pipeline',
     description: 'Confidential tracking for software engineering applications, interview rounds, offers, and proactive follow-ups.',
+  },
+  leads: {
+    title: 'Startup Leads & Outreach Radar',
+    description: 'Automated intelligence tracking early hiring posts, seed rounds, verified contacts, and tailored outreach hooks.',
   },
   health: {
     title: 'Personal Health Records & Emergency',
@@ -119,6 +124,7 @@ const VALID_ADMIN_TABS: AdminTab[] = [
   'library',
   'os',
   'career',
+  'leads',
   'health',
   'inbox',
   'supabase',
@@ -305,6 +311,8 @@ function AdminDashboardInner() {
         return <ZahidOsTab />;
       case 'career':
         return <CareerTab />;
+      case 'leads':
+        return <LeadsTab />;
       case 'health':
         return <HealthTab />;
       case 'supabase':
@@ -417,7 +425,7 @@ function AdminDashboardInner() {
             {/* Form Editor Column */}
             <main
               className={`flex-1 overflow-y-auto w-full min-w-0 ${
-                activeTab === 'career' || activeTab === 'health' || activeTab === 'inbox'
+                activeTab === 'career' || activeTab === 'leads' || activeTab === 'health' || activeTab === 'inbox'
                   ? 'p-0 max-w-none'
                   : 'p-3.5 sm:p-6 lg:p-8 max-w-5xl mx-auto'
               }`}
