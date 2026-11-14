@@ -7,6 +7,7 @@ import {
   StartupLeadTrack,
   StartupLeadSignalType,
   StartupLeadEmailConfidence,
+  StartupLeadStatus,
 } from '@/types/leads';
 import { getCareerApplications, saveCareerApplications } from '@/lib/career/career-store';
 import { CareerApplication } from '@/types/career';
@@ -28,6 +29,7 @@ export interface CreateLeadInput {
   email_confidence?: StartupLeadEmailConfidence;
   startup_summary?: string | null;
   pitch_hook?: string | null;
+  status?: StartupLeadStatus;
   try_hunter?: boolean;
   hunter_api_key?: string;
 }
@@ -234,6 +236,45 @@ export async function updateLead(
 }
 
 /**
+ * Get a lead by ID
+ */
+export async function getLeadById(id: string): Promise<StartupLead | null> {
+  const all = await getAllLeads();
+  return all.find((l) => l.id === id) || null;
+}
+
+/**
+ * Permanently delete a lead by ID from Supabase startup_leads and fallback storage
+ */
+export async function deleteLead(id: string): Promise<boolean> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  // 1. Try Supabase table
+  if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
+    try {
+      const supabase = supabaseServer();
+      const { error } = await supabase.from('startup_leads').delete().eq('id', id);
+      if (!error) {
+        memoryCache = null; // Invalidate cache
+        return true;
+      }
+    } catch {
+      // Fallback below
+    }
+  }
+
+  // 2. Fallback in-memory / site_settings / json
+  const all = await getAllLeads();
+  const filtered = all.filter((l) => l.id !== id);
+  if (filtered.length !== all.length) {
+    await saveLeadsFallback(filtered);
+    memoryCache = null;
+    return true;
+  }
+  return false;
+}
+
+/**
  * Manually create a new startup lead with strict deduplication
  */
 export async function createLead(input: CreateLeadInput): Promise<StartupLead> {
@@ -334,7 +375,9 @@ export async function createLead(input: CreateLeadInput): Promise<StartupLead> {
     contact_email: contactEmail,
     email_confidence: emailConfidence,
     pitch_hook: pitchHook,
-    status: 'new',
+    status: input.status && ['new', 'emailed', 'replied', 'promoted', 'archived'].includes(input.status)
+      ? input.status
+      : 'new',
     post_published_at: new Date().toISOString(),
   };
 

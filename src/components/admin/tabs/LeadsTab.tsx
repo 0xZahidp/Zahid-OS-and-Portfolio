@@ -27,6 +27,8 @@ import {
   Save,
   X,
   Plus,
+  Trash2,
+  ArchiveRestore,
 } from 'lucide-react';
 import {
   StartupLead,
@@ -36,7 +38,9 @@ import {
   StartupLeadStatus,
 } from '@/types/leads';
 import { generateOutreachEmailDraft } from '@/lib/leads/email-template';
+import { confirmModal } from '@/components/ui/ConfirmDialog';
 import { AddLeadModal } from './AddLeadModal';
+import { LeadDetailDrawer } from './LeadDetailDrawer';
 
 function formatRelativeTime(dateString?: string | null): string {
   if (!dateString) return 'recently';
@@ -90,6 +94,9 @@ export const LeadsTab: React.FC = () => {
   // Add Lead Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
 
+  // Active Detail Drawer state
+  const [activeDetailLead, setActiveDetailLead] = useState<StartupLead | null>(null);
+
   // Action in progress tracking
   const [actionInProgressId, setActionInProgressId] = useState<string | null>(null);
   const [lookingUpHunterId, setLookingUpHunterId] = useState<string | null>(null);
@@ -102,6 +109,32 @@ export const LeadsTab: React.FC = () => {
       setToastMessage((cur) => (cur === msg ? null : cur));
     }, 2800);
   }, []);
+
+  const handleLeadUpdatedFromDrawer = useCallback(
+    (updatedLead: StartupLead, newMetrics?: StartupLeadMetrics) => {
+      setLeads((prev) =>
+        prev.map((l) => (l.id === updatedLead.id ? updatedLead : l))
+      );
+      if (newMetrics) setMetrics(newMetrics);
+      if (activeDetailLead?.id === updatedLead.id) {
+        setActiveDetailLead(updatedLead);
+      }
+      showToast(`✓ Saved changes for ${updatedLead.company_name}`);
+    },
+    [activeDetailLead, showToast]
+  );
+
+  const handleLeadDeletedFromDrawer = useCallback(
+    (leadId: string, newMetrics?: StartupLeadMetrics) => {
+      setLeads((prev) => prev.filter((l) => l.id !== leadId));
+      if (newMetrics) setMetrics(newMetrics);
+      if (activeDetailLead?.id === leadId) {
+        setActiveDetailLead(null);
+      }
+      showToast('✓ Lead permanently deleted');
+    },
+    [activeDetailLead, showToast]
+  );
 
   const handleLeadCreated = useCallback(
     (newLead: StartupLead, newMetrics?: StartupLeadMetrics) => {
@@ -309,6 +342,76 @@ export const LeadsTab: React.FC = () => {
       }
     } catch {
       showToast('✕ Network error promoting lead');
+    } finally {
+      setActionInProgressId(null);
+    }
+  };
+
+  // Direct Permanent Delete from card or table row
+  const handleDirectDelete = async (e: React.MouseEvent, lead: StartupLead) => {
+    e.stopPropagation();
+    const ok = await confirmModal({
+      title: 'Permanently Delete Lead?',
+      message: `Are you sure you want to permanently delete "${lead.company_name}"? This removes the record from Supabase completely. (Use Archive instead if you only want to hide it while blocking duplicates).`,
+      confirmText: 'Delete Permanently',
+      type: 'danger',
+    });
+    if (!ok) return;
+
+    setActionInProgressId(lead.id);
+    try {
+      const res = await fetch(`/api/admin/leads/${lead.id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setLeads((prev) => prev.filter((l) => l.id !== lead.id));
+        if (data.metrics) setMetrics(data.metrics);
+        if (activeDetailLead?.id === lead.id) {
+          setActiveDetailLead(null);
+        }
+        showToast(`✓ Permanently deleted ${lead.company_name}`);
+      } else {
+        showToast(`✕ ${data.error || 'Failed to delete lead'}`);
+      }
+    } catch {
+      showToast('✕ Network error during deletion');
+    } finally {
+      setActionInProgressId(null);
+    }
+  };
+
+  // Direct Archive / Restore toggle from card or row
+  const handleArchiveToggle = async (e: React.MouseEvent, lead: StartupLead) => {
+    e.stopPropagation();
+    const newStatus: StartupLeadStatus = lead.status === 'archived' ? 'new' : 'archived';
+    setActionInProgressId(lead.id);
+
+    try {
+      const res = await fetch(`/api/admin/leads/${lead.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setLeads((prev) =>
+          prev.map((l) => (l.id === lead.id ? { ...l, status: newStatus } : l))
+        );
+        if (data.metrics) setMetrics(data.metrics);
+        if (activeDetailLead?.id === lead.id) {
+          setActiveDetailLead((prev) => (prev ? { ...prev, status: newStatus } : null));
+        }
+        showToast(
+          newStatus === 'archived'
+            ? `◫ Archived ${lead.company_name}`
+            : `✓ Restored ${lead.company_name} to active radar`
+        );
+      } else {
+        showToast(`✕ ${data.error || 'Failed to update status'}`);
+      }
+    } catch {
+      showToast('✕ Network error updating status');
     } finally {
       setActionInProgressId(null);
     }
@@ -626,7 +729,8 @@ export const LeadsTab: React.FC = () => {
             return (
               <div
                 key={lead.id}
-                className="group rounded-2xl border border-line bg-surface-2/50 hover:bg-surface-2/80 hover:border-line-2 transition-all p-4 flex flex-col justify-between gap-3 shadow-2xs"
+                onClick={() => setActiveDetailLead(lead)}
+                className="group rounded-2xl border border-line bg-surface-2/50 hover:bg-surface-2/80 hover:border-brand-500/40 transition-all p-4 flex flex-col justify-between gap-3 shadow-2xs cursor-pointer"
               >
                 {/* Card Header: Company, Track, Signal, Time */}
                 <div>
@@ -643,6 +747,7 @@ export const LeadsTab: React.FC = () => {
                                 ? lead.website_domain
                                 : `https://${lead.website_domain}`
                             }
+                            onClick={(e) => e.stopPropagation()}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-ink-4 hover:text-ink-2 transition-colors"
@@ -695,6 +800,7 @@ export const LeadsTab: React.FC = () => {
                       {lead.source_url && (
                         <a
                           href={lead.source_url}
+                          onClick={(e) => e.stopPropagation()}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-[10px] font-medium text-ink-3 hover:text-ink transition-colors shrink-0"
@@ -707,7 +813,10 @@ export const LeadsTab: React.FC = () => {
                     </div>
 
                     {/* Email Row or Inline Editor */}
-                    <div className="pt-1 border-t border-line/40 flex items-center justify-between gap-2">
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="pt-1 border-t border-line/40 flex items-center justify-between gap-2"
+                    >
                       {editingEmailId === lead.id ? (
                         <div className="flex items-center gap-1.5 w-full">
                           <input
@@ -834,9 +943,10 @@ export const LeadsTab: React.FC = () => {
                         </span>
                         <button
                           type="button"
-                          onClick={() =>
-                            handleCopy(draftEmail, `draft-${lead.id}`, '4-line email draft')
-                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopy(draftEmail, `draft-${lead.id}`, '4-line email draft');
+                          }}
                           className="h-5.5 px-2 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
                           title="Copy personalized 4-line email draft"
                         >
@@ -854,13 +964,19 @@ export const LeadsTab: React.FC = () => {
                 </div>
 
                 {/* Card Actions Footer */}
-                <div className="pt-2.5 border-t border-line/60 flex items-center justify-between gap-1.5">
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="pt-2.5 border-t border-line/60 flex items-center justify-between gap-1.5"
+                >
                   {/* Left: Email Status Toggle */}
                   <div className="flex items-center gap-1">
                     {lead.status === 'emailed' ? (
                       <button
                         type="button"
-                        onClick={() => handleUpdateStatus(lead.id, 'replied')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUpdateStatus(lead.id, 'replied');
+                        }}
                         disabled={isActing}
                         className="h-7 px-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-medium hover:bg-emerald-500/20 cursor-pointer transition-colors inline-flex items-center gap-1"
                         title="Mark as Replied"
@@ -876,7 +992,10 @@ export const LeadsTab: React.FC = () => {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => handleUpdateStatus(lead.id, 'emailed')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUpdateStatus(lead.id, 'emailed');
+                        }}
                         disabled={isActing}
                         className="h-7 px-2.5 rounded-xl border border-line bg-surface hover:bg-surface-3 text-ink text-[11px] font-medium cursor-pointer transition-colors inline-flex items-center gap-1"
                         title="Mark as Emailed"
@@ -887,7 +1006,7 @@ export const LeadsTab: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Right: Promote and Archive */}
+                  {/* Right: Promote, Archive & Permanent Delete */}
                   <div className="flex items-center gap-1">
                     {lead.status === 'promoted' ? (
                       <span className="h-7 px-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold inline-flex items-center gap-1 border border-indigo-500/20">
@@ -897,7 +1016,10 @@ export const LeadsTab: React.FC = () => {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => handlePromoteToCareer(lead)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePromoteToCareer(lead);
+                        }}
                         disabled={isActing}
                         className="h-7 px-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-[11px] font-semibold cursor-pointer transition-colors inline-flex items-center gap-1 shadow-2xs disabled:opacity-50"
                         title="Add to Career & Pipeline tracker as 'Applied'"
@@ -910,24 +1032,35 @@ export const LeadsTab: React.FC = () => {
                     {lead.status === 'archived' ? (
                       <button
                         type="button"
-                        onClick={() => handleUpdateStatus(lead.id, 'new')}
+                        onClick={(e) => handleArchiveToggle(e, lead)}
                         disabled={isActing}
-                        className="h-7 px-2 rounded-xl border border-line bg-surface hover:bg-surface-3 text-ink-3 hover:text-ink text-[11px] cursor-pointer transition-colors"
+                        className="h-7 px-2 rounded-xl border border-line bg-surface hover:bg-surface-3 text-ink-3 hover:text-ink text-[11px] cursor-pointer transition-colors inline-flex items-center gap-1"
                         title="Unarchive lead"
                       >
-                        Restore
+                        <ArchiveRestore className="size-3 text-emerald-500" />
+                        <span>Restore</span>
                       </button>
                     ) : (
                       <button
                         type="button"
-                        onClick={() => handleUpdateStatus(lead.id, 'archived')}
+                        onClick={(e) => handleArchiveToggle(e, lead)}
                         disabled={isActing}
-                        className="h-7 px-2 rounded-xl border border-transparent hover:border-line hover:bg-surface text-ink-4 hover:text-ink-2 text-[11px] cursor-pointer transition-colors"
-                        title="Archive lead"
+                        className="size-7 rounded-xl border border-transparent hover:border-line hover:bg-surface text-ink-4 hover:text-ink-2 flex items-center justify-center cursor-pointer transition-colors"
+                        title="Archive lead (preserves deduplication)"
                       >
-                        <Archive className="size-3" />
+                        <Archive className="size-3.5" />
                       </button>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={(e) => handleDirectDelete(e, lead)}
+                      disabled={isActing}
+                      className="size-7 rounded-xl border border-transparent hover:border-rose-500/20 hover:bg-rose-500/10 text-ink-4 hover:text-rose-500 flex items-center justify-center cursor-pointer transition-colors"
+                      title="Permanently Delete lead"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -957,7 +1090,8 @@ export const LeadsTab: React.FC = () => {
                   return (
                     <tr
                       key={lead.id}
-                      className="hover:bg-surface-2/60 transition-colors group"
+                      onClick={() => setActiveDetailLead(lead)}
+                      className="hover:bg-surface-2/60 transition-colors group cursor-pointer"
                     >
                       {/* Column 1: Company & Role */}
                       <td className="py-3 px-4 min-w-[200px] max-w-[260px]">
@@ -970,6 +1104,7 @@ export const LeadsTab: React.FC = () => {
                                   ? lead.website_domain
                                   : `https://${lead.website_domain}`
                               }
+                              onClick={(e) => e.stopPropagation()}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-ink-4 hover:text-ink-2"
@@ -980,6 +1115,7 @@ export const LeadsTab: React.FC = () => {
                           {lead.source_url && (
                             <a
                               href={lead.source_url}
+                              onClick={(e) => e.stopPropagation()}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-ink-4 hover:text-ink-2"
@@ -1017,9 +1153,10 @@ export const LeadsTab: React.FC = () => {
                             </span>
                             <button
                               type="button"
-                              onClick={() =>
-                                handleCopy(lead.contact_email!, `tbl-email-${lead.id}`, 'email')
-                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopy(lead.contact_email!, `tbl-email-${lead.id}`, 'email');
+                              }}
                               className="text-ink-4 hover:text-ink cursor-pointer"
                               title="Copy Email"
                             >
@@ -1037,7 +1174,10 @@ export const LeadsTab: React.FC = () => {
                               <button
                                 type="button"
                                 disabled={lookingUpHunterId === lead.id}
-                                onClick={() => handleHunterLookup(lead.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleHunterLookup(lead.id);
+                                }}
                                 className="text-[9px] font-medium text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-0.5 cursor-pointer disabled:opacity-50"
                                 title="Lookup email via Hunter.io (uses dynamic HUNTER_API_KEY from Secrets Vault)"
                               >
@@ -1060,9 +1200,10 @@ export const LeadsTab: React.FC = () => {
                         </p>
                         <button
                           type="button"
-                          onClick={() =>
-                            handleCopy(draftEmail, `tbl-draft-${lead.id}`, '4-line email draft')
-                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopy(draftEmail, `tbl-draft-${lead.id}`, '4-line email draft');
+                          }}
                           className="mt-1.5 h-5 px-2 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
                         >
                           {copiedItemId === `tbl-draft-${lead.id}` ? (
@@ -1081,11 +1222,17 @@ export const LeadsTab: React.FC = () => {
 
                       {/* Column 6: Actions */}
                       <td className="py-3 px-4 text-right shrink-0 whitespace-nowrap">
-                        <div className="inline-flex items-center gap-1.5">
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1.5"
+                        >
                           {lead.status !== 'emailed' && lead.status !== 'replied' && (
                             <button
                               type="button"
-                              onClick={() => handleUpdateStatus(lead.id, 'emailed')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateStatus(lead.id, 'emailed');
+                              }}
                               disabled={isActing}
                               className="h-7 px-2.5 rounded-xl border border-line bg-surface hover:bg-surface-3 text-ink text-[11px] font-medium cursor-pointer transition-colors"
                               title="Mark Emailed"
@@ -1102,7 +1249,10 @@ export const LeadsTab: React.FC = () => {
                           ) : (
                             <button
                               type="button"
-                              onClick={() => handlePromoteToCareer(lead)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePromoteToCareer(lead);
+                              }}
                               disabled={isActing}
                               className="h-7 px-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-[11px] font-semibold cursor-pointer transition-colors inline-flex items-center gap-1 shadow-2xs"
                               title="Promote to Career Pipeline"
@@ -1115,23 +1265,35 @@ export const LeadsTab: React.FC = () => {
                           {lead.status === 'archived' ? (
                             <button
                               type="button"
-                              onClick={() => handleUpdateStatus(lead.id, 'new')}
+                              onClick={(e) => handleArchiveToggle(e, lead)}
                               disabled={isActing}
-                              className="h-7 px-2 rounded-xl border border-line bg-surface hover:bg-surface-3 text-ink-3 text-[11px] cursor-pointer"
+                              className="h-7 px-2 rounded-xl border border-line bg-surface hover:bg-surface-3 text-ink-3 hover:text-ink text-[11px] cursor-pointer inline-flex items-center gap-1"
+                              title="Unarchive lead"
                             >
-                              Restore
+                              <ArchiveRestore className="size-3 text-emerald-500" />
+                              <span>Restore</span>
                             </button>
                           ) : (
                             <button
                               type="button"
-                              onClick={() => handleUpdateStatus(lead.id, 'archived')}
+                              onClick={(e) => handleArchiveToggle(e, lead)}
                               disabled={isActing}
-                              className="h-7 px-2 rounded-xl border border-transparent hover:border-line hover:bg-surface text-ink-4 hover:text-ink-2 text-[11px] cursor-pointer"
-                              title="Archive"
+                              className="size-7 rounded-xl border border-transparent hover:border-line hover:bg-surface text-ink-4 hover:text-ink-2 flex items-center justify-center cursor-pointer transition-colors"
+                              title="Archive lead (preserves deduplication)"
                             >
                               <Archive className="size-3" />
                             </button>
                           )}
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleDirectDelete(e, lead)}
+                            disabled={isActing}
+                            className="size-7 rounded-xl border border-transparent hover:border-rose-500/20 hover:bg-rose-500/10 text-ink-4 hover:text-rose-500 flex items-center justify-center cursor-pointer transition-colors"
+                            title="Permanently Delete lead"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1148,6 +1310,16 @@ export const LeadsTab: React.FC = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onLeadCreated={handleLeadCreated}
+      />
+
+      {/* Lead Detail Slide-Over Drawer */}
+      <LeadDetailDrawer
+        lead={activeDetailLead}
+        isOpen={!!activeDetailLead}
+        onClose={() => setActiveDetailLead(null)}
+        onLeadUpdated={handleLeadUpdatedFromDrawer}
+        onLeadDeleted={handleLeadDeletedFromDrawer}
+        onPromoteToCareer={handlePromoteToCareer}
       />
     </div>
   );

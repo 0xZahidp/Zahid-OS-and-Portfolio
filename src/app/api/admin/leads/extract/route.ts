@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
       email_confidence: emailConfidence as 'verified' | 'extracted' | 'guessed' | 'missing',
       startup_summary: extracted.startup_summary,
       pitch_hook: extracted.pitch_hook,
+      status: 'new',
     });
 
     const all = await getAllLeads();

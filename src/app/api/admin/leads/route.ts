@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/auth/admin-auth';
 import {
   getFilteredLeads,
   updateLead,
+  deleteLead,
   createLead,
   promoteLeadToCareerPipeline,
   calculateLeadMetrics,
@@ -172,6 +173,7 @@ export async function POST(req: NextRequest) {
 
     const createdLead = await createLead({
       ...body,
+      status: body.status || 'new',
       hunter_api_key: hunterKey,
     });
     const all = await getAllLeads();
@@ -185,6 +187,39 @@ export async function POST(req: NextRequest) {
     const status = (err as { status?: number })?.status || 500;
     const msg = err instanceof Error ? err.message : 'Failed to create lead';
     return NextResponse.json({ success: false, error: msg }, { status });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
+
+  try {
+    const { searchParams } = new URL(req.url);
+    let id = searchParams.get('id');
+    if (!id) {
+      const body = await req.json().catch(() => ({}));
+      id = body.id;
+    }
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Lead ID is required' }, { status: 400 });
+    }
+
+    const deleted = await deleteLead(id);
+    if (!deleted) {
+      return NextResponse.json({ success: false, error: 'Lead not found or delete failed' }, { status: 404 });
+    }
+
+    const all = await getAllLeads();
+    return NextResponse.json({
+      success: true,
+      deleted: true,
+      metrics: calculateLeadMetrics(all),
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to delete lead';
+    return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
 }
 
