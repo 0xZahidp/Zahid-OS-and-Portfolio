@@ -622,6 +622,12 @@ export const LeadsTab: React.FC = () => {
             <option value="Salesforce">Salesforce</option>
           </select>
 
+          {/* Web3 & Remote Scope Badge */}
+          <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 h-8.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold shrink-0">
+            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Web3 • Remote
+          </span>
+
           {/* Signal filter */}
           <select
             value={signalFilter}

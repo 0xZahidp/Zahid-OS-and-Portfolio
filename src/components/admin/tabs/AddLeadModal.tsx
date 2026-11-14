@@ -44,7 +44,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
   const [companyName, setCompanyName] = useState<string>('');
   const [roleOrHeadline, setRoleOrHeadline] = useState<string>('');
   const [sourceUrl, setSourceUrl] = useState<string>('');
-  const [track, setTrack] = useState<StartupLeadTrack>('Full-Stack');
+  const [track, setTrack] = useState<StartupLeadTrack>('Web3 Growth');
   const [signalType, setSignalType] = useState<StartupLeadSignalType>('early_hiring_post');
   const [websiteDomain, setWebsiteDomain] = useState<string>('');
   const [contactName, setContactName] = useState<string>('');
@@ -194,7 +194,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
             <div>
               <h3 className="text-sm font-bold text-ink">Add Startup Lead</h3>
               <p className="text-[11px] text-ink-3">
-                Auto-triage founder posts with AI or fill manually
+                Auto-triage Web3 & Remote founder posts with AI or fill manually
               </p>
             </div>
           </div>

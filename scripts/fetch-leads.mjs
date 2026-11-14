@@ -126,7 +126,7 @@ function parseXmlFeed(xml) {
 // 2. Fetch Free Sources
 // -----------------------------------------------------------------------------
 
-// 2a. Fetch Reddit posts (JSON or RSS with fallback)
+// 2a. Fetch Reddit posts (Web3 & Remote friendly only)
 async function fetchRedditSubreddit(sub) {
   const posts = [];
   const oneDayAgoSec = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
@@ -151,25 +151,36 @@ async function fetchRedditSubreddit(sub) {
         if (post.created_utc && post.created_utc < oneDayAgoSec) continue;
 
         const title = post.title || '';
-        const lowerTitle = title.toLowerCase();
+        const text = post.selftext || '';
+        const combined = `${title} ${text}`.toLowerCase();
 
-        // Must be hiring or relevant
+        // Must be hiring
         const isHiring =
-          lowerTitle.includes('[hiring]') ||
-          lowerTitle.includes('hiring') ||
-          lowerTitle.includes('looking for') ||
-          lowerTitle.includes('we are hiring');
+          combined.includes('[hiring]') ||
+          combined.includes('hiring') ||
+          combined.includes('looking for') ||
+          combined.includes('we are hiring');
         const isSeekingWork =
-          lowerTitle.includes('[for hire]') ||
-          lowerTitle.includes('for hire') ||
-          lowerTitle.includes('seeking work');
+          combined.includes('[for hire]') ||
+          combined.includes('for hire') ||
+          combined.includes('seeking work') ||
+          combined.includes('hire me');
 
-        if (isHiring && !isSeekingWork) {
+        // Must NOT be explicitly on-site or hybrid
+        const isExplicitOnSite =
+          combined.includes('on-site only') ||
+          combined.includes('onsite only') ||
+          combined.includes('in-office only') ||
+          (combined.includes('hybrid') &&
+            !combined.includes('or remote') &&
+            !combined.includes('remote friendly'));
+
+        if (isHiring && !isSeekingWork && !isExplicitOnSite) {
           posts.push({
             id: `reddit_${post.id}`,
             source: 'reddit',
             title,
-            text: (post.selftext || '').slice(0, 1000),
+            text: text.slice(0, 1000),
             url: `https://reddit.com${post.permalink}`,
             created_at: new Date(post.created_utc * 1000).toISOString(),
           });
@@ -193,10 +204,15 @@ async function fetchRedditSubreddit(sub) {
       const xml = await rssRes.text();
       const items = parseXmlFeed(xml);
       for (const item of items) {
-        const lowerTitle = item.title.toLowerCase();
-        const isHiring = lowerTitle.includes('hiring') || lowerTitle.includes('looking for');
-        const isSeekingWork = lowerTitle.includes('for hire');
-        if (isHiring && !isSeekingWork) {
+        const combined = `${item.title} ${item.description}`.toLowerCase();
+        const isHiring = combined.includes('hiring') || combined.includes('looking for');
+        const isSeekingWork = combined.includes('for hire') || combined.includes('hire me');
+        const isExplicitOnSite =
+          combined.includes('on-site only') ||
+          combined.includes('onsite only') ||
+          combined.includes('in-office only');
+
+        if (isHiring && !isSeekingWork && !isExplicitOnSite) {
           posts.push({
             id: `reddit_rss_${Buffer.from(item.link).toString('base64').slice(0, 16)}`,
             source: 'reddit',
@@ -215,33 +231,35 @@ async function fetchRedditSubreddit(sub) {
   return posts;
 }
 
-// 2b. Fetch Hacker News (Algolia API)
+// 2b. Fetch Hacker News (Web3 & Remote queries)
 async function fetchHackerNews() {
   const posts = [];
 
-  // 1. Stories with query=hiring
-  try {
-    const storyUrl =
-      'https://hn.algolia.com/api/v1/search_by_date?tags=story&query=hiring&hitsPerPage=20';
-    const res = await fetch(storyUrl, { signal: AbortSignal.timeout(8000) });
-    if (res.ok) {
-      const data = await res.json();
-      for (const hit of data.hits || []) {
-        posts.push({
-          id: `hn_story_${hit.objectID}`,
-          source: 'hn',
-          title: hit.title || '',
-          text: (hit.story_text || hit.comment_text || '').slice(0, 1000),
-          url: hit.url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
-          created_at: hit.created_at || new Date().toISOString(),
-        });
+  // 1. Stories with Web3 / Crypto remote queries
+  const queries = ['web3 remote', 'crypto remote', 'blockchain remote'];
+  for (const q of queries) {
+    try {
+      const storyUrl = `https://hn.algolia.com/api/v1/search_by_date?tags=story&query=${encodeURIComponent(q)}&hitsPerPage=15`;
+      const res = await fetch(storyUrl, { signal: AbortSignal.timeout(8000) });
+      if (res.ok) {
+        const data = await res.json();
+        for (const hit of data.hits || []) {
+          posts.push({
+            id: `hn_story_${hit.objectID}`,
+            source: 'hn',
+            title: hit.title || '',
+            text: (hit.story_text || hit.comment_text || '').slice(0, 1000),
+            url: hit.url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
+            created_at: hit.created_at || new Date().toISOString(),
+          });
+        }
       }
+    } catch (err) {
+      console.warn(`[HN] Story search for "${q}" failed:`, err.message);
     }
-  } catch (err) {
-    console.warn('[HN] Story search failed:', err.message);
   }
 
-  // 2. Monthly "Ask HN: Who is hiring?" latest comments
+  // 2. Monthly "Ask HN: Who is hiring?" comments filtered for Web3 + Remote
   try {
     const threadRes = await fetch(
       'https://hn.algolia.com/api/v1/search_by_date?tags=story,author_whoishiring&hitsPerPage=1',
@@ -252,15 +270,45 @@ async function fetchHackerNews() {
       const latestStory = threadData?.hits?.[0];
       if (latestStory?.objectID) {
         const commentsRes = await fetch(
-          `https://hn.algolia.com/api/v1/search_by_date?tags=comment,story_${latestStory.objectID}&hitsPerPage=30`,
+          `https://hn.algolia.com/api/v1/search_by_date?tags=comment,story_${latestStory.objectID}&hitsPerPage=50`,
           { signal: AbortSignal.timeout(8000) }
         );
         if (commentsRes.ok) {
           const comData = await commentsRes.json();
+          const web3Keywords = [
+            'web3',
+            'crypto',
+            'blockchain',
+            'defi',
+            'ethereum',
+            'solana',
+            'token',
+            'onchain',
+            'on-chain',
+            'dao',
+            'smart contract',
+            'layer2',
+            'layer 2',
+            'l2',
+            'zk',
+          ];
+          const remoteKeywords = ['remote', 'anywhere', 'distributed', 'worldwide', 'telecommute'];
+
           for (const com of comData.hits || []) {
             const rawHtml = com.comment_text || '';
             const plain = rawHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-            if (plain.length > 50) {
+            const lower = plain.toLowerCase();
+
+            const isWeb3 = web3Keywords.some((kw) => lower.includes(kw));
+            const isRemote = remoteKeywords.some((kw) => lower.includes(kw));
+            const isExplicitOnSite =
+              lower.includes('onsite only') ||
+              lower.includes('on-site only') ||
+              (lower.includes('hybrid') &&
+                !lower.includes('or remote') &&
+                !lower.includes('remote friendly'));
+
+            if (plain.length > 50 && isWeb3 && isRemote && !isExplicitOnSite) {
               const firstLine = plain.split('\n')[0].slice(0, 100);
               posts.push({
                 id: `hn_com_${com.objectID}`,
@@ -282,12 +330,11 @@ async function fetchHackerNews() {
   return posts;
 }
 
-// 2c. Fetch Startup & Web3 Seed Funding RSS Feeds
+// 2c. Fetch Startup & Web3 Seed Funding RSS Feeds (100% Web3 / Crypto)
 async function fetchSeedFundingFeeds() {
   const feeds = [
     { name: 'CoinDesk', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/' },
     { name: 'The Block', url: 'https://www.theblock.co/rss.xml' },
-    { name: 'TechCrunch Startups', url: 'https://techcrunch.com/category/startups/feed/' },
     { name: 'Decrypt', url: 'https://decrypt.co/feed' },
   ];
 
@@ -301,6 +348,8 @@ async function fetchSeedFundingFeeds() {
     'secures',
     'backed by',
     'valuation',
+    'token sale',
+    'grant',
   ];
 
   const posts = [];
@@ -346,40 +395,36 @@ async function triageWithGemini(apiKey, batch) {
     return [];
   }
 
-  const prompt = `You are an expert AI talent & startup intelligence scout working for Zahid Hasan (portfolio: zahidp.com).
-Zahid has a rare triple-threat profile:
-1. Web3 Growth Leader: Scaled NexGami to 500K+ registered users and $5M raised, leading growth loops, tokenomics, and Web3 BD.
-2. Full-Stack Engineer: Computer Science background, modern TypeScript, Next.js, Node.js, and cloud systems architect.
-3. Certified Salesforce Developer: Apex, LWC, complex integrations, and CRM workflow automation.
+  const prompt = `You are a strict, expert talent scout & venture intelligence analyst filtering for WEB3 ONLY and 100% REMOTE ONLY startup leads for Zahid Hasan (portfolio: zahidp.com).
+Zahid is a Web3 Growth Leader and Full-Stack builder who scaled NexGami to 500K+ registered users and a $5M raise, driving viral loops, community tokenomics, Web3 BD, and on-chain acquisition.
 
-Analyze the following list of candidate posts/news items.
-Discard immediately:
-- Anyone seeking a job or offering their own services (e.g. "[FOR HIRE]", "hire me", "looking for work", student portfolios).
-- Generic recruiting agency spam without a real company name.
-- Non-technical or irrelevant articles.
+STRICT DISQUALIFICATION RULES (DISCARD IMMEDIATELY):
+1. NOT WEB3 / CRYPTO: Discard immediately ANY traditional Web2 SaaS, non-crypto healthcare, traditional enterprise software, e-commerce, or non-blockchain company. ONLY Web3, crypto, blockchain, DeFi, tokenomics, on-chain protocols, or decentralized tech companies are accepted.
+2. NOT REMOTE: Discard immediately ANY position requiring physical office or hybrid presence (e.g. "NYC Hybrid", "San Francisco on-site", "London office", "Hybrid 2 days", "Relocation required"). ONLY 100% remote or globally distributed positions are accepted.
+3. FOR HIRE: Discard anyone looking for a job or offering consulting/agency services.
+4. RECRUITING SPAM: Discard recruiting agency postings without a real verifiable company name.
 
-Keep only:
-1. Legitimate startups / companies hiring for:
-   - "Web3 Growth"
-   - "Full-Stack"
-   - "Salesforce"
-2. Startups that recently announced seed, pre-seed, or venture funding in tech, Web3, AI, or SaaS.
+KEEP ONLY:
+1. Legitimate Web3 / Crypto startups hiring for REMOTE roles:
+   - Web3 Growth, Marketing, BD, Partnerships, Community, Tokenomics
+   - Full-Stack Web3 developers / engineers (TypeScript, Next.js, Node, smart contract integrations)
+2. Web3 / Crypto startups that announced recent seed, pre-seed, or venture funding (which are remote-first/distributed).
 
 Candidate Posts:
 ${JSON.stringify(batch, null, 2)}
 
 Return a JSON array of qualifying leads. For each qualifying item, output:
 - "raw_id": string matching the post "id" from input
-- "company_name": clean company name (e.g. "Monad Labs", "Stripe", "Supabase")
+- "company_name": clean company name (e.g. "Monad Labs", "Berachain", "Uniswap Labs")
 - "website_domain": domain name if known or found (e.g. "monad.xyz") or null
 - "signal_type": "early_hiring_post" | "seed_funding"
-- "track": "Web3 Growth" | "Full-Stack" | "Salesforce"
-- "role_or_headline": specific role or funding headline
-- "startup_summary": 1-2 sentence concise summary of product & funding
+- "track": "Web3 Growth" (or "Full-Stack" if it is purely technical Web3 dev)
+- "role_or_headline": specific remote role or Web3 funding headline
+- "startup_summary": 1-2 sentence concise summary of what they are building in Web3 and funding raised
 - "contact_name": founder / poster / hiring lead name if found in text, else null
-- "contact_title": e.g. "Founder & CEO", "CTO", "Head of Eng", else null
+- "contact_title": e.g. "Founder & CEO", "Head of Growth", "CTO", else null
 - "contact_email": valid email address if explicitly in text, else null
-- "pitch_hook": a punchy 1-sentence angle connecting their specific needs/product to Zahid's triple-threat profile (NexGami 500K users/$5M raise for Web3, CS full-stack for dev roles, Apex/LWC for Salesforce).
+- "pitch_hook": a punchy 1-sentence angle connecting their Web3 product/stage to Zahid's track record (scaling NexGami to 500K users & $5M raise, driving on-chain growth, viral mechanics, and token ecosystem growth).
 
 If none qualify, return an empty array [].`;
 
@@ -592,18 +637,18 @@ async function main() {
     console.log('[Supabase] No valid URL or key provided; running in dry/offline mode.');
   }
 
-  // 1. Fetch from all free sources
-  console.log('[Sources] Fetching Reddit feeds (r/forhire, r/Web3Jobs, r/CryptoJobs, r/salesforce, r/startups)...');
-  const subreddits = ['forhire', 'Web3Jobs', 'CryptoJobs', 'salesforce', 'startups'];
+  // 1. Fetch from all free Web3 & Remote sources
+  console.log('[Sources] Fetching Web3 Reddit feeds (r/Web3Jobs, r/CryptoJobs, r/ethdev, r/solana, r/defi)...');
+  const subreddits = ['Web3Jobs', 'CryptoJobs', 'ethdev', 'solana', 'defi'];
   const redditResults = await Promise.all(subreddits.map((s) => fetchRedditSubreddit(s)));
   const redditPosts = redditResults.flat();
-  console.log(`[Sources] Reddit: fetched ${redditPosts.length} hiring candidates.`);
+  console.log(`[Sources] Reddit: fetched ${redditPosts.length} Web3 hiring candidates.`);
 
-  console.log('[Sources] Fetching Hacker News (hiring stories & Ask HN Who is hiring)...');
+  console.log('[Sources] Fetching Hacker News (Web3 & Crypto remote hiring)...');
   const hnPosts = await fetchHackerNews();
   console.log(`[Sources] Hacker News: fetched ${hnPosts.length} candidates.`);
 
-  console.log('[Sources] Fetching Seed Funding RSS (CoinDesk, The Block, TechCrunch, Decrypt)...');
+  console.log('[Sources] Fetching Web3 Seed Funding RSS (CoinDesk, The Block, Decrypt)...');
   const rssPosts = await fetchSeedFundingFeeds();
   console.log(`[Sources] Seed Funding RSS: fetched ${rssPosts.length} articles.`);
 

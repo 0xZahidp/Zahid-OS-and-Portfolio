@@ -26,11 +26,8 @@ export async function extractLeadFromTextWithGemini(
     throw new Error('GEMINI_API_KEY is not configured in Supabase Secrets Vault or environment. Please add it to your Secrets & .env Vault in Settings.');
   }
 
-  const prompt = `You are an expert AI scout extracting structured tech talent & startup lead intelligence for Zahid Hasan (portfolio: zahidp.com).
-Zahid has a rare triple-threat profile:
-1. Web3 Growth Leader: Scaled NexGami to 500K+ registered users and $5M raised, leading growth loops, tokenomics, and Web3 BD.
-2. Full-Stack Engineer: Computer Science background, modern TypeScript, Next.js, Node.js, and cloud systems architect.
-3. Certified Salesforce Developer: Apex, LWC, complex integrations, and CRM workflow automation.
+  const prompt = `You are an expert AI talent & venture scout extracting structured Web3 & Remote startup lead intelligence for Zahid Hasan (portfolio: zahidp.com).
+Zahid is a Web3 Growth Leader and Full-Stack builder who scaled NexGami to 500K+ registered users and $5M raised, leading growth loops, tokenomics, BD, and on-chain acquisition.
 
 Analyze the following raw post text (e.g. from LinkedIn, X/Twitter, or seed funding news):
 
@@ -39,19 +36,16 @@ ${rawText.slice(0, 3000)}
 """
 
 Extract and return a single valid JSON object with the following fields:
-- "company_name": (string, required) Clean company or startup name (e.g. "Monad Labs", "Stripe")
+- "company_name": (string, required) Clean company or startup name (e.g. "Monad Labs", "Berachain", "Uniswap")
 - "website_domain": (string or null) Domain name if mentioned or obvious (e.g. "monad.xyz")
-- "track": (string, required, one of: "Web3 Growth", "Full-Stack", "Salesforce")
+- "track": (string, required, prioritize "Web3 Growth" for crypto/web3 roles, or "Full-Stack")
 - "signal_type": (string, required, one of: "early_hiring_post", "seed_funding")
-- "role_or_headline": (string, required) Specific role being hired (e.g. "Founding Full-Stack Engineer") or funding headline (e.g. "Raises $3.5M Seed for Decentralized Compute")
+- "role_or_headline": (string, required) Specific role being hired (e.g. "Remote Founding Growth Lead") or funding headline (e.g. "Raises $3.5M Seed for Decentralized Compute")
 - "startup_summary": (string) 1-2 sentence concise summary of product & funding
 - "contact_name": (string or null) Founder, hiring lead, or poster name if present in text
-- "contact_title": (string or null) e.g. "Founder & CEO", "CTO", "Head of Engineering"
+- "contact_title": (string or null) e.g. "Founder & CEO", "Head of Growth", "CTO"
 - "contact_email": (string or null) Explicit email address if mentioned in text
-- "pitch_hook": (string) A punchy 1-sentence angle connecting their specific needs/product to Zahid's triple-threat profile:
-  * For Web3 Growth: Highlight scaling NexGami to 500K users & $5M raise, driving on-chain growth and viral loops.
-  * For Full-Stack: Highlight CS background, production-grade Next.js/TypeScript/Node architectures, fast zero-to-one delivery.
-  * For Salesforce: Highlight certified Salesforce development, Apex/LWC integrations, CRM workflows, and automation.
+- "pitch_hook": (string) A punchy 1-sentence angle connecting their specific needs/product to Zahid's Web3 track record (scaling NexGami to 500K users & $5M raise, driving on-chain growth, viral mechanics, and community tokenomics).
 
 Return ONLY the JSON object.`;
 
