@@ -47,8 +47,8 @@ loadEnvLocal();
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const HUNTER_API_KEY = process.env.HUNTER_API_KEY;
+let GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+let HUNTER_API_KEY = process.env.HUNTER_API_KEY;
 const MAX_HUNTER_CALLS_PER_RUN = parseInt(process.env.MAX_HUNTER_CALLS_PER_RUN || '2', 10);
 
 const REDDIT_CLIENT_ID = process.env.REDDIT_CLIENT_ID;
@@ -524,6 +524,27 @@ async function main() {
       auth: { persistSession: false },
     });
     console.log('[Supabase] Initialized server client with service role key.');
+
+    // Fallback: If GEMINI_API_KEY or HUNTER_API_KEY are missing from env, resolve from app_settings
+    if (!GEMINI_API_KEY || !HUNTER_API_KEY) {
+      try {
+        const { data: settings } = await supabase.from('app_settings').select('key, value');
+        if (settings && Array.isArray(settings)) {
+          for (const s of settings) {
+            if (!GEMINI_API_KEY && s.key === 'GEMINI_API_KEY' && s.value && !s.value.startsWith('enc:')) {
+              GEMINI_API_KEY = s.value;
+              console.log('[Vault] Dynamically loaded GEMINI_API_KEY from Supabase app_settings.');
+            }
+            if (!HUNTER_API_KEY && s.key === 'HUNTER_API_KEY' && s.value && !s.value.startsWith('enc:')) {
+              HUNTER_API_KEY = s.value;
+              console.log('[Vault] Dynamically loaded HUNTER_API_KEY from Supabase app_settings.');
+            }
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
   } else {
     console.log('[Supabase] No valid URL or key provided; running in dry/offline mode.');
   }

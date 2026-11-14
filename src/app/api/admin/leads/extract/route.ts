@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/auth/admin-auth';
 import { extractLeadFromTextWithGemini } from '@/lib/leads/leads-ai';
 import { createLead, getAllLeads, calculateLeadMetrics } from '@/lib/leads/leads-store';
 import { lookupHunterEmail } from '@/lib/leads/hunter';
+import { getAppSecret } from '@/lib/env-vault';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,8 +23,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Dynamic secret resolution from Supabase app_settings (or process.env fallback)
+    const geminiKey = (await getAppSecret('GEMINI_API_KEY')) || process.env.GEMINI_API_KEY;
+    const hunterKey = (await getAppSecret('HUNTER_API_KEY')) || process.env.HUNTER_API_KEY;
+
+    if (!geminiKey) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'GEMINI_API_KEY is not configured in Supabase Secrets Vault or environment. Please add it in Settings > Secrets & .env Vault.',
+        },
+        { status: 400 }
+      );
+    }
+
     // 1. AI extraction via Gemini
-    const extracted = await extractLeadFromTextWithGemini(rawText);
+    const extracted = await extractLeadFromTextWithGemini(rawText, geminiKey);
 
     // 2. Hunter.io email enrichment if email missing but domain + name present
     let contactEmail = extracted.contact_email;
@@ -31,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     if (!contactEmail && extracted.website_domain && extracted.contact_name) {
       try {
-        const hunter = await lookupHunterEmail(extracted.website_domain, extracted.contact_name);
+        const hunter = await lookupHunterEmail(extracted.website_domain, extracted.contact_name, hunterKey);
         if (hunter) {
           contactEmail = hunter.email;
           emailConfidence = hunter.confidence;

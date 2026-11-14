@@ -8,6 +8,8 @@ import {
   calculateLeadMetrics,
   getAllLeads,
 } from '@/lib/leads/leads-store';
+import { lookupHunterEmail } from '@/lib/leads/hunter';
+import { getAppSecret } from '@/lib/env-vault';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,7 +70,67 @@ export async function PATCH(req: NextRequest) {
       });
     }
 
-    // Action 2: Standard field/status update
+    // Action 2: Manual Hunter.io Email Lookup
+    if (action === 'lookup_hunter') {
+      const allLeads = await getAllLeads();
+      const target = allLeads.find((l) => l.id === id);
+      if (!target) {
+        return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
+      }
+
+      if (!target.website_domain || !target.contact_name) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Both Website Domain and Contact Name are required for Hunter.io lookup.',
+          },
+          { status: 400 }
+        );
+      }
+
+      const hunterKey = (await getAppSecret('HUNTER_API_KEY')) || process.env.HUNTER_API_KEY;
+      if (!hunterKey) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              'HUNTER_API_KEY is not configured in Supabase Secrets Vault or environment. Please add it in Settings > Secrets & .env Vault.',
+          },
+          { status: 400 }
+        );
+      }
+
+      const hunterResult = await lookupHunterEmail(
+        target.website_domain,
+        target.contact_name,
+        hunterKey
+      );
+
+      if (!hunterResult?.email) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `No email found on Hunter.io for "${target.contact_name}" at ${target.website_domain}.`,
+          },
+          { status: 404 }
+        );
+      }
+
+      const updated = await updateLead(id, {
+        contact_email: hunterResult.email,
+        email_confidence: hunterResult.confidence,
+      });
+
+      const updatedAll = await getAllLeads();
+      return NextResponse.json({
+        success: true,
+        lead: updated,
+        hunter: hunterResult,
+        metrics: calculateLeadMetrics(updatedAll),
+      });
+    }
+
+    // Action 3: Standard field/status update
     const updated = await updateLead(id, updates || {});
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Lead not found or update failed' }, { status: 404 });
@@ -106,7 +168,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const createdLead = await createLead(body);
+    const hunterKey = (await getAppSecret('HUNTER_API_KEY')) || process.env.HUNTER_API_KEY;
+
+    const createdLead = await createLead({
+      ...body,
+      hunter_api_key: hunterKey,
+    });
     const all = await getAllLeads();
 
     return NextResponse.json({

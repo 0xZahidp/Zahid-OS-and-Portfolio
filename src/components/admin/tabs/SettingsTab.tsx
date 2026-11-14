@@ -1488,6 +1488,8 @@ export const SettingsTab: React.FC = () => {
                 {[
                   { key: 'RESEND_API_KEY', desc: 'Resend API key for inbox dispatches and contact form', secret: true },
                   { key: 'GITHUB_TOKEN', desc: 'GitHub Personal Access Token for private stats and rate limits', secret: true },
+                  { key: 'GEMINI_API_KEY', desc: 'Google Gemini API key for AI lead qualification and extraction', secret: true },
+                  { key: 'HUNTER_API_KEY', desc: 'Hunter.io API key for professional email discovery and verification', secret: true },
                   { key: 'CONTACT_TO_EMAIL', desc: 'Destination inbox for portfolio contact messages', secret: false },
                   { key: 'CONTACT_FROM_EMAIL', desc: 'Verified sender email (e.g. Md Zahid <hello@zahidp.com>)', secret: false },
                   { key: 'NEXT_PUBLIC_SITE_URL', desc: 'Canonical live domain URL (e.g. https://zahidp.com)', secret: false },

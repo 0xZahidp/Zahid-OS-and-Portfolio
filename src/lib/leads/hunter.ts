@@ -1,3 +1,5 @@
+import { getAppSecret } from '@/lib/env-vault';
+
 /**
  * Hunter.io Email Finder Helper
  * Respects free tier limits and safe error handling
@@ -7,7 +9,7 @@ export async function lookupHunterEmail(
   fullName: string,
   apiKey?: string
 ): Promise<{ email: string; confidence: 'verified' | 'guessed' } | null> {
-  const key = apiKey || process.env.HUNTER_API_KEY;
+  const key = apiKey || (await getAppSecret('HUNTER_API_KEY')) || process.env.HUNTER_API_KEY;
   if (!key || !domain || !fullName) return null;
 
   const parts = fullName.trim().split(/\s+/);

@@ -1,4 +1,5 @@
 import { StartupLeadTrack, StartupLeadSignalType } from '@/types/leads';
+import { getAppSecret } from '@/lib/env-vault';
 
 export interface ExtractedLeadData {
   company_name: string;
@@ -20,9 +21,9 @@ export async function extractLeadFromTextWithGemini(
   rawText: string,
   apiKey?: string
 ): Promise<ExtractedLeadData> {
-  const key = apiKey || process.env.GEMINI_API_KEY;
+  const key = apiKey || (await getAppSecret('GEMINI_API_KEY')) || process.env.GEMINI_API_KEY;
   if (!key) {
-    throw new Error('GEMINI_API_KEY is not configured on the server. Please add it to your environment.');
+    throw new Error('GEMINI_API_KEY is not configured in Supabase Secrets Vault or environment. Please add it to your Secrets & .env Vault in Settings.');
   }
 
   const prompt = `You are an expert AI scout extracting structured tech talent & startup lead intelligence for Zahid Hasan (portfolio: zahidp.com).

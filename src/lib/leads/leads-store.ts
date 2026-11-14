@@ -29,6 +29,7 @@ export interface CreateLeadInput {
   startup_summary?: string | null;
   pitch_hook?: string | null;
   try_hunter?: boolean;
+  hunter_api_key?: string;
 }
 
 const LEADS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'startup-leads.json');
@@ -294,7 +295,7 @@ export async function createLead(input: CreateLeadInput): Promise<StartupLead> {
 
   if (!contactEmail && input.try_hunter && input.website_domain && input.contact_name) {
     try {
-      const hunterRes = await lookupHunterEmail(input.website_domain, input.contact_name);
+      const hunterRes = await lookupHunterEmail(input.website_domain, input.contact_name, input.hunter_api_key);
       if (hunterRes) {
         contactEmail = hunterRes.email;
         emailConfidence = hunterRes.confidence;

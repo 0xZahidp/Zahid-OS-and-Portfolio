@@ -196,6 +196,16 @@ export async function listAppSecrets(): Promise<EnvVaultItem[]> {
       description: 'GitHub Personal Access Token for private contribution graphs and API limits',
     },
     {
+      key: 'GEMINI_API_KEY',
+      isSecret: true,
+      description: 'Google Gemini API key for AI lead qualification, extraction, and personalized pitches',
+    },
+    {
+      key: 'HUNTER_API_KEY',
+      isSecret: true,
+      description: 'Hunter.io API key for professional email discovery and verification',
+    },
+    {
       key: 'CONTACT_TO_EMAIL',
       isSecret: false,
       description: 'Destination email address where public contact inquiries are sent',

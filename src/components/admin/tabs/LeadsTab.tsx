@@ -92,6 +92,7 @@ export const LeadsTab: React.FC = () => {
 
   // Action in progress tracking
   const [actionInProgressId, setActionInProgressId] = useState<string | null>(null);
+  const [lookingUpHunterId, setLookingUpHunterId] = useState<string | null>(null);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -252,6 +253,30 @@ export const LeadsTab: React.FC = () => {
       showToast('✕ Network error saving email');
     } finally {
       setActionInProgressId(null);
+    }
+  };
+
+  // Manual Hunter.io email lookup
+  const handleHunterLookup = async (leadId: string) => {
+    setLookingUpHunterId(leadId);
+    try {
+      const res = await fetch('/api/admin/leads', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: leadId, action: 'lookup_hunter' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.lead) {
+        setLeads((prev) => prev.map((l) => (l.id === leadId ? data.lead : l)));
+        if (data.metrics) setMetrics(data.metrics);
+        showToast(`✓ Found email: ${data.lead.contact_email}`);
+      } else {
+        showToast(`✕ ${data.error || 'No email found on Hunter.io'}`);
+      }
+    } catch {
+      showToast('✕ Network error during Hunter.io lookup');
+    } finally {
+      setLookingUpHunterId(null);
     }
   };
 
@@ -763,19 +788,37 @@ export const LeadsTab: React.FC = () => {
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center justify-between w-full gap-2">
                           <span className="text-[11px] text-ink-4 italic">Email missing</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingEmailId(lead.id);
-                              setEditingEmailValue('');
-                            }}
-                            className="h-6 px-2 rounded-lg border border-dashed border-line bg-surface hover:border-line-2 text-ink-3 hover:text-ink text-[10px] font-medium inline-flex items-center gap-1 cursor-pointer transition-colors"
-                          >
-                            <Edit2 className="size-2.5" />
-                            <span>Add Email</span>
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            {lead.website_domain && lead.contact_name && (
+                              <button
+                                type="button"
+                                disabled={lookingUpHunterId === lead.id}
+                                onClick={() => handleHunterLookup(lead.id)}
+                                className="h-6 px-2 rounded-lg border border-amber-500/25 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-medium inline-flex items-center gap-1 cursor-pointer transition-colors disabled:opacity-50"
+                                title="Lookup email via Hunter.io (uses dynamic HUNTER_API_KEY from Secrets Vault)"
+                              >
+                                {lookingUpHunterId === lead.id ? (
+                                  <RefreshCw className="size-2.5 animate-spin" />
+                                ) : (
+                                  <Sparkles className="size-2.5" />
+                                )}
+                                <span>Find (Hunter)</span>
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingEmailId(lead.id);
+                                setEditingEmailValue('');
+                              }}
+                              className="h-6 px-2 rounded-lg border border-dashed border-line bg-surface hover:border-line-2 text-ink-3 hover:text-ink text-[10px] font-medium inline-flex items-center gap-1 cursor-pointer transition-colors"
+                            >
+                              <Edit2 className="size-2.5" />
+                              <span>Add Email</span>
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -988,7 +1031,25 @@ export const LeadsTab: React.FC = () => {
                             </button>
                           </div>
                         ) : (
-                          <div className="text-[10px] text-ink-4 italic mt-0.5">Email missing</div>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[10px] text-ink-4 italic">Email missing</span>
+                            {lead.website_domain && lead.contact_name && (
+                              <button
+                                type="button"
+                                disabled={lookingUpHunterId === lead.id}
+                                onClick={() => handleHunterLookup(lead.id)}
+                                className="text-[9px] font-medium text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-0.5 cursor-pointer disabled:opacity-50"
+                                title="Lookup email via Hunter.io (uses dynamic HUNTER_API_KEY from Secrets Vault)"
+                              >
+                                {lookingUpHunterId === lead.id ? (
+                                  <RefreshCw className="size-2 animate-spin" />
+                                ) : (
+                                  <Sparkles className="size-2" />
+                                )}
+                                <span>Lookup</span>
+                              </button>
+                            )}
+                          </div>
                         )}
                       </td>
 
