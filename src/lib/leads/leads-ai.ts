@@ -55,7 +55,7 @@ Extract and return a single valid JSON object with the following fields:
 
 Return ONLY the JSON object.`;
 
-  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  const models = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'];
   let lastError = 'Failed to extract with Gemini';
 
   for (const model of models) {
