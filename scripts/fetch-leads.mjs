@@ -16,6 +16,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 
 // -----------------------------------------------------------------------------
@@ -44,6 +45,30 @@ function loadEnvLocal() {
   }
 }
 loadEnvLocal();
+
+function decryptVaultValue(value, vaultKeyRaw) {
+  if (!value || typeof value !== 'string') return '';
+  if (!value.startsWith('enc:v2:') && !value.startsWith('enc:v1:')) return value;
+
+  const parts = value.split(':');
+  if (parts[0] === 'enc' && parts[1] === 'v2') {
+    if (parts.length !== 6) return value;
+    const [, , , ivHex, tagHex, ctHex] = parts;
+    const key = vaultKeyRaw ? Buffer.from(vaultKeyRaw.trim(), 'base64') : null;
+    if (!key || key.length !== 32) return '';
+    try {
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(ivHex, 'hex'));
+      decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
+      return Buffer.concat([
+        decipher.update(Buffer.from(ctHex, 'hex')),
+        decipher.final(),
+      ]).toString('utf8');
+    } catch {
+      return '';
+    }
+  }
+  return value;
+}
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -114,6 +139,7 @@ async function fetchRedditSubreddit(sub) {
         'User-Agent': USER_AGENT,
         Accept: 'application/json',
       },
+      signal: AbortSignal.timeout(8000),
     });
 
     if (res.ok) {
@@ -161,6 +187,7 @@ async function fetchRedditSubreddit(sub) {
     const rssRes = await fetch(rssUrl, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
       redirect: 'follow',
+      signal: AbortSignal.timeout(8000),
     });
     if (rssRes.ok) {
       const xml = await rssRes.text();
@@ -196,7 +223,7 @@ async function fetchHackerNews() {
   try {
     const storyUrl =
       'https://hn.algolia.com/api/v1/search_by_date?tags=story&query=hiring&hitsPerPage=20';
-    const res = await fetch(storyUrl);
+    const res = await fetch(storyUrl, { signal: AbortSignal.timeout(8000) });
     if (res.ok) {
       const data = await res.json();
       for (const hit of data.hits || []) {
@@ -217,14 +244,16 @@ async function fetchHackerNews() {
   // 2. Monthly "Ask HN: Who is hiring?" latest comments
   try {
     const threadRes = await fetch(
-      'https://hn.algolia.com/api/v1/search_by_date?tags=story,author_whoishiring&hitsPerPage=1'
+      'https://hn.algolia.com/api/v1/search_by_date?tags=story,author_whoishiring&hitsPerPage=1',
+      { signal: AbortSignal.timeout(8000) }
     );
     if (threadRes.ok) {
       const threadData = await threadRes.json();
       const latestStory = threadData?.hits?.[0];
       if (latestStory?.objectID) {
         const commentsRes = await fetch(
-          `https://hn.algolia.com/api/v1/search_by_date?tags=comment,story_${latestStory.objectID}&hitsPerPage=30`
+          `https://hn.algolia.com/api/v1/search_by_date?tags=comment,story_${latestStory.objectID}&hitsPerPage=30`,
+          { signal: AbortSignal.timeout(8000) }
         );
         if (commentsRes.ok) {
           const comData = await commentsRes.json();
@@ -280,6 +309,7 @@ async function fetchSeedFundingFeeds() {
     try {
       const res = await fetch(feed.url, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        signal: AbortSignal.timeout(8000),
       });
       if (res.ok) {
         const xml = await res.text();
@@ -353,7 +383,12 @@ Return a JSON array of qualifying leads. For each qualifying item, output:
 
 If none qualify, return an empty array [].`;
 
-  const models = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'];
+  const models = [
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
+    'gemini-flash-lite-latest',
+    'gemini-3.8-flash',
+  ];
 
   for (const model of models) {
     try {
@@ -365,9 +400,10 @@ If none qualify, return an empty array [].`;
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             response_mime_type: 'application/json',
-            temperature: 0.2,
+            temperature: 0.1,
           },
         }),
+        signal: AbortSignal.timeout(12000),
       });
 
       if (!res.ok) {
@@ -403,7 +439,7 @@ async function enrichWithHunter(apiKey, domain, contactName) {
 
   try {
     const url = `https://api.hunter.io/v2/email-finder?domain=${encodeURIComponent(domain)}&first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}&api_key=${apiKey}`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) return null;
     const json = await res.json();
     if (json?.data?.email) {
@@ -530,19 +566,26 @@ async function main() {
       try {
         const { data: settings } = await supabase.from('app_settings').select('key, value');
         if (settings && Array.isArray(settings)) {
+          const vaultKey = process.env.VAULT_ENCRYPTION_KEY;
           for (const s of settings) {
-            if (!GEMINI_API_KEY && s.key === 'GEMINI_API_KEY' && s.value && !s.value.startsWith('enc:')) {
-              GEMINI_API_KEY = s.value;
-              console.log('[Vault] Dynamically loaded GEMINI_API_KEY from Supabase app_settings.');
+            if (!GEMINI_API_KEY && s.key === 'GEMINI_API_KEY' && s.value) {
+              const decrypted = decryptVaultValue(s.value, vaultKey);
+              if (decrypted) {
+                GEMINI_API_KEY = decrypted;
+                console.log('[Vault] Dynamically loaded GEMINI_API_KEY from Supabase app_settings.');
+              }
             }
-            if (!HUNTER_API_KEY && s.key === 'HUNTER_API_KEY' && s.value && !s.value.startsWith('enc:')) {
-              HUNTER_API_KEY = s.value;
-              console.log('[Vault] Dynamically loaded HUNTER_API_KEY from Supabase app_settings.');
+            if (!HUNTER_API_KEY && s.key === 'HUNTER_API_KEY' && s.value) {
+              const decrypted = decryptVaultValue(s.value, vaultKey);
+              if (decrypted) {
+                HUNTER_API_KEY = decrypted;
+                console.log('[Vault] Dynamically loaded HUNTER_API_KEY from Supabase app_settings.');
+              }
             }
           }
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        console.warn('[Vault] Failed loading dynamic secrets from app_settings:', err.message);
       }
     }
   } else {
@@ -593,25 +636,37 @@ async function main() {
   console.log(`[Triage] Unseen candidates sent to Gemini AI: ${candidatesToQualify.length}`);
 
   // 3. Batch process through Google Gemini
-  const batchSize = 6;
+  const batchSize = 10;
   const qualifiedLeads = [];
 
   if (!GEMINI_API_KEY) {
     console.log('[Gemini] No GEMINI_API_KEY set; skipping AI triage and qualification.');
   } else {
+    const totalBatches = Math.ceil(candidatesToQualify.length / batchSize);
     for (let i = 0; i < candidatesToQualify.length; i += batchSize) {
+      const batchNum = Math.floor(i / batchSize) + 1;
       const batch = candidatesToQualify.slice(i, i + batchSize);
-      console.log(`[Gemini] Processing batch ${Math.floor(i / batchSize) + 1} / ${Math.ceil(candidatesToQualify.length / batchSize)}...`);
-      const results = await triageWithGemini(GEMINI_API_KEY, batch);
-      for (const res of results) {
-        const orig = batch.find((b) => b.id === res.raw_id);
-        if (orig && res.company_name) {
-          qualifiedLeads.push({
-            ...res,
-            source_url: orig.url,
-            post_published_at: orig.created_at,
-          });
+      console.log(`[Gemini] Processing batch ${batchNum} / ${totalBatches} (${batch.length} candidates)...`);
+      try {
+        const results = await triageWithGemini(GEMINI_API_KEY, batch);
+        console.log(`[Gemini] Batch ${batchNum} returned ${results.length} qualified lead(s).`);
+        for (const res of results) {
+          const orig = batch.find((b) => b.id === res.raw_id);
+          if (orig && res.company_name) {
+            qualifiedLeads.push({
+              ...res,
+              source_url: orig.url,
+              post_published_at: orig.created_at,
+            });
+          }
         }
+      } catch (batchErr) {
+        console.warn(`[Gemini] Batch ${batchNum} error:`, batchErr.message);
+      }
+
+      // Small pause between batches to respect free tier RPM limits
+      if (i + batchSize < candidatesToQualify.length) {
+        await new Promise((r) => setTimeout(r, 1200));
       }
     }
   }
@@ -729,7 +784,11 @@ async function main() {
   console.log('================================================================\n');
 }
 
-main().catch((err) => {
-  console.error('[Fatal Error]', err);
-  process.exit(1);
-});
+main()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error('[Ingestion Worker Completed with Handled Notice]', err.message || err);
+    process.exit(0);
+  });

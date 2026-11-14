@@ -55,7 +55,12 @@ Extract and return a single valid JSON object with the following fields:
 
 Return ONLY the JSON object.`;
 
-  const models = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'];
+  const models = [
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
+    'gemini-flash-lite-latest',
+    'gemini-3.8-flash',
+  ];
   let lastError = 'Failed to extract with Gemini';
 
   for (const model of models) {
@@ -71,6 +76,7 @@ Return ONLY the JSON object.`;
             temperature: 0.1,
           },
         }),
+        signal: AbortSignal.timeout(10000),
       });
 
       if (!res.ok) {
