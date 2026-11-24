@@ -68,6 +68,11 @@ export async function POST(req: NextRequest) {
       contacts: Array.isArray(body.contacts) ? body.contacts : [],
       interviews: Array.isArray(body.interviews) ? body.interviews : [],
       archived: Boolean(body.archived),
+      closed_outcome: body.closed_outcome || undefined,
+      outcome_reason: body.outcome_reason?.trim() || undefined,
+      outcome_notes: body.outcome_notes?.trim() || undefined,
+      rejected_at_stage: body.rejected_at_stage || undefined,
+      closed_at: body.closed_at || undefined,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

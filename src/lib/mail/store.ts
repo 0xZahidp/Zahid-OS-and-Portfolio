@@ -122,6 +122,8 @@ export const OFFICIAL_ALIASES = [
 ] as const;
 
 export function isOfficialEmail(m: MailMessage): boolean {
+  if (typeof m.is_official === 'boolean') return m.is_official;
+  if (typeof m.isOfficial === 'boolean') return m.isOfficial;
   if (m.mailbox === 'official') return true;
   if (m.mailbox === 'unofficial') return false;
   if (m.direction === 'outbound' || m.folder === 'sent') return true;
@@ -130,6 +132,8 @@ export function isOfficialEmail(m: MailMessage): boolean {
 }
 
 export function isUnofficialEmail(m: MailMessage): boolean {
+  if (typeof m.is_official === 'boolean') return !m.is_official && m.direction !== 'outbound' && m.folder !== 'sent';
+  if (typeof m.isOfficial === 'boolean') return !m.isOfficial && m.direction !== 'outbound' && m.folder !== 'sent';
   if (m.mailbox === 'unofficial') return true;
   if (m.mailbox === 'official') return false;
   if (m.direction === 'outbound' || m.folder === 'sent') return false;
@@ -207,6 +211,20 @@ export function normalizeMessage(item: Record<string, unknown>): MailMessage {
       isArchived,
       label: (item.label as string) || 'inbox',
       mailbox: (item.mailbox as 'official' | 'unofficial') || undefined,
+      isOfficial:
+        typeof item.is_official === 'boolean'
+          ? item.is_official
+          : typeof item.isOfficial === 'boolean'
+            ? item.isOfficial
+            : item.mailbox === 'official' || folder === 'sent',
+      is_official:
+        typeof item.is_official === 'boolean'
+          ? item.is_official
+          : typeof item.isOfficial === 'boolean'
+            ? item.isOfficial
+            : item.mailbox === 'official' || folder === 'sent',
+      isDeleted: Boolean(item.is_deleted ?? isTrashed),
+      is_deleted: Boolean(item.is_deleted ?? isTrashed),
       direction: (item.direction as 'inbound' | 'outbound') || (folder === 'sent' ? 'outbound' : 'inbound'),
       inReplyTo: (item.inReplyTo || item.in_reply_to) as string | undefined,
       references: (item.references || item.references_header) as string | undefined,
@@ -282,6 +300,20 @@ export function normalizeMessage(item: Record<string, unknown>): MailMessage {
     isArchived,
     label: (item.label as string) || (folder === 'archive' ? 'archive' : 'inbox'),
     mailbox: (item.mailbox as 'official' | 'unofficial') || undefined,
+    isOfficial:
+      typeof item.is_official === 'boolean'
+        ? item.is_official
+        : typeof item.isOfficial === 'boolean'
+          ? item.isOfficial
+          : item.mailbox === 'official' || isSent,
+    is_official:
+      typeof item.is_official === 'boolean'
+        ? item.is_official
+        : typeof item.isOfficial === 'boolean'
+          ? item.isOfficial
+          : item.mailbox === 'official' || isSent,
+    isDeleted: Boolean(item.is_deleted ?? isTrashed),
+    is_deleted: Boolean(item.is_deleted ?? isTrashed),
     direction: (item.direction as 'inbound' | 'outbound') || (isSent ? 'outbound' : 'inbound'),
     inReplyTo: (item.in_reply_to || item.inReplyTo) as string | undefined,
     references: (item.references_header || item.references) as string | undefined,
@@ -314,7 +346,7 @@ export async function readMailStore(options?: {
       const supabase = supabaseServer();
       const columns =
         options?.includeBody === false
-          ? 'id, thread_id, resend_id, status, label, direction, mailbox, from_name, from_email, to_email, subject, received_at, created_at, is_read, read_at, is_starred, is_trashed, in_reply_to, references_header, raw_headers, attachments, name, email, recipient, is_sent'
+          ? 'id, thread_id, resend_id, status, label, direction, mailbox, is_official, is_deleted, from_name, from_email, to_email, subject, received_at, created_at, is_read, read_at, is_starred, is_trashed, in_reply_to, references_header, raw_headers, attachments, name, email, recipient, is_sent'
           : '*';
 
       const query = supabase.from('inbox_messages') as unknown as {
@@ -669,6 +701,8 @@ export function groupMessagesIntoThreads(
       hasInbound,
       tags: allTags,
       mailbox: threadMailbox,
+      isOfficial,
+      is_official: isOfficial,
       messages: msgs,
     });
   }
@@ -697,7 +731,7 @@ export function groupMessagesIntoThreads(
           !t.isTrashed &&
           !t.isArchived &&
           t.messages.some((m) => m.folder === 'inbox' || (!m.folder && m.direction === 'inbound')) &&
-          (t.mailbox === 'unofficial' || t.messages.some((m) => isUnofficialEmail(m)))
+          (t.is_official === false || t.mailbox === 'unofficial' || t.messages.some((m) => isUnofficialEmail(m)))
       );
     } else {
       // Default 'inbox': only official inbound threads
@@ -706,7 +740,7 @@ export function groupMessagesIntoThreads(
           !t.isTrashed &&
           !t.isArchived &&
           t.messages.some((m) => m.folder === 'inbox' || (!m.folder && m.direction === 'inbound')) &&
-          (t.mailbox === 'official' || t.messages.some((m) => isOfficialEmail(m)))
+          (t.is_official === true || t.mailbox === 'official' || t.messages.some((m) => isOfficialEmail(m)))
       );
     }
   }
@@ -769,7 +803,7 @@ export function calculateMailFolderCounts(
       if (
         t.messages.some((m) => m.folder === 'inbox' || (!m.folder && m.direction === 'inbound'))
       ) {
-        const isOfficial = t.mailbox === 'official' || t.messages.some((m) => isOfficialEmail(m));
+        const isOfficial = t.is_official ?? (t.mailbox === 'official' || t.messages.some((m) => isOfficialEmail(m)));
         if (isOfficial) {
           inbox++;
           if (t.hasUnread) unread++;
@@ -887,6 +921,9 @@ export async function addMailMessage(message: MailMessage): Promise<boolean> {
         status: message.isRead ? 'read' : 'unread',
         is_starred: message.isStarred || false,
         is_sent: message.folder === 'sent',
+        direction: message.direction || (message.folder === 'sent' ? 'outbound' : 'inbound'),
+        is_official: true,
+        is_deleted: false,
         created_at: message.createdAt || new Date().toISOString(),
       });
     } catch (err) {
@@ -1129,9 +1166,11 @@ export async function upsertReceivedEmail(email: {
     read_at: null,
     is_starred: false,
     is_trashed: false,
+    is_deleted: false,
     label: 'inbox',
     direction: 'inbound',
     mailbox,
+    is_official: mailbox === 'official',
     in_reply_to: inReplyTo,
     references_header: referencesHeader,
     raw_headers: email.headers || {},
@@ -1272,8 +1311,10 @@ export async function saveSentMessage(sent: {
     read_at: createdAt,
     is_starred: false,
     is_trashed: false,
+    is_deleted: false,
     label: 'sent',
     direction: 'outbound',
+    is_official: true,
     in_reply_to: sent.inReplyTo || '',
     references_header: sent.references || '',
     raw_headers: {},
@@ -1383,6 +1424,7 @@ export async function updateThreadFolder(
         .from('inbox_messages')
         .update({
           is_trashed: isTrashed,
+          is_deleted: isTrashed,
           status: statusValue,
           label: labelValue,
         })
@@ -1481,7 +1523,7 @@ export async function deleteThread(threadId: string, permanent = false): Promise
         const supabase = supabaseServer();
         await supabase
           .from('inbox_messages')
-          .update({ is_trashed: true, status: 'trash', label: 'trash' })
+          .update({ is_trashed: true, is_deleted: true, status: 'trash', label: 'trash' })
           .or(`thread_id.eq.${threadId},id.eq.${threadId}`);
       } catch (err) {
         console.warn('[MailStore] Supabase trash thread error:', err);
@@ -1534,6 +1576,7 @@ export async function updateMailMessage(
       }
       if (typeof updates.isTrashed === 'boolean') {
         patch.is_trashed = updates.isTrashed;
+        patch.is_deleted = updates.isTrashed;
         if (updates.isTrashed) {
           patch.status = 'trash';
           patch.label = 'trash';
@@ -1548,19 +1591,23 @@ export async function updateMailMessage(
 
       if (updates.folder === 'trash') {
         patch.is_trashed = true;
+        patch.is_deleted = true;
         patch.status = 'trash';
         patch.label = 'trash';
       } else if (updates.folder === 'archive') {
         patch.is_trashed = false;
+        patch.is_deleted = false;
         patch.status = 'archived';
         patch.label = 'archive';
       } else if (updates.folder === 'inbox') {
         patch.is_trashed = false;
+        patch.is_deleted = false;
         patch.status = updated.isRead ? 'read' : 'unread';
         patch.direction = 'inbound';
         patch.label = 'inbox';
       } else if (updates.folder === 'sent') {
         patch.is_trashed = false;
+        patch.is_deleted = false;
         patch.status = 'read';
         patch.direction = 'outbound';
         patch.label = 'sent';
@@ -1632,7 +1679,7 @@ export async function deleteMailMessage(id: string, permanent: boolean = false):
         const supabase = supabaseServer();
         await supabase
           .from('inbox_messages')
-          .update({ is_trashed: true, status: 'trash', label: 'trash' })
+          .update({ is_trashed: true, is_deleted: true, status: 'trash', label: 'trash' })
           .eq('id', id);
       } catch (err) {
         console.warn('[MailStore] Supabase trash error:', err);
@@ -1732,14 +1779,11 @@ export async function syncReceivedEmailsFromResend(force = false): Promise<{ cou
     }
 
     const emailSummaries = listRes.data.data;
-    const store = await readMailStore();
 
     // Fetch tombstones once per sync
     const tombstones = await getTombstoneResendIds();
 
-    const existingResendIds = new Set(
-      store.messages.map((m) => m.resendId).filter(Boolean) as string[]
-    );
+    const existingResendIds = new Set<string>();
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (supabaseUrl && !supabaseUrl.includes('placeholder.supabase.co')) {
@@ -1753,6 +1797,11 @@ export async function syncReceivedEmailsFromResend(force = false): Promise<{ cou
         }
       } catch {
         // ignore
+      }
+    } else {
+      const store = await readMailStore({ includeBody: false });
+      for (const m of store.messages) {
+        if (m.resendId) existingResendIds.add(m.resendId);
       }
     }
 

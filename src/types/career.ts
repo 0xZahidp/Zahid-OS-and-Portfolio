@@ -8,6 +8,13 @@ export type CareerApplicationStatus =
   | 'rejected'
   | 'withdrawn';
 
+export type CareerClosedOutcome =
+  | 'accepted'
+  | 'rejected'
+  | 'ghosted'
+  | 'withdrawn'
+  | 'offer_declined';
+
 export type CareerPriorityLevel = 'low' | 'medium' | 'high' | 'urgent';
 
 export type CareerSourceType =
@@ -84,6 +91,12 @@ export interface CareerApplication {
   contacts: CareerContact[];
   interviews: CareerInterview[];
   archived: boolean;
+  // Closure Outcomes & Rejection Analytics
+  closed_outcome?: CareerClosedOutcome;
+  outcome_reason?: string;
+  outcome_notes?: string;
+  rejected_at_stage?: CareerApplicationStatus | string;
+  closed_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -95,5 +108,9 @@ export interface CareerMetrics {
   offers: number;
   rejected: number;
   overdueFollowups: number;
+  accepted?: number;
+  ghosted?: number;
+  withdrawn?: number;
+  offerDeclined?: number;
 }
 

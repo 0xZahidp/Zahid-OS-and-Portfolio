@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { getOsSettings, saveOsSettings } from '@/lib/os/settings';
 import { requireAdmin } from '@/lib/auth/admin-auth';
 
@@ -34,6 +35,12 @@ export async function POST(req: NextRequest) {
         ? body.version
         : undefined;
     const updated = await saveOsSettings(body, expectedVersion);
+    try {
+      revalidateTag('os-settings');
+      revalidatePath('/os');
+    } catch {
+      // In non-Next runtime or tests, ignore
+    }
     return NextResponse.json(
       {
         success: true,

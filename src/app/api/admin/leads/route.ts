@@ -55,7 +55,8 @@ export async function PATCH(req: NextRequest) {
 
     // Action 1: Promote to Career Pipeline
     if (action === 'promote') {
-      const promoteRes = await promoteLeadToCareerPipeline(id);
+      const targetStatus = body.targetStatus === 'applied' ? 'applied' : 'saved';
+      const promoteRes = await promoteLeadToCareerPipeline(id, targetStatus);
       if (!promoteRes.success) {
         return NextResponse.json(
           { success: false, error: promoteRes.error || 'Failed to promote lead' },
@@ -66,6 +67,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({
         success: true,
         promoted: true,
+        targetStatus,
         application: promoteRes.application,
         metrics: calculateLeadMetrics(all),
       });

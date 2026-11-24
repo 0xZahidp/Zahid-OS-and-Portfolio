@@ -39,7 +39,7 @@ interface LeadDetailDrawerProps {
   onClose: () => void;
   onLeadUpdated: (updatedLead: StartupLead, newMetrics?: StartupLeadMetrics) => void;
   onLeadDeleted: (leadId: string, newMetrics?: StartupLeadMetrics) => void;
-  onPromoteToCareer: (lead: StartupLead) => void;
+  onPromoteToCareer: (lead: StartupLead, targetStatus?: 'saved' | 'applied') => void;
 }
 
 function formatFullDate(dateString?: string | null): string {
@@ -705,7 +705,6 @@ export const LeadDetailDrawer: React.FC<LeadDetailDrawerProps> = ({
                 type="button"
                 onClick={() => {
                   onPromoteToCareer(localLead);
-                  handleFieldChange('status', 'promoted');
                 }}
                 className="h-8 px-3 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Promote directly into Career Pipeline"

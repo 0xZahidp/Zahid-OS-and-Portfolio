@@ -434,10 +434,11 @@ export async function createLead(input: CreateLeadInput): Promise<StartupLead> {
 }
 
 /**
- * Promote lead directly to Career & Pipeline as 'applied'
+ * Promote lead directly to Career & Pipeline as 'saved' (default) or 'applied'
  */
 export async function promoteLeadToCareerPipeline(
-  leadId: string
+  leadId: string,
+  targetStatus: 'saved' | 'applied' = 'saved'
 ): Promise<{ success: boolean; application?: CareerApplication; error?: string }> {
   const all = await getAllLeads();
   const lead = all.find((l) => l.id === leadId);
@@ -458,7 +459,7 @@ export async function promoteLeadToCareerPipeline(
     company_location: '',
     role_title: lead.role_or_headline.trim() || 'Software Engineer',
     type: 'job',
-    status: 'applied',
+    status: targetStatus,
     priority: 'high',
     stageChangedAt: new Date().toISOString(),
     source: lead.track === 'Web3 Growth' ? 'web3_board' : 'company_site',

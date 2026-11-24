@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { getShortLinks, saveShortLinks, deleteShortLink } from '@/lib/os/short-links';
 import { requireAdmin, isAdminRequest } from '@/lib/auth/admin-auth';
 import { ShortLink } from '@/types/os';
@@ -199,6 +200,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    try {
+      revalidateTag('os-links');
+      revalidatePath('/os');
+    } catch {}
+
     return NextResponse.json({
       success: true,
       link: updatedLink,
@@ -242,6 +248,10 @@ export async function DELETE(req: NextRequest) {
     }
 
     await deleteShortLink(id || '', slug || undefined);
+    try {
+      revalidateTag('os-links');
+      revalidatePath('/os');
+    } catch {}
     const updated = await getShortLinks();
 
     return NextResponse.json({
@@ -289,6 +299,10 @@ export async function PATCH(req: NextRequest) {
     target.updated_at = new Date().toISOString();
 
     await saveShortLinks(currentLinks);
+    try {
+      revalidateTag('os-links');
+      revalidatePath('/os');
+    } catch {}
 
     return NextResponse.json({
       success: true,

@@ -233,6 +233,10 @@ export function calculateMetrics(applications: CareerApplication[]): CareerMetri
   let offers = 0;
   let rejected = 0;
   let overdueFollowups = 0;
+  let accepted = 0;
+  let ghosted = 0;
+  let withdrawn = 0;
+  let offerDeclined = 0;
 
   applications.forEach((app) => {
     if (app.archived) return;
@@ -246,6 +250,11 @@ export function calculateMetrics(applications: CareerApplication[]): CareerMetri
     if (app.status === 'rejected') {
       rejected++;
     }
+
+    if (app.closed_outcome === 'accepted') accepted++;
+    if (app.closed_outcome === 'ghosted') ghosted++;
+    if (app.closed_outcome === 'withdrawn') withdrawn++;
+    if (app.closed_outcome === 'offer_declined') offerDeclined++;
 
     // Check interviews
     if (Array.isArray(app.interviews)) {
@@ -266,6 +275,10 @@ export function calculateMetrics(applications: CareerApplication[]): CareerMetri
     offers,
     rejected,
     overdueFollowups,
+    accepted,
+    ghosted,
+    withdrawn,
+    offerDeclined,
   };
 }
 

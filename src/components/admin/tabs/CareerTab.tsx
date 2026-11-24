@@ -48,6 +48,7 @@ import {
 import {
   CareerApplication,
   CareerApplicationStatus,
+  CareerClosedOutcome,
   CareerPriorityLevel,
   CareerMetrics,
   CareerInterview,
@@ -55,6 +56,109 @@ import {
 } from '@/types/career';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import { confirmModal } from '@/components/ui/ConfirmDialog';
+
+export const CLOSED_OUTCOME_CONFIG: Record<
+  CareerClosedOutcome,
+  {
+    label: string;
+    color: string;
+    bg: string;
+    border: string;
+    badge: string;
+    dot: string;
+    presetReasons: string[];
+  }
+> = {
+  accepted: {
+    label: 'Accepted',
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bg: 'bg-emerald-500/10',
+    border: 'border-emerald-500/25',
+    badge: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+    dot: 'bg-emerald-500',
+    presetReasons: [
+      'Offer accepted & signed',
+      'High compensation / Dream team',
+      'Great engineering culture',
+      'Preferred remote flexibility',
+    ],
+  },
+  rejected: {
+    label: 'Rejected',
+    color: 'text-rose-600 dark:text-rose-400',
+    bg: 'bg-rose-500/10',
+    border: 'border-rose-500/25',
+    badge: 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30',
+    dot: 'bg-rose-500',
+    presetReasons: [
+      'Technical round fail',
+      'Role filled / Hire frozen',
+      'Seniority / Experience gap',
+      'Culture / Communication mismatch',
+      'Resume screening / Auto-reject',
+      'Salary expectation mismatch',
+      'No specific feedback given',
+    ],
+  },
+  ghosted: {
+    label: 'Ghosted',
+    color: 'text-neutral-600 dark:text-neutral-400',
+    bg: 'bg-neutral-500/10',
+    border: 'border-neutral-500/25',
+    badge: 'bg-neutral-500/15 text-neutral-600 dark:text-neutral-400 border-neutral-500/30',
+    dot: 'bg-neutral-400',
+    presetReasons: [
+      'No response after interview',
+      'No response after application',
+      'Recruiter went silent after screening',
+      'Automated email bounced / disappeared',
+    ],
+  },
+  withdrawn: {
+    label: 'Withdrawn',
+    color: 'text-zinc-600 dark:text-zinc-400',
+    bg: 'bg-zinc-500/10',
+    border: 'border-zinc-500/25',
+    badge: 'bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border-zinc-500/30',
+    dot: 'bg-zinc-400',
+    presetReasons: [
+      'Accepted another offer',
+      'Compensation below expectation',
+      'Negative interview vibe / red flags',
+      'Role scope or tech stack changed',
+      'Personal / timing reasons',
+    ],
+  },
+  offer_declined: {
+    label: 'Offer Declined',
+    color: 'text-amber-600 dark:text-amber-400',
+    bg: 'bg-amber-500/10',
+    border: 'border-amber-500/25',
+    badge: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30',
+    dot: 'bg-amber-500',
+    presetReasons: [
+      'Accepted better offer elsewhere',
+      'Base salary too low / Equity mismatch',
+      'Required relocation / No remote',
+      'Unfavorable contract / IP clauses',
+    ],
+  },
+};
+
+export function getOutcomeLabel(outcome?: CareerClosedOutcome): string {
+  if (!outcome) return 'Closed';
+  return CLOSED_OUTCOME_CONFIG[outcome]?.label || outcome;
+}
+
+export function getOutcomeBadgeStyle(outcome?: CareerClosedOutcome): string {
+  if (!outcome) return 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30';
+  return CLOSED_OUTCOME_CONFIG[outcome]?.badge || 'bg-neutral-500/15 text-neutral-600 dark:text-neutral-400 border-neutral-500/30';
+}
+
+export function getOutcomeDotStyle(outcome?: CareerClosedOutcome): string {
+  if (!outcome) return 'bg-rose-500';
+  return CLOSED_OUTCOME_CONFIG[outcome]?.dot || 'bg-neutral-400';
+}
 
 const STATUS_CONFIG: Record<
   CareerApplicationStatus,
@@ -304,6 +408,41 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ app, onClick, isOverlay = false
         )}
       </div>
 
+      {/* Closed Outcome Badge & Reason Preview */}
+      {(app.status === 'rejected' || app.closed_outcome) && (
+        <div className="pt-2 border-t border-line/60 space-y-1">
+          <div className="flex items-center justify-between gap-1.5 flex-wrap">
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getOutcomeBadgeStyle(
+                app.closed_outcome
+              )}`}
+            >
+              <span
+                className={`size-1.5 rounded-full ${getOutcomeDotStyle(
+                  app.closed_outcome
+                )}`}
+              />
+              <span>{getOutcomeLabel(app.closed_outcome)}</span>
+            </span>
+
+            {app.rejected_at_stage && (
+              <span className="text-[10px] text-ink-3 font-medium capitalize">
+                at {app.rejected_at_stage}
+              </span>
+            )}
+          </div>
+
+          {app.outcome_reason && (
+            <p
+              className="text-[10px] text-ink-3 truncate italic"
+              title={app.outcome_reason}
+            >
+              &ldquo;{app.outcome_reason}&rdquo;
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Footer: Due date + Days in stage */}
       <div className="flex items-center justify-between pt-2 border-t border-line/60 text-[10px]">
         {dueInfo ? (
@@ -448,6 +587,7 @@ export const CareerTab: React.FC = () => {
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
   const [search, setSearch] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [outcomeFilter, setOutcomeFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'job' | 'scholarship'>('all');
   const [showArchived, setShowArchived] = useState<boolean>(false);
@@ -455,9 +595,13 @@ export const CareerTab: React.FC = () => {
   const [loadError, setLoadError] = useState<boolean>(false);
   const [careerVersion, setCareerVersion] = useState<number>(0);
 
-  // Modals
+  // Modals & Closure
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [activeDetailApp, setActiveDetailApp] = useState<CareerApplication | null>(null);
+  const [pendingClosure, setPendingClosure] = useState<{
+    app: CareerApplication;
+    previousStage: CareerApplicationStatus | string;
+  } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // CRM Features & Strip State
@@ -531,6 +675,15 @@ export const CareerTab: React.FC = () => {
 
     if (!targetStatus || targetStatus === draggedApp.status) return;
 
+    // If moving to Closed ('rejected'), trigger the Closure Modal with previous stage!
+    if (targetStatus === 'rejected') {
+      setPendingClosure({
+        app: draggedApp,
+        previousStage: draggedApp.status,
+      });
+      return;
+    }
+
     // Optimistic update
     const previousApps = [...applications];
     const nowIso = new Date().toISOString();
@@ -597,6 +750,78 @@ export const CareerTab: React.FC = () => {
       setApplications(previousApps);
       setSaveState('error');
       showToast('Network error updating stage. Rolled back.');
+    }
+  };
+
+  const handleConfirmClosure = async (closureData: {
+    closed_outcome: CareerClosedOutcome;
+    outcome_reason: string;
+    outcome_notes?: string;
+    rejected_at_stage: string;
+    closed_at: string;
+  }) => {
+    if (!pendingClosure) return;
+    const { app } = pendingClosure;
+    setPendingClosure(null);
+
+    const nowIso = new Date().toISOString();
+    const updatedApp: CareerApplication = {
+      ...app,
+      status: 'rejected',
+      closed_outcome: closureData.closed_outcome,
+      outcome_reason: closureData.outcome_reason,
+      outcome_notes: closureData.outcome_notes,
+      rejected_at_stage: closureData.rejected_at_stage,
+      closed_at: closureData.closed_at,
+      stageChangedAt: nowIso,
+      updated_at: nowIso,
+    };
+
+    setApplications((prev) => prev.map((a) => (a.id === app.id ? updatedApp : a)));
+    if (activeDetailApp?.id === app.id) {
+      setActiveDetailApp(updatedApp);
+    }
+    setSaveState('saving');
+
+    try {
+      const res = await fetch('/api/admin/career', {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          id: app.id,
+          status: 'rejected',
+          closed_outcome: closureData.closed_outcome,
+          outcome_reason: closureData.outcome_reason,
+          outcome_notes: closureData.outcome_notes,
+          rejected_at_stage: closureData.rejected_at_stage,
+          closed_at: closureData.closed_at,
+          expectedVersion: careerVersion,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof data.version === 'number') {
+          setCareerVersion(data.version);
+        }
+        setApplications((prev) =>
+          prev.map((a) => (a.id === app.id ? data.application : a))
+        );
+        if (activeDetailApp?.id === app.id) {
+          setActiveDetailApp(data.application);
+        }
+        setSaveState('saved');
+        setTimeout(() => setSaveState('idle'), 2000);
+        showToast(
+          `Closed "${app.company_name}" as ${CLOSED_OUTCOME_CONFIG[closureData.closed_outcome]?.label}`
+        );
+      } else {
+        setSaveState('error');
+        showToast('Failed to save application closure');
+      }
+    } catch {
+      setSaveState('error');
+      showToast('Network error saving closure');
     }
   };
 
@@ -877,6 +1102,7 @@ export const CareerTab: React.FC = () => {
       if (showArchived && !app.archived) return false;
 
       if (statusFilter !== 'all' && app.status !== statusFilter) return false;
+      if (outcomeFilter !== 'all' && app.closed_outcome !== outcomeFilter) return false;
       if (priorityFilter !== 'all' && app.priority !== priorityFilter) return false;
       if (typeFilter !== 'all' && (app.type || 'job') !== typeFilter) return false;
 
@@ -892,7 +1118,7 @@ export const CareerTab: React.FC = () => {
       }
       return true;
     });
-  }, [applications, showArchived, statusFilter, priorityFilter, typeFilter, search]);
+  }, [applications, showArchived, statusFilter, outcomeFilter, priorityFilter, typeFilter, search]);
 
   // Next actions strip groups (Due today, Overdue, Stale > 10d)
   const nextActionsData = useMemo(() => {
@@ -1198,6 +1424,20 @@ export const CareerTab: React.FC = () => {
                 {v.label}
               </option>
             ))}
+          </select>
+
+          {/* Closed Outcome filter */}
+          <select
+            value={outcomeFilter}
+            onChange={(e) => setOutcomeFilter(e.target.value)}
+            className="h-8.5 px-2.5 rounded-xl border border-line bg-surface-2 text-xs font-medium text-ink focus:outline-hidden cursor-pointer shrink-0"
+          >
+            <option value="all">All Outcomes</option>
+            <option value="accepted">Accepted</option>
+            <option value="rejected">Rejected</option>
+            <option value="ghosted">Ghosted</option>
+            <option value="withdrawn">Withdrawn</option>
+            <option value="offer_declined">Offer Declined</option>
           </select>
 
           {/* Priority filter */}
@@ -1677,20 +1917,55 @@ export const CareerTab: React.FC = () => {
                           {app.role_title}
                         </td>
 
-                        {/* Status */}
+                        {/* Status / Outcome */}
                         <td className="px-3 py-3.5">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                              STATUS_CONFIG[app.status]?.bg
-                            } ${STATUS_CONFIG[app.status]?.color}`}
-                          >
+                          {app.status === 'rejected' || app.closed_outcome ? (
+                            <div className="flex flex-col gap-1 items-start">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${getOutcomeBadgeStyle(
+                                  app.closed_outcome
+                                )}`}
+                              >
+                                <span
+                                  className={`size-1.5 rounded-full ${getOutcomeDotStyle(
+                                    app.closed_outcome
+                                  )}`}
+                                />
+                                <span>{getOutcomeLabel(app.closed_outcome)}</span>
+                              </span>
+                              {(app.rejected_at_stage || app.outcome_reason) && (
+                                <span
+                                  className="text-[10px] text-ink-3 max-w-[150px] truncate"
+                                  title={
+                                    app.outcome_reason
+                                      ? `${app.rejected_at_stage ? `${app.rejected_at_stage} • ` : ''}${app.outcome_reason}`
+                                      : app.rejected_at_stage
+                                  }
+                                >
+                                  {app.rejected_at_stage && (
+                                    <span className="font-medium capitalize">
+                                      {app.rejected_at_stage}
+                                    </span>
+                                  )}
+                                  {app.rejected_at_stage && app.outcome_reason && ' • '}
+                                  {app.outcome_reason && <span>{app.outcome_reason}</span>}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
                             <span
-                              className={`size-1.5 rounded-full ${
-                                STATUS_CONFIG[app.status]?.dot
-                              }`}
-                            />
-                            <span>{STATUS_CONFIG[app.status]?.label}</span>
-                          </span>
+                              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                                STATUS_CONFIG[app.status]?.bg
+                              } ${STATUS_CONFIG[app.status]?.color}`}
+                            >
+                              <span
+                                className={`size-1.5 rounded-full ${
+                                  STATUS_CONFIG[app.status]?.dot
+                                }`}
+                              />
+                              <span>{STATUS_CONFIG[app.status]?.label}</span>
+                            </span>
+                          )}
                         </td>
 
                         {/* Priority */}
@@ -1956,9 +2231,243 @@ export const CareerTab: React.FC = () => {
             handleDeleteApplication(id);
             handleCloseDetail();
           }}
+          onRequestClosure={(appToClose, prevStage) => {
+            setPendingClosure({
+              app: appToClose,
+              previousStage: prevStage,
+            });
+          }}
           disabled={loadError}
         />
       )}
+
+      {/* APPLICATION CLOSURE MODAL */}
+      {pendingClosure && (
+        <ClosureModal
+          isOpen={!!pendingClosure}
+          app={pendingClosure.app}
+          previousStage={pendingClosure.previousStage}
+          onClose={() => setPendingClosure(null)}
+          onConfirm={handleConfirmClosure}
+        />
+      )}
+    </div>
+  );
+};
+
+// CLOSURE & REJECTION MODAL
+interface ClosureModalProps {
+  isOpen: boolean;
+  app: CareerApplication;
+  previousStage: CareerApplicationStatus | string;
+  onClose: () => void;
+  onConfirm: (closureData: {
+    closed_outcome: CareerClosedOutcome;
+    outcome_reason: string;
+    outcome_notes?: string;
+    rejected_at_stage: string;
+    closed_at: string;
+  }) => void;
+}
+
+const ClosureModal: React.FC<ClosureModalProps> = ({
+  isOpen,
+  app,
+  previousStage,
+  onClose,
+  onConfirm,
+}) => {
+  const [selectedOutcome, setSelectedOutcome] = useState<CareerClosedOutcome>(
+    app.closed_outcome || 'rejected'
+  );
+  const [reason, setReason] = useState<string>(app.outcome_reason || '');
+  const [notes, setNotes] = useState<string>(app.outcome_notes || '');
+  const [error, setError] = useState<string | null>(null);
+
+  if (!isOpen) return null;
+
+  const config = CLOSED_OUTCOME_CONFIG[selectedOutcome];
+  const isReasonRequired =
+    selectedOutcome === 'rejected' ||
+    selectedOutcome === 'withdrawn' ||
+    selectedOutcome === 'offer_declined';
+
+  const handleSelectOutcome = (outcome: CareerClosedOutcome) => {
+    setSelectedOutcome(outcome);
+    setError(null);
+  };
+
+  const handleSelectPresetChip = (chip: string) => {
+    setReason(chip);
+    setError(null);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const finalReason = reason.trim();
+
+    if (isReasonRequired && !finalReason) {
+      setError(`Please provide or select a reason for "${config.label}".`);
+      return;
+    }
+
+    onConfirm({
+      closed_outcome: selectedOutcome,
+      outcome_reason: finalReason || config.label,
+      outcome_notes: notes.trim() || undefined,
+      rejected_at_stage: String(previousStage),
+      closed_at: app.closed_at || new Date().toISOString(),
+    });
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 select-none"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="relative w-full max-w-lg rounded-2xl border border-line bg-surface p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-rose-500/20 bg-rose-500/10 text-[11px] font-semibold text-rose-500">
+              <AlertCircle className="size-3" />
+              <span>Application Closure &amp; Outcomes</span>
+            </div>
+            <h3 className="text-base font-bold text-ink">
+              {app.company_name}
+            </h3>
+            <p className="text-xs text-ink-3">
+              {app.role_title} • <span className="font-semibold text-ink-2 capitalize">From stage: {previousStage}</span>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="size-7 rounded-lg border border-line flex items-center justify-center text-ink-3 hover:text-ink hover:bg-surface-2 transition-colors cursor-pointer"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* 1. Outcome Selector (5 options) */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-ink">
+              1. Outcome <span className="text-rose-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {(
+                [
+                  { id: 'rejected', label: 'Rejected', dot: 'bg-rose-500', border: 'border-rose-500' },
+                  { id: 'accepted', label: 'Accepted', dot: 'bg-emerald-500', border: 'border-emerald-500' },
+                  { id: 'ghosted', label: 'Ghosted', dot: 'bg-neutral-400', border: 'border-neutral-500' },
+                  { id: 'withdrawn', label: 'Withdrawn', dot: 'bg-zinc-400', border: 'border-zinc-500' },
+                  { id: 'offer_declined', label: 'Offer Declined', dot: 'bg-amber-500', border: 'border-amber-500' },
+                ] as const
+              ).map((opt) => {
+                const isSelected = selectedOutcome === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => handleSelectOutcome(opt.id)}
+                    className={`h-9 px-3 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                      isSelected
+                        ? `${opt.border} bg-surface-2 ring-2 ring-indigo-500/20 text-ink shadow-2xs`
+                        : 'border-line bg-surface-2/60 text-ink-3 hover:border-line-hover hover:text-ink'
+                    }`}
+                  >
+                    <span className={`size-2 rounded-full ${opt.dot}`} />
+                    <span>{opt.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. Rejection / Closure Reason */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-ink">
+                2. Reason {isReasonRequired && <span className="text-rose-500">*</span>}
+              </label>
+              <span className="text-[11px] text-ink-4">
+                {isReasonRequired ? 'Required for analysis' : 'Optional'}
+              </span>
+            </div>
+
+            {/* Quick preset chips */}
+            <div className="flex flex-wrap gap-1.5">
+              {config.presetReasons.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => handleSelectPresetChip(chip)}
+                  className={`text-[11px] px-2 py-0.5 rounded-lg border transition-all cursor-pointer ${
+                    reason === chip
+                      ? 'border-indigo-500 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold'
+                      : 'border-line bg-surface-2 text-ink-3 hover:text-ink hover:border-line-hover'
+                  }`}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom input */}
+            <input
+              type="text"
+              value={reason}
+              onChange={(e) => {
+                setReason(e.target.value);
+                setError(null);
+              }}
+              placeholder={`Enter primary reason (e.g. Technical round fail, Salary mismatch)...`}
+              className={`w-full h-9 px-3 rounded-xl border bg-surface-2 text-xs text-ink placeholder:text-ink-4 focus:outline-hidden transition-all ${
+                error
+                  ? 'border-rose-500 focus:ring-2 focus:ring-rose-500/20'
+                  : 'border-line focus:ring-2 focus:ring-indigo-500/20'
+              }`}
+            />
+            {error && (
+              <p className="text-[11px] text-rose-500 font-medium">{error}</p>
+            )}
+          </div>
+
+          {/* 3. Lessons Learned / Detailed Notes (Optional) */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-ink">
+              3. Lessons Learned &amp; Notes <span className="text-[11px] text-ink-4 font-normal">(Optional)</span>
+            </label>
+            <textarea
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="What questions did they ask? What to practice or improve next time?"
+              className="w-full p-2.5 rounded-xl border border-line bg-surface-2 text-xs text-ink placeholder:text-ink-4 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 resize-none leading-relaxed"
+            />
+          </div>
+
+          {/* Footer Actions */}
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-line">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3.5 py-2 rounded-xl border border-line text-xs font-medium text-ink-3 hover:text-ink cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            >
+              <Check className="size-3.5" />
+              <span>Confirm &amp; Close Application</span>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
@@ -1969,6 +2478,7 @@ interface CareerSlideOverProps {
   onClose: () => void;
   onUpdate: (app: CareerApplication) => void;
   onDelete: (id: string) => void;
+  onRequestClosure?: (app: CareerApplication, previousStage: string) => void;
   disabled?: boolean;
   expectedVersion?: number;
   onVersionUpdate?: (version: number) => void;
@@ -1980,6 +2490,7 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
   onClose,
   onUpdate,
   onDelete,
+  onRequestClosure,
   disabled = false,
   expectedVersion,
   onVersionUpdate,
@@ -2001,6 +2512,10 @@ const CareerSlideOver: React.FC<CareerSlideOverProps> = ({
       currentVersionRef.current = expectedVersion;
     }
   }, [expectedVersion]);
+
+  useEffect(() => {
+    setLocalApp(app);
+  }, [app]);
 
   // Email generator state
   const [emailTemplate, setEmailTemplate] = useState<
@@ -2286,9 +2801,17 @@ Md Zahid Hasan Patwary`;
             {/* Status Selector */}
             <select
               value={localApp.status}
-              onChange={(e) =>
-                handleFieldChange({ status: e.target.value as CareerApplicationStatus }, true)
-              }
+              onChange={(e) => {
+                const newStatus = e.target.value as CareerApplicationStatus;
+                if (newStatus === 'rejected') {
+                  onRequestClosure?.(
+                    localApp,
+                    localApp.rejected_at_stage || localApp.status
+                  );
+                } else {
+                  handleFieldChange({ status: newStatus }, true);
+                }
+              }}
               className={`h-7 px-2 rounded-lg border text-xs font-semibold cursor-pointer ${
                 STATUS_CONFIG[localApp.status]?.bg
               } ${STATUS_CONFIG[localApp.status]?.color}`}
@@ -2405,6 +2928,91 @@ Md Zahid Hasan Patwary`;
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="space-y-3.5 text-xs">
+              {/* Closure Outcome Details Card */}
+              {(localApp.status === 'rejected' || localApp.closed_outcome) && (
+                <div className="p-3.5 rounded-2xl border border-line bg-surface-2/60 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-ink">Closure Outcome</span>
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getOutcomeBadgeStyle(
+                          localApp.closed_outcome
+                        )}`}
+                      >
+                        <span
+                          className={`size-1.5 rounded-full ${getOutcomeDotStyle(
+                            localApp.closed_outcome
+                          )}`}
+                        />
+                        <span>{getOutcomeLabel(localApp.closed_outcome)}</span>
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onRequestClosure?.(
+                          localApp,
+                          localApp.rejected_at_stage || localApp.status
+                        )
+                      }
+                      className="px-2.5 py-1 rounded-lg border border-line bg-surface hover:bg-surface-3 text-[11px] font-semibold text-ink-2 hover:text-ink transition-colors cursor-pointer"
+                    >
+                      Edit Outcome
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {localApp.rejected_at_stage && (
+                      <div>
+                        <span className="text-[10px] text-ink-3 uppercase font-semibold">
+                          Closed at stage:
+                        </span>
+                        <p className="font-medium text-ink capitalize">
+                          {localApp.rejected_at_stage}
+                        </p>
+                      </div>
+                    )}
+                    {localApp.closed_at && (
+                      <div>
+                        <span className="text-[10px] text-ink-3 uppercase font-semibold">
+                          Closed on:
+                        </span>
+                        <p className="font-mono text-ink">
+                          {new Date(localApp.closed_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {localApp.outcome_reason && (
+                    <div className="pt-2 border-t border-line/60">
+                      <span className="text-[10px] text-ink-3 uppercase font-semibold">
+                        Primary Reason:
+                      </span>
+                      <p className="text-xs text-ink font-medium mt-0.5">
+                        {localApp.outcome_reason}
+                      </p>
+                    </div>
+                  )}
+
+                  {localApp.outcome_notes && (
+                    <div className="pt-2 border-t border-line/60">
+                      <span className="text-[10px] text-ink-3 uppercase font-semibold">
+                        Lessons Learned &amp; Notes:
+                      </span>
+                      <p className="text-xs text-ink-2 whitespace-pre-wrap mt-0.5 leading-relaxed">
+                        {localApp.outcome_notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Role Title & Company inputs */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div>

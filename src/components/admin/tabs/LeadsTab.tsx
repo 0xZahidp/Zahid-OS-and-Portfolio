@@ -29,6 +29,7 @@ import {
   Plus,
   Trash2,
   ArchiveRestore,
+  Loader2,
 } from 'lucide-react';
 import {
   StartupLead,
@@ -100,6 +101,10 @@ export const LeadsTab: React.FC = () => {
   // Action in progress tracking
   const [actionInProgressId, setActionInProgressId] = useState<string | null>(null);
   const [lookingUpHunterId, setLookingUpHunterId] = useState<string | null>(null);
+
+  // Promote to Career Modal state
+  const [promoteModalLead, setPromoteModalLead] = useState<StartupLead | null>(null);
+  const [promoteTargetStatus, setPromoteTargetStatus] = useState<'saved' | 'applied'>('saved');
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -314,7 +319,10 @@ export const LeadsTab: React.FC = () => {
   };
 
   // Promote to Career Pipeline
-  const handlePromoteToCareer = async (lead: StartupLead) => {
+  const handlePromoteToCareer = async (
+    lead: StartupLead,
+    targetStatus: 'saved' | 'applied' = 'saved'
+  ) => {
     if (lead.status === 'promoted') {
       showToast('ℹ This lead is already in your Career Pipeline.');
       return;
@@ -328,6 +336,7 @@ export const LeadsTab: React.FC = () => {
         body: JSON.stringify({
           id: lead.id,
           action: 'promote',
+          targetStatus,
         }),
       });
       const data = await res.json();
@@ -336,7 +345,11 @@ export const LeadsTab: React.FC = () => {
           prev.map((l) => (l.id === lead.id ? { ...l, status: 'promoted' } : l))
         );
         if (data.metrics) setMetrics(data.metrics);
-        showToast(`🚀 Promoted ${lead.company_name} to Career & Pipeline as 'Applied'!`);
+        showToast(
+          `🚀 Promoted ${lead.company_name} to Career & Pipeline as '${
+            targetStatus === 'saved' ? 'Saved' : 'Applied'
+          }'!`
+        );
       } else {
         showToast(`✕ ${data.error || 'Failed to promote lead'}`);
       }
@@ -1024,11 +1037,12 @@ export const LeadsTab: React.FC = () => {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handlePromoteToCareer(lead);
+                          setPromoteModalLead(lead);
+                          setPromoteTargetStatus('saved');
                         }}
                         disabled={isActing}
                         className="h-7 px-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-[11px] font-semibold cursor-pointer transition-colors inline-flex items-center gap-1 shadow-2xs disabled:opacity-50"
-                        title="Add to Career & Pipeline tracker as 'Applied'"
+                        title="Add to Career & Pipeline tracker (Saved or Applied)"
                       >
                         <ArrowRight className="size-3" />
                         <span>Promote</span>
@@ -1257,7 +1271,8 @@ export const LeadsTab: React.FC = () => {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handlePromoteToCareer(lead);
+                                setPromoteModalLead(lead);
+                                setPromoteTargetStatus('saved');
                               }}
                               disabled={isActing}
                               className="h-7 px-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-[11px] font-semibold cursor-pointer transition-colors inline-flex items-center gap-1 shadow-2xs"
@@ -1325,8 +1340,118 @@ export const LeadsTab: React.FC = () => {
         onClose={() => setActiveDetailLead(null)}
         onLeadUpdated={handleLeadUpdatedFromDrawer}
         onLeadDeleted={handleLeadDeletedFromDrawer}
-        onPromoteToCareer={handlePromoteToCareer}
+        onPromoteToCareer={(lead, target) => {
+          if (target) {
+            handlePromoteToCareer(lead, target);
+          } else {
+            setPromoteModalLead(lead);
+            setPromoteTargetStatus('saved');
+          }
+        }}
       />
+
+      {/* Promote to Career Modal */}
+      {promoteModalLead && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="relative w-full max-w-md rounded-2xl border border-line bg-surface p-6 shadow-xl space-y-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 text-[11px] font-semibold text-indigo-500">
+                  <TrendingUp className="size-3" />
+                  <span>Promote to Career Pipeline</span>
+                </div>
+                <h3 className="text-base font-bold text-ink">
+                  {promoteModalLead.company_name}
+                </h3>
+                <p className="text-xs text-ink-3">
+                  {promoteModalLead.role_or_headline}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPromoteModalLead(null)}
+                className="size-7 rounded-lg border border-line flex items-center justify-center text-ink-3 hover:text-ink hover:bg-surface-2 cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-ink">
+                Choose Destination Stage:
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPromoteTargetStatus('saved')}
+                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    promoteTargetStatus === 'saved'
+                      ? 'border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/20'
+                      : 'border-line bg-surface-2 hover:border-line-hover'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-ink">📌 Saved</span>
+                    <span className="text-[10px] uppercase font-bold text-indigo-500 bg-indigo-500/15 px-1.5 py-0.2 rounded-sm">Default</span>
+                  </div>
+                  <p className="text-[11px] text-ink-3 leading-snug">
+                    Save for review, CV tailoring, and research before applying.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPromoteTargetStatus('applied')}
+                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    promoteTargetStatus === 'applied'
+                      ? 'border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/20'
+                      : 'border-line bg-surface-2 hover:border-line-hover'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-ink">🚀 Applied</span>
+                  </div>
+                  <p className="text-[11px] text-ink-3 leading-snug">
+                    Mark as already applied and immediately track responses.
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-line">
+              <button
+                type="button"
+                onClick={() => setPromoteModalLead(null)}
+                className="px-3.5 py-2 rounded-xl border border-line text-xs font-medium text-ink-3 hover:text-ink cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={actionInProgressId === promoteModalLead.id}
+                onClick={async () => {
+                  const lead = promoteModalLead;
+                  const target = promoteTargetStatus;
+                  setPromoteModalLead(null);
+                  await handlePromoteToCareer(lead, target);
+                }}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {actionInProgressId === promoteModalLead.id ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <TrendingUp className="size-3.5" />
+                )}
+                <span>Promote to {promoteTargetStatus === 'saved' ? 'Saved' : 'Applied'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

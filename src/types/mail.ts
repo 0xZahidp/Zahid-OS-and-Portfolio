@@ -24,6 +24,10 @@ export interface MailMessage {
   folder: 'inbox' | 'sent' | 'archive' | 'trash';
   status?: 'unread' | 'read' | 'delivered' | 'failed' | 'bounced' | 'complained' | string;
   mailbox?: 'official' | 'unofficial' | null;
+  isOfficial?: boolean;
+  is_official?: boolean;
+  isDeleted?: boolean;
+  is_deleted?: boolean;
   from: EmailAddress;
   to: EmailAddress[];
   replyTo?: string;
@@ -66,6 +70,8 @@ export interface MailThread {
   hasInbound: boolean;
   tags: string[];
   mailbox?: 'official' | 'unofficial' | null;
+  isOfficial?: boolean;
+  is_official?: boolean;
   messages: MailMessage[];
 }
 
