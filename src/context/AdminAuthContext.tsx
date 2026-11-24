@@ -68,7 +68,7 @@ function formatPasskeyError(rawMsg: string): string {
     if (domain !== 'zahidp.com') {
       return `Credential verification failed: Your browser origin is "${origin}", but Supabase WebAuthn RP is registered for "https://zahidp.com". Please access admin directly via https://zahidp.com/admin.`;
     }
-    return `Credential verification failed by Supabase server. Please ensure you are accessing via https://zahidp.com (clean root domain, without www or localhost) and retry.`;
+    return 'Passkey verification failed. The passkey on this device is unrecognized or outdated. Please sign in with Email & Password below, then re-register your passkey in Admin Settings > Security.';
   }
 
   if (
@@ -382,12 +382,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           await checkMfaLevel();
           return { success: true };
         }
-        if (
-          authErr &&
-          (authErr.message?.toLowerCase().includes('cancel') ||
-            authErr.message?.toLowerCase().includes('abort') ||
-            authErr.message?.toLowerCase().includes('notallowed'))
-        ) {
+        if (authErr) {
           const msg = formatPasskeyError(authErr.message);
           setError(msg);
           return { success: false, error: msg };
@@ -588,11 +583,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           }
           return { success: true };
         }
-        if (
-          regErr.message?.toLowerCase().includes('cancel') ||
-          regErr.message?.toLowerCase().includes('abort') ||
-          regErr.message?.toLowerCase().includes('notallowed')
-        ) {
+        if (regErr) {
           const msg = formatPasskeyError(regErr.message);
           setError(msg);
           return { success: false, error: msg };
