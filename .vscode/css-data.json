@@ -2,23 +2,23 @@
   "version": 1.1,
   "atDirectives": [
     {
-      "name": "@theme",
+      "name": "theme",
       "description": "Tailwind CSS v4 theme configuration block for defining theme variables."
     },
     {
-      "name": "@custom-variant",
+      "name": "custom-variant",
       "description": "Tailwind CSS v4 custom variant definition."
     },
     {
-      "name": "@utility",
+      "name": "utility",
       "description": "Tailwind CSS v4 custom utility definition."
     },
     {
-      "name": "@variant",
+      "name": "variant",
       "description": "Tailwind CSS v4 variant declaration."
     },
     {
-      "name": "@source",
+      "name": "source",
       "description": "Tailwind CSS v4 source scan path declaration."
     }
   ]

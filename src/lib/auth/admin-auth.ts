@@ -114,6 +114,16 @@ function isAllowedOrigin(req: NextRequest): boolean {
  * - Returns null when authorized.
  */
 export async function requireAdmin(req: NextRequest): Promise<NextResponse | null> {
+  // Strict Local Development Bypass: ONLY active in local development on localhost/127.0.0.1 with bypass cookie
+  if (
+    process.env.NODE_ENV === 'development' &&
+    !process.env.VERCEL &&
+    (req.nextUrl.hostname === 'localhost' || req.nextUrl.hostname === '127.0.0.1') &&
+    req.cookies.get('folioframe_local_dev_bypass')?.value === 'true'
+  ) {
+    return null; // Authorized for local development preview
+  }
+
   const adminUserId = process.env.ADMIN_USER_ID;
 
   // Fail closed: if ADMIN_USER_ID is not configured, reject everything

@@ -145,11 +145,24 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     let mounted = true;
 
-    // Check if any Supabase auth token exists in localStorage
+    // Check if local dev bypass is active
     if (typeof window !== 'undefined') {
-      try {
-        localStorage.removeItem('folioframe_admin_local_bypass');
-      } catch { }
+      const isDev = process.env.NODE_ENV === 'development';
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isDev && isLocal) {
+        try {
+          if (sessionStorage.getItem('folioframe_admin_local_bypass') === 'true') {
+            setIsLocalBypass(true);
+            setIsLoading(false);
+          }
+        } catch {}
+      } else {
+        try {
+          sessionStorage.removeItem('folioframe_admin_local_bypass');
+          localStorage.removeItem('folioframe_admin_local_bypass');
+          document.cookie = 'folioframe_local_dev_bypass=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        } catch {}
+      }
 
       let hasSupabaseSession = false;
       try {
@@ -744,6 +757,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setUser(null);
     setIsLocalBypass(false);
     setMfaLevel(null);
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.removeItem('folioframe_admin_local_bypass');
+        localStorage.removeItem('folioframe_admin_local_bypass');
+        document.cookie = 'folioframe_local_dev_bypass=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      } catch {}
+    }
   }, []);
 
   // 13. Sign Out Everywhere
@@ -757,6 +777,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setUser(null);
       setIsLocalBypass(false);
       setMfaLevel(null);
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.removeItem('folioframe_admin_local_bypass');
+          localStorage.removeItem('folioframe_admin_local_bypass');
+          document.cookie = 'folioframe_local_dev_bypass=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        } catch {}
+      }
       return { success: true };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to sign out all devices';
@@ -764,10 +791,22 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  // 14. Bypass local dev auth (deprecated, disabled)
+  // 14. Bypass local dev auth (strictly active in local development on localhost/127.0.0.1)
   const bypassLocalAuth = useCallback(() => {
-    setIsLocalBypass(false);
-    setIsLoading(false);
+    const isDev = process.env.NODE_ENV === 'development';
+    const isLocal =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+    if (isDev && isLocal) {
+      setIsLocalBypass(true);
+      setIsLoading(false);
+      setError(null);
+      try {
+        sessionStorage.setItem('folioframe_admin_local_bypass', 'true');
+        document.cookie = 'folioframe_local_dev_bypass=true; path=/; SameSite=Lax';
+      } catch {}
+    }
   }, []);
 
   const value = useMemo(

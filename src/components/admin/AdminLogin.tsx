@@ -14,7 +14,6 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
-  KeyRound,
   ArrowLeft,
   Sparkles,
 } from 'lucide-react';
@@ -25,7 +24,6 @@ import { supabase } from '@/lib/supabase/client';
 export const AdminLogin: React.FC = () => {
   const {
     signInWithEmail,
-    signUpWithEmail,
     signInWithGoogle,
     signInWithPasskey,
     bypassLocalAuth,
@@ -33,7 +31,6 @@ export const AdminLogin: React.FC = () => {
     clearError,
   } = useAdminAuth();
 
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -51,22 +48,14 @@ export const AdminLogin: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      if (mode === 'signin') {
-        const res = await signInWithEmail(email, password);
-        if (res.success) {
-          if (res.requiresMfa) {
-            window.location.href = '/admin/mfa';
-            return;
-          }
-        } else {
-          setIsSubmitting(false);
+      const res = await signInWithEmail(email, password);
+      if (res.success) {
+        if (res.requiresMfa) {
+          window.location.href = '/admin/mfa';
+          return;
         }
       } else {
-        const res = await signUpWithEmail(email, password);
         setIsSubmitting(false);
-        if (res.success && res.message) {
-          setSuccessMessage(res.message);
-        }
       }
     } catch {
       setIsSubmitting(false);
@@ -98,6 +87,7 @@ export const AdminLogin: React.FC = () => {
   };
 
   const isLocalhost =
+    process.env.NODE_ENV === 'development' &&
     typeof window !== 'undefined' &&
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
@@ -118,7 +108,7 @@ export const AdminLogin: React.FC = () => {
         </Link>
         <span className="text-[11px] font-mono text-muted flex items-center gap-1">
           <Sparkles className="size-3 text-accent" />
-          <span>CMS Studio</span>
+          <span>ZahidP Studio</span>
         </span>
       </div>
 
@@ -126,12 +116,10 @@ export const AdminLogin: React.FC = () => {
       <div className="w-full max-w-[390px] rounded-[40px] p-7 sm:p-9 border-[5px] border-white/80 dark:border-[#27272C] bg-gradient-to-b from-white to-[#F4F7FB] dark:from-[#17171A] dark:to-[#0E0E10] shadow-[0_30px_35px_-20px_rgba(180,83,9,0.22)] dark:shadow-[0_30px_35px_-20px_rgba(0,0,0,0.7)] relative transition-all">
         {/* Heading */}
         <div className="text-center font-black text-3xl tracking-tight text-accent mb-2">
-          {mode === 'signin' ? 'Sign In' : 'Sign Up'}
+          Sign In
         </div>
         <p className="text-center text-xs text-muted mb-6">
-          {mode === 'signin'
-            ? 'Manage your portfolio identity, projects & secrets.'
-            : 'Create your administrator account for FolioFrame.'}
+          Manage your portfolio, projects & workspace.
         </p>
 
         {/* Success Feedback */}
@@ -174,7 +162,7 @@ export const AdminLogin: React.FC = () => {
               type={showPassword ? 'text' : 'password'}
               name="password"
               id="password"
-              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
@@ -192,16 +180,14 @@ export const AdminLogin: React.FC = () => {
           </div>
 
           {/* Forgot Password Link */}
-          {mode === 'signin' && (
-            <div className="pt-0.5 pl-3">
-              <Link
-                href="/admin/reset-password"
-                className="text-[11px] font-semibold text-accent hover:underline cursor-pointer"
-              >
-                Forgot Password ?
-              </Link>
-            </div>
-          )}
+          <div className="pt-0.5 pl-3">
+            <Link
+              href="/admin/reset-password"
+              className="text-[11px] font-semibold text-accent hover:underline cursor-pointer"
+            >
+              Forgot Password ?
+            </Link>
+          </div>
 
           {/* Submit Button (Uiverse .login-button style) */}
           <button
@@ -212,18 +198,18 @@ export const AdminLogin: React.FC = () => {
             {isSubmitting ? (
               <Loader2 className="size-4.5 animate-spin" />
             ) : (
-              <span>{mode === 'signin' ? 'Sign In' : 'Create Account'}</span>
+              <span>Sign In</span>
             )}
           </button>
         </form>
 
-        {/* Social / Fast Authentication Section (Uiverse .social-account-container) */}
+        {/* Social & Biometric Authentication (Consolidated clean option) */}
         <div className="mt-6 pt-1">
           <span className="block text-center text-[10.5px] uppercase font-bold tracking-wider text-muted">
             Or Sign in with
           </span>
 
-          <div className="w-full flex justify-center items-center gap-4 mt-3">
+          <div className="grid grid-cols-2 gap-3 mt-3">
             {/* Google Social Button */}
             <button
               type="button"
@@ -231,100 +217,46 @@ export const AdminLogin: React.FC = () => {
               disabled={isGoogleLoading || isSubmitting || isPasskeyLoading}
               title="Sign in with Google"
               aria-label="Sign in with Google"
-              className="size-11 rounded-full p-2.5 bg-gradient-to-br from-zinc-900 to-zinc-700 dark:from-zinc-800 dark:to-zinc-950 border-[3px] border-white dark:border-[#27272C] shadow-[0_10px_10px_-6px_rgba(180,83,9,0.3)] hover:scale-115 active:scale-95 transition-all grid place-content-center cursor-pointer disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-3 px-3.5 rounded-[18px] bg-white dark:bg-[#1E1E23] text-text border border-line/60 hover:border-accent shadow-[0_4px_12px_-2px_rgba(0,0,0,0.06)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 text-xs font-semibold font-sans"
             >
               {isGoogleLoading ? (
-                <Loader2 className="size-4 animate-spin text-white" />
+                <Loader2 className="size-4 animate-spin text-accent" />
               ) : (
-                <GoogleIcon className="size-4.5" />
+                <GoogleIcon className="size-4 shrink-0" />
               )}
+              <span>Google</span>
             </button>
 
-            {/* Passkey / WebAuthn Biometric Button */}
+            {/* Passkey Biometric Button */}
             <button
               type="button"
               onClick={handlePasskeySignIn}
               disabled={isPasskeyLoading || isSubmitting || isGoogleLoading}
               title="Sign in with Passkey (Touch ID, Windows Hello, YubiKey)"
               aria-label="Sign in with Passkey"
-              className="size-11 rounded-full p-2.5 bg-gradient-to-br from-zinc-900 to-zinc-700 dark:from-zinc-800 dark:to-zinc-950 border-[3px] border-white dark:border-[#27272C] shadow-[0_10px_10px_-6px_rgba(180,83,9,0.3)] hover:scale-115 active:scale-95 transition-all grid place-content-center cursor-pointer disabled:opacity-50 group"
+              className="w-full flex items-center justify-center gap-2 py-3 px-3.5 rounded-[18px] bg-white dark:bg-[#1E1E23] text-text border border-line/60 hover:border-accent shadow-[0_4px_12px_-2px_rgba(0,0,0,0.06)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 text-xs font-semibold font-sans group"
             >
               {isPasskeyLoading ? (
                 <Loader2 className="size-4 animate-spin text-accent" />
               ) : (
-                <Fingerprint className="size-5 text-accent group-hover:scale-110 transition-transform" />
+                <Fingerprint className="size-4.5 text-accent shrink-0 group-hover:scale-110 transition-transform" />
               )}
+              <span>Passkey</span>
             </button>
           </div>
         </div>
 
-        {/* Dedicated Passkey Banner (Ensures Passkey is prominent as requested) */}
-        <div className="mt-5 p-3 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2 min-w-0">
-            <KeyRound className="size-4 text-accent shrink-0" />
-            <div className="min-w-0">
-              <span className="text-[11px] font-bold text-text block leading-tight">
-                Passkey Enabled
-              </span>
-              <span className="text-[10px] text-muted truncate block">
-                Touch ID / Face ID / Windows Hello
-              </span>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handlePasskeySignIn}
-            disabled={isPasskeyLoading || isSubmitting || isGoogleLoading}
-            className="px-3 py-1.5 rounded-xl bg-accent hover:bg-accent-hover text-white dark:text-[#0E0E10] text-[10.5px] font-bold transition-transform active:scale-95 cursor-pointer shrink-0"
-          >
-            {isPasskeyLoading ? 'Authenticating...' : 'Use Passkey'}
-          </button>
-        </div>
-
-        {/* Switch Signin / Signup Mode */}
-        <div className="mt-5 text-center text-xs text-muted">
-          {mode === 'signin' ? (
-            <>
-              Don&apos;t have an admin account?{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  clearError();
-                  setMode('signup');
-                }}
-                className="font-bold text-accent hover:underline cursor-pointer"
-              >
-                Sign Up
-              </button>
-            </>
-          ) : (
-            <>
-              Already have an account?{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  clearError();
-                  setMode('signin');
-                }}
-                className="font-bold text-accent hover:underline cursor-pointer"
-              >
-                Sign In
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* User License / Agreement footer (Uiverse .agreement) */}
-        <span className="block text-center mt-4">
+        {/* User Workspace Agreement / Footer */}
+        <span className="block text-center mt-5">
           <Link
             href="/"
-            className="text-[10px] text-muted hover:text-accent transition-colors"
+            className="text-[10.5px] text-muted hover:text-accent transition-colors"
           >
-            FolioFrame Studio · Single-Tenant Admin Access
+            ZahidP Admin · Private Workspace
           </Link>
         </span>
 
-        {/* Local Dev Bypass for zero-friction local testing */}
+        {/* Local Dev Bypass strictly restricted to local development */}
         {isLocalhost && (
           <div className="mt-5 pt-3.5 border-t border-dashed border-line text-center">
             <button
