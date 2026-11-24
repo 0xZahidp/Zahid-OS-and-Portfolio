@@ -14,15 +14,7 @@ function applyRobotsHeader(res: NextResponse): NextResponse {
 }
 
 export async function middleware(req: NextRequest) {
-  const { pathname, hostname } = req.nextUrl;
-
-  // Canonical apex domain redirection for WebAuthn / Passkey origin consistency
-  if (hostname === 'www.zahidp.com') {
-    const url = req.nextUrl.clone();
-    url.hostname = 'zahidp.com';
-    url.port = '';
-    return NextResponse.redirect(url, { status: 308 });
-  }
+  const { pathname } = req.nextUrl;
 
   // Only apply default-deny to /api/ routes
   if (pathname.startsWith('/api')) {
