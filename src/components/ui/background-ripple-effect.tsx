@@ -18,8 +18,8 @@ export const BackgroundRippleEffect = ({
   cols = 75,
   className,
   cellClassName,
-  activeColor = "bg-emerald-400/80 shadow-[0_0_15px_rgba(52,211,153,0.6)]",
-  defaultColor = "bg-emerald-200/70 border border-emerald-300/40 dark:bg-emerald-950/45 dark:border-emerald-800/30",
+  activeColor = "bg-accent/80 shadow-[0_0_15px_rgba(180,83,9,0.5)] dark:shadow-[0_0_15px_rgba(229,169,60,0.5)]",
+  defaultColor = "bg-amber-200/60 border border-amber-300/40 dark:bg-zinc-800/60 dark:border-zinc-700/40",
 }: BackgroundRippleProps) => {
   const [clickedCell, setClickedCell] = useState<{
     row: number;
@@ -76,7 +76,7 @@ export const BackgroundRippleEffect = ({
                 className={cn(
                   "m-[1.5px] h-4 w-1.5 shrink-0 cursor-pointer rounded-full transition-colors duration-200",
                   isTriggered ? activeColor : defaultColor,
-                  "hover:bg-emerald-400 hover:scale-125",
+                  "hover:bg-accent hover:scale-125",
                   cellClassName
                 )}
               />

@@ -11,10 +11,6 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "nahian.bd",
-      },
-      {
-        protocol: "https",
         hostname: "avatars.githubusercontent.com",
       },
       {

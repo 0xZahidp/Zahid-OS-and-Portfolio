@@ -39,7 +39,7 @@ export const ProjectsTab: React.FC = () => {
       repository_url: 'https://github.com/0xZahidp/example',
       highlightBadge: '$100K+ raised',
       stars: 0,
-      logoType: 'bidvers',
+      logoType: 'badge',
     };
     updateProjects([newProj, ...projects]);
   };
@@ -227,11 +227,11 @@ export const ProjectsTab: React.FC = () => {
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-ink-3">Preset Vector Icon (Fallback if no uploaded icon)</label>
                   <select
-                    value={proj.logoType || proj.logo_type || 'bidvers'}
+                    value={proj.logoType || proj.logo_type || 'badge'}
                     onChange={(e) => handleUpdate(idx, { logoType: e.target.value as Project['logoType'], logo_type: e.target.value as Project['logoType'] })}
                     className="w-full rounded-xl border border-line bg-surface px-3 py-1.5 text-xs text-ink focus:outline-none"
                   >
-                    <option value="bidvers">Bidvers (Dark B badge)</option>
+                    <option value="badge">Dark Badge (B)</option>
                     <option value="laravel">Laravel (Orange wireframe)</option>
                     <option value="invo">Invo (Green rounded text)</option>
                     <option value="prompt">Prompt (Code curly braces)</option>

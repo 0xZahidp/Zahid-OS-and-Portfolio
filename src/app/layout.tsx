@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { AmbientProviders } from '@/components/ui/AmbientProviders';
 import { AuthRecoveryListener } from '@/components/auth/AuthRecoveryListener';
+import { MaintenanceNotice } from '@/components/maintenance/MaintenanceNotice';
 import { PortfolioProvider } from '@/context/PortfolioContext';
 import { getCachedPortfolioContent } from '@/lib/content/server-content';
 import './globals.css';
@@ -130,6 +131,7 @@ export default async function RootLayout({
         <PortfolioProvider initialContent={initialContent}>
           <AuthRecoveryListener />
           <AmbientProviders />
+          <MaintenanceNotice />
           {children}
         </PortfolioProvider>
       </body>

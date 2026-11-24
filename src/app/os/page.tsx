@@ -37,10 +37,10 @@ const TravelWorkspace = dynamic(
   {
     loading: () => (
       <div className="min-h-[460px] flex flex-col items-center justify-center gap-3 text-white/50 select-none">
-        <div className="size-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 grid place-items-center shadow-lg">
+        <div className="size-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 grid place-items-center shadow-lg">
           <Compass className="size-5.5 animate-spin" />
         </div>
-        <p className="text-xs font-mono text-emerald-300">Launching Bangladesh Travel Odyssey...</p>
+        <p className="text-xs font-mono text-amber-300">Launching Bangladesh Travel Odyssey...</p>
       </div>
     ),
     ssr: false,
@@ -248,7 +248,7 @@ export default function PublicZahidOsPage() {
   if (isLoading && !settings) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-3 select-none">
-        <div className="size-12 rounded-[22%] bg-gradient-to-br from-emerald-500 to-teal-700 animate-pulse grid place-items-center shadow-lg shadow-emerald-500/20 text-white">
+        <div className="size-12 rounded-[22%] bg-gradient-to-br from-amber-600 to-amber-800 animate-pulse grid place-items-center shadow-lg shadow-amber-500/20 text-white">
           <ZahidLogo className="size-7 text-white" />
         </div>
         <p className="text-xs font-mono text-neutral-400">Booting Zahid OS...</p>
@@ -449,7 +449,7 @@ export default function PublicZahidOsPage() {
                   <p className="text-xs text-rose-400 font-mono">{publicCreateError}</p>
                 )}
                 {publicCreateSuccess && (
-                  <p className="text-xs text-emerald-400 font-mono flex items-center gap-1.5">
+                  <p className="text-xs text-amber-400 font-mono flex items-center gap-1.5">
                     <Check className="size-3.5" />
                     <span>Short link created and copied: {origin}{publicCreateSuccess}</span>
                   </p>
@@ -497,8 +497,8 @@ export default function PublicZahidOsPage() {
                       >
                         {copiedSlug === link.slug ? (
                           <>
-                            <Check className="size-3.5 text-emerald-400" />
-                            <span className="text-emerald-300">Copied</span>
+                            <Check className="size-3.5 text-amber-400" />
+                            <span className="text-amber-300">Copied</span>
                           </>
                         ) : (
                           <>
@@ -640,7 +640,7 @@ export default function PublicZahidOsPage() {
             {currentTime}
           </span>
           <div className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
             <span className="text-[11px] font-mono text-white/70">Zahid OS 18</span>
           </div>
           <div className="flex items-center gap-2">

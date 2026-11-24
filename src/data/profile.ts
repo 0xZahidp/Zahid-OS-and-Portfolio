@@ -21,7 +21,7 @@ export const profileData: Profile = {
   avatar_url: '/images/avatar.webp',
   location: 'Dhaka, Bangladesh',
   timezone: 'Asia/Dhaka',
-  availability: 'Open to new conversations',
+  availability: 'Available for technical consulting & product builds',
   github_followers_count: 6,
   roles: [
     {

@@ -41,7 +41,7 @@ export const LibraryTab: React.FC = () => {
   const handleResetToDefault = async () => {
     const ok = await confirmModal({
       title: 'Reset Library Showcase',
-      message: 'Reset all library sections to the default curated showcase from nahian.bd/library?',
+      message: 'Reset all library sections to the default curated showcase?',
       confirmText: 'Reset Library',
       type: 'warning',
     });
@@ -219,7 +219,7 @@ export const LibraryTab: React.FC = () => {
               type="button"
               onClick={handleResetToDefault}
               className="btn btn-secondary h-8 px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 hover:text-brand-500 transition-colors"
-              title="Reset all library content to default showcase from nahian.bd/library"
+              title="Reset all library content to default showcase"
             >
               <Sparkles className="size-3.5 text-brand-500" />
               <span>Reset to Showcase Data</span>

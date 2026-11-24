@@ -2,222 +2,148 @@
 
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
+import { ShieldCheck } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { Profile } from '@/types/profile';
-import { LeftSidebar } from './LeftSidebar';
-import { RightSidebar } from './RightSidebar';
-import { DesktopStickyHeader } from '@/components/profile/DesktopStickyHeader';
+import { TopNavBar } from '@/components/navigation/TopNavBar';
+import { MobileMenu } from '@/components/navigation/MobileMenu';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
+import { ProjectsSection } from '@/components/sections/ProjectsSection';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { ExperienceSection } from '@/components/sections/ExperienceSection';
 import { SkillsSection } from '@/components/sections/SkillsSection';
-import { ProjectsSection } from '@/components/sections/ProjectsSection';
-import { PeopleSection } from '@/components/sections/PeopleSection';
 import { ContactSection } from '@/components/sections/ContactSection';
-import { LibrarySection } from '@/components/sections/LibrarySection';
-import { FocusSection } from '@/components/sections/FocusSection';
-import { WorkTabContent } from '@/components/sections/WorkTabContent';
+import {
+  GitHubIcon,
+  XIcon,
+  LinkedInIcon,
+  TelegramIcon,
+} from '@/components/ui/Icons';
 
 const ShareModal = dynamic(
   () => import('@/components/ui/ShareModal').then((m) => m.ShareModal),
   { ssr: false }
 );
-import { getPlatformIcon } from '@/components/ui/Icons';
 
 interface DesktopLayoutProps {
   profile: Profile;
-  activeSection: string;
-  activeTab: 'resume' | 'work';
-  isCollapsed: boolean;
-  onToggleCollapse: () => void;
-  onNavigate: (section: string) => void;
-  onTabChange: (tab: 'resume' | 'work') => void;
+  activeSection?: string;
+  activeTab?: 'resume' | 'work';
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+  onNavigate?: (section: string) => void;
+  onTabChange?: (tab: 'resume' | 'work') => void;
 }
 
 export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   profile,
-  activeSection,
-  activeTab,
-  isCollapsed,
-  onToggleCollapse,
-  onNavigate,
-  onTabChange,
 }) => {
   const { content } = usePortfolio();
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleContactClick = () => {
-    onNavigate('contact');
+    const el = document.querySelector('#connect');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
-  const defaultSocials = [
-    { id: 'def-github', platform: 'github', label: 'GitHub', url: 'https://github.com/0xZahidp' },
-    { id: 'def-x', platform: 'x', label: 'X', url: 'https://x.com/0xZahidP' },
-    { id: 'def-linkedin', platform: 'linkedin', label: 'LinkedIn', url: 'https://linkedin.com/in/0xZahidp' },
-    { id: 'def-telegram', platform: 'telegram', label: 'Telegram', url: 'https://t.me/0xZahidP' },
-    { id: 'def-facebook', platform: 'facebook', label: 'Facebook', url: 'https://facebook.com/0xZahidp' },
-  ];
-  const socials = Array.isArray(content.socialLinks) && content.socialLinks.length > 0
-    ? content.socialLinks
-    : defaultSocials;
-
-  const renderFooter = () => (
-    <footer className="mt-20 pt-8 pb-6 border-t border-line flex flex-col items-center gap-4 text-center">
-      <div className="flex items-center gap-4 text-ink-3">
-        {socials.map((social) => (
-          <a
-            key={social.id || social.url}
-            href={social.url}
-            target="_blank"
-            rel="me noopener noreferrer"
-            aria-label={social.label || social.platform}
-            className="hover:text-ink transition-colors"
-          >
-            {getPlatformIcon(social.platform, social.url, 'size-4')}
-          </a>
-        ))}
-      </div>
-      <p className="text-xs text-ink-3">© 2026 Zahid</p>
-    </footer>
-  );
-
   return (
-    <div className="mx-auto hidden min-h-dvh max-w-[87.5rem] md:flex" suppressHydrationWarning>
-      {/* 1. Left Column (Sticky Sidebar) */}
-      <LeftSidebar
-        activeSection={activeSection}
-        isCollapsed={isCollapsed}
-        onToggleCollapse={onToggleCollapse}
-        onNavigate={onNavigate}
+    <div className="min-h-dvh flex flex-col bg-bg text-text" suppressHydrationWarning>
+      {/* 1. Sticky Top Navigation Bar */}
+      <TopNavBar
+        onContactClick={handleContactClick}
+        onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
       />
 
-      {/* 2. Center Column (Scrollable Main Content) */}
-      <main className="min-w-0 flex-1 border-x border-line pb-16">
-        {activeSection === 'projects' ? (
-          <div>
-            {/* Sticky Header for Projects View */}
-            <header className="sticky top-0 z-30 flex h-[4.5rem] items-center px-6 border-b border-line bg-surface/85 backdrop-blur-md">
-              <h1 className="text-[19px] font-semibold tracking-tight text-ink">Projects</h1>
-            </header>
+      {/* Mobile Drawer Sheet */}
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+      />
 
-            <div className="px-6 py-6">
-              <p className="text-[14px] text-zinc-400 mb-5 leading-normal">
-                Products I&apos;ve designed, built and shipped, plus the open source work behind them.
-              </p>
+      {/* 2. One Centered Column (max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-12) */}
+      <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-12">
+        {/* Hero Section */}
+        <ProfileHeader
+          profile={profile || content.profile}
+          onContactClick={handleContactClick}
+        />
 
-              {/* Visual 2-Column Projects Grid & Open Source Section */}
-              <ProjectsSection />
+        {/* Selected Work (First) */}
+        <ProjectsSection />
 
-              {renderFooter()}
-            </div>
+        {/* About + Working Style + Languages */}
+        <AboutSection />
+
+        {/* Experience (with collapsed Web3 block) */}
+        <ExperienceSection />
+
+        {/* Skills (Shown once, grouped into 4 categories) */}
+        <SkillsSection />
+
+        {/* Connect (Full-width original CTA + message + links) */}
+        <ContactSection />
+
+        {/* Footer with DMCA badge moved here small */}
+        <footer className="pt-10 pb-8 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
+          <div className="flex items-center gap-3">
+            <span>© {new Date().getFullYear()} Md Zahid Hasan · 0xZahidP</span>
+            <span>·</span>
+            {/* DMCA Badge (Moved to footer, small) */}
+            <span className="inline-flex items-center gap-1 rounded bg-surface-2 px-1.5 py-0.5 text-[10px] font-mono text-muted border border-line">
+              <ShieldCheck className="size-3 text-accent" />
+              <span>DMCA Protected</span>
+            </span>
           </div>
-        ) : activeSection === 'people' ? (
-          <div>
-            {/* Sticky Header for People View */}
-            <header className="sticky top-0 z-30 flex h-[4.375rem] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
-              <h1 className="text-xl font-bold tracking-tight text-ink">People</h1>
-            </header>
 
-            <div className="px-6 py-8 lg:px-8">
-              {/* People Hero Banner & Filter Carousel & Cards */}
-              <PeopleSection />
-
-              {renderFooter()}
-            </div>
+          <div className="flex items-center gap-3 text-muted">
+            <a
+              href="https://t.me/0xZahidP"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Telegram"
+              className="hover:text-text transition-colors"
+            >
+              <TelegramIcon className="size-3.5" />
+            </a>
+            <a
+              href="https://github.com/0xZahidp"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub"
+              className="hover:text-text transition-colors"
+            >
+              <GitHubIcon className="size-3.5" />
+            </a>
+            <a
+              href="https://x.com/0xZahidP"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="X"
+              className="hover:text-text transition-colors"
+            >
+              <XIcon className="size-3" />
+            </a>
+            <a
+              href="https://linkedin.com/in/0xZahidp"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+              className="hover:text-text transition-colors"
+            >
+              <LinkedInIcon className="size-3.5" />
+            </a>
           </div>
-        ) : activeSection === 'library' ? (
-          <div>
-            {/* Sticky Header for Library View */}
-            <header className="sticky top-0 z-30 flex h-[4.375rem] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
-              <h1 className="text-xl font-bold tracking-tight text-ink">Library</h1>
-            </header>
-
-            <div className="px-6 py-8 lg:px-8">
-              <LibrarySection />
-              {renderFooter()}
-            </div>
-          </div>
-        ) : activeSection === 'focus' ? (
-          <div>
-            {/* Sticky Header for Focus View (No right-side Follow button, 1px bottom border) */}
-            <header className="sticky top-0 z-30 flex h-[4.375rem] items-center px-6 lg:px-10 border-b border-line bg-surface/85 backdrop-blur-md">
-              <h1 className="text-xl font-bold tracking-tight text-ink">Focus</h1>
-            </header>
-
-            <div className="max-w-[1070px] mx-auto px-6 sm:px-8 lg:px-10 py-8">
-              <FocusSection />
-              {renderFooter()}
-            </div>
-          </div>
-        ) : activeSection === 'contact' ? (
-          <div>
-            {/* Sticky Header for Contact View */}
-            <header className="sticky top-0 z-30 flex h-[4.375rem] items-center px-6 lg:px-8 border-b border-line bg-surface/85 backdrop-blur-md">
-              <h1 className="text-xl font-bold tracking-tight text-ink">Contact</h1>
-            </header>
-
-            <div className="px-6 py-8 lg:px-8">
-              {/* Contact Hero Banner, Work With Me, Reach Me & Find Me On */}
-              <ContactSection />
-
-              {renderFooter()}
-            </div>
-          </div>
-        ) : (
-          <div>
-            {/* Sticky Desktop Header Bar - Direct Child of <main>, stays sticky throughout all scroll positions */}
-            <DesktopStickyHeader
-              profile={profile}
-              onContactClick={handleContactClick}
-              onShareClick={() => setIsShareOpen(true)}
-            />
-
-            {/* Profile Hero & Decorative Banner */}
-            <ProfileHeader
-              profile={profile}
-              activeTab={activeTab}
-              onTabChange={onTabChange}
-              onContactClick={handleContactClick}
-            />
-
-            {/* Tab Content */}
-            <div className="px-6 py-10 lg:px-8">
-              {activeTab === 'resume' ? (
-                <>
-                  {/* About Section */}
-                  <AboutSection />
-
-                  {/* Experience Section */}
-                  <ExperienceSection />
-
-                  {/* Skills and Tools Section */}
-                  <SkillsSection />
-                </>
-              ) : (
-                /* Work / Repositories & Projects Tab (Screenshots 1, 2, 3) */
-                <WorkTabContent onNavigateToProjects={() => onNavigate('projects')} />
-              )}
-
-              {renderFooter()}
-            </div>
-          </div>
-        )}
+        </footer>
       </main>
 
-      {/* 3. Right Column (Sticky Follow & Socials Sidebar - Omitted on Focus page) */}
-      {activeSection !== 'focus' && (
-        <RightSidebar
-          onContactClick={handleContactClick}
-          onNavigate={onNavigate}
-          activeSection={activeSection}
-        />
-      )}
-
-      {/* Share Profile Modal */}
+      {/* Share Modal */}
       <ShareModal
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
-        profile={profile}
+        profile={profile || content.profile}
       />
     </div>
   );

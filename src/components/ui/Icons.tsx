@@ -2,7 +2,7 @@ import React from 'react';
 import { Globe } from 'lucide-react';
 export { ZahidLogo } from './ZahidLogo';
 
-// Exact Tabler Icons from nahian.bd
+// Tabler Icons (MIT License)
 export const TablerUserCircle = ({ className = 'size-6' }: { className?: string }) => (
   <svg width="1em" height="1em" viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0" />
@@ -162,7 +162,7 @@ export const GoogleIcon = ({ className = 'size-4' }: { className?: string }) => 
   </svg>
 );
 
-export const VerifiedBadgeIcon = ({ className = 'size-5 text-emerald-500' }: { className?: string }) => (
+export const VerifiedBadgeIcon = ({ className = 'size-5 text-accent' }: { className?: string }) => (
   <svg
     width="1em"
     height="1em"

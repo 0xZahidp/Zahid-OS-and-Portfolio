@@ -259,7 +259,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
     }
 
     switch (project.id) {
-      case 'proj-1': // Bidvers
+      case 'proj-1':
         return (
           <div className="size-12 rounded-[16px] bg-black text-white font-extrabold text-xl grid place-items-center shrink-0 shadow-xs ring-1 ring-white/10">
             B
@@ -375,7 +375,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
               <span><strong>{effectiveRepos}</strong> repos</span>
             </a>
 
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-accent/10 text-accent border border-accent/20 font-medium">
               <Activity className="size-3.5" />
               <span><strong>{effectiveContributions.toLocaleString()}</strong> contributions</span>
             </span>
@@ -551,7 +551,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
                 className="group rounded-[20px] border border-line bg-surface p-5 flex flex-col justify-between hover:border-line-strong transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer"
               >
                 <div>
-                  <h3 className="text-sm font-bold text-ink group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors font-mono">
+                  <h3 className="text-sm font-bold text-ink group-hover:text-accent transition-colors font-mono">
                     {repo.name}
                   </h3>
                   <p className="mt-2 text-xs leading-relaxed text-ink-2 line-clamp-2">
@@ -639,7 +639,7 @@ export const WorkTabContent: React.FC<WorkTabContentProps> = ({
                   {renderRowIcon(project)}
 
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-bold text-ink group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                    <h3 className="text-sm font-bold text-ink group-hover:text-accent transition-colors">
                       {project.title}
                     </h3>
 

@@ -2,49 +2,43 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { X } from 'lucide-react';
+import { X, Briefcase, Layers, Target, Mail } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { SoundToggle } from '@/components/ui/SoundToggle';
 import {
-  TablerUserCircle,
-  TablerBox,
-  TablerUsers,
-  TablerMail,
-  TablerBooks,
-  TablerHeadphones,
   GitHubIcon,
   XIcon,
   LinkedInIcon,
-  FacebookIcon,
+  TelegramIcon,
 } from '@/components/ui/Icons';
 import { ZahidLogo } from '@/components/ui/ZahidLogo';
 
 interface MobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
-  onNavigate: (section: string) => void;
 }
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({
   isOpen,
   onClose,
-  onNavigate,
 }) => {
   if (!isOpen) return null;
 
-  const handleNavClick = (section: string) => {
-    onNavigate(section);
-    onClose();
-  };
-
   const navItems = [
-    { id: 'profile', label: 'Profile', icon: TablerUserCircle },
-    { id: 'projects', label: 'Projects', icon: TablerBox },
-    { id: 'people', label: 'People', icon: TablerUsers },
-    { id: 'contact', label: 'Contact', icon: TablerMail },
-    { id: 'library', label: 'Library', icon: TablerBooks },
-    { id: 'focus', label: 'Focus', icon: TablerHeadphones },
+    { href: '#work', label: 'Work', icon: Layers },
+    { href: '#experience', label: 'Experience', icon: Briefcase },
+    { href: '#skills', label: 'Skills', icon: Target },
+    { href: '#connect', label: 'Connect', icon: Mail },
   ];
+
+  const handleNavClick = (href: string) => {
+    onClose();
+    setTimeout(() => {
+      const el = document.querySelector(href);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 150);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex md:hidden" role="dialog" aria-modal="true">
@@ -64,12 +58,17 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             onClick={onClose}
             className="group inline-flex items-center gap-2.5"
           >
-            <span className="grid size-9 place-items-center rounded-[11px] bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/40">
-              <ZahidLogo className="size-5 text-white" />
+            <span className="grid size-9 place-items-center rounded-xl bg-accent text-white shadow-xs">
+              <ZahidLogo className="size-5 fill-current" />
             </span>
-            <span className="text-title font-bold tracking-tight text-ink">
-              0xZahidP
-            </span>
+            <div className="flex flex-col text-left">
+              <span className="text-sm font-bold tracking-tight text-text leading-tight">
+                0xZahidP
+              </span>
+              <span className="text-[10px] font-mono text-muted">
+                Software Engineer
+              </span>
+            </div>
           </Link>
 
           <button
@@ -84,19 +83,21 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 
         {/* Navigation list */}
         <nav className="mt-8 flex flex-col gap-1.5 flex-1 overflow-y-auto">
-          {navItems.map((item, idx) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             return (
-              <button
-                key={item.id}
-                type="button"
-                data-note={idx}
-                onClick={() => handleNavClick(item.id)}
-                className="flex items-center gap-3.5 rounded-xl px-3.5 py-3 text-lead font-medium text-ink hover:bg-surface-2 transition-colors text-left"
+              <a
+                key={item.href}
+                href={item.href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNavClick(item.href);
+                }}
+                className="flex items-center gap-3.5 rounded-xl px-3.5 py-3 text-sm font-medium text-text hover:bg-surface-2 transition-colors text-left cursor-pointer"
               >
-                <Icon className="size-5 text-ink-3" />
+                <Icon className="size-5 text-muted" />
                 <span>{item.label}</span>
-              </button>
+              </a>
             );
           })}
         </nav>
@@ -104,20 +105,26 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
         {/* Socials & Theme Toggle at bottom */}
         <div className="pt-6 border-t border-line space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-ink-3">Theme & Audio</span>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <SoundToggle />
-            </div>
+            <span className="text-xs text-muted">Appearance</span>
+            <ThemeToggle />
           </div>
 
-          <div className="flex items-center gap-3 text-ink-3">
+          <div className="flex items-center gap-4 text-muted">
+            <a
+              href="https://t.me/0xZahidP"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Telegram"
+              className="hover:text-text transition-colors"
+            >
+              <TelegramIcon className="size-4" />
+            </a>
             <a
               href="https://github.com/0xZahidp"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub"
-              className="hover:text-ink transition-colors"
+              className="hover:text-text transition-colors"
             >
               <GitHubIcon className="size-4" />
             </a>
@@ -126,7 +133,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               target="_blank"
               rel="noopener noreferrer"
               aria-label="X"
-              className="hover:text-ink transition-colors"
+              className="hover:text-text transition-colors"
             >
               <XIcon className="size-4" />
             </a>
@@ -135,22 +142,13 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               target="_blank"
               rel="noopener noreferrer"
               aria-label="LinkedIn"
-              className="hover:text-ink transition-colors"
+              className="hover:text-text transition-colors"
             >
               <LinkedInIcon className="size-4" />
             </a>
-            <a
-              href="https://facebook.com/0xZahidp"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Facebook"
-              className="hover:text-ink transition-colors"
-            >
-              <FacebookIcon className="size-4" />
-            </a>
           </div>
 
-          <p className="text-[11px] text-ink-3">© 2026 Zahid</p>
+          <p className="text-[11px] text-muted">© 2026 Md Zahid Hasan</p>
         </div>
       </div>
     </div>

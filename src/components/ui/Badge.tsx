@@ -17,7 +17,7 @@ export const Badge: React.FC<BadgeProps> = ({
     badge: 'badge',
     pill: 'pill',
     status:
-      'inline-flex items-center gap-2 rounded-full bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-700 ring-1 ring-brand-500/25 dark:text-emerald-400',
+      'inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent ring-1 ring-accent/25 dark:text-accent',
   };
 
   return (

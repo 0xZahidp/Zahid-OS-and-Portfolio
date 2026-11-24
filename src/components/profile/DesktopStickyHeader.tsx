@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Profile } from '@/types/profile';
 import { VerifiedBadgeIcon, TablerShare } from '@/components/ui/Icons';
+import { PremiumFlipButton } from '@/components/ui/PremiumFlipButton';
 
 interface DesktopStickyHeaderProps {
   profile: Profile;
@@ -49,14 +50,13 @@ export const DesktopStickyHeader: React.FC<DesktopStickyHeaderProps> = ({
         <TablerShare className="size-4.5" />
       </button>
 
-      {/* Primary Tactile Button */}
-      <button
-        type="button"
+      {/* Primary Tactile Flip Button */}
+      <PremiumFlipButton
+        textOne="Get in touch"
+        textTwo="Let's build →"
         onClick={onContactClick}
-        className="btn btn-primary h-10 px-4.5 text-body"
-      >
-        Get in touch
-      </button>
+        size="md"
+      />
     </header>
   );
 };

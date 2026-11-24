@@ -30,13 +30,6 @@ export const ProfileBadges: React.FC = () => {
     return null;
   }
 
-  const aiSkills = skills.filter((s) => s.category === 'ai');
-  const techSkills = skills.filter((s) => s.category === 'tech' || s.category === 'top');
-  const toolSkills = skills.filter((s) => s.category === 'tool');
-  const fallbackSkills = skills.filter(
-    (s) => s.category !== 'ai' && s.category !== 'tech' && s.category !== 'top' && s.category !== 'tool'
-  );
-
   const getSkillIcon = (id: string, name: string) => {
     const key = (id || name).toLowerCase();
     if (key.includes('claude')) return <ClaudeIcon className="size-3.5 shrink-0" />;
@@ -58,59 +51,21 @@ export const ProfileBadges: React.FC = () => {
     return <Sparkles className="size-3 shrink-0 opacity-70" />;
   };
 
-  const getAiColor = (id: string, name: string, color?: string) => {
-    if (color) return color;
-    const key = (id || name).toLowerCase();
-    if (key.includes('claude')) return '#d97757';
-    if (key.includes('openai') || key.includes('gpt')) return '#10a37f';
-    if (key.includes('antigravity')) return '#3186ff';
-    if (key.includes('opencode')) return '#9a9897';
-    return '#8b5cf6';
-  };
+  const tagClass =
+    'inline-flex items-center gap-1.5 bg-surface border border-line text-muted hover:border-accent hover:text-text rounded-md px-2.5 py-1 text-xs font-mono transition-colors shadow-2xs select-none';
 
   return (
-    <div className="space-y-2 mt-6 max-w-2xl mx-auto">
-      {aiSkills.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5 justify-center" aria-label="AI tools">
-          {aiSkills.map((skill) => (
-            <li key={skill.id || skill.name}>
-              <span
-                className="pill ai-pill font-medium"
-                style={{ ['--ai' as string]: getAiColor(skill.id, skill.name, skill.color) }}
-              >
-                {getSkillIcon(skill.id, skill.name)}
-                <span>{skill.name}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {techSkills.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5 justify-center" aria-label="Tech stack">
-          {techSkills.map((skill) => (
-            <li key={skill.id || skill.name}>
-              <span className="pill font-medium">
-                {getSkillIcon(skill.id, skill.name)}
-                <span>{skill.name}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {(toolSkills.length > 0 || fallbackSkills.length > 0) && (
-        <ul className="flex flex-wrap gap-1.5 justify-center" aria-label="Additional tools">
-          {[...toolSkills, ...fallbackSkills].map((skill) => (
-            <li key={skill.id || skill.name}>
-              <span className="pill font-medium">
-                {getSkillIcon(skill.id, skill.name)}
-                <span>{skill.name}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="mt-5 w-full">
+      <ul className="flex flex-wrap gap-1.5 justify-start" aria-label="Skills and Tech Stack">
+        {skills.map((skill) => (
+          <li key={skill.id || skill.name}>
+            <span className={tagClass}>
+              {getSkillIcon(skill.id, skill.name)}
+              <span>{skill.name}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

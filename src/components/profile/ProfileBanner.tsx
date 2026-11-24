@@ -1,83 +1,28 @@
 'use client';
 
 import React from 'react';
-import dynamic from 'next/dynamic';
-
-const WaterRippleMatrix = dynamic(
-  () => import('./WaterRippleMatrix').then((m) => m.WaterRippleMatrix),
-  { ssr: false }
-);
 
 export const ProfileBanner: React.FC = () => {
   return (
-    <div className="relative overflow-hidden h-[235px] w-full border-b border-line bg-surface flex items-center justify-center select-none">
-      {/* Background ambient glowing blobs */}
-      <div className="cover absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-        <span
-          className="cover-blob"
-          style={{
-            ['--blob' as string]: 'var(--cover-1)',
-            top: '-45%',
-            left: '-12%',
-            ['--dur' as string]: '24s',
-            ['--delay' as string]: '0s',
-          }}
-        />
-        <span
-          className="cover-blob"
-          style={{
-            ['--blob' as string]: 'var(--cover-2)',
-            top: '15%',
-            left: '8%',
-            ['--dur' as string]: '27s',
-            ['--delay' as string]: '-4s',
-          }}
-        />
-        <span
-          className="cover-blob"
-          style={{
-            ['--blob' as string]: 'var(--cover-3)',
-            top: '-35%',
-            left: '32%',
-            ['--dur' as string]: '29s',
-            ['--delay' as string]: '-8s',
-          }}
-        />
-        <span
-          className="cover-blob"
-          style={{
-            ['--blob' as string]: 'var(--cover-4)',
-            top: '5%',
-            left: '55%',
-            ['--dur' as string]: '23s',
-            ['--delay' as string]: '-12s',
-          }}
-        />
-        <span
-          className="cover-blob"
-          style={{
-            ['--blob' as string]: 'var(--cover-5)',
-            top: '-30%',
-            left: '76%',
-            ['--dur' as string]: '31s',
-            ['--delay' as string]: '-6s',
-          }}
-        />
-        <span
-          className="cover-blob"
-          style={{
-            ['--blob' as string]: 'var(--cover-6)',
-            top: '45%',
-            left: '38%',
-            ['--dur' as string]: '33s',
-            ['--delay' as string]: '-16s',
-            width: '45%',
-          }}
-        />
-      </div>
+    <div className="relative overflow-hidden h-28 sm:h-36 w-full rounded-2xl border border-line bg-surface-2/40 mb-6 select-none">
+      {/* Editorial Dot Grid Pattern */}
+      <div
+        className="absolute inset-0 opacity-40 dark:opacity-30 [background-image:radial-gradient(var(--border)_1px,transparent_1px)] [background-size:16px_16px]"
+        aria-hidden="true"
+      />
 
-      {/* Interactive Water Ripple Matrix Canvas - Chunkier slats matching REFERENCE */}
-      <WaterRippleMatrix className="h-full w-full" slatWidth={11} slatHeight={25} gap={4} />
+      {/* Subtle Warm Amber/Copper Accent Corner Sheen */}
+      <div
+        className="absolute -right-12 -top-12 size-48 rounded-full bg-accent/10 blur-3xl pointer-events-none"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute -left-12 -bottom-12 size-48 rounded-full bg-accent/5 blur-3xl pointer-events-none"
+        aria-hidden="true"
+      />
+
+      {/* Hairline Editorial Accent Line at Bottom */}
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
     </div>
   );
 };

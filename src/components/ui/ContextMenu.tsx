@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/Icons';
 import { Check } from 'lucide-react';
 import { isSoundEnabled, toggleSound as toggleGlobalSound } from '@/lib/sound';
+import { toggleGlobalTheme } from '@/components/ui/ThemeManager';
 
 interface ContextMenuTargetData {
   selection?: string;
@@ -156,17 +157,7 @@ export const ContextMenu: React.FC = () => {
   };
 
   const toggleTheme = () => {
-    const nextDark = !isDarkMode;
-    setIsDarkMode(nextDark);
-    if (nextDark) {
-      document.documentElement.classList.remove('light');
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('folioframe-theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-      localStorage.setItem('folioframe-theme', 'light');
-    }
+    toggleGlobalTheme({ x: position.x, y: position.y });
     setTimeout(closeMenu, 150);
   };
 
@@ -246,7 +237,7 @@ export const ContextMenu: React.FC = () => {
             className="group/item flex flex-col items-center gap-1.5 rounded-xl py-2 text-[11px] font-medium text-zinc-700 dark:text-zinc-300 outline-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/80 cursor-pointer"
           >
             {copiedType === 'page' ? (
-              <Check className="size-5 text-emerald-500" />
+              <Check className="size-5 text-accent" />
             ) : (
               <TablerLink className="size-5 transition-colors group-hover/item:text-brand-500" />
             )}
@@ -362,13 +353,13 @@ export const ContextMenu: React.FC = () => {
           onClick={scrollToContact}
           className="group/item flex h-11 w-full cursor-pointer items-center gap-3.5 rounded-xl px-2 text-left text-[15px] font-semibold outline-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
         >
-          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-emerald-600 dark:text-emerald-400 transition-colors">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-accent transition-colors">
             <TablerMessageCircle className="size-4.5" />
           </span>
-          <span className="flex-1 text-emerald-600 dark:text-emerald-400">
+          <span className="flex-1 text-accent">
             Get in touch
           </span>
-          <span className="pr-2 text-emerald-600 dark:text-emerald-400 font-bold transition-transform group-hover/item:translate-x-0.5">
+          <span className="pr-2 text-accent font-bold transition-transform group-hover/item:translate-x-0.5">
             →
           </span>
         </button>

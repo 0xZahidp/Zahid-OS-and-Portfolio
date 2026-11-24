@@ -143,7 +143,7 @@ export const PeopleSection: React.FC = () => {
     <div className="space-y-8">
       {people.length === 0 ? (
         <div className="rounded-[28px] border border-dashed border-line bg-surface-2/40 p-8 sm:p-12 text-center">
-          <div className="size-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 grid place-items-center mx-auto mb-3">
+          <div className="size-12 rounded-2xl bg-accent/10 text-accent border border-accent/20 grid place-items-center mx-auto mb-3">
             <Users className="size-5" />
           </div>
           <h3 className="text-sm font-semibold text-ink">Curated Directory Coming Soon</h3>
@@ -154,7 +154,7 @@ export const PeopleSection: React.FC = () => {
       ) : (
         <>
           {/* 1. Hero Banner Card */}
-      <div className="rounded-[28px] p-6 sm:p-7 bg-gradient-to-br from-emerald-100/70 via-teal-50/40 to-emerald-50/30 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-emerald-900/10 border border-emerald-500/20 shadow-xs relative overflow-hidden">
+      <div className="rounded-[28px] p-6 sm:p-7 bg-surface-2 border border-line shadow-xs relative overflow-hidden">
         {/* Avatar Stack Facepile */}
         <div className="flex items-center -space-x-2">
           {people.slice(0, 5).map((person) => (
@@ -189,7 +189,7 @@ export const PeopleSection: React.FC = () => {
           Builders, founders and teachers whose work keeps me sharp. Filter by where I follow them, and follow them too.
         </p>
 
-        <div className="mt-5 flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+        <div className="mt-5 flex items-center gap-1.5 text-xs font-semibold text-accent">
           <Users className="size-4" />
           <span>
             {people.length} {people.length === 1 ? 'person' : 'people'} · {uniquePlatformsCount} platforms
@@ -291,7 +291,7 @@ export const PeopleSection: React.FC = () => {
                       <span className="truncate">{person.name}</span>
                       {person.verified && (
                         <span
-                          className="inline-flex items-center select-none text-emerald-500 text-sm shrink-0"
+                          className="inline-flex items-center select-none text-accent text-sm shrink-0"
                           title="Verified mentor / builder"
                           aria-label="Verified"
                         >
@@ -325,8 +325,8 @@ export const PeopleSection: React.FC = () => {
 
               {/* Personal Endorsement / Quote */}
               {person.quote && (
-                <div className="mt-3 flex items-start gap-2 rounded-xl bg-surface-2/40 px-3.5 py-2.5 text-xs text-ink-3 border-l-2 border-emerald-500 leading-relaxed">
-                  <QuoteIcon className="size-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                <div className="mt-3 flex items-start gap-2 rounded-xl bg-surface-2/40 px-3.5 py-2.5 text-xs text-ink-3 border-l-2 border-accent leading-relaxed">
+                  <QuoteIcon className="size-3.5 text-accent shrink-0 mt-0.5" />
                   <span className="italic">{person.quote}</span>
                 </div>
               )}

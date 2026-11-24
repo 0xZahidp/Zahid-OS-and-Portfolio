@@ -131,25 +131,12 @@ export const defaultLibraryData: LibraryContent = {
     },
   ],
   voiceovers: {
-    channelName: 'Tafheem',
-    handle: '@TafheemOfficial',
-    description: 'Bangla voiceovers, audiobooks, and reflective narratives recorded for personal and community growth.',
-    subscribeUrl: 'https://www.youtube.com/@TafheemOfficial?sub_confirmation=1',
-    subscriberCount: '5 voiceovers in Bangla',
-    items: [
-      {
-        id: 'vo-1',
-        title: "'অবক্ষয়কাল' অডিওবুক কন্টেস্ট এর বিজয়ী সাবমিশন | Al Nahian | Obokkhoykal | Asif Adnan | Tafheem",
-        url: 'https://www.youtube.com/@TafheemOfficial',
-        duration: '14:22',
-      },
-      {
-        id: 'vo-2',
-        title: 'কেমন লাগবে রাসুল (সা.) এর মুখে নিজের নাম শুনতে? | Tafheem',
-        url: 'https://www.youtube.com/@TafheemOfficial',
-        duration: '08:45',
-      },
-    ],
+    channelName: 'Zahid Hasan Patwary',
+    handle: '@0xZahidP',
+    description: 'Technical walkthroughs, product architecture reviews, and engineering logs.',
+    subscribeUrl: 'https://www.youtube.com/@0xZahidP?sub_confirmation=1',
+    subscriberCount: 'Tech Showcase',
+    items: [],
   },
 };
 

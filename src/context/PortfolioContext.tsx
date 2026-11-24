@@ -60,8 +60,8 @@ const normalizePortfolioContent = (raw: PortfolioContent): PortfolioContent => {
       ...p,
       highlightBadge: p.highlightBadge || p.highlight_badge || '',
       highlight_badge: p.highlight_badge || p.highlightBadge || '',
-      logoType: p.logoType || p.logo_type || 'bidvers',
-      logo_type: p.logo_type || p.logoType || 'bidvers',
+      logoType: p.logoType || p.logo_type || 'badge',
+      logo_type: p.logo_type || p.logoType || 'badge',
     })),
   };
 };

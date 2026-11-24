@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { DesktopLayout } from '@/components/layout/DesktopLayout';
-import { MobileLayout } from '@/components/layout/MobileLayout';
 
 interface HomeClientProps {
   defaultSection?: string;
@@ -13,7 +12,6 @@ export const HomeClient: React.FC<HomeClientProps> = ({ defaultSection = 'profil
   const { content } = usePortfolio();
   const [activeSection, setActiveSection] = useState<string>(defaultSection);
   const [activeTab, setActiveTab] = useState<'resume' | 'work'>('resume');
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
   // Catch password recovery links directed to root and forward to /admin/reset-password
   useEffect(() => {
@@ -55,62 +53,17 @@ export const HomeClient: React.FC<HomeClientProps> = ({ defaultSection = 'profil
       }
     }
 
-    if (section === 'projects') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    if (section === 'people') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    if (section === 'contact') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    if (section === 'profile') {
-      setActiveTab('resume');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    if (section === 'library') {
-      setActiveSection('library');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    if (section === 'focus') {
-      setActiveSection('focus');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <>
-      {/* Desktop & Tablet 3-Column Experience */}
-      <DesktopLayout
-        profile={content.profile}
-        activeSection={activeSection}
-        activeTab={activeTab}
-        isCollapsed={isCollapsed}
-        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
-        onNavigate={handleNavigate}
-        onTabChange={setActiveTab}
-      />
-
-      {/* Mobile Dedicated Experience */}
-      <MobileLayout
-        profile={content.profile}
-        activeSection={activeSection}
-        activeTab={activeTab}
-        onNavigate={handleNavigate}
-        onTabChange={setActiveTab}
-      />
-    </>
+    <DesktopLayout
+      profile={content.profile}
+      activeSection={activeSection}
+      activeTab={activeTab}
+      onNavigate={handleNavigate}
+      onTabChange={setActiveTab}
+    />
   );
 };
 

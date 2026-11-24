@@ -42,7 +42,7 @@ export const SoundToggle: React.FC<{ className?: string }> = ({ className = '' }
     >
       <span className="btn-content">
         {enabled ? (
-          <TablerVolume className="size-4.5 text-brand-600 dark:text-emerald-400" />
+          <TablerVolume className="size-4.5 text-accent" />
         ) : (
           <TablerVolumeOff className="size-4.5 text-ink-3" />
         )}

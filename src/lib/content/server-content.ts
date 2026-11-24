@@ -118,8 +118,8 @@ export async function fetchPortfolioContentServer(): Promise<PortfolioContent> {
             ...p,
             highlightBadge: p.highlightBadge || p.highlight_badge || '',
             highlight_badge: p.highlight_badge || p.highlightBadge || '',
-            logoType: p.logoType || p.logo_type || 'bidvers',
-            logo_type: p.logo_type || p.logoType || 'bidvers',
+            logoType: p.logoType || p.logo_type || 'badge',
+            logo_type: p.logo_type || p.logoType || 'badge',
           })),
           skills: skillRes.data || [],
           languages: (langRes.data || []).map((l) => ({
@@ -161,8 +161,8 @@ export async function fetchPortfolioContentServer(): Promise<PortfolioContent> {
             ...p,
             highlightBadge: p.highlightBadge || p.highlight_badge || '',
             highlight_badge: p.highlight_badge || p.highlightBadge || '',
-            logoType: p.logoType || p.logo_type || 'bidvers',
-            logo_type: p.logo_type || p.logoType || 'bidvers',
+            logoType: p.logoType || p.logo_type || 'badge',
+            logo_type: p.logo_type || p.logoType || 'badge',
           })),
           version: typeof legacyObj.version === 'number' ? legacyObj.version : 0,
           githubSettings: legacyObj.githubSettings

@@ -286,7 +286,7 @@ export const ProfileTab: React.FC = () => {
                     type="text"
                     value={role.company}
                     onChange={(e) => handleRoleChange(idx, 'company', e.target.value)}
-                    placeholder="e.g. Bidvers"
+                    placeholder="e.g. Scholar Quest"
                     className="mt-1 w-full rounded-lg border border-line bg-surface px-3 py-1.5 text-xs text-ink focus:outline-none"
                   />
                 </div>

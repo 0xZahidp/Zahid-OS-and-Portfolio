@@ -126,7 +126,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
   const shareBlurb =
     profile.bio ||
-    'Software engineer and agentic builder shipping global SaaS, now CTO at Bidvers. Always up for a chat about code, careers or English.';
+    'Product developer and full-stack builder crafting scalable web applications, offline-first systems, and automation tools.';
 
   return (
     <div

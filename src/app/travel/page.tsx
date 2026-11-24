@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 
 export default function StandaloneTravelPage() {
   return (
-    <main className="min-h-screen bg-black text-white selection:bg-emerald-500 selection:text-black relative overflow-x-hidden">
+    <main className="min-h-screen bg-black text-white selection:bg-amber-500 selection:text-black relative overflow-x-hidden">
       {/* Background radial glow */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-emerald-600/15 via-teal-600/5 to-transparent blur-3xl pointer-events-none -z-10" />
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-amber-600/15 via-orange-600/5 to-transparent blur-3xl pointer-events-none -z-10" />
 
       {/* Top Navbar */}
       <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-black/70 backdrop-blur-xl">
@@ -26,12 +26,12 @@ export default function StandaloneTravelPage() {
             href="/"
             className="flex items-center gap-2.5 text-white/80 hover:text-white transition-colors group cursor-pointer"
           >
-            <div className="size-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 grid place-items-center group-hover:scale-105 transition-transform">
+            <div className="size-7 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-400 grid place-items-center group-hover:scale-105 transition-transform">
               <ArrowLeft className="size-3.5" />
             </div>
             <span className="text-xs font-bold tracking-tight">0xZahidP</span>
             <span className="text-xs text-white/40">/</span>
-            <span className="text-xs text-emerald-400 font-mono">travel</span>
+            <span className="text-xs text-amber-400 font-mono">travel</span>
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -39,13 +39,13 @@ export default function StandaloneTravelPage() {
               href="/os"
               className="h-8 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
             >
-              <Terminal className="size-3.5 text-emerald-400" />
+              <Terminal className="size-3.5 text-amber-400" />
               <span>Zahid OS</span>
             </Link>
 
             <Link
               href="/"
-              className="h-8 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-emerald-500/20"
+              className="h-8 px-3 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-amber-500/20"
             >
               <Home className="size-3.5" />
               <span>Portfolio</span>

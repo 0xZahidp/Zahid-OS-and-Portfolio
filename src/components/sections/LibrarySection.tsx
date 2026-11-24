@@ -237,7 +237,7 @@ export const LibrarySection: React.FC = () => {
                         title="Copy install command"
                       >
                         {isCopied ? (
-                          <Check className="size-3.5 text-emerald-500" />
+                          <Check className="size-3.5 text-accent" />
                         ) : (
                           <Copy className="size-3.5" />
                         )}
@@ -288,7 +288,7 @@ export const LibrarySection: React.FC = () => {
             {bookmarks.find((b) => b.isTopPick) && (() => {
               const topPick = bookmarks.find((b) => b.isTopPick)!;
               return (
-                <div className="rounded-[28px] border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-surface p-5 sm:p-7 shadow-xs relative overflow-hidden">
+                <div className="rounded-[28px] border border-line bg-surface-2/60 p-5 sm:p-7 shadow-xs relative overflow-hidden">
                   <div className="grid gap-6 md:grid-cols-[1.1fr_1fr] items-center">
                     {topPick.image_url ? (
                       <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl ring-1 ring-line shadow-xs">
@@ -311,13 +311,13 @@ export const LibrarySection: React.FC = () => {
                         {topPick.badges?.map((badge) => (
                           <span
                             key={badge}
-                            className="inline-flex items-center gap-1 rounded-full bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-700 dark:text-emerald-400 border border-brand-500/20"
+                            className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent border border-accent/20"
                           >
                             <Sparkles className="size-3" />
                             <span>{badge}</span>
                           </span>
                         )) || (
-                          <span className="rounded-full bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-700 dark:text-emerald-400">
+                          <span className="rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent border border-accent/20">
                             Top Pick
                           </span>
                         )}
@@ -440,7 +440,7 @@ export const LibrarySection: React.FC = () => {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-bold text-ink truncate">{track.title}</span>
                       {track.arabic_title && (
-                        <span className="text-xs font-serif text-brand-600 dark:text-emerald-400 font-semibold" dir="rtl">
+                        <span className="text-xs font-serif text-accent font-semibold" dir="rtl">
                           {track.arabic_title}
                         </span>
                       )}

@@ -22,7 +22,7 @@ export default async function Image() {
           justifyContent: 'center',
           padding: '60px',
           fontFamily: 'sans-serif',
-          border: '12px solid #10b981',
+          border: '12px solid #B45309',
         }}
       >
         <div
@@ -38,7 +38,7 @@ export default async function Image() {
               width: '56px',
               height: '56px',
               borderRadius: '16px',
-              background: '#10b981',
+              background: '#B45309',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -78,7 +78,7 @@ export default async function Image() {
         <p
           style={{
             fontSize: '28px',
-            color: '#10b981',
+            color: '#B45309',
             margin: '0 0 24px 0',
             fontWeight: 600,
           }}

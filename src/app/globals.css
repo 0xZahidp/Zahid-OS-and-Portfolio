@@ -6,29 +6,34 @@
   --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
 
-  --color-bg-base: var(--surface);
+  --color-bg-base: var(--bg);
+  --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
-  --color-line: var(--line);
+  --color-line: var(--border);
+  --color-border: var(--border);
   --color-line-strong: var(--line-strong);
   
-  --color-ink: var(--ink);
-  --color-ink-2: var(--ink-2);
+  --color-ink: var(--text);
+  --color-text: var(--text);
+  --color-ink-2: var(--muted);
+  --color-muted: var(--muted);
   --color-ink-3: var(--ink-3);
 
-  --color-brand-50: #e8f7ef;
-  --color-brand-100: #c8edd9;
-  --color-brand-200: #93dbb5;
-  --color-brand-300: #57c48c;
-  --color-brand-400: #22a86a;
-  --color-brand-500: #0f9459;
-  --color-brand-600: #0a7f4f;
-  --color-brand-700: #08673f;
-  --color-brand-800: #075234;
-  --color-brand-900: #063f29;
-  
-  --color-link: var(--link);
+  --color-accent: var(--accent);
+  --color-link: var(--accent);
+
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
 
   --color-graph-0: var(--graph-0);
   --color-graph-1: var(--graph-1);
@@ -38,67 +43,86 @@
 }
 
 :root {
-  /* Design Tokens from nahian.bd Computed Styles */
-  --surface: #ffffff;
-  --surface-2: #f7f7f7;
-  --surface-3: #efefef;
-  --line: #e8e8e8;
-  --line-strong: #d6d6d6;
-  --ink: #171717;
-  --ink-2: #525252;
-  --ink-3: #6b6b6b;
-  --link: #0a7f4f;
+  /* Crisp Light Mode (Warm White & Copper) */
+  --bg: #ffffff;        /* Pure crisp white page background - no beige */
+  --surface: #faf8f6;   /* Clean subtle warm surface */
+  --surface-2: #f4f0ec; /* Elevated / hover surfaces */
+  --surface-3: #eee9e3; /* Nested chips & wells */
+  --text: #1c1917;      /* Primary headings & body text (high contrast) */
+  --muted: #57534e;     /* Secondary text, metadata, captions */
+  --border: #e7e5e4;    /* Subtle hairline borders & dividers */
+  --line: var(--border);
+  --line-strong: #d6d3d1;
+  --accent: #b45309;    /* Deep copper — primary buttons, active states, links */
+  --accent-hover: #92400e;
+  --accent-light: #fef3c7;
+
+  --ink: var(--text);
+  --ink-2: var(--muted);
+  --ink-3: #78716c;
+  --link: var(--accent);
+
+  /* Warm Copper Brand Ramp */
+  --brand-50: #FFFBEB;
+  --brand-100: #FEF3C7;
+  --brand-200: #FDE68A;
+  --brand-300: #FCD34D;
+  --brand-400: #D97706;
+  --brand-500: #B45309;
+  --brand-600: #92400E;
+  --brand-700: #78350F;
+  --brand-800: #55250B;
+  --brand-900: #381807;
 
   /* GitHub Calendar Graph Ramp */
-  --graph-0: #f4f4f5;
-  --graph-1: #93dbb5;
-  --graph-2: #57c48c;
-  --graph-3: #0f9459;
-  --graph-4: #08673f;
+  --graph-0: #f5f5f4;
+  --graph-1: #fed7aa;
+  --graph-2: #f97316;
+  --graph-3: #c2410c;
+  --graph-4: #b45309;
 
-  --cover-base-1: #e3f6ec;
-  --cover-base-2: #e6f4f1;
-  --cover-1: #34d399;
-  --cover-2: #2dd4bf;
-  --cover-3: #10b981;
-  --cover-4: #5eead4;
-  --cover-5: #a7f3d0;
-  --cover-6: #0f9459;
-  --slats-bg: #e9f6ef;
-  --slats-color: #0f9459;
-  --slats-glint: #ffffff;
   color-scheme: light;
 }
 
-.dark {
-  --surface: #0d0d0e;
-  --surface-2: #17171a;
-  --surface-3: #222226;
-  --line: #2b2b30;
-  --line-strong: #3d3d43;
-  --ink: #ededed;
-  --ink-2: #b4b4b8;
-  --ink-3: #9a9aa0;
-  --link: #57c48c;
+[data-theme="dark"], .dark {
+  /* Near-Black & Muted Amber Copper (Dark Mode) */
+  --bg: #09090b;        /* Near-black page background */
+  --surface: #141417;   /* Elevated dark cards & panels */
+  --surface-2: #1c1c21; /* Subtle elevated / hover surfaces */
+  --surface-3: #26262d; /* Nested chips & wells */
+  --text: #f4f4f5;      /* Soft crisp off-white primary text */
+  --muted: #a1a1aa;     /* Muted secondary text */
+  --border: #27272a;    /* Subtle dark hairline borders */
+  --line: var(--border);
+  --line-strong: #3f3f46;
+  --accent: #e5a93c;    /* Muted amber — primary buttons, active states, links */
+  --accent-hover: #f59e0b;
+  --accent-light: #2e2312;
+
+  --ink: var(--text);
+  --ink-2: var(--muted);
+  --ink-3: #71717a;
+  --link: var(--accent);
+
+  /* Brand Amber Palette (Dark Mode) */
+  --brand-50: #1D150B;
+  --brand-100: #2E2312;
+  --brand-200: #573E18;
+  --brand-300: #875E1E;
+  --brand-400: #B88028;
+  --brand-500: #E5A93C;
+  --brand-600: #F0B955;
+  --brand-700: #F7CA75;
+  --brand-800: #FBDD9F;
+  --brand-900: #FEF3D6;
 
   /* GitHub Calendar Graph Ramp (Dark) */
-  --graph-0: #212125;
-  --graph-1: #075234;
-  --graph-2: #0a7f4f;
-  --graph-3: #22a86a;
-  --graph-4: #93dbb5;
+  --graph-0: #18181b;
+  --graph-1: #451a03;
+  --graph-2: #7c2d12;
+  --graph-3: #b45309;
+  --graph-4: #e5a93c;
 
-  --cover-base-1: #03140d;
-  --cover-base-2: #04120f;
-  --cover-1: #059669;
-  --cover-2: #0d9488;
-  --cover-3: #047857;
-  --cover-4: #0f766e;
-  --cover-5: #065f46;
-  --cover-6: #10b981;
-  --slats-bg: #07100c;
-  --slats-color: #22a86a;
-  --slats-glint: #c8f5dc;
   color-scheme: dark;
 }
 
@@ -119,8 +143,8 @@ html {
 }
 
 body {
-  background-color: var(--surface);
-  color: var(--ink);
+  background-color: var(--bg);
+  color: var(--text);
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 0.9375rem;
   line-height: 1.5rem;
@@ -129,7 +153,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Typography tokens - exact match to nahian.bd */
+/* Fluid Typography Scale */
 .text-title {
   font-size: 1.375rem;
   line-height: 1.75rem;
@@ -166,15 +190,15 @@ body {
   transition: all 0.15s ease-in-out;
 }
 
-/* 1. Primary Tactile Button ("Get in touch", "Let's talk") */
+/* 1. Primary Tactile Button ("Get in touch", "Let's talk", CTAs) */
 .btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
-  background: linear-gradient(180deg, #22a86a 0%, #0a7f4f 45%, #075234 100%);
-  box-shadow: 0 0 0 4px rgba(15, 148, 89, 0.14), 0 8px 22px -6px rgba(10, 127, 79, 0.55), inset 0 1px 6px rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  background-color: var(--accent);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(180, 83, 9, 0.25);
   border-radius: 0.75rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -184,21 +208,33 @@ body {
   transition: all 0.15s ease;
 }
 .btn-primary:hover {
-  box-shadow: 0 0 0 6px rgba(15, 148, 89, 0.18), 0 12px 28px -6px rgba(10, 127, 79, 0.65), inset 0 1px 6px rgba(255, 255, 255, 0.28);
-  filter: brightness(1.05);
+  background-color: var(--accent-hover);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 18px -4px rgba(180, 83, 9, 0.35);
+  transform: translateY(-1px);
 }
 .btn-primary:active {
   transform: translateY(1px);
 }
+.dark .btn-primary, [data-theme="dark"] .btn-primary {
+  color: #0E0E10;
+  background-color: var(--accent);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 14px -2px rgba(229, 169, 60, 0.3);
+}
+.dark .btn-primary:hover, [data-theme="dark"] .btn-primary:hover {
+  background-color: var(--accent-hover);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 8px 20px -3px rgba(229, 169, 60, 0.4);
+}
 
-/* 2. Inverse Button (Dark obsidian button in light mode, silver gloss in dark mode) */
+/* 2. Inverse Button */
 .btn-inverse {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  background: linear-gradient(180deg, #4a4a4f 0%, #1c1c1f 45%, #050506 100%);
-  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.06), 0 8px 22px -8px rgba(0, 0, 0, 0.5), inset 0 1px 6px rgba(255, 255, 255, 0.18);
+  color: #FFFFFF;
+  background: #18181B;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 4px 12px -2px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0.75rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -208,26 +244,31 @@ body {
   transition: all 0.15s ease;
 }
 .btn-inverse:hover {
-  box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.08), 0 12px 28px -8px rgba(0, 0, 0, 0.55), inset 0 1px 6px rgba(255, 255, 255, 0.24);
-  filter: brightness(1.05);
+  background: #27272A;
+  transform: translateY(-1px);
 }
 .btn-inverse:active {
   transform: translateY(1px);
 }
-.dark .btn-inverse {
-  color: #0d0d0e;
-  background: linear-gradient(180deg, #ffffff 0%, #e9e9ec 50%, #c9c9cf 100%);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.07), 0 8px 22px -8px rgba(255, 255, 255, 0.25), inset 0 1px 6px rgba(255, 255, 255, 0.6);
+.dark .btn-inverse, [data-theme="dark"] .btn-inverse {
+  color: #0E0E10;
+  background: #EDEDEE;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 12px -2px rgba(255, 255, 255, 0.1);
+}
+.dark .btn-inverse:hover, [data-theme="dark"] .btn-inverse:hover {
+  background: #FFFFFF;
 }
 
-/* 3. Secondary Button ("Follow" in Who to follow, Sidebar icons, Share button) */
+/* 3. Secondary Button */
 .btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--ink);
-  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
-  box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(0, 0, 0, 0.06), 0 4px 12px -4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   border-radius: 0.75rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -237,116 +278,43 @@ body {
   transition: all 0.15s ease;
 }
 .btn-secondary:hover {
-  box-shadow: 0 0 0 1px var(--line-strong), 0 2px 4px rgba(0, 0, 0, 0.06), 0 8px 18px -6px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  background: var(--surface-2);
+  border-color: var(--line-strong);
   transform: translateY(-1px);
 }
 .btn-secondary:active {
   transform: translateY(1px);
 }
-.dark .btn-secondary {
-  background: linear-gradient(180deg, var(--surface-3) 0%, var(--surface-2) 100%);
-  box-shadow: 0 0 0 1px var(--line), 0 4px 12px -4px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+.dark .btn-secondary, [data-theme="dark"] .btn-secondary {
+  background: var(--surface-2);
+  border-color: var(--border);
 }
-.dark .btn-secondary:hover {
-  box-shadow: 0 0 0 1px var(--line-strong), 0 8px 18px -6px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+.dark .btn-secondary:hover, [data-theme="dark"] .btn-secondary:hover {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
 }
 
-/* Card Raised (Who to follow, experience rows, repos) */
+/* Card Raised */
 .card-raised {
-  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
-  box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(0, 0, 0, 0.05), 0 14px 32px -22px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  border-radius: 1.5rem; /* rounded-3xl (27px at 18px base) */
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.08);
+  border-radius: 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .card-raised:hover {
-  box-shadow: 0 0 0 1px var(--line-strong), 0 2px 4px rgba(0, 0, 0, 0.05), 0 22px 40px -22px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-color: var(--line-strong);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 12px 30px -12px rgba(0, 0, 0, 0.12);
   transform: translateY(-2px);
 }
-.dark .card-raised {
-  background: linear-gradient(180deg, var(--surface-3) 0%, var(--surface-2) 100%);
-  box-shadow: 0 0 0 1px var(--line), 0 14px 32px -22px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+.dark .card-raised, [data-theme="dark"] .card-raised {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 12px 28px -12px rgba(0, 0, 0, 0.6);
 }
-.dark .card-raised:hover {
-  box-shadow: 0 0 0 1px var(--line-strong), 0 22px 40px -22px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-/* Halo & Glass Card System ("Open to new conversations") */
-.halo {
-  position: relative;
-  border-radius: 1.5rem; /* rounded-3xl */
-}
-.halo-glow {
-  position: absolute;
-  inset: 4px;
-  border-radius: inherit;
-  overflow: hidden;
-  filter: blur(22px);
-  opacity: 0.35;
-  pointer-events: none;
-  transition: opacity 0.4s ease;
-  z-index: 0;
-}
-.halo:hover .halo-glow {
-  opacity: 0.65;
-}
-@keyframes halo-spin {
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
-.halo-glow::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 150%;
-  height: 150%;
-  aspect-ratio: 1;
-  background: conic-gradient(#57c48c, transparent 22%, #10b981 38%, transparent 55%, #34d399 72%, transparent 88%, #57c48c);
-  animation: halo-spin 9s linear infinite;
-}
-.glass {
-  position: relative;
-  z-index: 1;
-  border-radius: inherit;
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(20px) saturate(1.6);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(255, 255, 255, 0.08), 0 18px 40px -24px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-}
-.dark .glass {
-  background: rgba(23, 23, 26, 0.72);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(255, 255, 255, 0.03), 0 18px 40px -24px rgba(0, 0, 0, 0.9);
-}
-.glass::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.6), rgba(34, 168, 106, 0.4) 30%, transparent 55%, rgba(94, 234, 212, 0.35));
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  pointer-events: none;
-}
-.dark .glass::before {
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.25), rgba(34, 168, 106, 0.45) 30%, transparent 55%, rgba(15, 118, 110, 0.4));
-}
-.halo-spot {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(26rem circle at var(--mx, 50%) var(--my, -20%), rgba(87, 196, 140, 0.22), transparent 60%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-.halo:hover .halo-spot {
-  opacity: 1;
+.dark .card-raised:hover, [data-theme="dark"] .card-raised:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 18px 36px -12px rgba(0, 0, 0, 0.8);
 }
 
 /* Pill system */
@@ -382,7 +350,7 @@ body {
 }
 .ai-pill:hover {
   border-color: var(--ai, var(--line-strong));
-  box-shadow: 0 0 10px color-mix(in srgb, var(--ai, #10b981) 25%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ai, var(--accent)) 25%, transparent);
 }
 
 /* Badge pill system (e.g. Languages proficiency) */
@@ -405,45 +373,12 @@ body {
   display: block;
   width: 6px;
   height: 6px;
-  background-color: var(--color-brand-400);
+  background-color: var(--accent);
   border-radius: 9999px;
 }
 .dark .badge {
   background: var(--surface-3);
   box-shadow: 0 0 0 1px var(--line-strong), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-/* Cover and Blob animations matching nahian.bd */
-.cover {
-  isolation: isolate;
-  background: linear-gradient(120deg, var(--cover-base-1), var(--cover-base-2));
-  position: relative;
-  overflow: hidden;
-}
-
-@keyframes cover-drift {
-  0% {
-    transform: translate(0) scale(1) rotate(0);
-  }
-  50% {
-    transform: translate(12%, -10%) scale(1.15) rotate(20deg);
-  }
-  100% {
-    transform: translate(-10%, 8%) scale(0.95) rotate(-15deg);
-  }
-}
-
-.cover-blob {
-  aspect-ratio: 1;
-  background: radial-gradient(closest-side, var(--blob), transparent);
-  opacity: 0.7;
-  will-change: transform;
-  width: 70%;
-  animation: cover-drift var(--dur, 22s) ease-in-out infinite alternate;
-  animation-delay: var(--delay, 0s);
-  border-radius: 9999px;
-  position: absolute;
-  pointer-events: none;
 }
 
 /* Project card design tokens & dot matrix pattern */
@@ -460,3 +395,15 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* MagicUI Animated Theme Toggler View Transitions */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html[data-magicui-theme-vt="active"]::view-transition-new(root) {
+  clip-path: var(--magicui-theme-vt-clip-from, circle(0% at 50% 50%));
+}
+

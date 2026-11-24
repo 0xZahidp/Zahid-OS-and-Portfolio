@@ -67,8 +67,8 @@ export interface Project {
   stars?: number;
   highlightBadge?: string;
   highlight_badge?: string;
-  logoType?: 'bidvers' | 'laravel' | 'invo' | 'prompt' | 'mytapcard' | 'gymscanner' | (string & {});
-  logo_type?: 'bidvers' | 'laravel' | 'invo' | 'prompt' | 'mytapcard' | 'gymscanner' | (string & {});
+  logoType?: 'badge' | 'laravel' | 'invo' | 'prompt' | 'mytapcard' | 'gymscanner' | (string & {});
+  logo_type?: 'badge' | 'laravel' | 'invo' | 'prompt' | 'mytapcard' | 'gymscanner' | (string & {});
   sort_order?: number;
 }
 

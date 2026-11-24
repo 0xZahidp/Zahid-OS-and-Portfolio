@@ -43,8 +43,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           className="group inline-flex items-center gap-3"
           aria-label="Zahid, home"
         >
-          <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-b from-brand-500 to-brand-700 shadow-[0_0_15px_rgba(16,185,129,0.35)] ring-1 ring-brand-400/40 transition-transform group-hover:rotate-[-4deg] group-active:scale-95">
-            <ZahidLogo className="size-6 text-white" />
+          <span className="grid size-10 place-items-center rounded-xl bg-accent shadow-[0_0_15px_rgba(180,83,9,0.25)] dark:shadow-[0_0_15px_rgba(229,169,60,0.25)] ring-1 ring-accent/30 transition-transform group-hover:rotate-[-4deg] group-active:scale-95 text-white dark:text-[#0E0E10]">
+            <ZahidLogo className="size-6 fill-current" />
           </span>
 
           {!isCollapsed && (

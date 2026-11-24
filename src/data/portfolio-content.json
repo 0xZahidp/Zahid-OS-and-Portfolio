@@ -13,7 +13,7 @@
     "roles": [
       {
         "title": "Jr. Software Engineer",
-        "company": "TwinForce Soluations Ltd",
+        "company": "TwinForce Solutions Ltd",
         "company_url": "https://twinforce.net",
         "company_logo": "/uploads/logos/logo-scholar-quest-1793536616620.png"
       },
@@ -452,25 +452,6 @@
       "highlight_badge": "",
       "logo_type": "",
       "sort_order": 5,
-      "updated_at": "2026-11-05T06:46:39.643+00:00"
-    },
-    {
-      "id": "proj-bidvers",
-      "title": "Bidvers",
-      "description": "Core platform and API behind a real-time hotel upgrade bidding marketplace operating in the US, Oman and Romania.",
-      "tags": [
-        "Laravel",
-        "API",
-        "Real-time",
-        "Livewire"
-      ],
-      "image_url": "",
-      "project_url": "https://bidvers.com",
-      "repository_url": "",
-      "stars": 54,
-      "highlight_badge": "",
-      "logo_type": "",
-      "sort_order": 6,
       "updated_at": "2026-11-05T06:46:39.643+00:00"
     },
     {
@@ -1036,25 +1017,12 @@
       }
     ],
     "voiceovers": {
-      "items": [
-        {
-          "id": "vo-1",
-          "url": "https://www.youtube.com/@TafheemOfficial",
-          "title": "'অবক্ষয়কাল' অডিওবুক কন্টেস্ট এর বিজয়ী সাবমিশন | Al Nahian | Obokkhoykal | Asif Adnan | Tafheem",
-          "duration": "14:22"
-        },
-        {
-          "id": "vo-2",
-          "url": "https://www.youtube.com/@TafheemOfficial",
-          "title": "কেমন লাগবে রাসুল (সা.) এর মুখে নিজের নাম শুনতে? | Tafheem",
-          "duration": "08:45"
-        }
-      ],
-      "handle": "@TafheemOfficial",
-      "channelName": "Tafheem",
-      "description": "Bangla voiceovers, audiobooks, and reflective narratives recorded for personal and community growth.",
-      "subscribeUrl": "https://www.youtube.com/@TafheemOfficial?sub_confirmation=1",
-      "subscriberCount": "5 voiceovers in Bangla"
+      "items": [],
+      "handle": "@0xZahidP",
+      "channelName": "Zahid Hasan Patwary",
+      "description": "Technical walkthroughs, product architecture reviews, and engineering logs.",
+      "subscribeUrl": "https://www.youtube.com/@0xZahidP?sub_confirmation=1",
+      "subscriberCount": "Tech Showcase"
     }
   },
   "updatedAt": "2026-11-05T07:09:30.112Z"

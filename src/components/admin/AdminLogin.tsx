@@ -1,20 +1,22 @@
+/*
+From Uiverse.io by Smit-Prajapati - https://uiverse.io/Smit-Prajapati/swift-liger-76
+MIT License, Copyright (c) Smit-Prajapati (Smit Prajapati)
+*/
+
 'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
 import {
-  Lock,
-  Mail,
   Eye,
   EyeOff,
   Fingerprint,
-  ArrowRight,
-  Shield,
   Loader2,
   AlertCircle,
   CheckCircle2,
   KeyRound,
   ArrowLeft,
+  Sparkles,
 } from 'lucide-react';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import { GoogleIcon } from '@/components/ui/Icons';
@@ -100,189 +102,187 @@ export const AdminLogin: React.FC = () => {
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden select-none">
+    <div className="min-h-screen bg-bg flex flex-col justify-center items-center px-4 py-10 relative overflow-hidden select-none">
       {/* Decorative ambient background glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[34rem] h-[34rem] bg-brand-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[36rem] h-[36rem] bg-accent/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
       {/* Back to Portfolio Link */}
-      <div className="w-full max-w-md mb-4 flex items-center justify-between">
+      <div className="w-full max-w-[390px] mb-3.5 flex items-center justify-between px-1">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-3 hover:text-ink transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-text transition-colors"
         >
           <ArrowLeft className="size-3.5" />
           <span>Back to Portfolio</span>
         </Link>
-        <span className="text-[11px] font-mono text-ink-3">FolioFrame Studio v1.0</span>
+        <span className="text-[11px] font-mono text-muted flex items-center gap-1">
+          <Sparkles className="size-3 text-accent" />
+          <span>CMS Studio</span>
+        </span>
       </div>
 
-      {/* Main Login Card */}
-      <div className="card-raised rounded-3xl border border-line bg-surface p-7 sm:p-9 max-w-md w-full shadow-2xl relative">
-        {/* Header with Brand Icon */}
-        <div className="flex flex-col items-center text-center mb-7">
-          <div className="size-13 rounded-2xl bg-gradient-to-b from-brand-500 to-brand-700 shadow-md shadow-brand-500/20 grid place-items-center text-white mb-4.5 ring-1 ring-white/20">
-            <Shield className="size-6.5" />
-          </div>
-          <h1 className="text-xl font-bold tracking-tight text-ink">
-            {mode === 'signin' ? 'Sign in to CMS Studio' : 'Create Admin Account'}
-          </h1>
-          <p className="mt-1.5 text-xs text-ink-3 max-w-xs">
-            {mode === 'signin'
-              ? 'Authenticate to edit your portfolio identity, skills, projects, and secrets.'
-              : 'Register your email and password to secure your personal portfolio CMS.'}
-          </p>
+      {/* Main Container Card (Adapted from Uiverse swift-liger-76) */}
+      <div className="w-full max-w-[390px] rounded-[40px] p-7 sm:p-9 border-[5px] border-white/80 dark:border-[#27272C] bg-gradient-to-b from-white to-[#F4F7FB] dark:from-[#17171A] dark:to-[#0E0E10] shadow-[0_30px_35px_-20px_rgba(180,83,9,0.22)] dark:shadow-[0_30px_35px_-20px_rgba(0,0,0,0.7)] relative transition-all">
+        {/* Heading */}
+        <div className="text-center font-black text-3xl tracking-tight text-accent mb-2">
+          {mode === 'signin' ? 'Sign In' : 'Sign Up'}
         </div>
+        <p className="text-center text-xs text-muted mb-6">
+          {mode === 'signin'
+            ? 'Manage your portfolio identity, projects & secrets.'
+            : 'Create your administrator account for FolioFrame.'}
+        </p>
 
         {/* Success Feedback */}
         {successMessage && (
-          <div className="mb-5 flex items-start gap-2.5 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs">
-            <CheckCircle2 className="size-4.5 shrink-0 mt-0.5" />
+          <div className="mb-4 flex items-start gap-2.5 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs">
+            <CheckCircle2 className="size-4 shrink-0 mt-0.5" />
             <p className="leading-relaxed">{successMessage}</p>
           </div>
         )}
 
         {/* Error Feedback */}
         {error && (
-          <div className="mb-5 flex items-start gap-2.5 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs">
-            <AlertCircle className="size-4.5 shrink-0 mt-0.5" />
+          <div className="mb-4 flex items-start gap-2.5 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs">
+            <AlertCircle className="size-4 shrink-0 mt-0.5" />
             <p className="leading-relaxed">{error}</p>
           </div>
         )}
 
-        {/* Google OAuth Button */}
-        <button
-          type="button"
-          onClick={handleGoogleSignIn}
-          disabled={isGoogleLoading || isSubmitting || isPasskeyLoading}
-          className="w-full h-11 rounded-2xl border border-line bg-surface-2/60 hover:bg-surface-2 text-ink font-semibold text-xs tracking-[-0.01em] transition-all flex items-center justify-center gap-2.5 shadow-xs cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed group"
-        >
-          {isGoogleLoading ? (
-            <Loader2 className="size-4 animate-spin text-ink-2" />
-          ) : (
-            <GoogleIcon className="size-4.5 shrink-0" />
-          )}
-          <span>Continue with Google</span>
-        </button>
-
-        {/* Divider */}
-        <div className="relative my-6 flex items-center justify-center">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-line" />
-          </div>
-          <span className="relative bg-surface px-3 text-[11px] font-medium text-ink-3 uppercase tracking-wider">
-            or continue with email
-          </span>
-        </div>
-
-        {/* Email & Password Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-[11px] font-semibold text-ink-2 mb-1.5">
-              Email address
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-ink-3" />
-              <input
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@domain.com"
-                className="w-full h-10.5 rounded-xl border border-line bg-surface px-3.5 pl-10 text-xs text-ink placeholder:text-ink-3/70 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-sans"
-              />
-            </div>
+        {/* Form Section */}
+        <form onSubmit={handleSubmit} className="space-y-3.5">
+          {/* Email Input */}
+          <div className="relative">
+            <input
+              required
+              type="email"
+              name="email"
+              id="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="E-mail"
+              className="w-full bg-white dark:bg-[#1E1E23] text-text border-none px-5 py-3.5 rounded-[20px] text-xs sm:text-sm placeholder:text-muted/70 shadow-[0_10px_12px_-5px_rgba(180,83,9,0.12)] dark:shadow-[0_10px_12px_-5px_rgba(0,0,0,0.5)] outline-none border-x-2 border-transparent focus:border-accent transition-all font-sans"
+            />
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-[11px] font-semibold text-ink-2">
-                Password
-              </label>
-              {mode === 'signin' && (
-                <Link
-                  href="/admin/reset-password"
-                  className="text-[11px] font-medium text-brand-600 dark:text-brand-400 hover:underline cursor-pointer"
-                >
-                  Forgot password?
-                </Link>
-              )}
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-ink-3" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                required
-                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full h-10.5 rounded-xl border border-line bg-surface px-3.5 pl-10 pr-10 text-xs text-ink placeholder:text-ink-3/70 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-sans"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-ink-3 hover:text-ink transition-colors cursor-pointer rounded-md"
-                title={showPassword ? 'Hide password' : 'Show password'}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+          {/* Password Input */}
+          <div className="relative">
+            <input
+              required
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              id="password"
+              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full bg-white dark:bg-[#1E1E23] text-text border-none px-5 py-3.5 pr-11 rounded-[20px] text-xs sm:text-sm placeholder:text-muted/70 shadow-[0_10px_12px_-5px_rgba(180,83,9,0.12)] dark:shadow-[0_10px_12px_-5px_rgba(0,0,0,0.5)] outline-none border-x-2 border-transparent focus:border-accent transition-all font-sans"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors cursor-pointer"
+              title={showPassword ? 'Hide password' : 'Show password'}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+
+          {/* Forgot Password Link */}
+          {mode === 'signin' && (
+            <div className="pt-0.5 pl-3">
+              <Link
+                href="/admin/reset-password"
+                className="text-[11px] font-semibold text-accent hover:underline cursor-pointer"
               >
-                {showPassword ? (
-                  <EyeOff className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
-              </button>
+                Forgot Password ?
+              </Link>
             </div>
-          </div>
+          )}
 
-          {/* Submit Button */}
+          {/* Submit Button (Uiverse .login-button style) */}
           <button
             type="submit"
             disabled={isSubmitting || isGoogleLoading || isPasskeyLoading}
-            className="w-full h-11 mt-1 rounded-xl bg-gradient-to-b from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-800 text-white font-semibold text-xs tracking-[-0.01em] shadow-md shadow-brand-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full font-bold text-white dark:text-[#0E0E10] py-3.5 mt-4 rounded-[20px] bg-gradient-to-r from-accent to-[#D97706] dark:from-[#D97706] dark:to-accent shadow-[0_18px_14px_-12px_rgba(180,83,9,0.55)] hover:scale-[1.02] active:scale-[0.96] transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
-              <Loader2 className="size-4 animate-spin" />
+              <Loader2 className="size-4.5 animate-spin" />
             ) : (
-              <>
-                <span>{mode === 'signin' ? 'Sign In' : 'Create Account'}</span>
-                <ArrowRight className="size-3.5" />
-              </>
+              <span>{mode === 'signin' ? 'Sign In' : 'Create Account'}</span>
             )}
           </button>
         </form>
 
-        {/* Passkey / FIDO2 Authentication Section */}
-        <div className="mt-6 pt-5 border-t border-line">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-[11px] font-semibold text-ink-2 flex items-center gap-1.5">
-              <KeyRound className="size-3.5 text-brand-500" />
-              <span>Biometric & Hardware Key</span>
-            </span>
-            <span className="text-[10px] text-ink-3 uppercase tracking-wider">WebAuthn</span>
-          </div>
+        {/* Social / Fast Authentication Section (Uiverse .social-account-container) */}
+        <div className="mt-6 pt-1">
+          <span className="block text-center text-[10.5px] uppercase font-bold tracking-wider text-muted">
+            Or Sign in with
+          </span>
 
+          <div className="w-full flex justify-center items-center gap-4 mt-3">
+            {/* Google Social Button */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isGoogleLoading || isSubmitting || isPasskeyLoading}
+              title="Sign in with Google"
+              aria-label="Sign in with Google"
+              className="size-11 rounded-full p-2.5 bg-gradient-to-br from-zinc-900 to-zinc-700 dark:from-zinc-800 dark:to-zinc-950 border-[3px] border-white dark:border-[#27272C] shadow-[0_10px_10px_-6px_rgba(180,83,9,0.3)] hover:scale-115 active:scale-95 transition-all grid place-content-center cursor-pointer disabled:opacity-50"
+            >
+              {isGoogleLoading ? (
+                <Loader2 className="size-4 animate-spin text-white" />
+              ) : (
+                <GoogleIcon className="size-4.5" />
+              )}
+            </button>
+
+            {/* Passkey / WebAuthn Biometric Button */}
+            <button
+              type="button"
+              onClick={handlePasskeySignIn}
+              disabled={isPasskeyLoading || isSubmitting || isGoogleLoading}
+              title="Sign in with Passkey (Touch ID, Windows Hello, YubiKey)"
+              aria-label="Sign in with Passkey"
+              className="size-11 rounded-full p-2.5 bg-gradient-to-br from-zinc-900 to-zinc-700 dark:from-zinc-800 dark:to-zinc-950 border-[3px] border-white dark:border-[#27272C] shadow-[0_10px_10px_-6px_rgba(180,83,9,0.3)] hover:scale-115 active:scale-95 transition-all grid place-content-center cursor-pointer disabled:opacity-50 group"
+            >
+              {isPasskeyLoading ? (
+                <Loader2 className="size-4 animate-spin text-accent" />
+              ) : (
+                <Fingerprint className="size-5 text-accent group-hover:scale-110 transition-transform" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Dedicated Passkey Banner (Ensures Passkey is prominent as requested) */}
+        <div className="mt-5 p-3 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <KeyRound className="size-4 text-accent shrink-0" />
+            <div className="min-w-0">
+              <span className="text-[11px] font-bold text-text block leading-tight">
+                Passkey Enabled
+              </span>
+              <span className="text-[10px] text-muted truncate block">
+                Touch ID / Face ID / Windows Hello
+              </span>
+            </div>
+          </div>
           <button
             type="button"
             onClick={handlePasskeySignIn}
             disabled={isPasskeyLoading || isSubmitting || isGoogleLoading}
-            className="w-full h-11 rounded-xl border border-line bg-surface hover:bg-surface-2 text-ink font-semibold text-xs transition-all flex items-center justify-center gap-2.5 shadow-xs cursor-pointer disabled:opacity-60 group"
+            className="px-3 py-1.5 rounded-xl bg-accent hover:bg-accent-hover text-white dark:text-[#0E0E10] text-[10.5px] font-bold transition-transform active:scale-95 cursor-pointer shrink-0"
           >
-            {isPasskeyLoading ? (
-              <Loader2 className="size-4 animate-spin text-brand-500" />
-            ) : (
-              <Fingerprint className="size-4.5 text-brand-500 group-hover:scale-110 transition-transform" />
-            )}
-            <span>Sign in with Passkey</span>
+            {isPasskeyLoading ? 'Authenticating...' : 'Use Passkey'}
           </button>
-          <p className="mt-2 text-center text-[10.5px] text-ink-3">
-            Use Apple Touch ID / Face ID, YubiKey, or Windows Hello.
-          </p>
         </div>
 
         {/* Switch Signin / Signup Mode */}
-        <div className="mt-6 text-center text-xs text-ink-3">
+        <div className="mt-5 text-center text-xs text-muted">
           {mode === 'signin' ? (
             <>
               Don&apos;t have an admin account?{' '}
@@ -292,7 +292,7 @@ export const AdminLogin: React.FC = () => {
                   clearError();
                   setMode('signup');
                 }}
-                className="font-semibold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer"
+                className="font-bold text-accent hover:underline cursor-pointer"
               >
                 Sign Up
               </button>
@@ -306,7 +306,7 @@ export const AdminLogin: React.FC = () => {
                   clearError();
                   setMode('signin');
                 }}
-                className="font-semibold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer"
+                className="font-bold text-accent hover:underline cursor-pointer"
               >
                 Sign In
               </button>
@@ -314,13 +314,23 @@ export const AdminLogin: React.FC = () => {
           )}
         </div>
 
+        {/* User License / Agreement footer (Uiverse .agreement) */}
+        <span className="block text-center mt-4">
+          <Link
+            href="/"
+            className="text-[10px] text-muted hover:text-accent transition-colors"
+          >
+            FolioFrame Studio · Single-Tenant Admin Access
+          </Link>
+        </span>
+
         {/* Local Dev Bypass for zero-friction local testing */}
         {isLocalhost && (
-          <div className="mt-6 pt-4 border-t border-dashed border-line text-center">
+          <div className="mt-5 pt-3.5 border-t border-dashed border-line text-center">
             <button
               type="button"
               onClick={bypassLocalAuth}
-              className="text-[11px] font-semibold text-ink-3 hover:text-ink underline decoration-dashed transition-colors cursor-pointer"
+              className="text-[11px] font-semibold text-muted hover:text-text underline decoration-dashed transition-colors cursor-pointer"
             >
               Development Bypass (Preview CMS without logging in)
             </button>
