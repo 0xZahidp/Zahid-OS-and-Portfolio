@@ -28,6 +28,7 @@ import {
   ChevronRight,
   HeartPulse,
   Radar,
+  ShieldCheck,
 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAdminAuth } from '@/context/AdminAuthContext';
@@ -48,6 +49,7 @@ export type AdminTab =
   | 'os'
   | 'career'
   | 'leads'
+  | 'clients'
   | 'health'
   | 'inbox'
   | 'supabase'
@@ -174,6 +176,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           icon: Radar,
           badge: 'Private',
           badgeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+        },
+        {
+          id: 'clients' as AdminTab,
+          label: 'Clients & Vault',
+          icon: ShieldCheck,
+          badge: '2FA',
+          badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
         },
         {
           id: 'health' as AdminTab,

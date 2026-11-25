@@ -29,6 +29,7 @@ import { InboxTab } from '@/components/admin/tabs/InboxTab';
 import { BackupsTab } from '@/components/admin/tabs/BackupsTab';
 import { CareerTab } from '@/components/admin/tabs/CareerTab';
 import { LeadsTab } from '@/components/admin/tabs/LeadsTab';
+import { ClientsTab } from '@/components/admin/tabs/ClientsTab';
 import { HealthTab } from '@/components/admin/tabs/HealthTab';
 import { confirmModal } from '@/components/ui/ConfirmDialog';
 
@@ -44,6 +45,10 @@ const TAB_META: Record<AdminTab, { title: string; description: string }> = {
   leads: {
     title: 'Startup Leads & Outreach Radar',
     description: 'Automated intelligence tracking early hiring posts, seed rounds, verified contacts, and tailored outreach hooks.',
+  },
+  clients: {
+    title: 'Client Projects & Infrastructure Vault',
+    description: 'Unified tracker for client projects, domains, registrars, hosting, databases, Git repos, and 2FA-gated encrypted credentials.',
   },
   health: {
     title: 'Personal Health Records & Emergency',
@@ -125,6 +130,7 @@ const VALID_ADMIN_TABS: AdminTab[] = [
   'os',
   'career',
   'leads',
+  'clients',
   'health',
   'inbox',
   'supabase',
@@ -313,6 +319,8 @@ function AdminDashboardInner() {
         return <CareerTab />;
       case 'leads':
         return <LeadsTab />;
+      case 'clients':
+        return <ClientsTab />;
       case 'health':
         return <HealthTab />;
       case 'supabase':
